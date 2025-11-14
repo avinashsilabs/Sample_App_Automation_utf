@@ -138,6 +138,7 @@ class WifiJoin(ThreadBase):
             if self.tcp_server:
                 fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
                 logger().info(f"*** DUT firmware version after upgrade = {fw_version_before_upgrade} ***")
+                self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
                 self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          power_save=self.power_save, retry_count=3,
@@ -180,8 +181,10 @@ class WifiJoin(ThreadBase):
 
                     assert fw_version_after_upgrade == fw_version_before_upgrade, "Firmware version mismatch after upgrade"
                     return
-                self.wifi_dut.interfaces.wifi.deinit()
-                self.wifi_dut.interfaces.wifi.init()
+                self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+                self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
+                self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
                 fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
                 logger().info(f"*** DUT firmware version after upgrade = {fw_version_after_upgrade} ***")
                 logger().info("Stopping Sniffer capture...")
@@ -204,6 +207,7 @@ class WifiJoin(ThreadBase):
                     self.fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
                     logger().info(f"*** dut fw version before upgrade = {self.fw_version_before_upgrade} ***")
                     logger().info("scanning for ap...")
+                    self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
                     self.wifi_dut.interfaces.wifi.scan()
                     self.wifi_dut.interfaces.wifi.join_ap(access_point=self.wifi_access_point)
                     self.wifi_dut.interfaces.wifi.start_ip()
@@ -224,13 +228,10 @@ class WifiJoin(ThreadBase):
                         logger().info(f'*** Firmware upgrade time = {t.duration} ***')
 
                     logger().info(f'*** Firmware upgrade time: {t.duration} ***')
-                    # self.wifi_dut.interfaces.wifi.reset()
-                    self.wifi_dut.interfaces.wifi.deinit()
-                    time.sleep(30)
+                    self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+                    self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
                     self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                    self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-                    self.wifi_dut.interfaces.wifi.initialize_thread()
-                    self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+                    self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
 
                     self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
                     logger().info(f"*** dut fw version after upgrade = {self.fw_version_after_upgrade} ***")
@@ -240,18 +241,8 @@ class WifiJoin(ThreadBase):
                     else:
                         logger().info("Firmware upgrade successful. Versions are different.")
 
-                    self.wifi_dut.interfaces.wifi.default_fw = True
-                    self.wifi_dut.interfaces.wifi.close()
-                    # self.wifi_dut.interfaces.wifi.reset()
-                    self.wifi_dut.interfaces.wifi.deinit()
-                    time.sleep(30)
-                    self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                    self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-                    self.wifi_dut.interfaces.wifi.initialize_thread()
-                    self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-
                 return
-
+            self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
             self.sl_collections.join_to_wifi_network(self.wifi_dut,
                                                      wifi_access_point=self.wifi_access_point,
                                                      power_save=False,
@@ -433,13 +424,11 @@ class WifiJoin(ThreadBase):
             self.wifi_sniffer.interfaces.capture.stop_capture()
 
             if self.test_case != '510701' and self.test_case != '510702':
-                self.wifi_dut.interfaces.wifi.deinit(mode="client")
+                self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
                 time.sleep(25)
+                self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
                 self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                self.wifi_dut.interfaces.wifi.init(load_certificate=False)
-                self.wifi_dut.interfaces.wifi.initialize_thread()
-                self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
-                logger().info("DUT firmware version after upgrade...")
+                self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
                 self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
                 logger().info(f"*** DUT firmware version after upgrade = {self.fw_version_after_upgrade} ***")
 
@@ -453,7 +442,7 @@ class WifiJoin(ThreadBase):
             raise e
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -478,7 +467,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510696(fi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -504,7 +493,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510697(fi
 
 
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @wifi_dut_marker(ca_cert=["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_c510698(firmware_loader, aws_s3, wifi_sniffer, wifi_access_point,
@@ -526,7 +515,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c510698(firmware_loader, aws
 
 
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_https_fw_upgrade_using_azure_server_c510699(firmware_loader, azure_blob, wifi_sniffer,
@@ -547,7 +536,7 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_c510699(firmware_loader, a
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
@@ -574,7 +563,7 @@ def test_wifi_sdk_m4_fw_upgrade_in_sta_alone_mode_and_measure_time_c510701(firmw
 
 
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @wifi_dut_marker(ca_cert=["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
@@ -595,7 +584,7 @@ def test_wifi_sdk_m4_fw_upgrade_using_aws_server_c510702(firmware_loader, aws_s3
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
@@ -616,8 +605,7 @@ def test_wifi_sdk_plain_fw_upgrade_negative_c510708(firmware_loader, wifi_client
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
@@ -639,7 +627,7 @@ def test_wifi_sdk_corrupted_fw_upgrade_negative_c510709(firmware_loader, wifi_cl
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
@@ -661,7 +649,7 @@ def test_wifi_sdk_fw_upgrade_negative_with_no_file_c510710(firmware_loader, wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
@@ -682,7 +670,7 @@ def test_wifi_sdk_m4_plain_fw_upgrade_negative_c510711(firmware_loader, wifi_cli
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
@@ -704,7 +692,7 @@ def test_wifi_sdk_m4_corrupted_fw_upgrade_negative_c510712(firmware_loader, wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
@@ -728,7 +716,7 @@ def test_wifi_sdk_m4_fw_upgrade_negative_with_no_file_c510713(firmware_loader, w
 
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, http_server, wifi_sniffer, wifi_client, utf_constants,
@@ -747,7 +735,7 @@ def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, 
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -774,8 +762,7 @@ def test_wifi_sdk_tcp_fw_upgrade_with_full_security_mode_c510700(firmware_loader
     finally:
         sdk_server.interfaces.server.stop_server()
 
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -802,7 +789,7 @@ def test_wifi_sdk_tcp_fw_upgrade_with_full_security_mode_c510703(firmware_loader
         sdk_server.interfaces.server.stop_server()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -824,7 +811,7 @@ def test_wifi_sdk_http_combine_image_download_c510704(firmware_loader, wifi_clie
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.config("sdk_server", server={"firmware_file_name": "combined_ta_secure_m4_plain.rps"})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
@@ -852,7 +839,7 @@ def test_wifi_sdk_tcp_combine_image_ta_secure_m4_plain_c510727(firmware_loader, 
         sdk_server.interfaces.server.stop_server()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -879,7 +866,7 @@ def test_wifi_sdk_tcp_fw_abort_with_full_security_mode_c540475(firmware_loader, 
         sdk_server.interfaces.server.stop_server()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -907,7 +894,7 @@ def test_wifi_sdk_tcp_fw_abort_m4_with_full_security_mode_c540476(firmware_loade
         sdk_server.interfaces.server.stop_server()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -935,7 +922,7 @@ def test_wifi_sdk_tcp_fw_abort_with_combine_image_c540477(firmware_loader, wifi_
         sdk_server.interfaces.server.stop_server()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -962,7 +949,7 @@ def test_wifi_sdk_tcp_fw_upgrade_with_mic_encryption_sign_security_c540495(firmw
         sdk_server.interfaces.server.stop_server()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.config("sdk_server", server={"firmware_file_name": "mic_only_SiWG917-B.2.14.5.0.0.2.rps"})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
@@ -990,7 +977,7 @@ def test_wifi_sdk_tcp_fw_upgrade_with_mic_only_security_mode_c540496(firmware_lo
         sdk_server.interfaces.server.stop_server()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
@@ -1016,7 +1003,7 @@ def test_wifi_sdk_tcp_first_abort_then_upgrade_full_security_c559884(firmware_lo
         sdk_server.interfaces.server.stop_server()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.config("sdk_server", server={"firmware_file_name": "combined_SiWG917-B.2.14.5.0.0.2_wrong_header.rps"})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")

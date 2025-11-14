@@ -58,6 +58,7 @@ class WifiJoin(ThreadBase):
             while time.time() < t_end:
                 fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
                 logger().info(f"*** DUT firmware version after upgrade = {fw_version_before_upgrade} ***")
+                self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
                 self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut,
                                                                          wifi_access_point=self.wifi_access_point,
                                                                          power_save=self.power_save, retry_count=3,
@@ -73,15 +74,17 @@ class WifiJoin(ThreadBase):
                                                                server_port="5001")
 
                 self.wifi_dut.interfaces.wifi.update_firmware_over_tcp(timeout=150)
-                self.wifi_dut.interfaces.wifi.deinit()
-                self.wifi_dut.interfaces.wifi.init()
+                self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+                self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
+                self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
                 fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
                 logger().info(f"*** DUT firmware version after upgrade = {fw_version_after_upgrade} ***")
         logger().info("Stopping Sniffer capture...")
         self.wifi_sniffer.interfaces.capture.stop_capture()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.config(
@@ -134,7 +137,7 @@ def test_wifi_sdk_tcp_fw_upgrade_full_security_overnight_c510706(firmware_loader
         sdk_server.interfaces.server.stop_server()
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.config(
