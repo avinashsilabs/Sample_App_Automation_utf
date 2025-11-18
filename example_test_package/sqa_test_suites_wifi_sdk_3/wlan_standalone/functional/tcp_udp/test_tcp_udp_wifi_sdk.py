@@ -57,37 +57,6 @@ from utf.utf_config import UtfConfig
 def logger():
     return get_logger(__name__)
 
-
-@pytest.fixture(autouse=True, scope="function")
-def socket_cleanup_fixture(request, wiseconnect_duts):
-    """
-    Ensure all sockets are closed after each test to prevent resource leaks
-    and state carryover between test cases.
-    """
-    yield
-    
-    # Cleanup after test
-    logger().info("=" * 80)
-    logger().info("PERFORMING FIXTURE-LEVEL SOCKET CLEANUP")
-    logger().info("=" * 80)
-    
-    try:
-        for device in wiseconnect_duts:
-            if hasattr(device.interfaces, 'wifi') and hasattr(device.interfaces.wifi, 'bsdAsyncSockClose'):
-                # Try to close any remaining open sockets (0-9 for TCP/UDP)
-                for socket_id in range(10):
-                    try:
-                        device.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket_id)
-                        logger().info(f"Fixture cleaned up socket {socket_id}")
-                    except Exception:
-                        pass  # Socket already closed or doesn't exist
-    except Exception as e:
-        logger().warning(f"Fixture socket cleanup encountered error: {e}")
-    
-    logger().info("Fixture-level socket cleanup completed")
-    logger().info("=" * 80)
-
-
 class SnifferValidationProcess:
 
     def __init__(self, wifi_sniffer=None, wifi_access_point=None, dut_mac_address=None, ap_mac_address=None,
@@ -1623,8 +1592,8 @@ def test_wifi_sdk_multi_tcp_socket_dut_server_c19351(
             local_port = server_port_base + count
             logger().info(f'Server port = {local_port}')
             client_socket.append(remote_socket_factory.interfaces.socket.create_socket())
-            sock = wifi_dut.interfaces.wifi.Asyncsocket(domain="AF_INET", stream_type="SOCK_STREAM",
-                                                        protocol="IPPROTO_TCP")
+            sock = wifi_dut.interfaces.wifi.socket(domain="AF_INET", stream_type="SOCK_STREAM",
+                                                    protocol="IPPROTO_TCP")
             logger().info(f"Socket open successfully : {sock}")
             logger().info(
                 f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
@@ -1639,33 +1608,87 @@ def test_wifi_sdk_multi_tcp_socket_dut_server_c19351(
                 ],
                 timeout=10,
             )
-        count = 0
-        for sock_no in tcp_socks:
-            tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=50))
-            buffer_length = len(tx_buffer)
-            logger().info(f"Remote peer sending data over socket {sock_no} and data:{tx_buffer}")
-            client_socket[count].send_data_tcp(tx_buffer, use_server_socket=False)
-            time.sleep(1)
-            count += 1
-            wifi_dut.interfaces.wifi.bsdAsyncSocketSelect(numberOfFds=2, time=10)
-            buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock_no + 1)
-            logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
-            logger().info(f"###################### Buffer Data Length  {buffer_length}  ######################")
-            assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
-                                           f"{sock_no} opened in the DUT is not matched"
-            logger().info("Data sent by remote peer and received on DUT is matching")
+
+        logger().info(f"Processing {len(tcp_socks)} sockets with individual select() calls")
+        
+        for count, sock_no in enumerate(tcp_socks):
+            try:
+                tx_buffer = "".join(random.choices(string.ascii_uppercase + string.digits, k=50))
+                buffer_length = len(tx_buffer)
+
+                logger().info("=" * 80)
+                logger().info(f"PROCESSING SOCKET {sock_no} (Index: {count})")
+                logger().info("=" * 80)
+                logger().info(f"Remote peer sending data over socket {sock_no} and data: {tx_buffer}")
+
+                # Send data from client
+                client_socket[count].send_data_tcp(tx_buffer, use_server_socket=False)
+                time.sleep(1)
+
+                # Calculate DUT socket ID (sock_no + 1)
+                dut_socket_id = sock_no + 1
+
+                # This avoids the errno:22 issue with numberOfFds exceeding firmware limits
+                logger().info(f"Receiving directly from DUT socket ID: {dut_socket_id} (matching C code behavior)")
+                
+                # Directly receive data without select() call
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=dut_socket_id)
+
+                # Validate received data
+                if buffer_rx is None or (isinstance(buffer_rx, bytes) and len(buffer_rx) == 0):
+                    logger().error(f"Received NULL or empty data from socket {dut_socket_id}")
+                    raise AssertionError(
+                        f"No data received on DUT socket {dut_socket_id} "
+                        f"(expected {buffer_length} bytes)"
+                    )
+
+                # Convert buffer_rx to string if it's bytes
+                if isinstance(buffer_rx, bytes):
+                    buffer_rx = buffer_rx.decode('utf-8', errors='ignore')
+
+                logger().info(f"###################### Buffer Data: {buffer_rx} ######################")
+                logger().info(f"###################### Buffer Data Length: {buffer_length} ######################")
+                logger().info(f"###################### Received Data Length: {len(buffer_rx)} ######################")
+
+                # Validate data integrity
+                assert tx_buffer == buffer_rx, (
+                    f"Data mismatch on socket {sock_no} (DUT socket {dut_socket_id}): "
+                    f"\nExpected ({buffer_length} bytes): {tx_buffer}"
+                    f"\nReceived ({len(buffer_rx)} bytes): {buffer_rx}"
+                )
+
+                logger().info(f"✓ Data verification PASSED for socket {sock_no}")
+                logger().info("Data sent by remote peer and received on DUT is matching")
+                logger().info("=" * 80)
+
+            except AssertionError as ae:
+                logger().error(f"Assertion Error on socket {sock_no}: {ae}")
+                raise
+
+            except Exception as e:
+                logger().error(f"Unexpected error processing socket {sock_no}: {e}")
+                logger().error(f"Exception type: {type(e).__name__}")
+                logger().error(f"Exception details: {str(e)}")
+                import traceback
+                logger().error(f"Traceback:\n{traceback.format_exc()}")
+                raise AssertionError(
+                    f"Failed to process socket {sock_no} (index {count}): {e}"
+                ) from e
 
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
+        
+        # Close server sockets only - accepted client sockets are automatically closed
         for sock_id in tcp_socks:
             logger().info(f"Closing socket_id->{sock_id}")
-            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
 
     except Exception as e:
+        # Close server sockets on error
         for sock_id in tcp_socks:
             logger().info(f"Closing socket_id->{sock_id}")
-            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock_id)
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         remote_socket_factory.interfaces.socket.close_all()
