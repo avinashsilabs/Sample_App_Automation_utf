@@ -433,10 +433,28 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_1_C20638(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_1_C20638(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
  # ********************************************************************************************************************
@@ -465,10 +483,28 @@ def test_wlan_standby_associated_DTIM_1_C20638(firmware_loader, power_meter, wif
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_3_C20631(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_3_C20631(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -497,10 +533,28 @@ def test_wlan_standby_associated_DTIM_3_C20631(firmware_loader, power_meter, wif
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_6_C537577(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_6_C537577(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -529,10 +583,28 @@ def test_wlan_standby_associated_DTIM_6_C537577(firmware_loader, power_meter, wi
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_C20632(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_10_C20632(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -562,13 +634,30 @@ def test_wlan_standby_associated_DTIM_10_C20632(firmware_loader, power_meter, wi
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, dtim):
-    test_name = request.node.name
+def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, dtim, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, listen_case=True)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
    
 # ********************************************************************************************************************
@@ -597,10 +686,28 @@ def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_a
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_3_RC_CLK_Enabled_C537578(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_3_RC_CLK_Enabled_C537578(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -629,10 +736,28 @@ def test_wlan_standby_associated_DTIM_3_RC_CLK_Enabled_C537578(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_RC_CLK_Enabled_C537579(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_10_RC_CLK_Enabled_C537579(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -659,10 +784,28 @@ def test_wlan_standby_associated_DTIM_10_RC_CLK_Enabled_C537579(firmware_loader,
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-def test_wlan_active_tx_10dBm_C20643(firmware_loader, power_meter, wifi_dut, power):
+def test_wlan_active_tx_10dBm_C20643(firmware_loader, power_meter, wifi_dut, power, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     active_obj = Active_TX(power=power, wifi_dut=wifi_dut, power_meter=power_meter)
     active_obj.start()
     active_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
     
 
 # ********************************************************************************************************************
@@ -689,10 +832,28 @@ def test_wlan_active_tx_10dBm_C20643(firmware_loader, power_meter, wifi_dut, pow
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-def test_wlan_active_tx_20dBm_C20644(firmware_loader, power_meter, wifi_dut, power):
+def test_wlan_active_tx_20dBm_C20644(firmware_loader, power_meter, wifi_dut, power, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     active_obj = Active_TX(power=power, wifi_dut=wifi_dut, power_meter=power_meter)
     active_obj.start()
     active_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -722,10 +883,28 @@ def test_wlan_active_tx_20dBm_C20644(firmware_loader, power_meter, wifi_dut, pow
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1, "dtim": 200,
                                                "beacon_interval": 300})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_sleep_C20639(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, sl_collections):
+def test_wlan_standby_associated_sleep_C20639(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, sl_collections, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
     
 # ********************************************************************************************************************
@@ -749,7 +928,13 @@ def test_wlan_standby_associated_sleep_C20639(firmware_loader, power_meter, wifi
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wifi_dut):
+def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wifi_dut, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     dut = UtfConfig.instance().defaults.get("dut", {})
     logger().info(f"dut: {dut}")
     
@@ -775,6 +960,18 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
     pm_obj.wait_for_exit()
     if dut != "si917_ncp_sl_wifi":
         m4_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
     time.sleep(15)
 
@@ -805,10 +1002,28 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_1_broadcast_filter_disable_C537581(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_1_broadcast_filter_disable_C537581(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
  # ********************************************************************************************************************
@@ -837,10 +1052,28 @@ def test_wlan_standby_associated_DTIM_1_broadcast_filter_disable_C537581(firmwar
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_3_broadcast_filter_disable_C537580(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_3_broadcast_filter_disable_C537580(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
  # ********************************************************************************************************************
@@ -869,10 +1102,28 @@ def test_wlan_standby_associated_DTIM_3_broadcast_filter_disable_C537580(firmwar
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_6_broadcast_filter_disable_C537583(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_6_broadcast_filter_disable_C537583(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
  # ********************************************************************************************************************
@@ -901,10 +1152,28 @@ def test_wlan_standby_associated_DTIM_6_broadcast_filter_disable_C537583(firmwar
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_broadcast_filter_disable_C537582(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim):
+def test_wlan_standby_associated_DTIM_10_broadcast_filter_disable_C537582(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
  # ********************************************************************************************************************
@@ -934,15 +1203,32 @@ def test_wlan_standby_associated_DTIM_10_broadcast_filter_disable_C537582(firmwa
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, wifi_sniffer, sl_collections, request, remote_socket):
+def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, wifi_sniffer, sl_collections, request, remote_socket, performance_data, custom_performance_fixture):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,power_meter=power_meter, dtim_aligned_type=0, 
                                  deep_sleep=False, remote_socket=remote_socket, send_ka=True, capture_time=90, m4_sleep_time=120000, tcp_ka_time=55)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
-
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
  # ********************************************************************************************************************
 
@@ -971,14 +1257,31 @@ def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, w
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C564139(firmware_loader, power_meter, wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, dtim, request, remote_socket):
-    test_name = request.node.name
+def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C564139(firmware_loader, power_meter, wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, dtim, request, remote_socket, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,power_meter=power_meter, 
                                  deep_sleep=False, remote_socket=remote_socket, send_ka=True, capture_time=300, m4_sleep_time=600000, tcp_ka_time=240)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -1007,7 +1310,13 @@ def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C564139(firmware_loader, po
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_scan_and_connect_to_ap_timeline_C510792(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim):
+def test_wlan_standby_associated_scan_and_connect_to_ap_timeline_C510792(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     dut = UtfConfig.instance().defaults.get("dut", {})
     logger().info(f"dut: {dut}")
 
@@ -1069,6 +1378,18 @@ def test_wlan_standby_associated_scan_and_connect_to_ap_timeline_C510792(firmwar
     pm_obj.wait_for_exit()
     # if dut != "si917_ncp_sl_wifi":
     #     m4_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
     time.sleep(10)
 

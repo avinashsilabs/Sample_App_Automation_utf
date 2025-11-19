@@ -462,11 +462,29 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_conn_with_DTIM_10_ble_adv_C20649(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                               sl_collections, dtim, ):
+                                               sl_collections, dtim, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                    sl_collections=sl_collections, power_meter=power_meter, ble_advertisement=True)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.parametrize("dtim", [10])
@@ -505,12 +523,30 @@ def test_wlan_conn_with_DTIM_10_ble_adv_C20649(firmware_loader, power_meter, wif
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_conn_with_DTIM_10_ble_conn_C20650(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                sl_collections, dtim, ble_client):
+                                                sl_collections, dtim, ble_client, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                    ble_client=ble_client, sl_collections=sl_collections, power_meter=power_meter,
                                    ble_with_connection=True)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.parametrize("dtim", [10])
@@ -549,11 +585,29 @@ def test_wlan_conn_with_DTIM_10_ble_conn_C20650(firmware_loader, power_meter, wi
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_conn_with_DTIM_10_ble_conn_rc_clock_C537358(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                          sl_collections, dtim, ble_client):
+                                                           sl_collections, dtim, ble_client, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                    sl_collections=sl_collections, power_meter=power_meter, ble_client=ble_client,
                                    ble_with_connection=True)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 # ********************************************************************************************************************

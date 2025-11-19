@@ -31,6 +31,7 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficTyp
 from random import randint
 from utf.utils.thread_base import ThreadBase
 import os
+from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.power_meter.nrf_ppk2.nrf_power_profiler_mp import NRFPowerProfiler
@@ -431,13 +432,30 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_C20637(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, wifi_sniffer, request):
-    test_name = request.node.name
+def test_wlan_standby_associated_DTIM_10_C20637(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, wifi_sniffer, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, deep_sleep=True)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -469,14 +487,31 @@ def test_wlan_standby_associated_DTIM_10_C20637(firmware_loader, power_meter, wi
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C20637(firmware_loader, power_meter, wifi_access_point, wifi_sniffer, request, wifi_dut, sl_collections, dtim, remote_socket):
-    test_name = request.node.name
+def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C20637(firmware_loader, power_meter, wifi_access_point, wifi_sniffer, request, wifi_dut, sl_collections, dtim, remote_socket, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,power_meter=power_meter, 
                                  deep_sleep=True, remote_socket=remote_socket, send_ka=True, capture_time=300, m4_sleep_time=350000, tcp_ka_time=240)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -500,7 +535,13 @@ def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C20637(firmware_loader, pow
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wifi_dut):
+def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wifi_dut, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     
     dut = UtfConfig.instance().defaults.get("dut", {})
     logger().info(f"dut: {dut}")
@@ -527,6 +568,18 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
 
     if dut != "si917_ncp_sl_wifi":
         m4_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
     time.sleep(15)
 
@@ -558,13 +611,30 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, dtim):
-    test_name = request.node.name
+def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, dtim, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, listen_case=True)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -594,8 +664,13 @@ def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_a
     }
 )                           
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-def test_wlan_active_1mbps_tx_C652608(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
-    test_name = request.node.name
+def test_wlan_active_1mbps_tx_C652608(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     active_obj = Active_TX(power=power, rate=rate, wifi_dut=wifi_dut, power_meter=power_meter, enable_11ax=1)
@@ -608,6 +683,18 @@ def test_wlan_active_1mbps_tx_C652608(firmware_loader, power_meter, wifi_dut, po
     active_obj.wait_for_exit()
 
     wifi_dut.interfaces.wifi.sl_si91x_transmit_test_stop()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -636,8 +723,13 @@ def test_wlan_active_1mbps_tx_C652608(firmware_loader, power_meter, wifi_dut, po
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-def test_wlan_active_tx_ht_mcs0_C652609(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
-    test_name = request.node.name
+def test_wlan_active_tx_ht_mcs0_C652609(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     active_obj = Active_TX(power=power, rate=rate, wifi_dut=wifi_dut, power_meter=power_meter, enable_11ax=1)
@@ -650,6 +742,18 @@ def test_wlan_active_tx_ht_mcs0_C652609(firmware_loader, power_meter, wifi_dut, 
     active_obj.wait_for_exit()
 
     wifi_dut.interfaces.wifi.sl_si91x_transmit_test_stop()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -678,8 +782,13 @@ def test_wlan_active_tx_ht_mcs0_C652609(firmware_loader, power_meter, wifi_dut, 
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-def test_wlan_active_tx_ht_mcs7_C652610(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
-    test_name = request.node.name
+def test_wlan_active_tx_ht_mcs7_C652610(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     active_obj = Active_TX(power=power, rate=rate, wifi_dut=wifi_dut, power_meter=power_meter, enable_11ax=1)
@@ -692,6 +801,18 @@ def test_wlan_active_tx_ht_mcs7_C652610(firmware_loader, power_meter, wifi_dut, 
     active_obj.wait_for_exit()
 
     wifi_dut.interfaces.wifi.sl_si91x_transmit_test_stop()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -720,8 +841,13 @@ def test_wlan_active_tx_ht_mcs7_C652610(firmware_loader, power_meter, wifi_dut, 
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-def test_wlan_active_tx_he_mcs0_C652611(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
-    test_name = request.node.name
+def test_wlan_active_tx_he_mcs0_C652611(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     active_obj = Active_TX(power=power, rate=rate, wifi_dut=wifi_dut, power_meter=power_meter, enable_11ax=1)
@@ -734,6 +860,18 @@ def test_wlan_active_tx_he_mcs0_C652611(firmware_loader, power_meter, wifi_dut, 
     active_obj.wait_for_exit()
 
     wifi_dut.interfaces.wifi.sl_si91x_transmit_test_stop()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -762,8 +900,13 @@ def test_wlan_active_tx_he_mcs0_C652611(firmware_loader, power_meter, wifi_dut, 
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
-def test_wlan_active_tx_he_mcs7_C652612(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request):
-    test_name = request.node.name
+def test_wlan_active_tx_he_mcs7_C652612(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     active_obj = Active_TX(power=power, rate=rate, wifi_dut=wifi_dut, power_meter=power_meter, enable_11ax=1)
@@ -776,6 +919,18 @@ def test_wlan_active_tx_he_mcs7_C652612(firmware_loader, power_meter, wifi_dut, 
     active_obj.wait_for_exit()
 
     wifi_dut.interfaces.wifi.sl_si91x_transmit_test_stop()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 # ********************************************************************************************************************
@@ -797,8 +952,14 @@ def test_wlan_active_tx_he_mcs7_C652612(firmware_loader, power_meter, wifi_dut, 
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
-def test_ble_sdk_per_1mbps_tx_LP_CHAIN_0dBm_C20663(firmware_loader, power_meter, bt_dut, sl_collections):
+def test_ble_sdk_per_1mbps_tx_LP_CHAIN_0dBm_C20663(firmware_loader, power_meter, bt_dut, sl_collections, request, performance_data, custom_performance_fixture):
     "Verify BLE Active_2.4G 1Mbps Tx-0dBm_LP Chain"
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     cmd_ix = 0x13
     access_addr = 1903575337
     pkt_len = 240
@@ -854,6 +1015,18 @@ def test_ble_sdk_per_1mbps_tx_LP_CHAIN_0dBm_C20663(firmware_loader, power_meter,
 
         if dut != "si917_ncp_sl_wifi":
             m4_obj.wait_for_exit()
+        
+        parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+        __print_throughput(parsed_result)
+        assert parsed_result["Output"] is not None
+        performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                              opn=opn, 
+                                                              build_number=build_number,
+                                                              memory_configuration="test_352K_M4SS_320K",
+                                                              parsed_result=parsed_result["Output"],
+                                                              file_path = performance_file_root_dir,
+                                                              file_name = perf_file_name
+                                                              )
         time.sleep(10)
 
     except Exception as error:
@@ -880,7 +1053,13 @@ def test_ble_sdk_per_1mbps_tx_LP_CHAIN_0dBm_C20663(firmware_loader, power_meter,
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
-def test_ble_sdk_per_1mbps_rx_LP_CHAIN_C20665(firmware_loader, power_meter, bt_dut, sl_collections):
+def test_ble_sdk_per_1mbps_rx_LP_CHAIN_C20665(firmware_loader, power_meter, bt_dut, sl_collections, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     cmd_ix = 0x14
     access_addr = 1903575337
     ext_data_len_indication = 1
@@ -933,7 +1112,19 @@ def test_ble_sdk_per_1mbps_rx_LP_CHAIN_C20665(firmware_loader, power_meter, bt_d
 
         if dut != "si917_ncp_sl_wifi":
             m4_obj.wait_for_exit()
-            time.sleep(10)
+        
+        parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+        __print_throughput(parsed_result)
+        assert parsed_result["Output"] is not None
+        performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                              opn=opn, 
+                                                              build_number=build_number,
+                                                              memory_configuration="test_352K_M4SS_320K",
+                                                              parsed_result=parsed_result["Output"],
+                                                              file_path = performance_file_root_dir,
+                                                              file_name = perf_file_name
+                                                              )
+        time.sleep(10)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=bt_dut, exception=error)
 
@@ -958,8 +1149,14 @@ def test_ble_sdk_per_1mbps_rx_LP_CHAIN_C20665(firmware_loader, power_meter, bt_d
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
-def test_ble_sdk_per_1mbps_tx_7p5_dBm_C20664(firmware_loader, power_meter, bt_dut, sl_collections):
+def test_ble_sdk_per_1mbps_tx_7p5_dBm_C20664(firmware_loader, power_meter, bt_dut, sl_collections, request, performance_data, custom_performance_fixture):
     """Verify BLE Active_2.4G 1Mbps Tx-10dBm_LP Chain"""
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     cmd_ix = 0x13
     access_addr = 1903575337
     pkt_len = 240
@@ -1015,7 +1212,19 @@ def test_ble_sdk_per_1mbps_tx_7p5_dBm_C20664(firmware_loader, power_meter, bt_du
 
         if dut != "si917_ncp_sl_wifi":
             m4_obj.wait_for_exit()
-            time.sleep(10)
+        
+        parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+        __print_throughput(parsed_result)
+        assert parsed_result["Output"] is not None
+        performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                              opn=opn, 
+                                                              build_number=build_number,
+                                                              memory_configuration="test_352K_M4SS_320K",
+                                                              parsed_result=parsed_result["Output"],
+                                                              file_path = performance_file_root_dir,
+                                                              file_name = perf_file_name
+                                                              )
+        time.sleep(10)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=bt_dut, exception=error)
 
@@ -1040,8 +1249,14 @@ def test_ble_sdk_per_1mbps_tx_7p5_dBm_C20664(firmware_loader, power_meter, bt_du
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
-def test_ble_sdk_advertise_non_connectable_power_0dBm_C20657(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections):
+def test_ble_sdk_advertise_non_connectable_power_0dBm_C20657(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections, request, performance_data, custom_performance_fixture):
     """ Verify BLE Undirected Non-Connectable Advertisement"""
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     with BleLogs(
             start_collecting_logs=True,
             bt_log_path=f"reports/test_ble_advertise_non_connectable_power{int(time.time())}.log",
@@ -1112,6 +1327,18 @@ def test_ble_sdk_advertise_non_connectable_power_0dBm_C20657(firmware_loader, po
 
             if dut != "si917_ncp_sl_wifi":
                 m4_obj.wait_for_exit()
+            
+            parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+            __print_throughput(parsed_result)
+            assert parsed_result["Output"] is not None
+            performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                                  opn=opn, 
+                                                                  build_number=build_number,
+                                                                  memory_configuration="test_352K_M4SS_320K",
+                                                                  parsed_result=parsed_result["Output"],
+                                                                  file_path = performance_file_root_dir,
+                                                                  file_name = perf_file_name
+                                                                  )
             time.sleep(10)
 
         except Exception as error:
@@ -1140,8 +1367,14 @@ def test_ble_sdk_advertise_non_connectable_power_0dBm_C20657(firmware_loader, po
             "power_index": 31,
         },
     )
-def test_ble_sdk_advertise_connectable_power_0_dBm_C20658(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections):
+def test_ble_sdk_advertise_connectable_power_0_dBm_C20658(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections, request, performance_data, custom_performance_fixture):
     """ Verify BLE Undirected Connectable advertisement """
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     with BleLogs(
             start_collecting_logs=True,
             bt_log_path=f"reports/test_ble_advertise_connectable_power_{int(time.time())}.log",
@@ -1208,6 +1441,18 @@ def test_ble_sdk_advertise_connectable_power_0_dBm_C20658(firmware_loader, power
 
             if dut != "si917_ncp_sl_wifi":
                 m4_obj.wait_for_exit()
+            
+            parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+            __print_throughput(parsed_result)
+            assert parsed_result["Output"] is not None
+            performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                                  opn=opn, 
+                                                                  build_number=build_number,
+                                                                  memory_configuration="test_352K_M4SS_320K",
+                                                                  parsed_result=parsed_result["Output"],
+                                                                  file_path = performance_file_root_dir,
+                                                                  file_name = perf_file_name
+                                                                  )
             time.sleep(10)
 
         except Exception as error:
@@ -1236,8 +1481,14 @@ def test_ble_sdk_advertise_connectable_power_0_dBm_C20658(firmware_loader, power
         },
     )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_connect_with_1_28ms_0dBm_20660(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections):
+def test_ble_sdk_connect_with_1_28ms_0dBm_20660(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections, request, performance_data, custom_performance_fixture):
     """Verify ble connection with 1.28ms """
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     with BleLogs(
             start_collecting_logs=True,
             bt_log_path=f"reports/test_ble_connection_C20660_power{int(time.time())}.log",
@@ -1312,6 +1563,18 @@ def test_ble_sdk_connect_with_1_28ms_0dBm_20660(firmware_loader, power_meter, wi
             pm_obj.start()
             pm_obj.wait_for_exit()
             m4_obj.wait_for_exit()
+            
+            parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+            __print_throughput(parsed_result)
+            assert parsed_result["Output"] is not None
+            performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                                  opn=opn, 
+                                                                  build_number=build_number,
+                                                                  memory_configuration="test_352K_M4SS_320K",
+                                                                  parsed_result=parsed_result["Output"],
+                                                                  file_path = performance_file_root_dir,
+                                                                  file_name = perf_file_name
+                                                                  )
             time.sleep(10)
             logger().info("Initiating disconnection from remote device")
             ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
@@ -1340,8 +1603,14 @@ def test_ble_sdk_connect_with_1_28ms_0dBm_20660(firmware_loader, power_meter, wi
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES  | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
-def test_ble_sdk_connect_with_200ms_0dBm_C20659(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections):
+def test_ble_sdk_connect_with_200ms_0dBm_C20659(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections, request, performance_data, custom_performance_fixture):
     """Verify ble connection with 200ms"""
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     with BleLogs(
             start_collecting_logs=True,
             bt_log_path=f"reports/test_ble_connection_C20659_power{int(time.time())}.log",
@@ -1415,6 +1684,18 @@ def test_ble_sdk_connect_with_200ms_0dBm_C20659(firmware_loader, power_meter, wi
             pm_obj.start()
             pm_obj.wait_for_exit()
             m4_obj.wait_for_exit()
+            
+            parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+            __print_throughput(parsed_result)
+            assert parsed_result["Output"] is not None
+            performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                                  opn=opn, 
+                                                                  build_number=build_number,
+                                                                  memory_configuration="test_352K_M4SS_320K",
+                                                                  parsed_result=parsed_result["Output"],
+                                                                  file_path = performance_file_root_dir,
+                                                                  file_name = perf_file_name
+                                                                  )
             time.sleep(10)
             logger().info("Initiating disconnection from remote device")
             ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)

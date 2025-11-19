@@ -474,8 +474,13 @@ pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
-def test_standby_power_twt_disable_without_ip_C129918(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request):
-     test_name = request.node.name
+def test_standby_power_twt_disable_without_ip_C129918(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
+     performance_file_root_dir, perf_file_name = custom_performance_fixture
+     obtained_test_name = request.node.name
+     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+     opn = UtfConfig.instance().defaults.get("opn", {})
+     build_number = UtfConfig.instance().defaults.get("build_number", {})
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
@@ -506,6 +511,18 @@ def test_standby_power_twt_disable_without_ip_C129918(firmware_loader, power_met
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
  
+     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+     __print_throughput(parsed_result)
+     assert parsed_result["Output"] is not None
+     performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
      time.sleep(10)
 
 
@@ -537,8 +554,13 @@ def test_standby_power_twt_disable_without_ip_C129918(firmware_loader, power_met
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
-def test_standby_power_twt_disable_with_ip_C129919(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request):
-     test_name = request.node.name
+def test_standby_power_twt_disable_with_ip_C129919(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
+     performance_file_root_dir, perf_file_name = custom_performance_fixture
+     obtained_test_name = request.node.name
+     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+     opn = UtfConfig.instance().defaults.get("opn", {})
+     build_number = UtfConfig.instance().defaults.get("build_number", {})
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
@@ -569,6 +591,18 @@ def test_standby_power_twt_disable_with_ip_C129919(firmware_loader, power_meter,
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
  
+     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+     __print_throughput(parsed_result)
+     assert parsed_result["Output"] is not None
+     performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
      time.sleep(10)
 
 
@@ -599,8 +633,13 @@ def test_standby_power_twt_disable_with_ip_C129919(firmware_loader, power_meter,
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
-def test_standby_power_twt_disable_tcp_ka_C129920(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket):
-     test_name = request.node.name
+def test_standby_power_twt_disable_tcp_ka_C129920(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket, performance_data, custom_performance_fixture):
+     performance_file_root_dir, perf_file_name = custom_performance_fixture
+     obtained_test_name = request.node.name
+     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+     opn = UtfConfig.instance().defaults.get("opn", {})
+     build_number = UtfConfig.instance().defaults.get("build_number", {})
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
@@ -637,6 +676,18 @@ def test_standby_power_twt_disable_tcp_ka_C129920(firmware_loader, power_meter, 
 
      wifi_sock_obj.wait_for_exit()
  
+     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+     __print_throughput(parsed_result)
+     assert parsed_result["Output"] is not None
+     performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
      time.sleep(10)
 
 
@@ -664,8 +715,13 @@ def test_standby_power_twt_disable_tcp_ka_C129920(firmware_loader, power_meter, 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
-def test_standby_power_twt_enable_without_ip_C129922(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request):
-     test_name = request.node.name
+def test_standby_power_twt_enable_without_ip_C129922(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
+     performance_file_root_dir, perf_file_name = custom_performance_fixture
+     obtained_test_name = request.node.name
+     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+     opn = UtfConfig.instance().defaults.get("opn", {})
+     build_number = UtfConfig.instance().defaults.get("build_number", {})
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
@@ -718,6 +774,18 @@ def test_standby_power_twt_enable_without_ip_C129922(firmware_loader, power_mete
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
  
+     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+     __print_throughput(parsed_result)
+     assert parsed_result["Output"] is not None
+     performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
      time.sleep(10)
 
 
@@ -748,8 +816,13 @@ def test_standby_power_twt_enable_without_ip_C129922(firmware_loader, power_mete
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
-def test_standby_power_twt_enable_with_ip_C129923(firmware_loader, power_meter,  wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request):
-     test_name = request.node.name
+def test_standby_power_twt_enable_with_ip_C129923(firmware_loader, power_meter,  wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request, performance_data, custom_performance_fixture):
+     performance_file_root_dir, perf_file_name = custom_performance_fixture
+     obtained_test_name = request.node.name
+     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+     opn = UtfConfig.instance().defaults.get("opn", {})
+     build_number = UtfConfig.instance().defaults.get("build_number", {})
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
@@ -802,6 +875,18 @@ def test_standby_power_twt_enable_with_ip_C129923(firmware_loader, power_meter, 
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
  
+     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+     __print_throughput(parsed_result)
+     assert parsed_result["Output"] is not None
+     performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
      time.sleep(10)
 
 
@@ -832,8 +917,13 @@ def test_standby_power_twt_enable_with_ip_C129923(firmware_loader, power_meter, 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
-def test_standby_power_twt_enable_tcp_ka_C129924(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket):
-     test_name = request.node.name
+def test_standby_power_twt_enable_tcp_ka_C129924(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket, performance_data, custom_performance_fixture):
+     performance_file_root_dir, perf_file_name = custom_performance_fixture
+     obtained_test_name = request.node.name
+     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+     opn = UtfConfig.instance().defaults.get("opn", {})
+     build_number = UtfConfig.instance().defaults.get("build_number", {})
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
@@ -892,6 +982,18 @@ def test_standby_power_twt_enable_tcp_ka_C129924(firmware_loader, power_meter,  
 
      wifi_sock_obj.wait_for_exit()
  
+     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+     __print_throughput(parsed_result)
+     assert parsed_result["Output"] is not None
+     performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
      time.sleep(10)
 
 
@@ -919,8 +1021,13 @@ def test_standby_power_twt_enable_tcp_ka_C129924(firmware_loader, power_meter,  
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
-def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request):
-     test_name = request.node.name
+def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
+     performance_file_root_dir, perf_file_name = custom_performance_fixture
+     obtained_test_name = request.node.name
+     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+     opn = UtfConfig.instance().defaults.get("opn", {})
+     build_number = UtfConfig.instance().defaults.get("build_number", {})
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
@@ -973,6 +1080,18 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
  
+     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+     __print_throughput(parsed_result)
+     assert parsed_result["Output"] is not None
+     performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
      time.sleep(10)
 
 
@@ -1003,8 +1122,13 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
-def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request):
-     test_name = request.node.name
+def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
+     performance_file_root_dir, perf_file_name = custom_performance_fixture
+     obtained_test_name = request.node.name
+     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+     opn = UtfConfig.instance().defaults.get("opn", {})
+     build_number = UtfConfig.instance().defaults.get("build_number", {})
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
@@ -1057,6 +1181,18 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
      pm_obj.wait_for_exit()
      m4_obj.wait_for_exit()
  
+     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+     __print_throughput(parsed_result)
+     assert parsed_result["Output"] is not None
+     performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
      time.sleep(10)
 
 
@@ -1087,8 +1223,13 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
-def test_standby_power_announced_twt_enable_tcp_ka_C129929(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket):
-     test_name = request.node.name
+def test_standby_power_announced_twt_enable_tcp_ka_C129929(firmware_loader, power_meter,  wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket, performance_data, custom_performance_fixture):
+     performance_file_root_dir, perf_file_name = custom_performance_fixture
+     obtained_test_name = request.node.name
+     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+     opn = UtfConfig.instance().defaults.get("opn", {})
+     build_number = UtfConfig.instance().defaults.get("build_number", {})
      wifi_sniffer.interfaces.capture.configure_interface(channel=1)
      wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
      logger().info(f"M4-TA secure handshake")
@@ -1147,6 +1288,18 @@ def test_standby_power_announced_twt_enable_tcp_ka_C129929(firmware_loader, powe
 
      wifi_sock_obj.wait_for_exit()
  
+     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+     __print_throughput(parsed_result)
+     assert parsed_result["Output"] is not None
+     performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
      time.sleep(10)
 
 
@@ -1178,8 +1331,13 @@ def test_standby_power_announced_twt_enable_tcp_ka_C129929(firmware_loader, powe
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.parametrize("keep_alive_time", [60])
 def test_standby_power_twt_disable_mqtt_ka_C129921(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                   sl_collections, mqtt_server, keep_alive_time, wifi_sniffer, request):
-    test_name = request.node.name
+                                                   sl_collections, mqtt_server, keep_alive_time, wifi_sniffer, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     logger().info(f"M4-TA secure handshake")
@@ -1244,8 +1402,13 @@ def test_standby_power_twt_disable_mqtt_ka_C129921(firmware_loader, power_meter,
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.parametrize("keep_alive_time", [60])
 def test_standby_power_twt_enable_mqtt_ka_C129925(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                  sl_collections, mqtt_server, keep_alive_time, wifi_sniffer, request):
-    test_name = request.node.name
+                                                  sl_collections, mqtt_server, keep_alive_time, wifi_sniffer, request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     logger().info(f"M4-TA secure handshake")
@@ -1333,8 +1496,13 @@ def test_standby_power_twt_enable_mqtt_ka_C129925(firmware_loader, power_meter, 
 @pytest.mark.parametrize("keep_alive_time", [60])
 def test_standby_power_announced_twt_enable_mqtt_ka_C129926(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                             sl_collections, mqtt_server, keep_alive_time, wifi_sniffer,
-                                                            request):
-    test_name = request.node.name
+                                                            request, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
     logger().info(f"M4-TA secure handshake")
@@ -1395,6 +1563,18 @@ def test_standby_power_announced_twt_enable_mqtt_ka_C129926(firmware_loader, pow
 
     wifi_dut.interfaces.wifi.get_mac_address()
 
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
+
     time.sleep(10)
 
 
@@ -1432,8 +1612,13 @@ def test_standby_power_announced_twt_enable_mqtt_ka_C129926(firmware_loader, pow
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 def test_standby_power_aws_pub_sub_with_twt_C129922(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                     sl_collections, wifi_sniffer, request, aws_iot_client,
-                                                    utf_constants):
-    test_name = request.node.name
+                                                    utf_constants, performance_data, custom_performance_fixture):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     client_id = 'client_c19548'
     topic = "topic_c19548"
     iterations = utf_constants.get('iter_count')
@@ -1506,6 +1691,18 @@ def test_standby_power_aws_pub_sub_with_twt_C129922(firmware_loader, power_meter
             pm_obj.start()
             pm_obj.wait_for_exit()
             m4_obj.wait_for_exit()
+
+            parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+            __print_throughput(parsed_result)
+            assert parsed_result["Output"] is not None
+            performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                                  opn=opn, 
+                                                                  build_number=build_number,
+                                                                  memory_configuration="test_480K_M4SS_192K",
+                                                                  parsed_result=parsed_result["Output"],
+                                                                  file_path = performance_file_root_dir,
+                                                                  file_name = perf_file_name
+                                                                  )
 
             time.sleep(10)
     except Exception as error:

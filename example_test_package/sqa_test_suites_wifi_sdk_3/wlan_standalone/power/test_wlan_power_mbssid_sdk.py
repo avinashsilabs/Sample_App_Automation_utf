@@ -783,17 +783,35 @@ class StandBy_Associated(ThreadBase):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_T_profile_C219305(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                              sl_collections, dtim, wifi_sniffer, sniffer_filter,
-                                                             request):
+                                                             request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, test_case_id=219305, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.parametrize("dtim", [10])
@@ -855,17 +873,35 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219305(firmware_loader, po
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219306(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                               sl_collections, dtim, wifi_sniffer, sniffer_filter,
-                                                              request):
+                                                              request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.parametrize("dtim", [10])
@@ -927,17 +963,35 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219306(firmware_loader, p
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_T_profile_C219307(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                              sl_collections, dtim, wifi_sniffer, sniffer_filter,
-                                                             request):
+                                                             request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, test_case_id=219305, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_416K_M4SS_256K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.parametrize("dtim", [10])
@@ -999,17 +1053,35 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219307(firmware_loader, po
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219308(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                               sl_collections, dtim, wifi_sniffer, sniffer_filter,
-                                                              request):
+                                                              request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_416K_M4SS_256K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.parametrize("dtim", [10])
@@ -1071,17 +1143,35 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219308(firmware_loader, p
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_T_profile_C219309(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                              sl_collections, dtim, wifi_sniffer, sniffer_filter,
-                                                             request):
+                                                             request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, test_case_id=219305, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.parametrize("dtim", [10])
@@ -1143,17 +1233,35 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219309(firmware_loader, po
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219310(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                               sl_collections, dtim, wifi_sniffer, sniffer_filter,
-                                                              request):
+                                                              request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, dtim_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.config(
@@ -1213,17 +1321,35 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219310(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_con_Listen_based_with_T_profile_C219303(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                             sl_collections, wifi_sniffer, sniffer_filter, request):
+                                                             sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, test_case_id=219305, listen_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.config(
@@ -1283,17 +1409,35 @@ def test_wlan_standby_con_Listen_based_with_T_profile_C219303(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_con_Listen_based_with_NT_profile_C219304(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                              sl_collections, wifi_sniffer, sniffer_filter, request):
+                                                              sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, listen_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.config(
@@ -1353,17 +1497,35 @@ def test_wlan_standby_con_Listen_based_with_NT_profile_C219304(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_con_Listen_based_with_T_profile_C219311(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                             sl_collections, wifi_sniffer, sniffer_filter, request):
+                                                             sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, test_case_id=219305, listen_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_416K_M4SS_256K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.config(
@@ -1423,17 +1585,35 @@ def test_wlan_standby_con_Listen_based_with_T_profile_C219311(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_con_Listen_based_with_NT_profile_C219312(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                              sl_collections, wifi_sniffer, sniffer_filter, request):
+                                                              sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, listen_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_416K_M4SS_256K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.config(
@@ -1493,17 +1673,35 @@ def test_wlan_standby_con_Listen_based_with_NT_profile_C219312(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_con_Listen_based_with_T_profile_C219313(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                             sl_collections, wifi_sniffer, sniffer_filter, request):
+                                                             sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to T profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, test_case_id=219305, listen_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 
 @pytest.mark.config(
@@ -1563,16 +1761,34 @@ def test_wlan_standby_con_Listen_based_with_T_profile_C219313(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 def test_wlan_standby_con_Listen_based_with_NT_profile_C219314(firmware_loader, power_meter, wifi_access_point, wifi_dut,
-                                                              sl_collections, wifi_sniffer, sniffer_filter, request):
+                                                              sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture):
     '''
     Measure the WLAN stand by power when DUT connects to NT profile BSSID(DTIM based)
     '''
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name_csv = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
     test_name = request.node.name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
     standby_obj = StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=sl_collections, power_meter=power_meter,
                                      sniffer_filter=sniffer_filter, test_name=test_name,
                                      wifi_sniffer=wifi_sniffer, listen_based=True)
     standby_obj.start()
     standby_obj.wait_for_exit()
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name_csv, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_352K_M4SS_320K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
 # ********************************************************************************************************************

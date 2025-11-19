@@ -290,7 +290,7 @@ pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
     }
 )                 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wlan_active_rx_6mbps_HP_CHAIN_C20645(firmware_loader, power_meter, remote_wiseconnect3, wifi_dut, wifi_sniffer, request, power, rate):
+def test_wlan_active_rx_6mbps_HP_CHAIN_C20645(firmware_loader, power_meter, remote_wiseconnect3, wifi_dut, wifi_sniffer, request, power, rate, performance_data, custom_performance_fixture):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=11)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
@@ -305,6 +305,25 @@ def test_wlan_active_rx_6mbps_HP_CHAIN_C20645(firmware_loader, power_meter, remo
     active_tx_obj.wait_for_exit()
 
     wifi_dut.interfaces.wifi.sl_si91x_transmit_test_stop()
+
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
     time.sleep(10)
 
@@ -358,7 +377,7 @@ def test_wlan_active_rx_6mbps_HP_CHAIN_C20645(firmware_loader, power_meter, remo
     }
 )                 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wlan_active_rx_72mbps_HP_CHAIN_C20646(firmware_loader, power_meter, remote_wiseconnect3, wifi_dut, wifi_sniffer, request, power, rate):
+def test_wlan_active_rx_72mbps_HP_CHAIN_C20646(firmware_loader, power_meter, remote_wiseconnect3, wifi_dut, wifi_sniffer, request, power, rate, performance_data, custom_performance_fixture):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=11)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
@@ -373,6 +392,25 @@ def test_wlan_active_rx_72mbps_HP_CHAIN_C20646(firmware_loader, power_meter, rem
     active_tx_obj.wait_for_exit()
 
     wifi_dut.interfaces.wifi.sl_si91x_transmit_test_stop()
+
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
     time.sleep(10)
 
@@ -428,7 +466,7 @@ def test_wlan_active_rx_72mbps_HP_CHAIN_C20646(firmware_loader, power_meter, rem
     }
 )                 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wlan_active_rx_6mbps_LP_CHAIN_C20647(firmware_loader, power_meter, remote_wiseconnect3, wifi_dut, wifi_sniffer, request, power, rate):
+def test_wlan_active_rx_6mbps_LP_CHAIN_C20647(firmware_loader, power_meter, remote_wiseconnect3, wifi_dut, wifi_sniffer, request, power, rate, performance_data, custom_performance_fixture):
     test_name = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(channel=11)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
@@ -443,6 +481,25 @@ def test_wlan_active_rx_6mbps_LP_CHAIN_C20647(firmware_loader, power_meter, remo
     active_tx_obj.wait_for_exit()
 
     wifi_dut.interfaces.wifi.sl_si91x_transmit_test_stop()
+
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name, 
+                                                          opn=opn, 
+                                                          build_number=build_number,
+                                                          memory_configuration="test_480K_M4SS_192K",
+                                                          parsed_result=parsed_result["Output"],
+                                                          file_path = performance_file_root_dir,
+                                                          file_name = perf_file_name
+                                                          )
 
     time.sleep(10)
 
