@@ -47,7 +47,7 @@ class ThreadC(ThreadBase):
                     for event in events:
                         logger().info(f"Event Data {event.event_data} Event Type {event.event_type}")
                 time.sleep(0.5)
-    
+
 def test_wiseconnect_3_without_using_threads(wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -107,3 +107,19 @@ def test_wiseconnect_3_ncp(wifi_dut):
 def test_wiseconnect_3_soc_secure(wifi_dut):
     wifi_dut.interfaces.wifi.version()
     wifi_dut.interfaces.wifi.scan(ssid=None)
+
+@pytest.mark.firmware_app("test_firmware_loadder")
+def test_wiseconnect_3_with_two_efrs(firmware_loader, wifi_dut, remote_wiseconnect3):
+    logger().info("Testing wifi_dut scan")
+    with TimeMeasurer() as t:
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
+    logger().info(scan_results)
+    assert len(scan_results) > 0
+    logger().info(f"Scan in {t.duration} seconds")
+    
+    logger().info("Testing wiseconnect3 scan")
+    with TimeMeasurer() as t:
+        scan_results1 = remote_wiseconnect3.interfaces.wifi.scan(ssid=None)
+    logger().info(scan_results1)
+    assert len(scan_results1) > 0
+    logger().info(f"Scan in {t.duration} seconds")
