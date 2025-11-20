@@ -1306,7 +1306,7 @@ def test_wlan_ble_conn_as_m_128_udp_tx_rx_c200751(wifi_sniffer, wifi_access_poin
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
@@ -1360,7 +1360,7 @@ def test_wlan_ble_as_m_adv_ping_dl_ul_c207446(wifi_sniffer, wifi_access_point, w
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.Ping,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
                               Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
                               Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
