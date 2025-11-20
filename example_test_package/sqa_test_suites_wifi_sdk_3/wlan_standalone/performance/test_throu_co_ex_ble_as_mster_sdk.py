@@ -19,6 +19,8 @@ import string
 import random
 from random import randint
 from utf.utils.iperf.iperf_utils import ping
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.performance.test_throughput_co_ex_sdk import DLPing
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.performance.test_throughput_co_ex_sdk import ULPing
 
 
 def logger():
@@ -469,6 +471,47 @@ class ble_notify(WifiJoinThread):
         while sw.elapsed_sec < 35:
             self.wifi_dut.interfaces.wifi.ble_notify_custom_value(data=data, ble_remote_dev_address=self.ble_client_address)
             time.sleep(0.5)
+
+
+class IperfThread(ThreadBase):
+
+    def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None, wifi_client=None,
+                 test_id=None, traffic_type=None, protocol=None, net_perf_client=None, timeout=60, device_ip=None,
+                 remote_ip=None, ip_version=4, async_socket=0):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.sl_collections = sl_collections
+        self.test_name = test_name
+        self.wifi_client = wifi_client
+        self.test_id = test_id
+        self.traffic_type = traffic_type
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
+        self.timeout = timeout
+        self.ip_version = ip_version
+        self.device_ip = device_ip
+        self.remote_ip = remote_ip
+        self.async_socket = async_socket
+        self.dut_add_dict = None
+
+    def run_traffic(self):
+        self.sl_collections.run_traffic(
+            wifi_dut=self.wifi_dut,
+            net_perf_client=self.net_perf_client,
+            protocol=self.protocol,
+            device_ip=self.device_ip,
+            host_ip=self.remote_ip,
+            timeout=self.timeout,
+            traffic_type=self.traffic_type,
+            ip_version=self.ip_version,
+            buffer_size_tcp=1380,
+            buffer_size_udp=1390,
+            async_socket=self.async_socket
+        )
+
+    def run(self):
+        self.run_traffic()
 
 
 
@@ -972,3 +1015,388 @@ def test_wlan_ble_conn_128_with_ssl_rx_ax_C200767(wifi_sniffer, wifi_access_poin
     finally:
         wifi_client.interfaces.tc.delete_delay()
         time.sleep(2)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_as_m_adv_tcp_tx_rx_c200748(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
+                                           utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    testcase = request.node.name
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(ble_client=ble_client, wifi_dut=wifi_dut, wifi_client=wifi_client, test_case_no=121231)
+    wlan_obj.ble_adv_as_m()
+    dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                        wifi_access_point=wifi_access_point,
+                                                        associated=wifi_dut.interfaces.wifi.associated,
+                                                        retry_count=3, ping_after_power_save=False,
+                                                        ping_count=ping_count, power_save=False)
+    time.sleep(2)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Remote device ip :{host_ip}")
+    dut_ip = dut_addr['device_ip']
+    logger().info(f"#######=====>>>>>>>{dut_ip}")
+    try:
+
+        ipv4_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                               test_name=testcase, wifi_client=wifi_client,
+                               traffic_type="TX", protocol="TCP", net_perf_client=net_perf_clients[0], timeout=30,
+                               device_ip=dut_ip, remote_ip=host_ip,
+                               ip_version=4
+                               )
+        ipv4_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                               test_name=testcase, wifi_client=wifi_client,
+                               traffic_type="RX", protocol="TCP", net_perf_client=net_perf_clients[1], timeout=30,
+                               device_ip=dut_ip, remote_ip=host_ip,
+                               ip_version=4, async_socket=1,
+                               )
+        ipv4_tx_obj.start()
+        time.sleep(2)
+        ipv4_rx_obj.start()
+        time.sleep(10)
+        ipv4_tx_obj.wait_for_exit()
+        ipv4_rx_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        logger().info(f'Sniffer Capture is going to Stop')
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_client.interfaces.tc.delete_delay()
+        time.sleep(2)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_conn_as_m_tcp_tx_rx_c200749(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
+                                           utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    testcase = request.node.name
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(ble_client=ble_client, bt_dut=bt_dut, wifi_client=wifi_client, wifi_dut=wifi_dut,
+                              test_case_no=121231)
+
+    wlan_obj.ble_conn_as_m()
+    dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                        wifi_access_point=wifi_access_point,
+                                                        associated=wifi_dut.interfaces.wifi.associated,
+                                                        retry_count=3, ping_after_power_save=False,
+                                                        ping_count=ping_count, power_save=False)
+    time.sleep(2)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Remote device ip :{host_ip}")
+    dut_ip = dut_addr['device_ip']
+    logger().info(f"#######=====>>>>>>>{dut_ip}")
+    try:
+
+        ipv4_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                               test_name=testcase, wifi_client=wifi_client,
+                               traffic_type="TX", protocol="TCP", net_perf_client=net_perf_clients[0], timeout=30,
+                               device_ip=dut_ip, remote_ip=host_ip,
+                               ip_version=4
+                               )
+        ipv4_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                               test_name=testcase, wifi_client=wifi_client,
+                               traffic_type="RX", protocol="TCP", net_perf_client=net_perf_clients[1], timeout=30,
+                               device_ip=dut_ip, remote_ip=host_ip,
+                               ip_version=4, async_socket=1,
+                               )
+        ipv4_tx_obj.start()
+        time.sleep(2)
+        ipv4_rx_obj.start()
+        time.sleep(10)
+        ipv4_tx_obj.wait_for_exit()
+        ipv4_rx_obj.wait_for_exit()
+        logger().info(f'Sniffer Capture is going to Stop')
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_client.interfaces.tc.delete_delay()
+        time.sleep(2)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_as_m_adv_udp_tx_rx_c200750(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
+                                           utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    testcase = request.node.name
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(ble_client=ble_client, wifi_dut=wifi_dut, wifi_client=wifi_client, test_case_no=121231)
+    wlan_obj.ble_adv_as_m()
+    dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                   wifi_access_point=wifi_access_point,
+                                                   associated=wifi_dut.interfaces.wifi.associated,
+                                                   retry_count=3, ping_after_power_save=False,
+                                                   ping_count=ping_count, power_save=False)
+    time.sleep(2)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Remote device ip :{host_ip}")
+    dut_ip = dut_addr['device_ip']
+    logger().info(f"#######=====>>>>>>>{dut_ip}")
+    try:
+
+        ipv4_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                  test_name=testcase, wifi_client=wifi_client,
+                                  traffic_type="TX", protocol="UDP", net_perf_client=net_perf_clients[0], timeout=30,
+                                  device_ip=dut_ip, remote_ip=host_ip,
+                                  ip_version=4
+                                  )
+        ipv4_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                  test_name=testcase, wifi_client=wifi_client,
+                                  traffic_type="RX", protocol="UDP", net_perf_client=net_perf_clients[1], timeout=30,
+                                  device_ip=dut_ip, remote_ip=host_ip,
+                                  ip_version=4, async_socket=1,
+                                  )
+        ipv4_tx_obj.start()
+        time.sleep(2)
+        ipv4_rx_obj.start()
+        time.sleep(10)
+        ipv4_tx_obj.wait_for_exit()
+        ipv4_rx_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        logger().info(f'Sniffer Capture is going to Stop')
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        wifi_client.interfaces.tc.delete_delay()
+        time.sleep(2)
+
+
+@pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_conn_as_m_128_udp_tx_rx_c200751(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
+                                            utf_constants, request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    testcase = request.node.name
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(ble_client=ble_client, bt_dut=bt_dut, wifi_client=wifi_client, wifi_dut=wifi_dut,
+                              test_case_no=121231)
+    wlan_obj.ble_conn_as_m()
+    dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                   wifi_access_point=wifi_access_point,
+                                                   associated=wifi_dut.interfaces.wifi.associated,
+                                                   retry_count=3, ping_after_power_save=False,
+                                                   ping_count=ping_count, power_save=False)
+    time.sleep(2)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Remote device ip :{host_ip}")
+    dut_ip = dut_addr['device_ip']
+    logger().info(f"#######=====>>>>>>>{dut_ip}")
+    try:
+
+        ipv4_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                  test_name=testcase, wifi_client=wifi_client,
+                                  traffic_type="TX", protocol="TCP", net_perf_client=net_perf_clients[0], timeout=30,
+                                  device_ip=dut_ip, remote_ip=host_ip,
+                                  ip_version=4
+                                  )
+        ipv4_rx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                  test_name=testcase, wifi_client=wifi_client,
+                                  traffic_type="RX", protocol="TCP", net_perf_client=net_perf_clients[1], timeout=30,
+                                  device_ip=dut_ip, remote_ip=host_ip,
+                                  ip_version=4, async_socket=1,
+                                  )
+        ipv4_tx_obj.start()
+        time.sleep(2)
+        ipv4_rx_obj.start()
+        time.sleep(10)
+        ipv4_tx_obj.wait_for_exit()
+        ipv4_rx_obj.wait_for_exit()
+        logger().info(f'Sniffer Capture is going to Stop')
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_as_m_adv_ping_dl_ul_c207446(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
+                                              request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    testcase = request.node.name
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(ble_client=ble_client, wifi_dut=wifi_dut, wifi_client=wifi_client)
+    wlan_obj.ble_adv_as_m()
+    dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                   wifi_access_point=wifi_access_point,
+                                                   associated=wifi_dut.interfaces.wifi.associated,
+                                                   retry_count=3, ping_after_power_save=False,
+                                                   ping_count=ping_count, power_save=False)
+    time.sleep(2)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Remote device ip :{host_ip}")
+    dut_ip = dut_addr['device_ip']
+    logger().info(f"#######=====>>>>>>>{dut_ip}")
+    try:
+        ping_down = DLPing(wifi_client=wifi_client, dut_ip=dut_ip, ping_count=ping_count)
+        ping_up = ULPing(wifi_client=wifi_client, ping_count=ping_count, wifi_dut=wifi_dut)
+        ping_down.start()
+        time.sleep(1)
+        ping_up.start()
+        ping_down.wait_for_exit()
+        ping_up.wait_for_exit()
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.leave()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}, "ble": {"count": 2, "stack_len": 2048}}
+
+    }
+)
+def test_wlan_ble_as_m_conn_ping_dl_ul_c207447(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
+                                               request, sl_collections, ble_client, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    testcase = request.node.name
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(ble_client=ble_client, bt_dut=bt_dut, wifi_client=wifi_client, wifi_dut=wifi_dut)
+    wlan_obj.ble_conn_as_m()
+    dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                   wifi_access_point=wifi_access_point,
+                                                   associated=wifi_dut.interfaces.wifi.associated,
+                                                   retry_count=3, ping_after_power_save=False,
+                                                   ping_count=ping_count, power_save=False)
+    time.sleep(2)
+    host_ip = wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"Remote device ip :{host_ip}")
+    dut_ip = dut_addr['device_ip']
+    logger().info(f"#######=====>>>>>>>{dut_ip}")
+    try:
+        ping_down = DLPing(wifi_client=wifi_client, dut_ip=dut_ip, ping_count=ping_count)
+        ping_up = ULPing(wifi_client=wifi_client, ping_count=ping_count, wifi_dut=wifi_dut)
+        ping_down.start()
+        time.sleep(1)
+        ping_up.start()
+        ping_down.wait_for_exit()
+        ping_up.wait_for_exit()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.leave()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
