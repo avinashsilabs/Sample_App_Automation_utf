@@ -1432,7 +1432,7 @@ def test_wifi_sdk_max_psp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_
         logger().info(f'AP BSSID = {ap_bssid}')
 
         logger().info(f"***** Enabling Max PSP in DUT ******")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', dtim_aligned_type=0,
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', dtim_aligned_type=0,
                                                          num_of_dtim_skip=0, listen_interval=listen_interval,
                                                          monitor_interval=50)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
@@ -1532,7 +1532,7 @@ def test_wifi_sdk_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_du
         logger().info(f'AP BSSID = {ap_bssid}')
 
         logger().info(f"***** Enabling Max PSP in DUT ******")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', dtim_aligned_type=0,
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', dtim_aligned_type=0,
                                                          num_of_dtim_skip=0,
                                                          monitor_interval=50)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
@@ -1629,7 +1629,7 @@ def test_wifi_sdk_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_du
         logger().info(f'AP BSSID = {ap_bssid}')
 
         logger().info(f"***** Enabling Max PSP in DUT ******")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', dtim_aligned_type=1,
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', dtim_aligned_type=1,
                                                          num_of_dtim_skip=dtim_skip - 1, monitor_interval=50)
         wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
@@ -1733,7 +1733,7 @@ def test_wifi_sdk_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point,
             time_left = int((test_run_time - sw.elapsed_sec) / 60)
             logger().info(f"\n\nRemaining time to complete test is '{time_left}' minutes")
             logger().info(f"***** Enabling Max PSP in DUT ******")
-            wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', dtim_aligned_type=0,
+            wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save', dtim_aligned_type=0,
                                                              num_of_dtim_skip=0, monitor_interval=50)
             wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                           psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
@@ -2243,7 +2243,7 @@ def test_wifi_sdk_verify_sta_wakeup_with_dtim_3_fast_psp_ulp_ipv6_enabled_c70211
 
         logger().info(f"***** Enabling Fast PSP in DUT ******")
         wifi_dut.interfaces.wifi.set_performance_profile(
-            mode="power_save_low_latency",
+            mode='power_save',
             dtim_aligned_type=0,
             num_of_dtim_skip=0,
             monitor_interval=50,
