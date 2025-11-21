@@ -126,6 +126,8 @@ class WifiJoin(ThreadBase):
                                 | Si91xExtCustomFeatureBitMap.FeatureLowPower
                                 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                 | Si91xExtCustomFeatureBitMap.IEEE802_11W),
+        "config_features": Si91xConfigFeatureBitMap.Default
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
