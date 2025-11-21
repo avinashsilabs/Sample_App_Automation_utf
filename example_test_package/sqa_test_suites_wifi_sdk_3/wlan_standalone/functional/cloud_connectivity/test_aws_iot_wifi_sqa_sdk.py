@@ -362,6 +362,14 @@ class AwsConnection(ThreadBase):
         # Retrieve received messages from AWS IoT client
         recv_messages = aws_iot_client.interfaces.aws_iot.get_received_messages()
 
+        # Check if we received enough messages
+        if len(recv_messages) < len(messages):
+            logger().error(f"Expected {len(messages)} messages but only received {len(recv_messages)}")
+            raise AssertionError(
+                f"Message count mismatch: Expected {len(messages)} messages, "
+                f"but only received {len(recv_messages)} messages"
+            )
+
         # Validate each received message
         for count, msg in enumerate(messages):
             # Determine the expected topic based on the presence of topic_1 and topic_2
@@ -2314,8 +2322,8 @@ def test_wifi_sdk_aws_server_not_respond_c4062(wifi_sniffer, wifi_access_point, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
-@pytest.mark.legacy_deployed
-def test_wifi_sdk_aws_internet_connection_disconntion_c537615(wifi_sniffer, wifi_access_point, wifi_dut, logger,
+# # @pytest.mark.legacy_deployed
+def test_wifi_sdk_aws_internet_connection_disconnection_c537615(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                               sniffer_filter, sl_collections, aws_iot_client,
                                                               utf_constants):
     """
@@ -2394,12 +2402,24 @@ def test_wifi_sdk_aws_internet_connection_disconntion_c537615(wifi_sniffer, wifi
             logger.info(f"\n\n Sleep for 10 second \n\n")
             time.sleep(10)
 
+            # Device should automatically restore connection after internet is back
+            logger.info("\n\n *** Testing if device can automatically publish after internet restoration *** \n\n")
+            
             for count, msg in enumerate(messages):
                 logger.info(f"\nDUT is publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
                             f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
-                aws_obj.publish_from_dut(wifi_dut, topic, msg, qos=Si91xAwsQos.QOS1)
-                time.sleep(5)
-            time.sleep(10)
+                try:
+                    aws_obj.publish_from_dut(wifi_dut, topic, msg, qos=Si91xAwsQos.QOS1)
+                except ValueError as ve:
+                    # Handle invalid SLStatus error - device failed to auto-recover
+                    logger.error(f"ValueError occurred during publish: {ve}")
+                    logger.error("Device failed to automatically restore AWS connection after internet restoration")
+                    raise AssertionError(
+                        f"Device did not automatically recover AWS connection after internet restoration. "
+                        f"ValueError: {ve}"
+                    )
+                time.sleep(10)
+            time.sleep(20)
             aws_obj.validate_aws_messages_from_raspi(aws_iot_client, topic, Si91xAwsQos.QOS1, messages, wait_time=20)
 
             logger.info("Stop Sniffer finally")
