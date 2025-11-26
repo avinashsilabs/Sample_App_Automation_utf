@@ -1115,9 +1115,8 @@ class http_server_provisioning(ThreadBase):
         assert self.credentials, "Unable to fetch 3rd party AP details from DUT"
         self.wifi_dut.interfaces.wifi.http_server_deinit()
         self.wifi_dut.interfaces.wifi.http_server_stop()
-        self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
-
-        self.wifi_dut.interfaces.wifi.sl_net_init(mode="client", timeout=20, stats_arg=1)
+        self.wifi_dut.interfaces.wifi.deinit()
+        self.wifi_dut.interfaces.wifi.init(timeout=20, config_required=False)
         self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=1)
 
         self.dut_sta_ip = self.join_to_ap(self.credentials[1], self.credentials[2], self.credentials[3].lower())
@@ -8178,7 +8177,7 @@ def test_wifi_sdk_mqtt_will_topic_length_62_to_202_bytes_C708546(
         "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
+        "features": Si91xFeatureBitMap.Default,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.SSL |0,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
@@ -8218,7 +8217,6 @@ def test_wifi_sdk_MQTT_publish_STA_using_provisioning_c778871(wifi_dut, wifi_cli
         logger().info("********** configuring the sniffer with access point channel **********")
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
         wifi_dut.interfaces.wifi.init(mode="ap")
 
         provision_obj.start()
@@ -8262,7 +8260,6 @@ def test_wifi_sdk_MQTT_publish_STA_using_provisioning_c778871(wifi_dut, wifi_cli
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
     finally:
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
         wifi_dut.interfaces.wifi.stop_ap()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
