@@ -27,7 +27,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xBLEFeatureBitMap,
     Si91xBLECustomFeatureBitMap,
     Si91xPowerSaveModes,
-    Si91xPowerSaveProcedureTypes, Si91xOperatingMode, Si91xJoinFeatureBitMap
+    Si91xPowerSaveProcedureTypes, Si91xOperatingMode, Si91xJoinFeatureBitMap,
+    Cipher
 )
 from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
@@ -460,6 +461,15 @@ class mqtt_sniffer_validation:
                             mqtt_capture_list.append(tuple([mqtt_layer, packet.sniff_timestamp]))
         logger().info(f"***** Inside mqtt_sniffer_validation mqtt_capture_list {mqtt_capture_list}")
         return mqtt_capture_list
+
+    @staticmethod
+    def select_cipher_list(cipher_list):
+        cipher = 0
+        for cipher_name in cipher_list:
+            for cipher_mem in Cipher:
+                if cipher_name in str(cipher_mem):
+                    cipher = cipher | cipher_mem.value
+        return cipher
 
 
 @pytest.mark.config(
@@ -3669,10 +3679,11 @@ def test_wifi_sdk_aws_combined_cert_tx_c688527(wifi_sniffer, wifi_access_point, 
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA3', "region": 'Korea', "channel": 13})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "disassociated"])
+                       wifi=["wifi_powersave_disable", "disassociated", "set_default_ssl_cipher"])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384']])
 @pytest.mark.deployed_25q2
 def test_wifi_sdk_aws_ca3_cert_tx_c688520(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
-                                          aws_iot_client):
+                                          aws_iot_client, cipher_list):
     """
     Connect to AWS server with root CA3 certificate and check whether Tx functionality
     """
@@ -3687,6 +3698,14 @@ def test_wifi_sdk_aws_ca3_cert_tx_c688520(wifi_sniffer, wifi_access_point, wifi_
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        # Set ECDSA cipher for AWS CA3 certificate compatibility
+        logger.info(f"Configuring SSL cipher list for AWS CA3: {cipher_list}")
+        cipher = mqtt_sniffer_validation.select_cipher_list(cipher_list)
+        
+        if cipher:
+            wifi_dut.interfaces.wifi.set_ssl_cipher(cipher_list=cipher)
+            logger.info(f"SSL cipher configured successfully with bitmap: {hex(cipher)}")
 
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0)
         assert (len(scan_results) >= 1), "Scan failed"
@@ -3848,10 +3867,11 @@ def test_wifi_sdk_aws_ca1_cert_rx_c687530(wifi_sniffer, wifi_access_point, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
-                             "disassociated"])
+                             "disassociated", "set_default_ssl_cipher"])
+@pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384']])
 @pytest.mark.deployed_25q2
 def test_wifi_sdk_aws_ca3_cert_rx_c688521(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
-                                          aws_iot_client):
+                                          aws_iot_client, cipher_list):
     """
     Connect to AWS server with root CA3 certificate and check whether Rx functionality
     """
@@ -3865,6 +3885,11 @@ def test_wifi_sdk_aws_ca3_cert_rx_c688521(wifi_sniffer, wifi_access_point, wifi_
         channel = wifi_access_point.interfaces.wifi.channel
         wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        # Configure cipher for AWS CA3 certificate
+        cipher = mqtt_sniffer_validation.select_cipher_list(cipher_list)
+        wifi_dut.interfaces.wifi.set_ssl_cipher(cipher_list=cipher)
+        logger.info(f"Setting cipher list to: {cipher_list}")
 
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0)
         assert (len(scan_results) >= 1), "Scan failed"
