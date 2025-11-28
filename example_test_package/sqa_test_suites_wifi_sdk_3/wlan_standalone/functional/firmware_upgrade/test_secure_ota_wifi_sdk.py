@@ -115,6 +115,20 @@ class WifiJoin(ThreadBase):
         logger().info(f"azure url1 is {url}")
         return url
 
+    def get_firmware_status(self):
+        self.wifi_dut.interfaces.wifi.reset()
+        time.sleep(30)
+        logger().info("Initialising DUT after the reset....")
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
+        self.wifi_dut.interfaces.wifi.init(load_certificate=False, mode="client")
+        self.wifi_dut.interfaces.wifi.initialize_thread()
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+        self.wifi_dut.interfaces.wifi.inited = False
+        time.sleep(5)
+        return fw_after_upgrade
+
     def run(self):
         try:
 
@@ -274,6 +288,20 @@ class WifiJoin(ThreadBase):
                     host_name=self.host_ip,
                     http_url=self.rps_path,
                     timeout=150)
+            if self.test_case == '510704':
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    ip_address=self.host_ip,
+                    host_name=self.host_ip,
+                    http_url=self.rps_path,
+                    timeout=150)
+                self.fw_version_after_upgrade = self.get_firmware_status()
+                logger().info(f"*** DUT firmware version after upgrade = {self.fw_version_after_upgrade} ***")
+
+                if self.fw_version_before_upgrade == self.fw_version_after_upgrade:
+                    logger().info("Firmware after upgrade matched with the previous firmware")
+                else:
+                    logger().info("Firmware upgrade successful. Versions are different.")
+                return
 
             if self.test_case == '510697':
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
@@ -798,7 +826,7 @@ def test_wifi_sdk_http_combine_image_download_c510704(firmware_loader, wifi_clie
     """Verify DUT functionality with combined image using OTA (HTTP OTAF example) with Full Security and sign enabled"""
 
     try:
-        test_case = '510696'
+        test_case = '510704'
         rps_path = utf_constants.get("combine_rps_filename")
         wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer, wifi_client=wifi_client,
                             sl_collections=sl_collections, rps_path=rps_path,
