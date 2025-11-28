@@ -1238,7 +1238,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_peap_1_2_c113767(wifi_dut, wifi_access_poi
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', 'standard': 'gnbax'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1263,7 +1263,6 @@ def test_wifi_sdk_wpa2_enterprise_eap_ttls_1_2_c113766(wifi_dut, wifi_access_poi
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
         logger().info("Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -1276,6 +1275,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_ttls_1_2_c113766(wifi_dut, wifi_access_poi
                                        remote_port=net_perf_client.interfaces.net_perf.client_port,
                                        size=1460, ttl=30, throughput_type=3, qos=0, async_socket=0)
         wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
                                                         dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
@@ -1323,7 +1323,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_ttls_1_2_c113766(wifi_dut, wifi_access_poi
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', 'standard': 'gnbax'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
@@ -1348,7 +1348,6 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_1_0_c113775(wifi_dut, wifi_access_poin
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
         logger().info("Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -1361,6 +1360,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_1_0_c113775(wifi_dut, wifi_access_poin
                                        remote_port=net_perf_client.interfaces.net_perf.client_port,
                                        size=1460, ttl=30, throughput_type=3, qos=0, async_socket=0)
         wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
                                                         dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
@@ -3493,7 +3493,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_C113792(wifi_dut, wifi_access_point, w
         "band": 0,
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', 'standard': 'gnbax'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
@@ -3518,7 +3518,6 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_tls_1_0_c113778(wifi_dut, wifi_access
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
         logger().info("Stop Sniffer finally")
-        wifi_sniffer.interfaces.capture.stop_capture()
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
@@ -3537,6 +3536,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_tls_1_0_c113778(wifi_dut, wifi_access
         net_perf_client.interfaces.net_perf.close_files()
         net_perf_client.interfaces.net_perf.iperf_process.stop(10)
         wifi_dut.interfaces.wifi.leave()
+        wifi_sniffer.interfaces.capture.stop_capture()
         sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
                                                         wifi_access_point=wifi_access_point,
                                                         dut_mac_address=wifi_thread.dut_addr['dut_mac_address'],
