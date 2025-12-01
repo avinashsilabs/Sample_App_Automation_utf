@@ -668,11 +668,28 @@ def test_wifi_sdk_connect_correct_psk_C694555(
         },
     }
 )
-@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.net_perf_clients(["raspi_iperf", "raspi_iperf2"])
+@pytest.mark.config(
+    "net_perf_clients",
+     net_perf={
+        0: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+       1: {
+        "type": 'iperf',
+        "zip_results": 'Y',
+        "host": {"TCP": {"port": 5203}, "UDP": {"port": 5204}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        },
+        }
+)
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.deployed_25q2
 def test_wifi_sdk_tcp_tx_both_sta_and_ap_in_conc_mode_c766509(
-        wifi_clients, wifi_access_point, sl_collections, wifi_dut, net_perf_client, protocol, wifi_client, wifi_sniffer,
+        wifi_clients, wifi_access_point, sl_collections, wifi_dut, net_perf_clients, protocol, wifi_client, wifi_sniffer,
         sniffer_filter):
     """
     Verify TCP Tx in both STA and AP Mode in Concurrent scenario
@@ -680,6 +697,10 @@ def test_wifi_sdk_tcp_tx_both_sta_and_ap_in_conc_mode_c766509(
     try:
         wifi_clients = wifi_clients[:1]
         con_obj = ConcurrentMode()
+        capture_filename = "test_c766509"
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=11)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}")
 
         host_ip = wifi_client.interfaces.wifi.get_ip_address('eth1')
         logger().info(f"******** HOST IP {host_ip} *******")
@@ -688,7 +709,7 @@ def test_wifi_sdk_tcp_tx_both_sta_and_ap_in_conc_mode_c766509(
             wifi_dut, wifi_access_point, associated=wifi_dut.interfaces.wifi.associated, power_save=False, retry_count=3)
 
         data_transfer_obj = Iperf(
-            wifi_dut=wifi_dut, net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+            wifi_dut=wifi_dut, net_perf_client=net_perf_clients[0], wifi_client=wifi_client, protocol=protocol,
             traffic='0x00', wifi_access_point=wifi_access_point, qos=0, result=result, host_ip=host_ip,
             wifi_sniffer=wifi_sniffer, sl_collections=sl_collections, sniffer_filter=sniffer_filter)
 
@@ -703,12 +724,19 @@ def test_wifi_sdk_tcp_tx_both_sta_and_ap_in_conc_mode_c766509(
         data_transfer_obj.start()
         time.sleep(15)
         sl_collections.run_traffic(
-            wifi_dut=wifi_dut, net_perf_client=net_perf_client, protocol=protocol, device_ip='192.168.100.76',
+            wifi_dut=wifi_dut, net_perf_client=net_perf_clients[1], protocol=protocol, device_ip='192.168.100.76',
             host_ip='192.168.100.77', timeout=120, traffic_type="TX")
         data_transfer_obj.wait_for_exit()
+
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+        net_perf_clients[0].interfaces.net_perf.close_files()
+        net_perf_clients[1].interfaces.net_perf.close_files()
+        net_perf_clients[0].interfaces.net_perf.iperf_process.stop(5)
+        net_perf_clients[1].interfaces.net_perf.iperf_process.stop(5)
