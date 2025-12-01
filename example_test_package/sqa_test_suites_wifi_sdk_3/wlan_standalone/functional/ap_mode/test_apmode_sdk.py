@@ -2688,6 +2688,22 @@ def test_wifi_sdk_dutap_china_region_c662091(wifi_sniffer, wifi_dut,
                }
          },
 )
+@pytest.mark.config("net_perf_server",
+     net_perf={
+        "type": 'iperf',
+        "zip_results": 'Y',
+         "host_role": IperfConstants.SERVER_MODE,
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        })
+@pytest.mark.config("net_perf_client",
+     net_perf={
+        "type": 'iperf',
+        "zip_results": 'Y',
+         "host_role": IperfConstants.CLIENT_MODE,
+        "host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}},
+        "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
+        })
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_dutap_region_china_data_transfer_2clients_c662092(wifi_sniffer, wifi_dut, wifi_clients,
                                                                     sl_collections, utf_constants, net_perf_client,
