@@ -388,7 +388,7 @@ class Start_stop(ThreadBase):
                 self.wifi_dut.interfaces.wifi.stop_soft_ap_interface()
                 time.sleep(5)
             if self.test_case_no == 468633:
-                self.wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security="wpa3_trasition", channel=channel, psk=password,
+                self.wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security="wpa3_transition", channel=channel, psk=password,
                                                   dtim_beacon_count=dtim_count,
                                                   beacon_interval=beacon_interval, encryption=None,
                                                   ht_caps=ht_caps)
@@ -1765,6 +1765,7 @@ def test_wifi_sdk_wpa3_conc_dtim_based_ps_enabled_C463715(wifi_sniffer, wifi_acc
 
 
 @pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
+@pytest.mark.start_state("remote_wiseconnect3", wifi=["init"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA3', "passphrase": "Automation@Silabs", "ssid": 'STA_Concurrent_AP',
