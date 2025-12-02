@@ -138,7 +138,7 @@ class WLanThread(ThreadBase):
 
             elif self.test_case_no == 19737:
                 """Enabling Rejoin with scan interval 1 second"""
-                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=4, scan_interval=1,
+                self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=1,
                                                                               beacon_missed_count=40,
                                                                               first_time_retry_enable=0)
 
@@ -1537,9 +1537,9 @@ def test_wifi_sdk_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_po
 def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants,
                                                    request, sl_collections, sniffer_filter):
     test_name = request.node.name
-    scan_interval = 1
+    scan_interval = 2.1
     packet_filter2 = '    Type/Subtype: Probe Request (0x0004)'
-    time_delta = 1
+    time_delta = 2
     status = False
     time_period = utf_constants.get("time_period")
 
@@ -1547,7 +1547,7 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
                           time_period=time_period, test_name=test_name,
                           test_case_no=19737, sl_collections=sl_collections, switch=switch)
 
-    """Set scan interval to 1 sec in rejoin params command Verify scan interval time in rejoin process"""
+    """Set scan interval to 2.1 sec in rejoin params command Verify scan interval time in rejoin process"""
     try:
 
         wlan_obj.start()
@@ -1557,11 +1557,11 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(5)
 
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file="rejoin_scan_interval_1_sec_")
-
         logger().info("\n\n ****** Access point is going to turn off  ******")
         switch.interfaces.pdu_switch.turn_off()
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="rejoin_scan_interval_1_sec_after_ap_off")
 
         """validate rejoin retry failure"""
         wlan_obj.rejoin_async_event()
@@ -1573,25 +1573,34 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=wlan_obj.dut_addr['dut_mac_address'], filter_name='probe_request')
+        packet_filter1 = packet_filter1 + " and " + f"wlan.ds.current_channel == {wifi_access_point.interfaces.wifi.channel}"
         result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                                     packet_filter2=packet_filter2)[
             'packet_count']
+        
+        # Get the AP channel
+        ap_channel = wifi_access_point.interfaces.wifi.channel
+        logger().info(f'AP Channel: {ap_channel}')
+        
+        # Get time deltas only for consecutive probe requests on the AP channel
         probe_packets_time_delta_list = wlan_obj.delta_between_probe_packet()
-        logger().info(f'Probe packet time delta list= {probe_packets_time_delta_list}')
+        logger().info(f'Probe packet time delta list for Channel {ap_channel}: {probe_packets_time_delta_list}')
+        
+        # Remove first entry if exists (it may be zero or initial delta)
+        if probe_packets_time_delta_list:
+            probe_packets_time_delta_list.pop(0)
+            logger().info(f'Probe packet time delta list after removing first entry = {probe_packets_time_delta_list}')
 
-        probe_packets_time_delta_list.pop(0)
-        logger().info(f'Probe packet time delta list after removing 0 = {probe_packets_time_delta_list}')
         for time_diff in probe_packets_time_delta_list:
-            logger().info(int(time_diff))
-            is_between = int(time_diff) in range(time_delta, time_delta + 2)
+            logger().info(f"Time delta: {time_diff:.3f} seconds")
+            is_between = 2.0 <= time_diff <= 2.15
+            logger().info(f"Time delta {time_diff:.3f}s is within range [2.0, 2.15]: {is_between}")
             if is_between is False:
-                logger().info(is_between)
                 status = is_between
                 break
             else:
-                logger().info(is_between)
                 status = is_between
-        '''If time gap between 2 successful broadcast packets is ~1sec then PASS else FAIL'''
+        '''If time gap between 2 successful broadcast packets is 2.1 sec then PASS else FAIL'''
         if result and status is True:
             logger().info(f'Expected scan interval {scan_interval}sec found between Probe request packets')
             assert True
