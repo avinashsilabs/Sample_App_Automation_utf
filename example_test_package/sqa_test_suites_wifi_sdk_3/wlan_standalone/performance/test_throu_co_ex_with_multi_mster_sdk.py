@@ -228,8 +228,8 @@ class WifiJoinThread(ThreadBase):
                                                                  retry_count=3, ping_after_power_save=False,
                                                                  ping_count=self.ping_count, power_save=False)
 
-        if self.test_case_no == 20740 or self.test_case_no == 20751 or self.test_case_no == 20748 or \
-                self.test_case_no == 20749:
+        if self.test_case_no == 207401 or self.test_case_no == 207511 or self.test_case_no == 207481 or \
+                self.test_case_no == 207491:
             logger().info(f"BLE Data Transfer is going to start")
             ble_data = ble_notify(self.wifi_dut, self.ble_client_address)
             ble_data.start()
