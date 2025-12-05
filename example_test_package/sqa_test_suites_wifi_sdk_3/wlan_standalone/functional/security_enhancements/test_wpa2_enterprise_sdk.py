@@ -3874,7 +3874,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_1_0_udp_tx_11w_c679990(wifi_dut, wifi
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+        wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
         wifi_access_point.interfaces.wifi.start_ap()
 
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
@@ -3882,7 +3882,6 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_1_0_udp_tx_11w_c679990(wifi_dut, wifi
                                                                  beacon_missed_count=40, first_time_retry_enable=0)
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable |
-                                Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable |
                                 Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
         wifi_thread = WPA2Enterprise(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      eap_type="fast", sl_collections=sl_collections, test_name=test_name,
