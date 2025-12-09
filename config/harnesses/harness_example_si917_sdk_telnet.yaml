@@ -76,7 +76,7 @@ devices:
         type: 'rs911x'
         subtype: 'rs9117'
         src_dir: 'utf_wiseconnect'
-        commander_options: "--device Si917 --ip 10.207.17.246"
+        commander_options: "--device Si917 --ip 192.168.150.216"
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
@@ -96,7 +96,7 @@ devices:
                # by specifying the vid and pid of the device.
                # In the below example, the vid and pid represent the USB connection to the WSTK
                 type: 'cli.telnet_cli_transport_async'
-                remote: '10.207.17.246'
+                remote: '192.168.150.216'
                 port: 4901
             wifi:
                 # Both of these (or any interface of type 'cli') require a 'cli_transport' property
@@ -111,7 +111,7 @@ devices:
                     ble:
                         count: 1
                         stack_len: 2048
-                commander_options: "--device Si917 --ip 10.207.17.246"
+                commander_options: "--device Si917 --ip 192.168.150.216"
 
     remote_wiseconnect3:
         type: 'efx32'
@@ -140,11 +140,11 @@ devices:
     efr32_4180b_Si917:
         type: 'efx32'
         subtype: 'efr32_4180b_Si917'
-        commander_options: "--device Si917 --ip 10.207.17.246"
+        commander_options: "--device Si917 --ip 192.168.150.216"
         interfaces:
             vcom:
                 type: 'cli.telnet_cli_transport_async'
-                remote: '10.207.17.246'
+                remote: '192.168.150.216'
                 port: 4901
 
     efr32_4180b_Si917_1:
@@ -195,8 +195,8 @@ devices:
         interfaces:
             wifi:
                 type: 'wifi.access_points.asus_rt_ax3000'
-                ip_address: '192.168.50.1' # # #
-                admin_password: 'admin@12345' #'www.ni.com'
+                ip_address: '192.168.150.1' # # #
+                admin_password: 'aaaabcdefgh_utf' #'www.ni.com'
                 ssh_port: 22 #1022
                 web_ui_port: 8443
                 ssid: "9117_sw"
@@ -537,7 +537,7 @@ devices:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
                 # the format is 'device:interface'
-                forward_to: 'raspi_bt_client:linux_shell'
+                forward_to: 'raspi_ble_client:linux_shell'
                 host: 'docker_host'
 
             bluetooth:
@@ -546,6 +546,75 @@ devices:
                 host: 'docker_host'
         harness:
             devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
+
+    secondary_raspi:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '10.207.16.82'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
+            # these are the RPC-enabled interfaces that will forward all method and property access
+            # calls over to the respective instance on the server
+            shell:
+                type: 'rpc.rpc_client'
+                # the 'forward_to' property specifies the destination device and interface on the server
+                # the format is 'device:interface'
+                forward_to: 'raspi_bt_client:linux_shell'
+                host: 'docker_host'
+
+            http:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_http_server:http'
+                host: 'docker_host'
+
+            http_client:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_http_client:http_client'
+                host: 'docker_host'
+
+            bluetooth:
+                type: 'rpc.rpc_client'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'docker_host'
+
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                raspi_http_server:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        http:
+                            type: 'http.server.http_linux'
+                            shell: 'linux_shell'
+                            port: 80
+                            interface: 'eth0'
+
+                raspi_http_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        http_client:
+                            type: 'http.client.requests_client'
+                            disable_certificate_verification: True
+
                 raspi_ble_client:
                     interfaces:
                         linux_shell:
@@ -747,7 +816,7 @@ devices:
 
     raspi_http_client:
         interfaces:
-            http:
+            http_client:
                 type: 'http.client.requests_client'
                 disable_certificate_verification: True
 
