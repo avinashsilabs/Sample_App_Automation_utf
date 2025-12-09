@@ -3780,6 +3780,8 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_auto_provisioning_1_2_c113769(wifi_du
         is loaded using the in tls version 1.2 """
     try:
         test_name = request.node.name
+        # Clear any leftover certificates from previous tests (auto-provisioning shouldn't use manual certs)
+        wifi_dut.interfaces.wifi.clear_certificate()
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
