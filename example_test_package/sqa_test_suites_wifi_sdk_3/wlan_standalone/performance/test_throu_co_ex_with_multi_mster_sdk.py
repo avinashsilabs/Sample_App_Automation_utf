@@ -439,55 +439,71 @@ class WifiJoinThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
 
-    def wlan_data_transfer_without_async(self):
-        logger().info("starting the sniffer capture")
-        self.wifi_sniffer.interfaces.capture.configure_interface(
-            channel=self.wifi_access_point.interfaces.wifi.channel)
-        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
-        self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                 wifi_access_point=self.wifi_access_point,
-                                                                 associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                 retry_count=3, ping_after_power_save=False,
-                                                                 ping_count=self.ping_count, power_save=False)
+    def ble_adv_as_m(self):
+        if self.test_case_no == 121231:
+            logger().info("Enabling the **** RTT 40 Command ****")
+            self.wifi_client.interfaces.tc.add_delay(40)
+            time.sleep(2)
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "unable to fetch dut bd address...."
         time.sleep(2)
-        self.wifi_dut.interfaces.wifi.switch_host_frequency()
-        time.sleep(2)
-        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"Remote device ip :{host_ip}")
+        logger().info("Set DUT in advertise mode")
+        ble_client_address_1 = self.ble_clients[0].interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
 
-        if self.test_case_no == 146663:
-            protocols = ["TCP"]
-            traffic_types = ["RX"]
-            for protocol in protocols:
-                for traffic_type in traffic_types:
-                    self.wifi_dut.interfaces.wifi.set_socket_config()
-                    self.sl_collections.run_traffic(
-                        wifi_dut=self.wifi_dut,
-                        net_perf_client=self.net_perf_client,
-                        protocol=protocol,
-                        device_ip=self.dut_addr['device_ip'],
-                        host_ip=host_ip,
-                        timeout=35,
-                        traffic_type=traffic_type,
-                    )
-        if self.test_case_no == 146664:
-            protocols = ["UDP"]
-            traffic_types = ["RX"]
-            for protocol in protocols:
-                for traffic_type in traffic_types:
-                    self.sl_collections.run_traffic(
-                        wifi_dut=self.wifi_dut,
-                        net_perf_client=self.net_perf_client,
-                        protocol=protocol,
-                        device_ip=self.dut_addr['device_ip'],
-                        host_ip=host_ip,
-                        timeout=35,
-                        traffic_type=traffic_type,
-                    )
-        self.wifi_dut.interfaces.wifi.leave()
+        self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address_1, timeout=120)
+        logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+        self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+        ble_client_address_2 = self.ble_clients[1].interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+        self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address_2, timeout=120)
+        logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+
+    def ble_conn_mul_mster(self):
+        if self.test_case_no == 121231:
+            logger().info("Enabling the **** RTT 40 Command ****")
+            self.wifi_client.interfaces.tc.add_delay(40)
+            time.sleep(2)
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "unable to fetch dut bd address...."
         time.sleep(2)
-        self.wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(2)
+        logger().info("Set DUT in advertise mode")
+        ble_client_address = self.ble_clients[1].interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+        # ble_client_address = self.remote_wiseconnect3.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128)
+
+        self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
+        logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+        time.sleep(5)
+        # See that we found our device
+        self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+        # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+        timeout = 120
+        logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+        self.wifi_dut.interfaces.wifi.ble_connect(
+            ble_remote_dev_address=ble_client_address,
+            timeout=timeout,
+            expected="RSI_BLE_ENHC_CONN_EVENT",
+        )
+        logger().info("Set DUT in advertise mode in Remote ====>>>> 2")
+        time.sleep(80)
+        # ble_dut_mac = self.remote_wiseconnect3.interfaces.wifi.ble_start()
+        ble_client_address_1 = self.ble_clients[0].interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+        # ble_client_address_1 = self.remote_wiseconnect3.interfaces.wifi.ble_start_advertising(ble_adv_type=128)
+
+        self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address_1, timeout=120)
+        logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+        time.sleep(5)
+        # See that we found our device
+        self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+        # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+        timeout = 120
+        logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+        self.wifi_dut.interfaces.wifi.ble_connect(
+            ble_remote_dev_address=ble_client_address_1,
+            timeout=timeout,
+            expected="RSI_BLE_ENHC_CONN_EVENT",
+        )
+        time.sleep(20)
 
 
 class ble_notify(WifiJoinThread):
@@ -834,7 +850,7 @@ def test_wlan_ble_adv_128_with_ssl_rx_ax_c401746(wifi_sniffer, wifi_access_point
         }
     }
 )
-def test_wlan_ble_conn_with_mul_master_tcp_tx_c200746(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_ble_conn_with_mul_master_tcp_tx_c401747(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                         net_perf_client, protocol, utf_constants, request,
                                                         sl_collections, ble_clients, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -893,7 +909,7 @@ def test_wlan_ble_conn_with_mul_master_tcp_tx_c200746(wifi_sniffer, wifi_access_
         }
     }
 )
-def test_wlan_ble_conn_with_mul_master_tcp_rx_c200747(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_ble_conn_with_mul_master_tcp_rx_c401748(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                         net_perf_client, protocol, utf_constants, request,
                                                         sl_collections, ble_clients, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -953,7 +969,7 @@ def test_wlan_ble_conn_with_mul_master_tcp_rx_c200747(wifi_sniffer, wifi_access_
 
     }
 )
-def test_wlan_ble_conn_with_mul_master_udp_tx_c200744(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_ble_conn_with_mul_master_udp_tx_c401749(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                         net_perf_client, protocol, utf_constants, request,
                                                         sl_collections, ble_clients, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1012,7 +1028,7 @@ def test_wlan_ble_conn_with_mul_master_udp_tx_c200744(wifi_sniffer, wifi_access_
         }
     }
 )
-def test_wlan_ble_conn_with_mul_master_udp_rx_c200745(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_ble_conn_with_mul_master_udp_rx_c401750(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                         net_perf_client, protocol, utf_constants, request,
                                                         sl_collections, ble_clients, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1069,7 +1085,7 @@ def test_wlan_ble_conn_with_mul_master_udp_rx_c200745(wifi_sniffer, wifi_access_
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-def test_wlan_ble_conn_with_mul_master_with_ssl_tx_ax_C200766(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_ble_conn_with_mul_master_with_ssl_tx_ax_c401751(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                                 utf_constants, request, sl_collections, ble_clients,
                                                                 bt_dut, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -1127,7 +1143,7 @@ def test_wlan_ble_conn_with_mul_master_with_ssl_tx_ax_C200766(wifi_sniffer, wifi
 
     }
 )
-def test_wlan_ble_conn_with_mul_master_ssl_rx_ax_C200767(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
+def test_wlan_ble_conn_with_mul_master_ssl_rx_ax_c401752(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                                 utf_constants, request, sl_collections, ble_clients,
                                                                 bt_dut, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -1169,15 +1185,15 @@ def test_wlan_ble_conn_with_mul_master_ssl_rx_ax_C200767(wifi_sniffer, wifi_acce
 
     }
 )
-def test_wlan_ble_as_m_adv_tcp_tx_rx_c200748(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
-                                           utf_constants, request, sl_collections, ble_client, bt_dut):
+def test_wlan_ble_as_m_adv_tcp_tx_rx_c401753(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
+                                           utf_constants, request, sl_collections, ble_clients):
     ping_count = utf_constants.get("ping_count")
     testcase = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     time.sleep(2)
-    wlan_obj = WifiJoinThread(ble_client=ble_client, wifi_dut=wifi_dut, wifi_client=wifi_client, test_case_no=121231)
+    wlan_obj = WifiJoinThread(ble_clients=ble_clients, wifi_dut=wifi_dut, wifi_client=wifi_client, test_case_no=121231)
     wlan_obj.ble_adv_as_m()
     dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                         wifi_access_point=wifi_access_point,
@@ -1239,18 +1255,18 @@ def test_wlan_ble_as_m_adv_tcp_tx_rx_c200748(wifi_sniffer, wifi_access_point, wi
 
     }
 )
-def test_wlan_ble_conn_as_m_tcp_tx_rx_c200749(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
-                                           utf_constants, request, sl_collections, ble_client, bt_dut):
+def test_wlan_ble_conn_as_m_tcp_tx_rx_c401754(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
+                                           utf_constants, request, sl_collections, ble_clients, bt_dut):
     ping_count = utf_constants.get("ping_count")
     testcase = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     time.sleep(2)
-    wlan_obj = WifiJoinThread(ble_client=ble_client, bt_dut=bt_dut, wifi_client=wifi_client, wifi_dut=wifi_dut,
+    wlan_obj = WifiJoinThread(ble_clients=ble_clients, bt_dut=bt_dut, wifi_client=wifi_client, wifi_dut=wifi_dut,
                               test_case_no=121231)
 
-    wlan_obj.ble_conn_as_m()
+    wlan_obj.ble_conn_mul_mster()
     dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                         wifi_access_point=wifi_access_point,
                                                         associated=wifi_dut.interfaces.wifi.associated,
@@ -1310,15 +1326,15 @@ def test_wlan_ble_conn_as_m_tcp_tx_rx_c200749(wifi_sniffer, wifi_access_point, w
 
     }
 )
-def test_wlan_ble_as_m_adv_udp_tx_rx_c200750(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
-                                           utf_constants, request, sl_collections, ble_client, bt_dut):
+def test_wlan_ble_as_m_adv_udp_tx_rx_c401755(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
+                                           utf_constants, request, sl_collections, ble_clients, bt_dut):
     ping_count = utf_constants.get("ping_count")
     testcase = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     time.sleep(2)
-    wlan_obj = WifiJoinThread(ble_client=ble_client, wifi_dut=wifi_dut, wifi_client=wifi_client, test_case_no=121231)
+    wlan_obj = WifiJoinThread(ble_clients=ble_clients, wifi_dut=wifi_dut, wifi_client=wifi_client, test_case_no=121231)
     wlan_obj.ble_adv_as_m()
     dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                    wifi_access_point=wifi_access_point,
@@ -1380,17 +1396,17 @@ def test_wlan_ble_as_m_adv_udp_tx_rx_c200750(wifi_sniffer, wifi_access_point, wi
 
     }
 )
-def test_wlan_ble_conn_as_m_128_udp_tx_rx_c200751(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
-                                            utf_constants, request, sl_collections, ble_client, bt_dut):
+def test_wlan_ble_conn_as_m_128_udp_tx_rx_c401756(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
+                                            utf_constants, request, sl_collections, ble_clients, bt_dut):
     ping_count = utf_constants.get("ping_count")
     testcase = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     time.sleep(2)
-    wlan_obj = WifiJoinThread(ble_client=ble_client, bt_dut=bt_dut, wifi_client=wifi_client, wifi_dut=wifi_dut,
+    wlan_obj = WifiJoinThread(ble_clients=ble_clients, bt_dut=bt_dut, wifi_client=wifi_client, wifi_dut=wifi_dut,
                               test_case_no=121231)
-    wlan_obj.ble_conn_as_m()
+    wlan_obj.ble_conn_mul_mster()
     dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                    wifi_access_point=wifi_access_point,
                                                    associated=wifi_dut.interfaces.wifi.associated,
@@ -1446,15 +1462,15 @@ def test_wlan_ble_conn_as_m_128_udp_tx_rx_c200751(wifi_sniffer, wifi_access_poin
 
     }
 )
-def test_wlan_ble_as_m_adv_ping_dl_ul_c207446(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
-                                              request, sl_collections, ble_client, bt_dut):
+def test_wlan_ble_as_m_adv_ping_dl_ul_c401757(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
+                                              request, sl_collections, ble_clients, bt_dut):
     ping_count = utf_constants.get("ping_count")
     testcase = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     time.sleep(2)
-    wlan_obj = WifiJoinThread(ble_client=ble_client, wifi_dut=wifi_dut, wifi_client=wifi_client)
+    wlan_obj = WifiJoinThread(ble_clients=ble_clients, wifi_dut=wifi_dut, wifi_client=wifi_client)
     wlan_obj.ble_adv_as_m()
     dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                    wifi_access_point=wifi_access_point,
@@ -1500,16 +1516,16 @@ def test_wlan_ble_as_m_adv_ping_dl_ul_c207446(wifi_sniffer, wifi_access_point, w
 
     }
 )
-def test_wlan_ble_as_m_conn_ping_dl_ul_c207447(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
-                                               request, sl_collections, ble_client, bt_dut):
+def test_wlan_ble_as_m_conn_ping_dl_ul_c401758(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
+                                               request, sl_collections, ble_clients, bt_dut):
     ping_count = utf_constants.get("ping_count")
     testcase = request.node.name
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     time.sleep(2)
-    wlan_obj = WifiJoinThread(ble_client=ble_client, bt_dut=bt_dut, wifi_client=wifi_client, wifi_dut=wifi_dut)
-    wlan_obj.ble_conn_as_m()
+    wlan_obj = WifiJoinThread(ble_clients=ble_clients, bt_dut=bt_dut, wifi_client=wifi_client, wifi_dut=wifi_dut)
+    wlan_obj.ble_conn_mul_mster()
     dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                    wifi_access_point=wifi_access_point,
                                                    associated=wifi_dut.interfaces.wifi.associated,

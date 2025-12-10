@@ -416,55 +416,47 @@ class WifiJoinThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
 
-    def wlan_data_transfer_without_async(self):
-        logger().info("starting the sniffer capture")
-        self.wifi_sniffer.interfaces.capture.configure_interface(
-            channel=self.wifi_access_point.interfaces.wifi.channel)
-        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
-        self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                 wifi_access_point=self.wifi_access_point,
-                                                                 associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                 retry_count=3, ping_after_power_save=False,
-                                                                 ping_count=self.ping_count, power_save=False)
+    def ble_adv_as_m(self):
+        if self.test_case_no == 121231:
+            logger().info("Enabling the **** RTT 40 Command ****")
+            self.wifi_client.interfaces.tc.add_delay(40)
+            time.sleep(2)
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "unable to fetch dut bd address...."
         time.sleep(2)
-        self.wifi_dut.interfaces.wifi.switch_host_frequency()
-        time.sleep(2)
-        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"Remote device ip :{host_ip}")
+        logger().info("Set DUT in advertise mode")
+        ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
 
-        if self.test_case_no == 146663:
-            protocols = ["TCP"]
-            traffic_types = ["RX"]
-            for protocol in protocols:
-                for traffic_type in traffic_types:
-                    self.wifi_dut.interfaces.wifi.set_socket_config()
-                    self.sl_collections.run_traffic(
-                        wifi_dut=self.wifi_dut,
-                        net_perf_client=self.net_perf_client,
-                        protocol=protocol,
-                        device_ip=self.dut_addr['device_ip'],
-                        host_ip=host_ip,
-                        timeout=35,
-                        traffic_type=traffic_type,
-                    )
-        if self.test_case_no == 146664:
-            protocols = ["UDP"]
-            traffic_types = ["RX"]
-            for protocol in protocols:
-                for traffic_type in traffic_types:
-                    self.sl_collections.run_traffic(
-                        wifi_dut=self.wifi_dut,
-                        net_perf_client=self.net_perf_client,
-                        protocol=protocol,
-                        device_ip=self.dut_addr['device_ip'],
-                        host_ip=host_ip,
-                        timeout=35,
-                        traffic_type=traffic_type,
-                    )
-        self.wifi_dut.interfaces.wifi.leave()
+        self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
+        logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+
+    def ble_conn_as_m(self):
+        if self.test_case_no == 121231:
+            logger().info("Enabling the **** RTT 40 Command ****")
+            self.wifi_client.interfaces.tc.add_delay(40)
+            time.sleep(2)
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert bt_dut_address, "unable to fetch dut bd address...."
         time.sleep(2)
-        self.wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(2)
+        logger().info("Set DUT in advertise mode")
+        ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+
+        self.wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
+        logger().info(f"Remote device found in scan results ,BLE scanning is successful")
+        time.sleep(5)
+        # See that we found our device
+        self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+        # Sometimes Connection is not triggered for a long time. Is this a bug on DUT, or issue with Raspi?
+        timeout = 120
+        logger().info(f"Initiating connection this can take upto {timeout} seconds....")
+        self.wifi_dut.interfaces.wifi.ble_connect(
+            ble_remote_dev_address=ble_client_address,
+            timeout=timeout,
+            expected="RSI_BLE_ENHC_CONN_EVENT",
+        )
+        time.sleep(35)
 
 
 class ble_notify(WifiJoinThread):
