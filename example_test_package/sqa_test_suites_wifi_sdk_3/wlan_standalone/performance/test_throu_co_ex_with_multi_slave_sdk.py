@@ -186,12 +186,6 @@ class WifiJoinThread(ThreadBase):
             self.ble_client.interfaces.bluetooth.stop_scanning()
             assert device_found, "no device found"
 
-            # See that we found our device
-            # logger().info("Check the dut is listed...")
-            # found_devices_1 = self.ble_clients[0].interfaces.bluetooth.get_devices()
-            # logger().info(f" Found DUT device =====>>>>> {found_devices_1}")
-            # assert self.bt_dut.interfaces.bluetooth.ble_address in found_devices_1
-
             self.ble_clients[0].interfaces.bluetooth.connect(dev_addr=bt_dut_address,
                                                          min_conn_interval=conn_params["min_conn_interval"],
                                                          max_conn_interval=conn_params["max_conn_interval"],
@@ -229,29 +223,6 @@ class WifiJoinThread(ThreadBase):
 
             assert bt_dut_address, "unable to connect to the given address"
             time.sleep(12)
-
-            # logger().info("Start smp scan from the remote device ====>>>> 2")
-            # bt_client_address_2 = self.ble_clients[1].interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
-            # logger().info(f"DUT mac ====>>>>> {bt_client_address_2}")
-            # assert bt_client_address_2 is not None
-            # time.sleep(5)
-            # logger().info("stop scanning ....")
-            # self.ble_clients[0].interfaces.bluetooth.stop_scanning()
-            #
-            # # See that we found our device
-            # logger().info("Check the dut is listed...")
-            # found_devices_2 = self.ble_clients[1].interfaces.bluetooth.get_devices()
-            # logger().info(f"available devices {found_devices_2}")
-            # assert self.bt_dut.interfaces.bluetooth.ble_address in found_devices_2
-            #
-            # self.ble_clients[1].interfaces.bluetooth.connect(dev_addr=bt_dut_address,
-            #                                              min_conn_interval=200,
-            #                                              max_conn_interval=200,
-            #                                              conn_latency=conn_params["conn_latency"],
-            #                                              supervision_timeout=conn_params["supervision_timeout"])
-            #
-            # assert bt_dut_address, "unable to connect to the given address"
-            # time.sleep(12)
 
         if self.ble_data_transfer:
             logger().info(f"BLE Data Transfer going to start")
@@ -517,6 +488,71 @@ class WifiJoinThread(ThreadBase):
         time.sleep(2)
         self.wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
+
+    def ble_advertise_128(self):
+        if self.test_case_no == 121231:
+            logger().info("Enabling the **** RTT 40 Command ****")
+            self.wifi_client.interfaces.tc.add_delay(40)
+            time.sleep(2)
+
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = self.bt_dut.interfaces.bluetooth.ble_start()
+        assert bt_dut_address, "unable to fetch dut bd address...."
+
+        logger().info("Set DUT in advertise mode")
+        self.bt_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128)
+
+        logger().info("Start smp scan from the remote device")
+        bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert bt_client_address is not None
+        time.sleep(5)
+        logger().info("stop scanning ....")
+        self.ble_client.interfaces.bluetooth.stop_scanning()
+
+        # See that we found our device
+        logger().info("Check the dut is listed...")
+        found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+        assert self.bt_dut.interfaces.bluetooth.ble_address in found_devices
+
+    def ble_connection_128(self):
+        if self.test_case_no == 121232:
+            logger().info("Enabling the **** RTT 40 Command ****")
+            self.wifi_client.interfaces.tc.add_delay(40)
+            time.sleep(2)
+
+        logger().info(f"BLE connection process started")
+        conn_params = {
+            "min_conn_interval": self.utf_constants.get("min_conn_interval"),
+            "max_conn_interval": self.utf_constants.get("max_conn_interval"),
+            "conn_latency": 0,
+            "supervision_timeout": self.utf_constants.get("supervision_timeout")}
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = self.bt_dut.interfaces.bluetooth.ble_start()
+        assert bt_dut_address, "unable to fetch dut bd address...."
+
+        logger().info("Set DUT in advertise mode")
+        self.bt_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128)
+
+        logger().info("Start smp scan from the remote device")
+        bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert bt_client_address is not None
+        time.sleep(5)
+        logger().info("stop scanning ....")
+        self.ble_client.interfaces.bluetooth.stop_scanning()
+
+        # See that we found our device
+        logger().info("Check the dut is listed...")
+        found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+        assert self.bt_dut.interfaces.bluetooth.ble_address in found_devices
+
+        self.ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                     min_conn_interval=conn_params["min_conn_interval"],
+                                                     max_conn_interval=conn_params["max_conn_interval"],
+                                                     conn_latency=conn_params["conn_latency"],
+                                                     supervision_timeout=conn_params["supervision_timeout"])
+
+        assert bt_dut_address, "unable to connect to the given address"
+        time.sleep(12)
 
 
 class ble_notify(WifiJoinThread):
@@ -867,4 +903,108 @@ def test_wlan_ble_adv_128_with_ssl_rx_ax_c401806(wifi_sniffer, wifi_access_point
     finally:
         wifi_client.interfaces.tc.delete_delay()
         time.sleep(2)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
+                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+
+    }
+)
+def test_wlan_ble_adv_128_with_ping_ul_dl_c401807(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
+                                                 request, sl_collections, ble_clients, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    testcase = request.node.name
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(ble_clients=ble_clients, bt_dut=bt_dut, wifi_client=wifi_client)
+    wlan_obj.ble_advertise_128()
+    dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                   wifi_access_point=wifi_access_point,
+                                                   associated=wifi_dut.interfaces.wifi.associated,
+                                                   retry_count=3, ping_after_power_save=False,
+                                                   ping_count=ping_count, power_save=False)
+    time.sleep(2)
+    dut_ip = dut_addr['device_ip']
+    logger().info(f"#######=====>>>>>>>{dut_ip}")
+    try:
+        ping_down = DLPing(wifi_client=wifi_client, dut_ip=dut_ip, ping_count=ping_count)
+        ping_up = ULPing(wifi_client=wifi_client, ping_count=ping_count, wifi_dut=wifi_dut)
+        ping_down.start()
+        time.sleep(1)
+        ping_up.start()
+        ping_down.wait_for_exit()
+        ping_up.wait_for_exit()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.leave()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
+                  Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
+                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+
+    }
+)
+def test_wlan_ble_conn_128_with_ping_ul_dl_c401808(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
+                                                 request, sl_collections, ble_clients, bt_dut):
+    ping_count = utf_constants.get("ping_count")
+    testcase = request.node.name
+    wifi_sniffer.interfaces.capture.configure_interface(
+        channel=wifi_access_point.interfaces.wifi.channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+    time.sleep(2)
+    wlan_obj = WifiJoinThread(ble_client=ble_clients, bt_dut=bt_dut, wifi_client=wifi_client, utf_constants=utf_constants)
+    wlan_obj.ble_connection_128()
+    dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                   wifi_access_point=wifi_access_point,
+                                                   associated=wifi_dut.interfaces.wifi.associated,
+                                                   retry_count=3, ping_after_power_save=False,
+                                                   ping_count=ping_count, power_save=False)
+    time.sleep(2)
+    dut_ip = dut_addr['device_ip']
+    logger().info(f"#######=====>>>>>>>{dut_ip}")
+    try:
+        ping_down = DLPing(wifi_client=wifi_client, dut_ip=dut_ip, ping_count=ping_count)
+        ping_up = ULPing(wifi_client=wifi_client, ping_count=ping_count, wifi_dut=wifi_dut)
+        ping_down.start()
+        time.sleep(1)
+        ping_up.start()
+        ping_down.wait_for_exit()
+        ping_up.wait_for_exit()
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.leave()
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 

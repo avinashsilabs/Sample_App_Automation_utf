@@ -430,55 +430,70 @@ class WifiJoinThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
 
-    def wlan_data_transfer_without_async(self):
-        logger().info("starting the sniffer capture")
-        self.wifi_sniffer.interfaces.capture.configure_interface(
-            channel=self.wifi_access_point.interfaces.wifi.channel)
-        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
-        self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                 wifi_access_point=self.wifi_access_point,
-                                                                 associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                 retry_count=3, ping_after_power_save=False,
-                                                                 ping_count=self.ping_count, power_save=False)
-        time.sleep(2)
-        self.wifi_dut.interfaces.wifi.switch_host_frequency()
-        time.sleep(2)
-        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"Remote device ip :{host_ip}")
+    def ble_advertise_128(self):
+        if self.test_case_no == 121231:
+            logger().info("Enabling the **** RTT 40 Command ****")
+            self.wifi_client.interfaces.tc.add_delay(40)
+            time.sleep(2)
 
-        if self.test_case_no == 146663:
-            protocols = ["TCP"]
-            traffic_types = ["RX"]
-            for protocol in protocols:
-                for traffic_type in traffic_types:
-                    self.wifi_dut.interfaces.wifi.set_socket_config()
-                    self.sl_collections.run_traffic(
-                        wifi_dut=self.wifi_dut,
-                        net_perf_client=self.net_perf_client,
-                        protocol=protocol,
-                        device_ip=self.dut_addr['device_ip'],
-                        host_ip=host_ip,
-                        timeout=35,
-                        traffic_type=traffic_type,
-                    )
-        if self.test_case_no == 146664:
-            protocols = ["UDP"]
-            traffic_types = ["RX"]
-            for protocol in protocols:
-                for traffic_type in traffic_types:
-                    self.sl_collections.run_traffic(
-                        wifi_dut=self.wifi_dut,
-                        net_perf_client=self.net_perf_client,
-                        protocol=protocol,
-                        device_ip=self.dut_addr['device_ip'],
-                        host_ip=host_ip,
-                        timeout=35,
-                        traffic_type=traffic_type,
-                    )
-        self.wifi_dut.interfaces.wifi.leave()
-        time.sleep(2)
-        self.wifi_sniffer.interfaces.capture.stop_capture()
-        time.sleep(2)
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = self.bt_dut.interfaces.bluetooth.ble_start()
+        assert bt_dut_address, "unable to fetch dut bd address...."
+
+        logger().info("Set DUT in advertise mode")
+        self.bt_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128)
+
+        logger().info("Start smp scan from the remote device")
+        bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert bt_client_address is not None
+        time.sleep(5)
+        logger().info("stop scanning ....")
+        self.ble_client.interfaces.bluetooth.stop_scanning()
+
+        # See that we found our device
+        logger().info("Check the dut is listed...")
+        found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+        assert self.bt_dut.interfaces.bluetooth.ble_address in found_devices
+
+    def ble_connection_128(self):
+        if self.test_case_no == 121232:
+            logger().info("Enabling the **** RTT 40 Command ****")
+            self.wifi_client.interfaces.tc.add_delay(40)
+            time.sleep(2)
+
+        logger().info(f"BLE connection process started")
+        conn_params = {
+            "min_conn_interval": self.utf_constants.get("min_conn_interval"),
+            "max_conn_interval": self.utf_constants.get("max_conn_interval"),
+            "conn_latency": 0,
+            "supervision_timeout": self.utf_constants.get("supervision_timeout")}
+        logger().info("Initiate ble service in DUT")
+        bt_dut_address = self.bt_dut.interfaces.bluetooth.ble_start()
+        assert bt_dut_address, "unable to fetch dut bd address...."
+
+        logger().info("Set DUT in advertise mode")
+        self.bt_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128)
+
+        logger().info("Start smp scan from the remote device")
+        bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+        assert bt_client_address is not None
+        time.sleep(5)
+        logger().info("stop scanning ....")
+        self.ble_client.interfaces.bluetooth.stop_scanning()
+
+        # See that we found our device
+        logger().info("Check the dut is listed...")
+        found_devices = self.ble_client.interfaces.bluetooth.get_devices()
+        assert self.bt_dut.interfaces.bluetooth.ble_address in found_devices
+
+        self.ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                     min_conn_interval=conn_params["min_conn_interval"],
+                                                     max_conn_interval=conn_params["max_conn_interval"],
+                                                     conn_latency=conn_params["conn_latency"],
+                                                     supervision_timeout=conn_params["supervision_timeout"])
+
+        assert bt_dut_address, "unable to connect to the given address"
+        time.sleep(12)
 
 
 class ble_notify(WifiJoinThread):
