@@ -41,10 +41,20 @@ from utf.utf_session import get_active_session
 from utf.utf_queue_session import UtfQueueSession
 from data_transform.generate_perf_data import generate_perf_data_files
 from data_transform.send_perf_data_to_datalake import send_perf_data
+try:
+    from executor.launch_utf_tests import get_milestone_branch_from_git_branch
+except ImportError:
+    pass
 
 last_loaded_custom_app_name = None
 last_test_mode = None
 default_test_mode = None
+
+
+def pytest_configure(config):
+    """Ensure _metadata attribute is initialized for pytest-metadata plugin."""
+    if not hasattr(config, "_metadata"):
+        config._metadata = {}
 
 
 def logger():
@@ -139,7 +149,10 @@ def roll_back_to_default_firmware(request, wiseconnect_duts):
 
 @pytest.fixture(autouse=True, scope="session")
 def store_environment_info(request, harness: Harness):
-    request.config._metadata["Milestone"] = os.environ["MILESTONE"]
+    milestone = os.environ.get("MILESTONE",None)
+    if milestone is None:
+        milestone = get_milestone_branch_from_git_branch()
+    request.config._metadata["Milestone"] = milestone
     manifest_file: str = request.config.getoption("manifest")
     if manifest_file is not None:
         request.config._metadata["DUT Firmware Version"] = parse_version(manifest_file)
