@@ -2,6 +2,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
     Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, \
     Si91xOperatingMode, Si91xCertificateType, Si91xCertIdentifier
 import time
+import re 
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
@@ -167,7 +168,15 @@ class WifiJoin(ThreadBase):
                 self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=client_socket, server_ip=remote_ip, ip_len=4,
                                                                server_port="5001")
                 if self.test_case == "540496" or self.test_case == "510727":
-                    self.wifi_dut.interfaces.wifi.update_firmware_over_tcp(timeout=60, expected_status=SLStatus.SL_STATUS_FAIL)
+                    update_data = self.wifi_dut.interfaces.wifi.update_firmware_over_tcp(timeout=60, expected_status=SLStatus.SL_STATUS_FAIL)
+                    pattern = r'Firmware update failed\s*:\s*([a-fA-F0-9]+)'
+                    match = re.search(pattern, update_data)
+                    error_code = match.group(1) if match else None
+                    logger().info(f"Printing the error code {error_code}")
+                    if error_code == "1dd04":
+                        logger().info(f"\n UPDATE FIRMWARE OVER TCP Returned error code {error_code}\n ")
+                    else:
+                        raise ValueError("\n No Error Code Encountered while Upgrading Firmware \n")
                     return
 
                 if self.test_case == "510714":
