@@ -384,18 +384,31 @@ devices:
         interfaces:
             wifi:
                 type: 'wifi.access_points.asus_rt_ac68u'
-                ip_address: '192.168.1.1'
+                ip_address:  '192.168.1.1' 
                 admin_username: 'admin'
                 admin_password: 'admin@12345'
                 ssh_port: 22
                 web_ui_port: 8443
-                ssid: "rt_ac68u"
+                ssid: "TEST_ASUS_SR1"
+                passphrase: '12345678'
                 channel: 1
+                region: "Asia"
                 protected_management_frame: 'Disable'
                 skip_assertion_failure: True
                 # radius server configuration
                 radius_ip: "192.168.1.231"
                 radius_port: "1812"
+            
+    linksys_e7350_ap:
+        interfaces:
+            wifi:
+                type: 'wifi.access_points.linksys_e7350'
+                ip_address: '192.168.1.1'
+                web_ui_port: 8080
+                admin_password: 'password'
+                ssid: "TEST_LINKSYS"
+                security: WPA2
+                
     # This represents another access point configuration.
     asus_rt_ax53u_ap:
         interfaces:

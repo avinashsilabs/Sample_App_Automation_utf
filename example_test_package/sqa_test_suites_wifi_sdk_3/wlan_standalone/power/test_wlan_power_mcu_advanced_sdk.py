@@ -34,7 +34,7 @@ import os
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.power_meter.nrf_ppk2.nrf_power_profiler_mp import NRFPowerProfiler
-
+from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
 
 def logger():
     return get_logger(__name__)
@@ -410,6 +410,11 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [1])
 @pytest.mark.config(
     "wifi_dut",
@@ -460,6 +465,11 @@ def test_wlan_standby_associated_DTIM_1_C20638(firmware_loader, power_meter, wif
  # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [3])
 @pytest.mark.config(
     "wifi_dut",
@@ -510,6 +520,11 @@ def test_wlan_standby_associated_DTIM_3_C20631(firmware_loader, power_meter, wif
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [6])
 @pytest.mark.config(
     "wifi_dut",
@@ -560,6 +575,11 @@ def test_wlan_standby_associated_DTIM_6_C537577(firmware_loader, power_meter, wi
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -610,6 +630,11 @@ def test_wlan_standby_associated_DTIM_10_C20632(firmware_loader, power_meter, wi
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -663,6 +688,11 @@ def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_a
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [3])
 @pytest.mark.config(
     "wifi_dut",
@@ -713,6 +743,11 @@ def test_wlan_standby_associated_DTIM_3_RC_CLK_Enabled_C537578(firmware_loader, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -910,6 +945,11 @@ def test_wlan_standby_associated_sleep_C20639(firmware_loader, power_meter, wifi
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -979,6 +1019,11 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [1])
 @pytest.mark.config(
     "wifi_dut",
@@ -1029,6 +1074,11 @@ def test_wlan_standby_associated_DTIM_1_broadcast_filter_disable_C537581(firmwar
  # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [3])
 @pytest.mark.config(
     "wifi_dut",
@@ -1079,6 +1129,11 @@ def test_wlan_standby_associated_DTIM_3_broadcast_filter_disable_C537580(firmwar
  # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [6])
 @pytest.mark.config(
     "wifi_dut",
@@ -1129,6 +1184,11 @@ def test_wlan_standby_associated_DTIM_6_broadcast_filter_disable_C537583(firmwar
  # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -1179,6 +1239,11 @@ def test_wlan_standby_associated_DTIM_10_broadcast_filter_disable_C537582(firmwa
  # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -1233,6 +1298,11 @@ def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, w
  # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -1287,6 +1357,11 @@ def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C564139(firmware_loader, po
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -1345,39 +1420,7 @@ def test_wlan_standby_associated_scan_and_connect_to_ap_timeline_C510792(firmwar
     
     wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save")
     
-
-
-    # wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-    #     interface = 'client',
-    #     join_feature_bitmap = Si91xJoinFeatureBitMap.Default
-    # )
-    # wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, dtim=dtim,
-    #                     sl_collections=sl_collections)
-    
-    # if dut != "si917_ncp_sl_wifi":
-    #     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, m4_sleep_time=180000)
-    
-    # wlan_obj.start()
-    # wlan_obj.wait_for_exit()
-
-    # time.sleep(2)
-
-    # logger().info(f"Setting filter broadcast command")
-    # wifi_dut.interfaces.wifi.set_filter_broadcast()
-    
-    # time.sleep(2)
-
-    # logger().info(f"Enabling TA power save")
-    # wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save", dtim_aligned_type=1)
-    # time.sleep(2)
-
-    # if dut != "si917_ncp_sl_wifi":
-    #     m4_obj.start()
-    #     time.sleep(2)
-    
     pm_obj.wait_for_exit()
-    # if dut != "si917_ncp_sl_wifi":
-    #     m4_obj.wait_for_exit()
 
     parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
     __print_throughput(parsed_result)

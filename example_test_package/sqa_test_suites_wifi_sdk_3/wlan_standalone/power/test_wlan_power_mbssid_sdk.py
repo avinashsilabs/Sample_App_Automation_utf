@@ -35,6 +35,7 @@ import os
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.power_meter.nrf_ppk2.nrf_power_profiler_mp import NRFPowerProfiler
+from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
 
 """ Test Steps:
         1. Configure the DUT in 2.4Ghz.
@@ -724,6 +725,11 @@ class StandBy_Associated(ThreadBase):
         time.sleep(10)
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_access_point",
@@ -815,6 +821,11 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219305(firmware_loader, po
 
 
 @pytest.mark.parametrize("dtim", [10])
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -904,6 +915,11 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219306(firmware_loader, p
                                                           )
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_access_point",
@@ -995,6 +1011,11 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219307(firmware_loader, po
 
 
 @pytest.mark.parametrize("dtim", [10])
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1084,6 +1105,11 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219308(firmware_loader, p
                                                           )
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_access_point",
@@ -1175,6 +1201,11 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219309(firmware_loader, po
 
 
 @pytest.mark.parametrize("dtim", [10])
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1264,6 +1295,11 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219310(firmware_loader, p
                                                           )
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1352,6 +1388,11 @@ def test_wlan_standby_con_Listen_based_with_T_profile_C219303(firmware_loader, p
                                                           )
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1440,6 +1481,11 @@ def test_wlan_standby_con_Listen_based_with_NT_profile_C219304(firmware_loader, 
                                                           )
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1528,6 +1574,11 @@ def test_wlan_standby_con_Listen_based_with_T_profile_C219311(firmware_loader, p
                                                           )
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1616,6 +1667,11 @@ def test_wlan_standby_con_Listen_based_with_NT_profile_C219312(firmware_loader, 
                                                           )
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1704,6 +1760,11 @@ def test_wlan_standby_con_Listen_based_with_T_profile_C219313(firmware_loader, p
                                                           )
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_access_point",
     wifi={

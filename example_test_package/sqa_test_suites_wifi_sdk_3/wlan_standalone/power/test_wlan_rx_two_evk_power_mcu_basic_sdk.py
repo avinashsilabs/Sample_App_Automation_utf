@@ -34,6 +34,7 @@ import os
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.power_meter.nrf_ppk2.nrf_power_profiler_mp import NRFPowerProfiler
+from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
 
 
 def logger():
@@ -243,7 +244,11 @@ pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
 
 # ********************************************************************************************************************
 
-
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [139])
 @pytest.mark.config(
@@ -331,6 +336,11 @@ def test_wlan_active_rx_6mbps_HP_CHAIN_C20645(firmware_loader, power_meter, remo
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [775])
 @pytest.mark.config(
@@ -418,6 +428,11 @@ def test_wlan_active_rx_72mbps_HP_CHAIN_C20646(firmware_loader, power_meter, rem
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [139])
 @pytest.mark.config(

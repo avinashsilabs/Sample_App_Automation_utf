@@ -264,8 +264,6 @@ class M4_Sleep_Thread(ThreadBase):
         else:
             self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.m4_sleep_time, timeout=150)
         time.sleep(2)
-        self.wifi_dut.interfaces.wifi.leave()
-        logger().info(f'DUT is leaving the AP')
             
 class Power_Measurement_Thread(ThreadBase, Power_Device):
 
@@ -408,6 +406,11 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -461,8 +464,11 @@ def test_wlan_standby_associated_DTIM_10_C20637(firmware_loader, power_meter, wi
 # ********************************************************************************************************************
 
 
-
-
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -517,6 +523,11 @@ def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C20637(firmware_loader, pow
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -587,6 +598,11 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -640,6 +656,11 @@ def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_a
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [1])
 @pytest.mark.config(
@@ -700,6 +721,11 @@ def test_wlan_active_1mbps_tx_C652608(firmware_loader, power_meter, wifi_dut, po
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [256])
 @pytest.mark.config(
@@ -759,6 +785,11 @@ def test_wlan_active_tx_ht_mcs0_C652609(firmware_loader, power_meter, wifi_dut, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [263])
 @pytest.mark.config(
@@ -818,6 +849,11 @@ def test_wlan_active_tx_ht_mcs7_C652610(firmware_loader, power_meter, wifi_dut, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [256])
 @pytest.mark.config(
@@ -877,6 +913,11 @@ def test_wlan_active_tx_he_mcs0_C652611(firmware_loader, power_meter, wifi_dut, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [263])
 @pytest.mark.config(
@@ -935,6 +976,11 @@ def test_wlan_active_tx_he_mcs7_C652612(firmware_loader, power_meter, wifi_dut, 
 
 # ********************************************************************************************************************
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1036,6 +1082,11 @@ def test_ble_sdk_per_1mbps_tx_LP_CHAIN_0dBm_C20663(firmware_loader, power_meter,
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1132,6 +1183,11 @@ def test_ble_sdk_per_1mbps_rx_LP_CHAIN_C20665(firmware_loader, power_meter, bt_d
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1232,6 +1288,11 @@ def test_ble_sdk_per_1mbps_tx_7p5_dBm_C20664(firmware_loader, power_meter, bt_du
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1348,6 +1409,11 @@ def test_ble_sdk_advertise_non_connectable_power_0dBm_C20657(firmware_loader, po
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1461,7 +1527,12 @@ def test_ble_sdk_advertise_connectable_power_0_dBm_C20658(firmware_loader, power
 
 # ********************************************************************************************************************
 
-@pytest.mark.skip()
+
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1585,7 +1656,11 @@ def test_ble_sdk_connect_with_1_28ms_0dBm_20660(firmware_loader, power_meter, wi
 
 # ********************************************************************************************************************
 
-@pytest.mark.skip()
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={

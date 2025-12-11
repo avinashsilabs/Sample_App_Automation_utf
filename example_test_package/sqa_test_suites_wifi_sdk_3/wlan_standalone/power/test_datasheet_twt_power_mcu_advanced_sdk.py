@@ -34,6 +34,7 @@ import os
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.power_meter.nrf_ppk2.nrf_power_profiler_mp import NRFPowerProfiler
+from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
 
 
 def logger():
@@ -89,6 +90,8 @@ class power_number_output():
             print_dict("##     ", throughput)
 
     def get_power_value(self):
+        dut = UtfConfig.instance().defaults.get("dut", {})
+        logger().info(f"dut: {dut}")
         if self.dtim:
             # Init power meter by specifying module name as datalogger or scope
             logger().info(f"initiating power meter wih dtim")
@@ -100,14 +103,19 @@ class power_number_output():
 
         self.power_meter.interfaces.power_meter.init_power_meter_module("data_logger")
         # set power meter out put channels
-        logger().info(f"setting output channels")
-        self.power_meter.interfaces.power_meter.set_output_channels_settings([{"channel": "3",
-                                                                      "emulation_mode": "2 Quadrant Power Supply",
-                                                                      "voltage": "3.3000", "current_limit": "1.00000",
-                                                                      "voltage_slew": "MAX",
-                                                                      "voltage_meter_range": "Auto",
-                                                                      "current_meter_range": "Auto",
-                                                                      "trace_current": True, "trace_power": True}])
+        if dut == "si917_ncp_sl_wifi":
+            self.power_meter.interfaces.power_meter.set_output_channels_settings(
+            [{"channel": "1", "emulation_mode": "Current Measure", "trace_current": True, "trace_voltage": False,
+              "trace_power": False}])
+            
+        else:
+            self.power_meter.interfaces.power_meter.set_output_channels_settings([{"channel": "3",
+                                                                        "emulation_mode": "2 Quadrant Power Supply",
+                                                                        "voltage": "3.3000", "current_limit": "1.00000",
+                                                                        "voltage_slew": "MAX",
+                                                                        "voltage_meter_range": "Auto",
+                                                                        "current_meter_range": "Auto",
+                                                                        "trace_current": True, "trace_power": True}])
         
         time.sleep(10)
         # start capture power meter datalog/scope
@@ -275,6 +283,11 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -320,7 +333,8 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter, 
 
      wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                          sl_collections=sl_collections)
-     m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, deep_sleep_without_ret=True, m4_sleep_time=180000)
+     if dut != "si917_ncp_sl_wifi":
+         m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, deep_sleep_without_ret=True, m4_sleep_time=180000)
      pm_obj = Power_Measurement_Thread(power_meter=power_meter)
  
      wlan_obj.start()
@@ -349,11 +363,13 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter, 
 
      time.sleep(60)
 
-     m4_obj.start()
+     if dut != "si917_ncp_sl_wifi":
+         m4_obj.start()
      time.sleep(10)
      pm_obj.start()
      pm_obj.wait_for_exit()
-     m4_obj.wait_for_exit()
+     if dut != "si917_ncp_sl_wifi":
+         m4_obj.wait_for_exit()
  
      parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(power_meter.interfaces.power_meter.results)
      __print_throughput(parsed_result)
@@ -373,6 +389,11 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -473,6 +494,11 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter,
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -570,6 +596,11 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_C129923(firmware_loader, power_meter,
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -676,6 +707,11 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, p
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)   
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -781,6 +817,11 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=

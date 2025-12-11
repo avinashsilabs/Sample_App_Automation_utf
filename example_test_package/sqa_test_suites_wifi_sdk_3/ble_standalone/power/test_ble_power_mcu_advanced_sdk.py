@@ -26,6 +26,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveProcedureTypes,
     Si91xOperatingMode,
 )
+from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
 
 
 def logger():
@@ -212,6 +213,11 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -325,6 +331,11 @@ def test_ble_sdk_advertise_connectable_power_0dBm_C20656(firmware_loader, power_
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -442,6 +453,11 @@ def test_ble_sdk_advertise_non_connectable_power_0dBm_C20657(firmware_loader, po
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -553,6 +569,11 @@ def test_ble_sdk_advertise_1sec_connectable_power_0dBm_C537352(firmware_loader, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -657,6 +678,11 @@ def test_ble_sdk_advertise_1sec_non_connectable_power_0dBm_C537353(firmware_load
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -783,6 +809,11 @@ def test_ble_sdk_connect_with_200ms_0dBm_C20659(firmware_loader, power_meter, wi
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -895,6 +926,11 @@ def test_ble_sdk_connect_with_1_28s_0dBm_C20660(firmware_loader, power_meter, wi
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1020,6 +1056,11 @@ def test_ble_sdk_connect_with_200ms_7p5dBm_C20661(firmware_loader, power_meter, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1132,6 +1173,11 @@ def test_ble_sdk_connect_with_1_28s_7p5dBm_C20662(firmware_loader, power_meter, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1235,6 +1281,11 @@ def test_ble_sdk_advertise_non_connectable_power_1065ms_C20654(firmware_loader, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1336,6 +1387,11 @@ def test_ble_sdk_advertise_connectable_power_20ms_C20653(firmware_loader, power_
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1424,13 +1480,18 @@ def test_ble_sdk_advertise_connectable_power_7p5dBm_C20658(firmware_loader, powe
                 m4_obj.wait_for_exit()
             time.sleep(10)
             time.sleep(10)
-      except Exception as error:
-          sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+        except Exception as error:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1530,6 +1591,11 @@ def test_ble_sdk_per_1mbps_tx_LP_CHAIN_0dBm_C20663(firmware_loader, power_meter,
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1628,6 +1694,11 @@ def test_ble_sdk_per_2mbps_tx_HP_CHAIN_0dBm_C564142(firmware_loader, power_meter
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1720,6 +1791,11 @@ def test_ble_sdk_per_1mbps_tx_LP_CHAIN_7p5dBm_C20664(firmware_loader, power_mete
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1816,6 +1892,11 @@ def test_ble_sdk_connect_with_idlelink_200ms_C20655(firmware_loader, power_meter
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={
@@ -1910,6 +1991,11 @@ def test_ble_sdk_per_1mbps_rx_LP_CHAIN_C20665(firmware_loader, power_meter, bt_d
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
         "wifi_dut",
         wifi={

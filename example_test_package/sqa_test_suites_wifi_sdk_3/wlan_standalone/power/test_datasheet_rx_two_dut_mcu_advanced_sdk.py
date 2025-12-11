@@ -34,6 +34,7 @@ import os
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.power_meter.nrf_ppk2.nrf_power_profiler_mp import NRFPowerProfiler
+from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
 
 
 def logger():
@@ -244,7 +245,12 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 
 # ********************************************************************************************************************
 
-# @pytest.mark.firmware_app("test_352K_M4SS_320K")
+
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [256])
 @pytest.mark.config(
@@ -332,6 +338,11 @@ def test_wlan_active_rx_ht_mcs0_C652604(firmware_loader, power_meter, remote_wis
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [263])
 @pytest.mark.config(
@@ -419,6 +430,11 @@ def test_wlan_active_rx_ht_mcs7_C652605(firmware_loader, power_meter, remote_wis
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [256])
 @pytest.mark.config(
@@ -506,6 +522,11 @@ def test_wlan_active_rx_he_mcs0_C652606(firmware_loader, power_meter, remote_wis
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("power", [127])
 @pytest.mark.parametrize("rate", [263])
 @pytest.mark.config(

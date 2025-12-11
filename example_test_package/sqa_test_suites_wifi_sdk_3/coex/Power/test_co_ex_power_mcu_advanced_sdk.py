@@ -34,6 +34,7 @@ import os
 from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.power_meter.nrf_ppk2.nrf_power_profiler_mp import NRFPowerProfiler
+from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
 
 """ Test Steps:
         1. Configure the DUT in Co-Ex mode for 2.4Ghz.
@@ -426,6 +427,11 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 
 # ********************************************************************************************************************
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -487,7 +493,13 @@ def test_wlan_conn_with_DTIM_10_ble_adv_C20649(firmware_loader, power_meter, wif
                                                           file_name = perf_file_name
                                                           )
 
+# ********************************************************************************************************************
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",
@@ -550,7 +562,13 @@ def test_wlan_conn_with_DTIM_10_ble_conn_C20650(firmware_loader, power_meter, wi
                                                           file_name = perf_file_name
                                                           )
 
+# ********************************************************************************************************************
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.config(
     "wifi_dut",

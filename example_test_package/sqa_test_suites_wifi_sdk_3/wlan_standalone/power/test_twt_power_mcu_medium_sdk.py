@@ -42,6 +42,7 @@ from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEvent
 import string
 import random
 from retry import retry
+from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
 
 
 def logger():
@@ -450,6 +451,11 @@ pytestmark = [pytest.mark.firmware_app("test_416K_M4SS_256K")]
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -531,6 +537,11 @@ def test_standby_power_twt_disable_without_ip_C129918(firmware_loader, power_met
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -610,6 +621,11 @@ def test_standby_power_twt_disable_with_ip_C129919(firmware_loader, power_meter,
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -692,6 +708,11 @@ def test_standby_power_twt_disable_tcp_ka_C129920(firmware_loader, power_meter, 
      time.sleep(10)
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -793,6 +814,11 @@ def test_standby_power_twt_enable_without_ip_C129922(firmware_loader, power_mete
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -894,6 +920,11 @@ def test_standby_power_twt_enable_with_ip_C129923(firmware_loader, power_meter, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -998,6 +1029,11 @@ def test_standby_power_twt_enable_tcp_ka_C129924(firmware_loader, power_meter,  
      time.sleep(10)
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1099,6 +1135,11 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1200,6 +1241,11 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1307,6 +1353,11 @@ def test_standby_power_announced_twt_enable_tcp_ka_C129929(firmware_loader, powe
 # ********************************************************************************************************************
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1390,6 +1441,11 @@ def test_standby_power_twt_disable_mqtt_ka_C129921(firmware_loader, power_meter,
     time.sleep(10)
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1495,6 +1551,11 @@ def test_standby_power_twt_enable_mqtt_ka_C129925(firmware_loader, power_meter, 
     time.sleep(10)
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1603,6 +1664,11 @@ def test_standby_power_announced_twt_enable_mqtt_ka_C129926(firmware_loader, pow
     time.sleep(10)
 
 
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
 @pytest.mark.config(
     "wifi_dut",
     wifi=
