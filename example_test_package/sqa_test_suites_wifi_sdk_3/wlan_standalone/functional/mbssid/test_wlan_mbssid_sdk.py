@@ -3889,10 +3889,12 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
-        wifi_dut.interfaces.wifi.stop_ap()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info("Stop DUT AP finally")
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.config(
@@ -3989,10 +3991,12 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
-        wifi_dut.interfaces.wifi.stop_ap()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.config(
@@ -4091,17 +4095,19 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
         sniffer_filter=sniffer_filter,
         net_perf_client=net_perf_client,
         wifi_clients=wifi_clients,
+
     )
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
         wifi_sniffer.interfaces.capture.stop_capture()
-        logger().info("Stop Sniffer finally")
-        wifi_dut.interfaces.wifi.stop_ap()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info("Stop Soft AP finally")
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.config(
@@ -4206,10 +4212,12 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
-        wifi_dut.interfaces.wifi.stop_ap()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info("Stop Sniffer finally")
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.config(
@@ -4319,10 +4327,12 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
-        wifi_dut.interfaces.wifi.stop_ap()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info("Stop DUT AP finally")
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.config(
@@ -4432,10 +4442,13 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
-        wifi_dut.interfaces.wifi.stop_ap()
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        logger().info("Stop DUT AP finally")
+        wifi_dut.interfaces.wifi.stop_ap()
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
