@@ -236,3 +236,7 @@ disable_sgi_ping_APUT, (wlan.addr == {{sa_addr}}, and (radiotap.flags.shortgi ==
 disable_sgi_assoc_pkt, (wlan.addr == {{sa_addr}}, and (wlan.ht.capabilities.short20 == 0)),
 ping_request, (ip.src == {{sa_addr}} and  ip.dst == {{da_addr}}), and (icmp.type == 8),
 ping_response, (ip.src == {{sa_addr}} and ip.dst == {{da_addr}}), and (icmp.type == 0),
+ap_wps_pbc_beacon, ((wlan.addr == {{wlan_addr}}), and (wps.selected_registrar_config_methods.pushbutton == 0x1) and (wps.selected_registrar == 0x01)),
+dut_wps_pbc_probe_req, ((wlan.addr == {{wlan_addr}}), and (wps.config_methods == 0x0280) && (wps.request_type == 0x01)),
+ap_wps_assoc_resp, ((wlan.addr == {{wlan_addr}}), and (wlan.fc.type_subtype == 0x01 ) and  (wps.response_type == 0x03)),
+dut_wps_assoc_req, ((wlan.addr == {{wlan_addr}}), and (wps.request_type == 0x01) and wlan.fc.type_subtype == 0x00),

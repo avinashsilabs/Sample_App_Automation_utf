@@ -344,14 +344,14 @@ class WPSThread(ThreadBase):
 
                 if self.test_case == "893048":
                     time.sleep(5)
-                    logger.info("Turning off the AP")
+                    logger().info("Turning off the AP")
                     self.switch.interfaces.pdu_switch.turn_off(delay=20)
-                    logger.info("Again turning on the AP")
+                    logger().info("Again turning on the AP")
                     self.switch.interfaces.pdu_switch.turn_on(delay=100)
-                    logger.info("Successfully powered on AP")
-                    logger.info("Pinging to DUT to check rejoin process is completed or not")
+                    logger().info("Successfully powered on AP")
+                    logger().info("Pinging to DUT to check rejoin process is completed or not")
                     status = self.sl_collections.ping(self.device_ip, 30, 5)
-                    assert not status, "Pinging to DUT is passed, but STA remains disconnected after reboot AP"
+                    assert status, "Pinging to DUT is failed, and STA remains disconnected after reboot AP"
 
                 time.sleep(2)
                 if self.leave:
@@ -458,6 +458,8 @@ def test_wifi_sdk_sta_wps_pbc_conn_loop_c893043(wifi_dut, wifi_access_point, wif
             wps_obj.start()
             wps_obj.wait_for_exit()
             wps_obj.wps_pbc_sniffer_validation()
+            wifi_access_point.interfaces.wifi.set_configure_wps_web()
+            time.sleep(10)
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
@@ -495,7 +497,6 @@ def test_wifi_sdk_wps_no_AP_in_PBC_mode_c893047(wifi_dut, wifi_access_point, wif
 
 
 @wifi_dut_marker()
-@pytest.mark.skip()
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -511,8 +512,7 @@ def test_wifi_sdk_sta_wps_AP_reboot_c893048(wifi_dut, wifi_access_point, wifi_sn
         ping_count = utf_constants.get("ping_count")
         wps_obj = WPSThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case="893048",
-                            ping_count=ping_count, power_save=True, wifi_client=wifi_client, switch=switch,
-                            leave=False)
+                            ping_count=ping_count, power_save=True, wifi_client=wifi_client, switch=switch)
 
         wps_obj.start()
         wps_obj.wait_for_exit()
