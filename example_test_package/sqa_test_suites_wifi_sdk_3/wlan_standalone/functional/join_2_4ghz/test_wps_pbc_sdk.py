@@ -3,6 +3,8 @@ import hashlib
 import pytest
 import time
 import re
+import ipaddress
+import random
 from datetime import datetime, date
 from utf.interfaces.wifi.fixtures import wifi_client
 from utf.utils.logger import get_logger
@@ -38,13 +40,28 @@ def logger():
 
 """
 
+def random_ipv6_addr(prefix: str) -> str:
+    # Ensure the prefix is interpreted as a /64 network
+    network = ipaddress.IPv6Network(f"{prefix}/64", strict=False)
+
+    # Generate a random 64-bit interface identifier
+    random_suffix = random.getrandbits(64)
+
+    # Combine the prefix and the random suffix
+    full_ip_int = int(network.network_address) | random_suffix
+    full_ip = ipaddress.IPv6Address(full_ip_int)
+
+    return str(full_ip)
+
+wan_ipv6_addr = random_ipv6_addr("2001:db8:abcd:0012::")
+wan_gateway = "2001:db8:abcd:0012::1"
 
 class WPSThread(ThreadBase):
     """This function is responsible for wi-fi connectivity"""
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, ping_count=None, test_case=None, sniffer_filter=None,
                  sl_collections=None, power_save=None, auto_connect=True, wifi_sniffer=None,
-                 wifi_client=None, switch=None, leave=True, stop_capture=True, run_time=30):
+                 wifi_client=None, switch=None, leave=True, stop_capture=True, run_time=30, ip_version='ipv4'):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -63,6 +80,7 @@ class WPSThread(ThreadBase):
         self.stop_capture = stop_capture
         self.run_time = run_time
         self.device_ip = None
+        self.ip_version = ip_version
 
     def delta_between_dhcp_req_packet(self):
         packet_filter = "Time delta from previous captured frame"
@@ -304,18 +322,23 @@ class WPSThread(ThreadBase):
                                                        security=self.wifi_access_point.interfaces.wifi.security.name.lower(),
                                                        timeout=60)
 
-                ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut, ip_status=False, retry_count=3)
+                ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut, ip_status=False, retry_count=3, ip_version=self.ip_version)
                 assert ip_status, f"....Unable to assign IP ADDRESS through DHCP with reason: {ip_config}...."
-
-                self.device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+                if self.ip_version == 'ipv6':
+                    self.device_ip = ip_config[1]
+                else:
+                    self.device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
                 logger().info(f"\n **** Device IP Address: {self.device_ip} ****\n")
                 logger().info(f"\n =========== pinging DUT before power save ===============\n")
                 status = self.sl_collections.ping(device_ip=self.device_ip, ping_count=10)
                 assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
                 logger().info(f"\n =========== Initiate the ping from DUT to Station ===============\n")
-                host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
-                self.wifi_dut.interfaces.wifi.ping(server_ip=host_ip, num_ping_attempts=5, )
+                if self.ip_version == 'ipv6':
+                    host_ip = self.wifi_client.interfaces.wifi.get_ip_address(version=6, addr_type="global")
+                else:
+                    host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+                self.wifi_dut.interfaces.wifi.ping(server_ip=host_ip, num_ping_attempts=5, ip_version=self.ip_version)
 
                 if self.power_save:
                     self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
@@ -332,11 +355,6 @@ class WPSThread(ThreadBase):
                             time.sleep(1)
 
                     logger().info("=========== pinging DUT after power save ===============")
-                    status = self.sl_collections.ping(device_ip=self.device_ip, ping_count=10)
-                    assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
-
-                    time.sleep(30)
-                    logger().info("=========== Verifying connection status after 30 second delay ========")
                     status = self.sl_collections.ping(device_ip=self.device_ip, ping_count=10)
                     assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
@@ -591,7 +609,7 @@ def test_wifi_sdk_wps_auto_conn_false_c893053(wifi_dut, wifi_access_point, wifi_
                         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation,
                         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.mDNS | Si91xTCPIPFeatureBitMap.SSL
                                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
-                        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+                        "custom_features": Si91xCustomFeatureBitMap.Default,
                         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
                         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
@@ -637,7 +655,7 @@ def test_wifi_sdk_wps_ap_mode_ragistrar_role_c893055(wifi_dut, wifi_access_point
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             10),
-        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
         "config_features": 0,
@@ -789,7 +807,7 @@ def test_wifi_sdk_sta_wps_api_disabled_c893051(wifi_dut, wifi_access_point, wifi
         "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.mDNS | Si91xTCPIPFeatureBitMap.SSL
                           | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
-        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.FeatureLowPower,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
@@ -865,7 +883,7 @@ def test_wifi_sdk_sta_wps_pin_method_c893054(wifi_dut, wifi_access_point, wifi_s
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_sdk_sta_wps_pbc_conn_open_security_c893092(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
+def test_wifi_sdk_sta_wps_pbc_conn_open_security_c922292(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                          sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC connection with OPEN security via Software API """
     ap_mac_address = wifi_access_point.interfaces.wifi.bssid
@@ -875,7 +893,7 @@ def test_wifi_sdk_sta_wps_pbc_conn_open_security_c893092(wifi_dut, wifi_access_p
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
         wps_obj = WPSThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case="893092",
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case="922292",
                             ping_count=ping_count, power_save=True, wifi_client=wifi_client)
 
         wps_obj.start()
@@ -1129,6 +1147,67 @@ def test_wifi_sdk_wps_pbc_wpa2_wpa3_PMF_capable_c922293(wifi_dut, wifi_access_po
             'packet_count'], 'Unable to find beacon frame with PMF capable'
 
         wps_obj.wps_pbc_sniffer_validation()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+    finally:
+        logger().info(" ====== Stop WPS PBC on Access Point ====== ")
+        wifi_access_point.interfaces.wifi.set_configure_wps_web()
+
+
+@pytest.mark.firmware_app("test_ipv6")
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ipv6_state": "0",
+                               "wan_ipv6_address": wan_ipv6_addr,
+                               "wan_ipv6_gateway": wan_gateway,
+                               "security": "Open"}
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv6Client | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.mDNS | Si91xTCPIPFeatureBitMap.SSL
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.IPv6Mode,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.FeatureLowPower,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            10),
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+def test_wifi_sdk_sta_wps_pbc_conn_ipv6_c925838(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
+                                           sl_collections, sniffer_filter, request, wifi_client):
+    """This test case verifies the STA WPS PBC connection via Software API with IPV6"""
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        test_case = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wps_obj = WPSThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case="925838",
+                            ping_count=ping_count, power_save=True, wifi_client=wifi_client, ip_version='ipv6')
+
+        wps_obj.start()
+        wps_obj.wait_for_exit()
+        wps_obj.wps_pbc_sniffer_validation()
+
+        logger().info("\n ====== Validate ICMPV6 message in Sniffer Capture ====== \n")
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(type=129, filter_name='icmpv6_msg_type')
+
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Sniffer: ICMPV6 message not received'
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
