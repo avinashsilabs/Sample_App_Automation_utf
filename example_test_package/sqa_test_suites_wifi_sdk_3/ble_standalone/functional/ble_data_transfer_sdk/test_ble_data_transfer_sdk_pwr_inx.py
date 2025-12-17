@@ -141,6 +141,7 @@ class Ble_Data_Transfer:
         time.sleep(30)
 
         events = self.ble_dut.interfaces.bluetooth.get_async_events()
+        time.sleep(1)
         for event in events:
             if event.event_type == AsyncEventIdentifiers.ADVERTISE:
                 if "rsi_ble_simple_central_on_adv_report_event" in event.event_data:
@@ -544,6 +545,7 @@ class Ble_Data_Transfer:
             tw = Stopwatch()
             while tw.elapsed_sec < 10:
                 events = self.ble_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                time.sleep(5)
                 for event in events:
                     if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                         logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")

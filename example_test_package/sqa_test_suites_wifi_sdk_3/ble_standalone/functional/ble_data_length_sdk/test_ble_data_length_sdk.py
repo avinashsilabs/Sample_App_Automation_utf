@@ -97,6 +97,7 @@ class SendDataFromRemote(ThreadBase):
             tw = Stopwatch()
             while tw.elapsed_sec < 10:
                 events = self.wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                time.sleep(5)
                 for event in events:
                     if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                         logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
@@ -752,6 +753,7 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
                     tw = Stopwatch()
                     while tw.elapsed_sec < 10:
                         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                        time.sleep(5)
                         for event in events:
                             if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                                 logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
@@ -896,6 +898,7 @@ def test_ble_master_rx_100_bytes_duty_cycle_C19930(ble_dut, ble_client, sl_colle
                     tw = Stopwatch()
                     while tw.elapsed_sec < 10:
                         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                        time.sleep(5)
                         for event in events:
                             if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                                 logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
@@ -1041,6 +1044,7 @@ def test_ble_master_rx_230_bytes_C19921(ble_dut, ble_client, sl_collections, wif
                     tw = Stopwatch()
                     while tw.elapsed_sec < 10:
                         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                        time.sleep(5)
                         for event in events:
                             if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                                 logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")
@@ -1186,6 +1190,7 @@ def test_ble_master_rx_230_bytes_duty_cycle_C19927(ble_dut, ble_client, sl_colle
                     tw = Stopwatch()
                     while tw.elapsed_sec < 10:
                         events = wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                        time.sleep(5)
                         for event in events:
                             if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                                 logger().info(f"************** BLE EVENT DATA IS : {event.event_data} **************")

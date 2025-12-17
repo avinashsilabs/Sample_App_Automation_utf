@@ -31,12 +31,12 @@ def logger():
 
 def ble_different_adv_type_random_private_addr(ble_dut=None, ble_sniffer=None, capture_file=None, test_case=None,
                                                ble_adv_type=128, ble_addr_type=0, own_addr_type=0, ble_adv_int_min=256,
-                                               ble_adv_int_max=512, arg_set=0):
+                                               ble_adv_int_max=512):
     ble_sniffer.interfaces.sniffer.init_sniffer()
     ble_sniffer.interfaces.sniffer.start_capture(capture_file=capture_file)
 
     logger().info("Initiate ble service in DUT")
-    ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(arg_set=arg_set)
+    ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
     assert ble_dut_address, "failed to initiate ble in dut"
 
     if ble_addr_type==1:
@@ -164,7 +164,7 @@ def test_ble_sdk_directed_connectable_min_int_adv_C663378(ble_dut, sl_collection
         with TimeMeasurer() as t:
             ble_different_adv_type_random_private_addr(ble_dut, ble_sniffer, capture_file='ble_gap_sdk_C663378',
                                                        test_case=663378, ble_adv_type=129, ble_adv_int_min=32,
-                                                       ble_adv_int_max=32, arg_set=1)
+                                                       ble_adv_int_max=32)
         logger().info(f"time taken for test {t.duration}")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
@@ -236,7 +236,7 @@ def test_ble_sdk_directed_connectable_max_int_adv_C663382(ble_dut, sl_collection
         with TimeMeasurer() as t:
             ble_different_adv_type_random_private_addr(ble_dut, ble_sniffer, capture_file='ble_gap_sdk_C663382',
                                                        test_case=663382, ble_adv_type=129, ble_adv_int_min=16384,
-                                                       ble_adv_int_max=16384, arg_set=1)
+                                                       ble_adv_int_max=16384)
         logger().info(f"time taken for test {t.duration}")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
@@ -308,7 +308,7 @@ def test_ble_sdk_directed_connectable_max_min_int_adv_C663386(ble_dut, sl_collec
         with TimeMeasurer() as t:
             ble_different_adv_type_random_private_addr(ble_dut, ble_sniffer, capture_file='ble_gap_sdk_C663386',
                                                        test_case=663386, ble_adv_type=129, ble_adv_int_min=32,
-                                                       ble_adv_int_max=16384, arg_set=1)
+                                                       ble_adv_int_max=16384)
         logger().info(f"time taken for test {t.duration}")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
@@ -380,7 +380,7 @@ def test_ble_sdk_directed_connectable_random_addr_C663390(ble_dut, sl_collection
         with TimeMeasurer() as t:
             ble_different_adv_type_random_private_addr(ble_dut, ble_sniffer, capture_file='ble_gap_sdk_C663390',
                                                        test_case=663390, ble_adv_type=129, ble_addr_type=1,
-                                                       own_addr_type=1, arg_set=1)
+                                                       own_addr_type=1)
         logger().info(f"time taken for test {t.duration}")
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
