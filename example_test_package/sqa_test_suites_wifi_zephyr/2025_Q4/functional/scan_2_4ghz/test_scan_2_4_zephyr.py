@@ -11,17 +11,16 @@ def logger():
 
 
 """ Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
-        2. Enable the wlan and bt power save mode in dut after the connection
-        3. Initiate the Scan from DUT
-        4. Verify the scan results
+        1. Configuration of DUT in 2G : gnbax
+        2. Initiate the Scan from DUT
+        3. Verify the scan results
+        4. Verify Scan functionality with all possible options provided in the scan API
 
     setup requirement:
         1. DUT(SiWG917)
-        2. Si-MB4002A
-        3. Raspberry PI4
-        4. Access Point(Third Party AP's)
-        5. NUC
+        2. Raspberry PI4
+        3. Access Point(Third Party AP's)
+        4. NUC
 
     Author: Vinod.G
 """
@@ -37,11 +36,10 @@ def logger():
 # This test case verifies All Channels Scan in 2.4 Ghz by giving channel number as Zero
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_zephyr_all_scan_channels_c19056(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
-                                           zephyr_wifi_collections):
+                                              zephyr_wifi_collections):
+    """ Verify Scan functionality when channel is set to 0 in scan API """
     try:
         test_name = request.node.name
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
         true_result_list = []
         false_result_list = []
@@ -91,9 +89,8 @@ def test_wifi_zephyr_all_scan_channels_c19056(wifi_sniffer, wifi_dut, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan Response Based on RSSI
 def test_wifi_zephyr_scan_check_rssi_c19060(wifi_dut, wifi_access_point, zephyr_wifi_collections):
+    """ The test case verifies whether the RSSI of the scanned APs are in ascending order or not """
     try:
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
 
         logger().info("Initiating scan from dut...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
@@ -120,15 +117,14 @@ def test_wifi_zephyr_scan_check_rssi_c19060(wifi_dut, wifi_access_point, zephyr_
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_zephyr_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
-                                           zephyr_wifi_collections):
+                                              zephyr_wifi_collections):
+    """ The test case verifies whether DUT is able to scan AP ssid when ssid length is 32 bytes """
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"Device mac address: {sa_addr}")
         da_addr = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {da_addr}")
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         ssid_list = ['test123test123test123test123test', 'test1*@test1*#test1*@test1*$test',
                      'test12.test12.test12.test12.test', '了是不了是不了是不了']
 
@@ -164,7 +160,8 @@ def test_wifi_zephyr_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_acces
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_ssid', "broadcast_ssid": False})
 # This case verifies the scan in hidden mode of AP for all channels
 def test_wifi_zephyr_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
-                                                  zephyr_wifi_collections):
+                                                     zephyr_wifi_collections):
+    """ This case verifies the scan in hidden mode of AP for all channels """
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
@@ -178,11 +175,6 @@ def test_wifi_zephyr_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wif
             sa_addr=sa_addr,
             hidden_ssid="\"\"",
             filter_name="hidden_ssid_probe_request_packet")
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
-        logger().info("Enabling rejoin...")
-        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0)
         logger().info("Initiating scan from dut...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
         time.sleep(1)
@@ -206,14 +198,8 @@ def test_wifi_zephyr_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wif
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality with max scan of dut
 def test_wifi_zephyr_scan_max_aps_c19061(wifi_dut, wifi_access_point, zephyr_wifi_collections):
+    """This test case verifies whether DUT is able to scan 11 APs """
     try:
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
-
-        logger().info("Enabling rejoin...")
-        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0)
-
         channel_bitmap_2_4 = 0
         # enables the scan in DUT with the given channel bitmap value
         logger().info("Initiating selective channel scan from dut...")
@@ -239,13 +225,12 @@ def test_wifi_zephyr_scan_max_aps_c19061(wifi_dut, wifi_access_point, zephyr_wif
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality for channles 1-11
 def test_wifi_zephyr_all_chan_scan_with_channel_bitmap_c19057(wifi_sniffer, wifi_dut, wifi_access_point, request,
-                                                           zephyr_wifi_collections, sniffer_filter):
+                                                              zephyr_wifi_collections, sniffer_filter):
+    """ This test case verifies the scan functionality for channles 1-11 """
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"Device mac address: {sa_addr}")
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         channel_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
         true_result_list = []
         false_result_list = []
@@ -304,13 +289,12 @@ def test_wifi_zephyr_all_chan_scan_with_channel_bitmap_c19057(wifi_sniffer, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality with the channel 1,6,8
 def test_wifi_zephyr_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
-                                                zephyr_wifi_collections):
+                                                   zephyr_wifi_collections):
+    """ Verifies the scan functionality with the channel 1,6,8 """
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"Device mac address: {sa_addr}")
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         channel_list = [1, 6, 8]
         true_result_list = []
         false_result_list = []
@@ -368,13 +352,12 @@ def test_wifi_zephyr_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality with the channel 1,3,6,11
 def test_wifi_zephyr_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
-                                                zephyr_wifi_collections):
+                                                   zephyr_wifi_collections):
+    """  Verifies the scan functionality with the channel 1,3,6,11 """
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"Device mac address: {sa_addr}")
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         channel_list = [1, 3, 6, 11]
         true_result_list = []
         false_result_list = []
@@ -433,16 +416,12 @@ def test_wifi_zephyr_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "hidden_ssid", "broadcast_ssid": False})
 # Verifies the scan in selected channels with the ap set in hidden mode
 def test_wifi_zephyr_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
-                                              zephyr_wifi_collections):
+                                                 zephyr_wifi_collections):
+    """ Verifies the scan in selected channels when the AP is set in hidden mode """
     try:
         test_name = request.node.name
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
         logger().info(f"Device mac address: {sa_addr}")
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
-        logger().info("Enabling rejoin...")
-        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0)
         channel_list = [1, 5, 9]
         true_result_list = []
         false_result_list = []
@@ -501,9 +480,9 @@ def test_wifi_zephyr_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_ac
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_zephyr_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi_access_point, request, wifi_sniffer,
-                                                               sniffer_filter, zephyr_wifi_collections):
+                                                                  sniffer_filter, zephyr_wifi_collections):
     """Trigger scan command when configured access point
-       is not available(DUT should throw 0x10003 error(No AP found))"""
+       is not available(Number of scan results should be 0))"""
 
     try:
         wifi_access_point.interfaces.wifi.stop_ap()
@@ -540,12 +519,11 @@ def test_wifi_zephyr_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "ssid": 'Explore@WiFi', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_zephyr_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi_access_point, request, wifi_sniffer,
-                                                               sniffer_filter, zephyr_wifi_collections):
+                                                                  sniffer_filter, zephyr_wifi_collections):
     """Verify whether DUT is able to scan special characters SSID or not"""
 
     try:
         test_name = request.node.name
-        mode = "high_performance"
         channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
         true_result_list = []
         false_result_list = []
@@ -595,7 +573,7 @@ def test_wifi_zephyr_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_zephyr_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_dut, request, wifi_sniffer,
-                                                       sniffer_filter, zephyr_wifi_collections):
+                                                          sniffer_filter, zephyr_wifi_collections):
     """Verify WLAN scan with a third-party AP configured with a high beacon length (max 512 bytes)."""
 
     try:
@@ -661,7 +639,7 @@ def test_wifi_zephyr_scan_with_high_beacon_length_c538006(wifi_access_point, wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_zephyr_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_access_point, request, wifi_sniffer,
-                                                         sniffer_filter, zephyr_wifi_collections):
+                                                            sniffer_filter, zephyr_wifi_collections):
     """Verify Wi-Fi scan results when there is no AP available in the envirnoment(Closed room))))"""
 
     try:
@@ -698,11 +676,9 @@ def test_wifi_zephyr_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_acces
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# This test case verifies the scan functionality with max scan of dut
 def test_wifi_zephyr_active_channel_scan_dwell_time_50msec_c19071(wifi_dut, wifi_access_point, zephyr_wifi_collections):
+    """ The test case verifies the scan functionality in all channels when dwell time is set to 50msec """
     try:
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         channel_bitmap_2_4 = 0
         dwell_time_active = 50
         scan_time_threshold = (11 * dwell_time_active + 100) / 1000
@@ -737,12 +713,9 @@ def test_wifi_zephyr_active_channel_scan_dwell_time_50msec_c19071(wifi_dut, wifi
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# This test case verifies the scan functionality with max scan of dut
 def test_wifi_zephyr_scan_bss_count_one_c19072(wifi_dut, wifi_access_point, zephyr_wifi_collections):
+    """ The test case verifies scan functionality when the max bss count is set to 1"""
     try:
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
-
         channel_bitmap_2_4 = 0
         # enables the scan in DUT with the given channel bitmap value
         logger().info("Initiating selective channel scan from dut...")
@@ -769,10 +742,9 @@ def test_wifi_zephyr_scan_bss_count_one_c19072(wifi_dut, wifi_access_point, zeph
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-def test_wifi_zephyr_scan_channel_12_c19073(wifi_dut, wifi_access_point, request, wifi_sniffer,
-                                         sniffer_filter, zephyr_wifi_collections):
-    """Trigger scan command when configured access point
-       is not available(DUT should throw 0x10003 error(No AP found))"""
+def test_wifi_zephyr_neg_scan_channel_12_c19073(wifi_dut, wifi_access_point, request, wifi_sniffer,
+                                                sniffer_filter, zephyr_wifi_collections):
+    """The test case verifies scan functionality in channel 12 in default region"""
 
     try:
         test_name = request.node.name
@@ -803,11 +775,10 @@ def test_wifi_zephyr_scan_channel_12_c19073(wifi_dut, wifi_access_point, request
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# This test case verifies the scan functionality with max scan of dut
-def test_wifi_zephyr_active_channel_scan_dwell_time_default_c19074(wifi_dut, wifi_access_point, zephyr_wifi_collections):
+def test_wifi_zephyr_active_channel_scan_dwell_time_default_c19074(wifi_dut, wifi_access_point,
+                                                                   zephyr_wifi_collections):
+    """ The test case measures the time taken in each channel when dwell time is set to 0"""
     try:
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
         channel_bitmap_2_4 = 0
         dwell_time_active = 0
         scan_time_threshold = (11 * 100 + 100) / 1000
@@ -842,8 +813,8 @@ def test_wifi_zephyr_active_channel_scan_dwell_time_default_c19074(wifi_dut, wif
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# This test case verifies the scan functionality with max scan of dut
 def test_wifi_zephyr_scan_for_10_min_c19075(wifi_dut, wifi_access_point, zephyr_wifi_collections):
+    """ The test case verifies scan functionality in loop for 10 minutes"""
     try:
         channel_bitmap_2_4 = 0
         # enables the scan in DUT with the given channel bitmap value
@@ -863,6 +834,7 @@ def test_wifi_zephyr_scan_for_10_min_c19075(wifi_dut, wifi_access_point, zephyr_
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -873,7 +845,7 @@ def test_wifi_zephyr_scan_for_10_min_c19075(wifi_dut, wifi_access_point, zephyr_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 def test_wifi_zephyr_scan_neg_band_5ghz_c751134(wifi_dut, zephyr_wifi_collections):
     """
-    Negative Case : Verify Passive scan functionality by enabling Dwell time to 1001msec.
+    Negative Case : The test case verifies whether the scan API failed with error when 5ghz band selected
     """
     try:
         wifi_dut.interfaces.wifi.scan(ssid="None", scan_bitmap_2_4=0, scan_type=0, bands=2,
@@ -881,62 +853,5 @@ def test_wifi_zephyr_scan_neg_band_5ghz_c751134(wifi_dut, zephyr_wifi_collection
     except Exception as error:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
 
-'''
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-    }
-)
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-# This test case verifies the scan functionality with max scan of dut
-def test_wifi_sdk_scan_max_aps_c19072(wifi_dut, wifi_access_point, zephyr_wifi_collections):
-    try:
-        channel_bitmap_2_4 = 0
-        # enables the scan in DUT with the given channel bitmap value
-        logger().info("Initiating selective channel scan from dut...")
-        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4, bands=2)
-        time.sleep(1)
-        logger().info(scan_results)
-        logger().info(len(scan_results))
-        if len(scan_results) == 11:
-            assert True, f"Dut has scanned {len(scan_results)} Aps"
-        else:
-            assert False, f"To scan more number of APs, Need to keep setup in open air environment"
-    except Exception as e:
-        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-    }
-)
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-# This test case verifies the scan functionality with max scan of dut
-def test_wifi_sdk_scan_max_aps_c19072(wifi_dut, wifi_access_point, zephyr_wifi_collections):
-    try:
-        logger().info("Setting DUT in wlan power save...")
-        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
-
-        logger().info("Enabling rejoin...")
-        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
-                                                                 beacon_missed_count=40, first_time_retry_enable=0)
-
-        channel_bitmap_2_4 = 0
-        # enables the scan in DUT with the given channel bitmap value
-        logger().info("Initiating selective channel scan from dut...")
-        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=channel_bitmap_2_4)
-        time.sleep(1)
-        logger().info(scan_results)
-        logger().info(len(scan_results))
-        if len(scan_results) == 11:
-            assert True, f"Dut has scanned {len(scan_results)} Aps"
-        else:
-            assert False, f"To scan more number of APs, Need to keep setup in open air environment"
-    except Exception as e:
-        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-'''

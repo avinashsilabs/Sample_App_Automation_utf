@@ -9,22 +9,18 @@ from utf.utils.stopwatch import Stopwatch
 from utf_wifi_zephyr.interfaces.zephyr_wifi_test_agent_cli import SLWifiCLI
 
 
-
 def logger():
     return get_logger(__name__)
 
 
 """This function runs below test steps for DUT-Si91x
-        1. Configuration of DUT in 2G : BGN
+        1. Configuration of DUT in 2G : bgnax
         2. Association of Third party AP's
         3. Get the valid IP address
-        4. Create a new TCP/IP socket
-        5. Bind the socket with DUT ip address
-        6. Connect the client with server socket as specified port number.
-        7. Validate all management packets in 1 Mbps data rates.
-        8. Configure data rates at on 11/12/54 Mbps and check the data rate in sniffer.
-        9. Verification of EAPOL packets for 1 Mbps data rates
-        10. Verification of Basic data rates for Association req & Probe response
+        4. Ping from remote peer
+        5. Validate all management packets in 1 Mbps data rates.
+        6. Verification of EAPOL packets for 1 Mbps data rates
+        7. Verification of Basic data rates for Association req & Probe response
 
     setup requirement:
         1. DUT(Soc917)
@@ -32,7 +28,7 @@ def logger():
         3. Access Point(Third Party AP's)
         4. Sniffer(NUC device)
 
-    Author: Vivek Verma
+    Author: Vinod.G
 """
 
 
@@ -122,9 +118,9 @@ class WLanThread(ThreadBase):
                 channel=self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
             self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                     wifi_access_point=self.wifi_access_point,
-                                                                     associated=self.wifi_dut.interfaces.wifi.associated
-                                                                     , ping_after_power_save=False)
+                                                                              wifi_access_point=self.wifi_access_point,
+                                                                              associated=self.wifi_dut.interfaces.wifi.associated
+                                                                              , ping_after_power_save=False)
             logger().info("DUT successfully connected with AP")
             time.sleep(10)
             if self.data_transfer:
@@ -135,6 +131,7 @@ class WLanThread(ThreadBase):
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case {self.test_case_no} thread: {str(e)} ****\n\n")
             raise e
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -178,6 +175,7 @@ def test_wifi_zephyr_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wif
             'Unable to find Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth mgmt packets'
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -237,6 +235,7 @@ def test_wifi_zephyr_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_po
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -276,6 +275,7 @@ def test_wifi_zephyr_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -311,6 +311,7 @@ def test_wifi_zephyr_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wi
             'Unable to find packets for EAPOL packets for 1 Mbps data rates'
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -375,149 +376,3 @@ def test_wifi_zephyr_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wi
             assert True
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#     }
-# )
-# @pytest.mark.skip
-# @pytest.mark.start_state("wifi_dut", wifi="init")
-# @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-# @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi={
-#         "thread_config": { "wifi":{ "count": 1, "stack_len": 2048 }} ,
-#         "oper_mode": Si91xOperatingMode.WiFiClient,
-#         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-#         "features": Si91xFeatureBitMap.ULPGPIOHandshake,
-#         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
-#         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-#         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-#         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
-#         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-#         "bt_features": 0,
-#         "ble_features": 0,
-#         "ble_custom_ext_features": 0,
-#     },
-# )
-# def test_wifi_sdk_data_rates_with_diff_rssi_values_c19630(wifi_sniffer, wifi_access_point, wifi_dut, rf_attenuator,
-#                                                           utf_constants, request, sniffer_filter, zephyr_wifi_collections):
-#     ping_count = utf_constants.get("ping_count")
-#     time_period = utf_constants.get("time_period")
-#     test_name = request.node.name
-#     set_rssi = 0
-#     packet_filter6 = '    Data Rate:'
-#
-#     '''Verify data rate functionality of STA DUT using AUTO RATE as data rate with AP OPEN mode'''
-#     ap_bssid = wifi_access_point.interfaces.wifi.bssid
-#     logger().info(f'AP BSSID = {ap_bssid}')
-#
-#     scan_results = wifi_dut.interfaces.wifi.scan(ssid=wifi_access_point.interfaces.wifi.ssid)
-#     logger().info(f'\n\n{scan_results[0]}\n')
-#     my_str = str(scan_results[0])
-#     current_rssi = abs(int(my_str.strip('()').split(' ')[5]))
-#     logger().info(f'Current RSSI = {current_rssi}')
-#     logger().info(f'Make RSSI -35 for ideal condition')
-#     if current_rssi < 35:
-#         set_rssi = 35 - current_rssi
-#     elif current_rssi > 35:
-#         set_rssi = current_rssi - 35
-#     elif current_rssi == 35:
-#         set_rssi = 35
-#
-#     logger().info(f'SET RSSI value = {set_rssi}')
-#
-#     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, time_period=time_period,
-#                           ping_count=ping_count, test_name=test_name, test_case_no=19622)
-#     try:
-#         wlan_obj.start()
-#         wlan_obj.wait_for_exit()
-#
-#         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-#             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-#             radio_ch=wifi_access_point.
-#             interfaces.wifi.channel,
-#             filter_name='probe_request')
-#         packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-#             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-#             da_addr=ap_bssid,
-#             filter_name='association_request')
-#         packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_bssid,
-#                                                                                         da_addr=wlan_obj.dut_addr[
-#                                                                                             'dut_mac_address'],
-#                                                                                         filter_name='association_response')
-#         packet_filter4 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-#             sa_addr=wlan_obj.dut_addr['dut_mac_address'],
-#             da_addr=ap_bssid,
-#             filter_name='power_mgmt_bit')
-#         packet_filter5 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-#             ta_addr=wlan_obj.dut_addr['dut_mac_address'],
-#             ra_addr=ap_bssid,
-#             filter_name='data_packets')
-#
-#         wifi_sniffer.interfaces.capture.stop_capture()
-#         logger().info("Stop Sniffer finally")
-#
-#         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
-#             'Unable to find Broadcast probe request packet'
-#         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count'], \
-#             'Unable to find Association req packets'
-#         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
-#             'Unable to find Association response packets'
-#         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)['packet_count'], \
-#             'Unable to find Power save mode with pmt bit 1'
-#
-#         if connect_status is False:
-#             logger().info("Unable to connect with Server")
-#             assert connect_status
-#         else:
-#             sw = Stopwatch()
-#             db_value = 10
-#             att_channel = 1
-#             attenuation_data_rates_dict = dict()
-#
-#             file_name = 'attenuation_' + str(db_value)
-#             logger().info('***** Set the attenuator *****')
-#             # ideal_rssi = set_rssi + current_rssi
-#             # set_db_value = int(ideal_rssi) + db_value
-#             ideal_rssi = 10
-#             set_db_value = int(ideal_rssi) + db_value
-#             logger().info(f'\n\n Set the ideal RSSI = {ideal_rssi}\n')
-#             wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, ideal_rssi)
-#
-#             while sw.elapsed_sec < time_period:
-#
-#                 time.sleep(10)
-#
-#                 wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-#                 wifi_sniffer.interfaces.capture.start_capture(capture_file=file_name)
-#                 logger().info(f'current time = {sw.elapsed_sec}, end time = {time_period}')
-#                 send_response = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data=data)
-#                 logger().info(f'SEND-RESPONSE = {send_response}')
-#
-#                 logger().info(f'\n\n set_db_value = {set_db_value}\n')
-#                 wifi_dut.interfaces.wifi.set_attenuator(rf_attenuator, att_channel, set_db_value)
-#                 time.sleep(10)
-#                 sw1 = Stopwatch()
-#                 while sw1.elapsed_sec < 30:
-#                     logger().info(f'\n\n current time = {sw.elapsed_sec}\n')
-#                     send_response = wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=tcp_socket_id, data=data)
-#                     logger().info(f'\n\n SEND-RESPONSE = {send_response}\n')
-#                 wifi_sniffer.interfaces.capture.stop_capture()
-#
-#                 assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5,
-#                                                                           packet_filter2=packet_filter6)['packet_count'], \
-#                     'Unable to find data packets'
-#
-#                 attenuation_data_rates_dict[eval('set_db_value')] = tcp_socket_obj.verify_data_rates()
-#                 logger().info(f'Attenuation and Data Rates value = {attenuation_data_rates_dict}')
-#                 set_db_value = set_db_value + 10
-#
-#             logger().info(f'Attenuation and Data Rates value = {attenuation_data_rates_dict}')
-#     except Exception as e:
-#         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

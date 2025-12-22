@@ -3,9 +3,6 @@ import time
 import pytest as pytest
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
-
-# from example_test_package.sqa_test_suites_wifi_zephyr.functional.data_rates.test_wlan_data_rates_sdk \
-#     import SocketDataTransfer
 from utf_wifi_zephyr.utils.sl_status import SLStatus
 from collections import Counter
 from utf.interfaces.iperf.iperf_constants import IperfConstants
@@ -20,14 +17,14 @@ def logger():
 
 
 """This function runs below test steps for DUT-Si91x
-        1. Configuration of DUT in 2G : BGN
+        1. Configuration of DUT in 2G : gnbax
         2. Association of Third party AP's
         3. Validate MBSSID support in Third party AP's
         4. Scan available ssid's in vicinity and compare with AP configured VAP's list
         5. Connect DUT with T & NT based ssid with different security modes. 
         6. Trigger TCP/UDP traffic suing socket/iperf API's.
         7. Enable rejoin and verify the same functionality with different security modes.
-        8. Verify in concurrent modes.
+       
 
     setup requirement:
         1. DUT(Soc917)
@@ -197,18 +194,18 @@ class WLanThread(ThreadBase):
                 self.wifi_sniffer.interfaces.capture.configure_interface(
                     channel=self.wifi_access_point.interfaces.wifi.channel)
                 self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
-                self.wifi_dut.interfaces.wifi.join(#ssid=vap_list[0],
-                                                   ssid=self.wifi_access_point.interfaces.wifi.guest_networks[0]["ssid"],
-                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
-                                                       "passphrase"],
-                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
-                                                       "security"].name.lower(), )
+                self.wifi_dut.interfaces.wifi.join(  # ssid=vap_list[0],
+                    ssid=self.wifi_access_point.interfaces.wifi.guest_networks[0]["ssid"],
+                    passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                        "passphrase"],
+                    security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                        "security"].name.lower(), )
 
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                                   wifi_access_point=self.wifi_access_point,
                                                                                   associated=False,
                                                                                   ping_after_power_save=False,
-                                                                                  skip_scan=True, skip_connect=True,
+                                                                                  skip_connect=True,
                                                                                   retry_count=3, )
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -267,7 +264,7 @@ class WLanThread(ThreadBase):
                     self.wifi_dut.interfaces.wifi.scan()
                     time.sleep(2)
                     self.wifi_dut.interfaces.wifi.join(
-                        #ssid=vap_list[0],
+                        # ssid=vap_list[0],
                         ssid=self.wifi_access_point.interfaces.wifi.guest_networks[0]["ssid"],
                         security=self.wifi_access_point.interfaces.wifi.guest_networks[
                             0
@@ -284,7 +281,6 @@ class WLanThread(ThreadBase):
                         wifi_access_point=self.wifi_access_point,
                         associated=False,
                         ping_after_power_save=False,
-                        skip_scan=True,
                         skip_connect=True,
                         mfp=ZephyrWifiMfpOptions.WIFI_MFP_REQUIRED
                     )
@@ -292,54 +288,6 @@ class WLanThread(ThreadBase):
                     host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                     logger().info(f"Remote device ip :{host_ip}")
 
-                    # time.sleep(5)
-                    # (
-                    #     ip_version,
-                    #     ttl,
-                    #     multicast_mac,
-                    #     multicast_ip,
-                    #     device_port,
-                    #     server_port,
-                    #     buffer_length,
-                    #     no_of_pkts,
-                    # ) = self.multicast_client.interfaces.multicast.multicast_params()
-                    #
-                    # logger().info(f"DUT joining to the multicast group {multicast_ip}")
-                    # self.wifi_dut.interfaces.wifi.sl_net_join_multicast_address()
-                    #
-                    # self.net_perf_client.interfaces.net_perf.init_client(
-                    #     host_ip=host_ip,
-                    #     device_ip=multicast_ip,
-                    #     time_out=70,
-                    #     protocol=self.protocol,
-                    #     time_to_leave="32",
-                    #     bandwidth="60M",
-                    #     host_role="C",
-                    #     bind_address=host_ip,
-                    # )
-                    # logger().info(
-                    #     f"Host IP: {host_ip}, Dut IP: {self.dut_addr['device_ip']}, Protocol: {self.protocol}"
-                    # )
-                    # logger().info(f"***** starting iperf ******")
-                    # self.net_perf_client.interfaces.net_perf.start()
-                    # logger().info(f"***** start listening  ******")
-                    # self.wifi_dut.interfaces.wifi.iperf(
-                    #     family=2,
-                    #     transfer_type=2,
-                    #     protocol=17,
-                    #     local_port=self.net_perf_client.interfaces.net_perf.client_port,
-                    #     local_ip=multicast_ip,
-                    #     remote_ip=host_ip,
-                    #     remote_port=self.net_perf_client.interfaces.net_perf.client_port,
-                    #     size=1470,
-                    #     ttl=60,
-                    #     throughput_type=4,
-                    #     qos=0,
-                    #     async_socket=1,
-                    #     timeout=70,
-                    # )
-                    #
-                    # self.wifi_dut.interfaces.wifi.sl_net_leave_multicast_address()
                     logger().info("Stop Sniffer finally")
                     self.wifi_sniffer.interfaces.capture.stop_capture()
                     self.wifi_dut.interfaces.wifi.leave()
@@ -351,13 +299,6 @@ class WLanThread(ThreadBase):
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
                 """ Enabling Rejoin """
-                # The below method is not supported on zephyr
-                # self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
-                #     max_retry_attempts=0,
-                #     scan_interval=6,
-                #     beacon_missed_count=40,
-                #     first_time_retry_enable=0,
-                # )
                 self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                 self.validate_rssi_channel_security()
 
@@ -365,7 +306,6 @@ class WLanThread(ThreadBase):
                     wifi_dut=self.wifi_dut,
                     wifi_access_point=self.wifi_access_point,
                     associated=self.wifi_dut.interfaces.wifi.associated,
-                    skip_scan=True,
                     power_save=False,
                     ping_after_power_save=False,
                 )
@@ -381,19 +321,12 @@ class WLanThread(ThreadBase):
 
             elif self.test_case_no == 219295:
                 """Enabling Rejoin"""
-                # The below method is not supported in zephyr
-                # self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
-                #     max_retry_attempts=0,
-                #     scan_interval=6,
-                #     beacon_missed_count=40,
-                #     first_time_retry_enable=0,
-                # )
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                 self.validate_rssi_channel_security()
 
                 self.wifi_dut.interfaces.wifi.scan()
                 self.wifi_dut.interfaces.wifi.join(
-                    #ssid=vap_list[0],
+                    # ssid=vap_list[0],
                     ssid=self.wifi_access_point.interfaces.wifi.guest_networks[0]["ssid"],
                     passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
                         "passphrase"
@@ -407,7 +340,6 @@ class WLanThread(ThreadBase):
                     wifi_access_point=self.wifi_access_point,
                     associated=False,
                     ping_after_power_save=False,
-                    skip_scan=True,
                     skip_connect=True,
                 )
 
@@ -427,23 +359,8 @@ class WLanThread(ThreadBase):
                 )
 
             elif self.test_case_no == 219296:
-                """Enabling Rejoin"""
-                # The below method is not supported in zephyr
-                # self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
-                #     max_retry_attempts=0,
-                #     scan_interval=6,
-                #     beacon_missed_count=40,
-                #     first_time_retry_enable=0,
-                # )
-
                 self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                 self.validate_rssi_channel_security()
-
-                # time.sleep(2)
-                # self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-                #     join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
-                #                         | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
-                # )
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(
                     wifi_dut=self.wifi_dut,
                     wifi_access_point=self.wifi_access_point,
@@ -457,25 +374,11 @@ class WLanThread(ThreadBase):
                 self.zephyr_wifi_collections.ping(self.dut_addr["device_ip"], ping_count=60)
 
             elif self.test_case_no == 219297:
-                # logger().info("\n *** Enable Rejoin *** \n")
-                # The below method is not supported in zephyr
-                # self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
-                #     max_retry_attempts=0,
-                #     scan_interval=6,
-                #     beacon_missed_count=40,
-                #     first_time_retry_enable=0,
-                # )
-
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                 self.validate_rssi_channel_security()
-                # The below method is not supported in zephyr
-                # self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-                #     join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
-                #                         | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
-                # )
                 self.wifi_dut.interfaces.wifi.scan()
                 self.wifi_dut.interfaces.wifi.join(
-                    #ssid=vap_list[0],
+                    # ssid=vap_list[0],
                     ssid=self.wifi_access_point.interfaces.wifi.guest_networks[0]["ssid"],
                     security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
                         "security"
@@ -490,7 +393,6 @@ class WLanThread(ThreadBase):
                     wifi_access_point=self.wifi_access_point,
                     associated=False,
                     ping_after_power_save=False,
-                    skip_scan=True,
                     skip_connect=True,
                 )
                 self.zephyr_wifi_collections.ping(self.dut_addr["device_ip"], ping_count=60)
@@ -500,7 +402,7 @@ class WLanThread(ThreadBase):
                 self.validate_rssi_channel_security()
 
                 self.wifi_dut.interfaces.wifi.join(
-                    #ssid=vap_list[0],
+                    # ssid=vap_list[0],
                     ssid=self.wifi_access_point.interfaces.wifi.guest_networks[0]["ssid"],
                     security="open",
                     passphrase=self.wifi_access_point.interfaces.wifi.passphrase,
@@ -513,7 +415,7 @@ class WLanThread(ThreadBase):
 
                 self.wifi_dut.interfaces.wifi.scan()
                 status = self.wifi_dut.interfaces.wifi.join(
-                    #ssid=vap_list[0],
+                    # ssid=vap_list[0],
                     ssid=self.wifi_access_point.interfaces.wifi.guest_networks[0]["ssid"],
                     security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
                         "security"
@@ -546,7 +448,7 @@ class WLanThread(ThreadBase):
                     self.validate_rssi_channel_security()
                     time.sleep(2)
                     self.wifi_dut.interfaces.wifi.join(
-                        #ssid=vap_list[0],
+                        # ssid=vap_list[0],
                         ssid=self.wifi_access_point.interfaces.wifi.guest_networks[0]["ssid"],
                         security=self.wifi_access_point.interfaces.wifi.security.name.lower(),
                         passphrase=self.wifi_access_point.interfaces.wifi.passphrase,
@@ -556,7 +458,6 @@ class WLanThread(ThreadBase):
                         wifi_access_point=self.wifi_access_point,
                         associated=False,
                         ping_after_power_save=False,
-                        skip_scan=True,
                         skip_connect=True,
                     )
                     self.zephyr_wifi_collections.ping(self.dut_addr["device_ip"], ping_count=60)
@@ -581,6 +482,74 @@ class WLanThread(ThreadBase):
                 for i in range(0, 5):
                     self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                     self.validate_rssi_channel_security()
+
+            elif self.test_case_no == 219315:
+                self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
+
+                # Initiate scan to find all available SSID in DUT scan list T & NT based BSSID
+                vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
+                self.validate_rssi_channel_security()
+                time.sleep(10)
+
+                for i in range(0, 5):
+                    # Initiate the connection again for T based BSSID
+                    self.wifi_sniffer.interfaces.capture.configure_interface(
+                        channel=self.wifi_access_point.interfaces.wifi.channel
+                    )
+                    self.wifi_sniffer.interfaces.capture.start_capture(
+                        capture_file=self.test_name
+                    )
+
+                    self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(
+                        wifi_dut=self.wifi_dut,
+                        wifi_access_point=self.wifi_access_point,
+                        associated=self.wifi_dut.interfaces.wifi.associated,
+                        ping_after_power_save=False,
+                    )
+
+                    self.zephyr_wifi_collections.ping(self.dut_addr["device_ip"], ping_count=60)
+                    time.sleep(2)
+                    self.wifi_dut.interfaces.wifi.leave()
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    time.sleep(2)
+
+                    # Initiate the connection again for NT based BSSID
+                    vap0_mbssid = self.find_vaps_mbssid()
+                    logger().info(f"VAP0 MBSSID = {vap0_mbssid}")
+                    self.wifi_sniffer.interfaces.capture.configure_interface(
+                        channel=self.wifi_access_point.interfaces.wifi.channel
+                    )
+                    self.wifi_sniffer.interfaces.capture.start_capture(
+                        capture_file=self.test_name
+                    )
+
+                    self.wifi_dut.interfaces.wifi.scan()
+                    self.wifi_dut.interfaces.wifi.join(
+                        ssid=vap_list[0],
+                        security=self.wifi_access_point.interfaces.wifi.guest_networks[
+                            0
+                        ]["security"].name.lower(),
+                        passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[
+                            0
+                        ][
+                            "passphrase"
+                        ],
+                    )
+
+                    self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(
+                        wifi_dut=self.wifi_dut,
+                        wifi_access_point=self.wifi_access_point,
+                        associated=False,
+                        ping_after_power_save=False,
+                        skip_connect=True,
+                        retry_count=3,
+                    )
+
+                    self.zephyr_wifi_collections.ping(self.dut_addr["device_ip"], ping_count=60)
+                    time.sleep(2)
+                    self.wifi_dut.interfaces.wifi.leave()
+                    self.wifi_sniffer.interfaces.capture.stop_capture()
+                    time.sleep(2)
 
 
             elif self.test_case_no == 219300:
@@ -607,8 +576,6 @@ class WLanThread(ThreadBase):
                         wifi_access_point=self.wifi_access_point,
                         associated=self.wifi_dut.interfaces.wifi.associated,
                         ping_after_power_save=False,
-                        skip_scan=True,
-
                     )
 
                     time.sleep(5)
@@ -675,7 +642,6 @@ class WLanThread(ThreadBase):
                         wifi_access_point=self.wifi_access_point,
                         associated=self.wifi_dut.interfaces.wifi.associated,
                         ping_after_power_save=False,
-                        skip_scan=True,
                         retry_count=3,
                     )
                     packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -688,12 +654,6 @@ class WLanThread(ThreadBase):
                     time.sleep(2)
                     self.wifi_dut.interfaces.wifi.leave()
                     self.wifi_sniffer.interfaces.capture.stop_capture()
-                    # time.sleep(20)
-                    # assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    #     packet_filter1=packet_filter1
-                    # )[
-                    #     "packet_count"
-                    # ], "Unable to find NULL-Data frame packets with power save bit 1"
 
                     """ Initiate the connection again for NT based BSSID """
                     self.wifi_sniffer.interfaces.capture.configure_interface(
@@ -708,7 +668,7 @@ class WLanThread(ThreadBase):
                                 0
                             ]["ssid"], retries=3, timeout=25)
                     self.wifi_dut.interfaces.wifi.join(
-                        #ssid=vap_list[0],
+                        # ssid=vap_list[0],
                         ssid=self.wifi_access_point.interfaces.wifi.guest_networks[0]["ssid"],
                         security=self.wifi_access_point.interfaces.wifi.guest_networks[
                             0
@@ -725,7 +685,6 @@ class WLanThread(ThreadBase):
                         wifi_access_point=self.wifi_access_point,
                         associated=False,
                         ping_after_power_save=False,
-                        skip_scan=True,
                         skip_connect=True,
                         retry_count=3,
                     )
@@ -742,12 +701,7 @@ class WLanThread(ThreadBase):
                     time.sleep(2)
                     self.wifi_dut.interfaces.wifi.leave()
                     self.wifi_sniffer.interfaces.capture.stop_capture()
-                    # time.sleep(10)
-                    # assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    #     packet_filter1=packet_filter4
-                    # )[
-                    #     "packet_count"
-                    # ], "Unable to find NULL-Data frame packets with power save bit 1"
+
 
             else:
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(
@@ -1085,7 +1039,7 @@ class WLanThread(ThreadBase):
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219284')
-def test_wifi_zephyr_mbssid_c219284(
+def test_wifi_zephyr_mbssid_send_probe_request_asso_req_c219284(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -2216,7 +2170,7 @@ def test_wifi_zephyr_mbssid_rejoin_NT_wpa3_c219297(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219298')
-def test_wifi_zephyr_mbssid_c219298(
+def test_wifi_zephyr_mbssid_connection_with_wrong_security_c219298(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -2300,7 +2254,7 @@ def test_wifi_zephyr_mbssid_c219298(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219299')
-def test_wifi_zephyr_mbssid_negative_c219299(
+def test_wifi_zephyr_mbssid_neg_connection_with_wrong_password_c219299(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -2312,7 +2266,7 @@ def test_wifi_zephyr_mbssid_negative_c219299(
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
 
-    """	Connection with Wrong security """
+    """	Connection with Wrong password """
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -2383,12 +2337,12 @@ def test_wifi_zephyr_mbssid_negative_c219299(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219300')
-def test_wifi_zephyr_mbssid_connection_failure_c219300(
+def test_wifi_zephyr_mbssid_neg_connection_failure_when_ssid_not_provided_c219300(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sniffer_filter, zephyr_wifi_collections
 ):
     test_name = request.node.name
 
-    """continuous connect disconnect b/w T and NT profile based SSID's"""
+    """The test case should fail when connecting to AP when SSID is not provided in the join API"""
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -2455,7 +2409,7 @@ def test_wifi_zephyr_mbssid_connection_failure_c219300(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219301')
-def test_wifi_zephyr_mbssid_c219301(
+def test_wifi_zephyr_mbssid_connect_disconnect_to_ap_txbssid_c219301(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -2536,7 +2490,7 @@ def test_wifi_zephyr_mbssid_c219301(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219302')
-def test_wifi_zephyr_mbssid_c219302(
+def test_wifi_zephyr_mbssid_connect_disconnect_nt_bssid_c219302(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -2616,7 +2570,7 @@ def test_wifi_zephyr_mbssid_c219302(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219319')
-def test_wifi_zephyr_mbssid_c219319(
+def test_wifi_zephyr_mbssid_verify_scan_list_when_vap_wpa2_sec_NT_vap_wpa3_c219319(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -2697,7 +2651,7 @@ def test_wifi_zephyr_mbssid_c219319(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219320')
-def test_wifi_zephyr_mbssid_c219320(
+def test_wifi_zephyr_mbssid_verify_scan_list_when_vap_wpa3_sec_NT_vap_wpa3_transition_c219320(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -2774,7 +2728,7 @@ def test_wifi_zephyr_mbssid_c219320(
     },
 )
 @pytest.mark.test_src_map_id('C219321')
-def test_wifi_zephyr_mbssid_c219321(
+def test_wifi_zephyr_mbssid_verify_scan_list_when_vap_open_sec_NT_vap_wpa2_sec_c219321(
         wifi_sniffer,
         wifi_access_point,
         wifi_dut,
@@ -2963,6 +2917,87 @@ def test_wifi_zephyr_mbssid_T_NT_connect_disconnect_hidden_mode_c535831(
         test_case_no=535831,
         test_name=test_name,
         sniffer_filter=sniffer_filter,
+    )
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+        raise e
+
+
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "standard": "gnbax",
+        "security": "WPA2",
+        "ssid": "Mbssid_ap",
+        "passphrase": "123456789",
+        "channel": 3,
+        "guest_networks": [
+            {
+                "index": "1",
+                "ssid": "MBSSID_TEST_1",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "2",
+                "ssid": "MBSSID_TEST_2",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+            {
+                "index": "3",
+                "ssid": "MBSSID_TEST_3",
+                "passphrase": "123456789",
+                "band": "2g",
+                "security": "WPA2",
+                "channel": 3,
+            },
+        ],
+    },
+)
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["unassociated"]
+)
+def test_wifi_zephyr_mbssid_T_NT_connect_disconnect_c219315(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        request,
+        sniffer_filter,
+        zephyr_wifi_collections,
+        net_perf_client,
+        wifi_client,
+        protocol,
+):
+    test_name = request.node.name
+
+    """continuous connect disconnect b/w T and NT profile based SSID's"""
+
+    wlan_obj = WLanThread(
+        wifi_dut=wifi_dut,
+        wifi_access_point=wifi_access_point,
+        wifi_sniffer=wifi_sniffer,
+        zephyr_wifi_collections=zephyr_wifi_collections,
+        test_case_no=219315,
+        test_name=test_name,
+        sniffer_filter=sniffer_filter,
+        protocol=protocol,
+        net_perf_client=net_perf_client,
+        wifi_client=wifi_client,
     )
     try:
         wlan_obj.start()

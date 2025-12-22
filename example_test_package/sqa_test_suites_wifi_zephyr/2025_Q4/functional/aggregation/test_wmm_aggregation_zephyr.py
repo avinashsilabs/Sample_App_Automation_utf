@@ -6,14 +6,13 @@ from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
 
 """This function runs below test steps for DUT-Si91x
-        1. Configuration of DUT in 2G : BGN
+        1. Configuration of DUT in 2G : gnbax
         2. Start the sniffer before connection
         3. Association of Third party AP's
         4. Get the valid IP address
-        6. Enable the power save mode in DUT
-        7. Stop the sniffer
-        8. Validating Add-ba request from AP/DUT
-        9. Validating Add-ba response from AP/DUT 
+        5. Stop the sniffer
+        6. Validating Add-ba request from AP/DUT
+        7. Validating Add-ba response from AP/DUT 
 
     setup requirement:
         1. soc board
@@ -21,7 +20,7 @@ from utf.utils.thread_base import ThreadBase
         3. Access Point(Third Party AP's)
         4. Sniffer(NUC device)
         
-    Author: Saurabh Sharma
+    Author: Vinod.G
 
 """
 
@@ -55,12 +54,8 @@ class WifiJoin(ThreadBase):
             self.wifi_sniffer.interfaces.capture.configure_interface(
                 channel=self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
-            #The below method is not supported in zephyr
-            # self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-            #                                                               beacon_missed_count=40,
-            #                                                               first_time_retry_enable=0)
             self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
-                                                                     associated=self.wifi_dut.interfaces.wifi.associated)
+                                                                              associated=self.wifi_dut.interfaces.wifi.associated)
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
 
@@ -76,8 +71,10 @@ class WifiJoin(ThreadBase):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_wifi_zephyr_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
-                                               wifi_client, protocol, zephyr_wifi_collections, sniffer_filter):
+def test_wifi_zephyr_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
+                                                           request,
+                                                           wifi_client, protocol, zephyr_wifi_collections,
+                                                           sniffer_filter):
     """ Verifying UDP Tx by enabling Aggregation in WPA2-AES mode and verifying sniffer packets """
 
     capture_filename = request.node.name
@@ -169,8 +166,10 @@ def test_wifi_zephyr_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_per
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_wifi_zephyr_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
-                                             wifi_client, protocol, zephyr_wifi_collections, sniffer_filter):
+def test_wifi_zephyr_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
+                                                         request,
+                                                         wifi_client, protocol, zephyr_wifi_collections,
+                                                         sniffer_filter):
     """ Verifying UDP Tx aggregation in OPEN mode and verifying sniffer packets """
 
     capture_filename = request.node.name
@@ -261,8 +260,10 @@ def test_wifi_zephyr_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_wifi_zephyr_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
-                                               wifi_client, protocol, zephyr_wifi_collections, sniffer_filter):
+def test_wifi_zephyr_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
+                                                           request,
+                                                           wifi_client, protocol, zephyr_wifi_collections,
+                                                           sniffer_filter):
     """ Verifying UDP Rx by enabling Aggregation in WPA2-AES mode and verifying sniffer packets """
 
     capture_filename = request.node.name
@@ -351,8 +352,10 @@ def test_wifi_zephyr_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_per
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-def test_wifi_zephyr_udp_rx_aggregation_open_mode_c19034(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
-                                             wifi_client, protocol, zephyr_wifi_collections, sniffer_filter):
+def test_wifi_zephyr_udp_rx_aggregation_open_mode_c19034(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
+                                                         request,
+                                                         wifi_client, protocol, zephyr_wifi_collections,
+                                                         sniffer_filter):
     """Verifying UDP Rx aggregation in OPEN mode and verifying sniffer packets """
 
     capture_filename = request.node.name

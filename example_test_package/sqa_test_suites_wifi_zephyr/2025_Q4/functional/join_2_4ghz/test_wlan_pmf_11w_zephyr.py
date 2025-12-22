@@ -5,21 +5,20 @@ from utf.utils.logger import get_logger
 from utf_wifi_zephyr.devices.si91x import (
     ZephyrWifiMfpOptions
 )
-from utf_wiseconnect_3.tests.sl_status import SLStatus
-from utf.interfaces.iperf.iperf_constants import IperfConstants
+from utf_wifi_zephyr.utils.sl_status import SLStatus
+from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 
 
 def logger():
     return get_logger(__name__)
 
 
-"""Author : Vivek"""
+"""Author : Vinod.G"""
 
 """This function runs below test steps for DUT-Si91x to verify 802.11w functionality 
-        1. Configuration of DUT in 2G/5G : BGN
+        1. Configuration of DUT in 2G : gnbax
         2. Association of Third party AP's(ASUS RT AX3000)
         3. Get the valid IP address
-        4. Enable Background scan
         4. Create a new TCP/IP socket
         5. Bind the socket with DUT ip address
         6. Connect the client with server socket as specified port number.
@@ -56,12 +55,6 @@ class WLanThread(ThreadBase):
 
     def run(self):
         try:
-            # """ Enabling Rejoin """
-            # The below method is not supported in zephyr
-            # self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
-            #                                                               beacon_missed_count=40,
-            #                                                               first_time_retry_enable=0)
-
             logger().info("\n *** Start sniffer configuration *** \n")
             self.wifi_sniffer.interfaces.capture.configure_interface(
                 channel=self.wifi_access_point.interfaces.wifi.channel)
@@ -69,9 +62,6 @@ class WLanThread(ThreadBase):
             time.sleep(2)
 
             if self.test_case_no == 19658 or self.test_case_no == 19671:
-                # the below method is not supported in zephyr
-                # self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-                #     join_feature_bitmap=IEEE802_11W.Protection_capable)
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                                   wifi_access_point=self.wifi_access_point,
                                                                                   associated=False,
@@ -81,9 +71,6 @@ class WLanThread(ThreadBase):
                 time.sleep(2)
 
             if self.test_case_no == 19659:
-                # the below method is not supported in zephyr
-                # self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-                #     join_feature_bitmap=IEEE802_11W.Protection_Required)
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                                   wifi_access_point=self.wifi_access_point,
                                                                                   associated=False,
@@ -93,10 +80,6 @@ class WLanThread(ThreadBase):
                 time.sleep(2)
 
             if self.test_case_no == 19670:
-                # the below method is not supported in zephyr
-                # self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(join_feature_bitmap=
-                #                                                       IEEE802_11W.Protection_capable |
-                #                                                       IEEE802_11W.Protection_Required)
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                                   wifi_access_point=self.wifi_access_point,
                                                                                   associated=False,
@@ -106,10 +89,6 @@ class WLanThread(ThreadBase):
                 time.sleep(2)
 
             if self.data_transfer:
-                # self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
-                #                                      time_period=self.time_period, data=self.data,
-                #                                      dut_ip=self.dut_addr['device_ip'])
-                # self.socket_obj.socket_data_transfer()
                 self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"***** Host IP Address is {self.host_ip} ******")
 
@@ -346,14 +325,13 @@ def test_wifi_zephyr_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wifi_ac
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-def test_wifi_zephyr_pmf_cap_ap_pmf_req_and_cap_dut_c19663(wifi_sniffer, wifi_access_point, wifi_dut,
-                                                           zephyr_wifi_collections,
-                                                           request, sniffer_filter, wifi_client, net_perf_client,
-                                                           protocol):
+def test_wifi_zephyr_mgmt_pmf_enable_tx_data_c19671(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                    zephyr_wifi_collections,
+                                                    request, sniffer_filter, wifi_client, net_perf_client,
+                                                    protocol):
     test_name = request.node.name
 
-    '''Check whether the device is connecting to PMF Capable AP when the device is configured with PMF Required 
-       and Capable'''
+    """Check whether the data transfer(transmit) is happening with PMF enable mode"""
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()
 
@@ -557,7 +535,7 @@ def test_wifi_zephyr_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_poi
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.skip()
+
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -574,7 +552,7 @@ def test_wifi_zephyr_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_poi
 def test_wifi_zephyr_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_point, wifi_sniffer,
                                                          zephyr_wifi_collections, request, sniffer_filter, wifi_client,
                                                          net_perf_client, protocol):
-    # Check whether the data transfer(receiver) is happening with PMF enable mode
+    """Check whether the data transfer(receiver) is happening with PMF enable mode"""
     test_name = request.node.name
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()

@@ -117,7 +117,7 @@ devices:
                 # to be defined in the defaults section for specifying the
                 # communication interface to the device
                 type: 'zephyr_wifi_test_agent_cli'
-                src_dir: 'utf_wifi_zephyr.tests'
+                src_dir: 'utf_wifi_zephyr'
                 thread_config:
                     wifi:
                         count: 2

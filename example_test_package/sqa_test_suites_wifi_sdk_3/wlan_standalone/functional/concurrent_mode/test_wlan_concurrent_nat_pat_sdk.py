@@ -20,7 +20,7 @@ from utf.utils.thread_base import ThreadBase
 import pytest as pytest
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf import UtfDatabaseProperties
-from utf_wifi_zephyr.tests.sl_status import SLStatus
+from utf_wifi_zephyr.sl_status import SLStatus
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import SLWifiCLI
 from utf.interfaces.wifi import WlanError
 from utf.utils.logger import get_logger

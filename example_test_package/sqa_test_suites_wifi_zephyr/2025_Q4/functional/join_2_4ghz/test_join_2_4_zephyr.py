@@ -21,10 +21,9 @@ def logger():
         4. Sniffer(NUC device)
 
     Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        1. Configuration of DUT in 2G : bgnax
         2. Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate ping from the dut
+        3. Initiate Ping from remote peer
 
     Author: Vinod.G
 
@@ -35,7 +34,8 @@ class WLanJoinThread(ThreadBase):
     """This function is responsible for wi-fi connectivity"""
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, ping_count=None, test_case=None,
-                 zephyr_wifi_collections=None, sniffer_filter=None, power_save=None, ap_mac_address=None, pmk_enable=False,
+                 zephyr_wifi_collections=None, sniffer_filter=None, power_save=None, ap_mac_address=None,
+                 pmk_enable=False,
                  wifi_client=None):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -65,11 +65,12 @@ class WLanJoinThread(ThreadBase):
                 self.wifi_access_point.interfaces.wifi.passphrase = 'test12345678'
 
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(self.wifi_dut,
-                                                                         wifi_access_point=self.wifi_access_point,
-                                                                         power_save=self.power_save,
-                                                                         ping_after_power_save=True, retry_count=3,
-                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                         pmk_enable=self.pmk_enable)
+                                                                                  wifi_access_point=self.wifi_access_point,
+                                                                                  power_save=self.power_save,
+                                                                                  ping_after_power_save=True,
+                                                                                  retry_count=3,
+                                                                                  associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                                  pmk_enable=self.pmk_enable)
                 time.sleep(2)
                 logger().info("disconnecting to ap.....")
                 self.wifi_dut.interfaces.wifi.leave()
@@ -82,11 +83,12 @@ class WLanJoinThread(ThreadBase):
                 logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
                 self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(self.wifi_dut,
-                                                                         wifi_access_point=self.wifi_access_point,
-                                                                         power_save=self.power_save,
-                                                                         ping_after_power_save=True, retry_count=3,
-                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                         pmk_enable=self.pmk_enable)
+                                                                                  wifi_access_point=self.wifi_access_point,
+                                                                                  power_save=self.power_save,
+                                                                                  ping_after_power_save=True,
+                                                                                  retry_count=3,
+                                                                                  associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                                  pmk_enable=self.pmk_enable)
 
                 time.sleep(1)
                 logger().info("disconnecting to ap.....")
@@ -96,8 +98,9 @@ class WLanJoinThread(ThreadBase):
                 self.wifi_sniffer.interfaces.capture.stop_capture()
                 time.sleep(1)
                 self.zephyr_wifi_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer,
-                                                            self.dut_addr['dut_mac_address'], self.ap_mac_address,
-                                                            self.sniffer_filter, power_save=self.power_save)
+                                                                     self.dut_addr['dut_mac_address'],
+                                                                     self.ap_mac_address,
+                                                                     self.sniffer_filter, power_save=self.power_save)
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
@@ -152,11 +155,10 @@ def test_wifi_zephyr_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_poi
                                                        zephyr_wifi_collections, sniffer_filter, request):
     """
     Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        1. Configure the DUT in Wlan mode for 2.4Ghz
         2. Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate ping from the dut
-        5. Do sniffer Validation for 11n mode
+        3. Initiate ping from remote peer to DUT
+        4. Do sniffer Validation for 11n mode
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -169,7 +171,8 @@ def test_wifi_zephyr_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_poi
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter, test_case=test_case,
+                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter,
+                                  test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
 
         wlan_obj.start()
@@ -190,14 +193,15 @@ def test_wifi_zephyr_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_poi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_zephyr_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_point, wifi_sniffer,
-                                                             utf_constants, zephyr_wifi_collections, sniffer_filter, request):
+                                                             utf_constants, zephyr_wifi_collections, sniffer_filter,
+                                                             request):
     """
     Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        1. Configure the DUT in Wlan mode for 2.4Ghz
+        2. Keep SSID to hidden mode in AP
         2. Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate ping from the dut
-        5. Do sniffer Validation for hidden mode
+        3. Initiate ping from remote peer to DUT
+        4. Do sniffer Validation for hidden mode
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -209,7 +213,8 @@ def test_wifi_zephyr_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_acce
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter, test_case=test_case,
+                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter,
+                                  test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
 
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=ap_mac_address,
@@ -240,13 +245,14 @@ def test_wifi_zephyr_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_zephyr_psk_with_64_different_characters_c19719(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper,
-                                                             utf_constants, request, zephyr_wifi_collections, sniffer_filter):
+                                                             utf_constants, request, zephyr_wifi_collections,
+                                                             sniffer_filter):
     """
     Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        1. Configure the DUT in Wlan mode for 2.4Ghz
         2. Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate ping from the dut
+        3. Initiate ping from remote peer to DUT
+
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -258,7 +264,8 @@ def test_wifi_zephyr_psk_with_64_different_characters_c19719(wifi_dut, wifi_acce
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter, test_case=test_case,
+                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter,
+                                  test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
 
         wlan_obj.start()
@@ -280,13 +287,10 @@ def test_wifi_zephyr_psk_with_64_different_characters_c19719(wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_zephyr_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper,
-                                                            utf_constants, request, zephyr_wifi_collections, sniffer_filter):
+                                                            utf_constants, request, zephyr_wifi_collections,
+                                                            sniffer_filter):
     """
-    Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
-        2. Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate ping from the dut
+    Verify connect and disconnect functionality to the AP for multiple times for 15 minutes
     """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -297,7 +301,8 @@ def test_wifi_zephyr_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_acces
         test_case = request.node.name
         ping_count = utf_constants.get("ping_count")
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter, test_case=test_case,
+                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter,
+                                  test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
 
         with TimeMeasurer() as t:
@@ -332,13 +337,12 @@ def test_wifi_zephyr_verify_connectivity_with_correct_psk_after_wrong_psk_c69455
                                                                                   sniffer_filter):
     """
     Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        1. Configure the DUT in Wlan mode for 2.4Ghz
         2. Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate ping from the dut
-        5. Verify error SI91X_DEAUTHENTICATION on connecting wrong PSK
-        6. Try with correct PSK
-        7. Connection should be a success
+        3. Verify error on connecting wrong PSK
+        4. Try with correct PSK
+        5. Connection should be success
+        6. Initiate ping from the dut
   """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -358,7 +362,8 @@ def test_wifi_zephyr_verify_connectivity_with_correct_psk_after_wrong_psk_c69455
         logger().info(f"\n Changing the PSK to {wrong_psk}\n")
         wifi_access_point.interfaces.wifi.passphrase = wrong_psk
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter, test_case=test_case,
+                                  zephyr_wifi_collections=zephyr_wifi_collections, sniffer_filter=sniffer_filter,
+                                  test_case=test_case,
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address)
 
         wlan_obj.start()
@@ -388,15 +393,8 @@ def test_wifi_zephyr_connectivity_neg_psk_7_bytes_or_64_bytes_c79234(wifi_dut, w
                                                                      utf_constants, request, zephyr_wifi_collections,
                                                                      sniffer_filter):
     """
-    Test Steps:
-        1. Configure the DUT in Wlan coex mode for 2.4Ghz
-        2. Join the access point and enable the dhcp
-        3. Enable the wlan and bt power save mode in dut after the connection
-        4. Initiate ping from the dut
-        5. Verify error SI91X_DEAUTHENTICATION on connecting wrong PSK
-        6. Try with correct PSK
-        7. Connection should be a success
-  """
+    Connection to the AP should fail as psk length is not in the permittable range
+    """
 
     try:
         test_case = request.node.name
@@ -424,8 +422,6 @@ def test_wifi_zephyr_connectivity_neg_psk_7_bytes_or_64_bytes_c79234(wifi_dut, w
                                       expected_status=SLStatus.SL_STATUS_FAIL
                                       )
 
-        # wifi_dut.interfaces.wifi.join(ssid=None, channel=0)
-
         logger().info("Stopping sniffer...")
         wifi_sniffer.interfaces.capture.stop_capture()
 
@@ -441,9 +437,10 @@ def test_wifi_zephyr_connectivity_neg_psk_7_bytes_or_64_bytes_c79234(wifi_dut, w
     }
 )
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": 'TESTTEST-ASUS-ANSHUL', "security": 'WPA2', "passphrase": '12345678'})
+                    wifi={"ssid": 'TESTTEST-WPA2', "security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections, request,
+def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
+                                                    request,
                                                     utf_constants):
     """ Test case verifies the device is able to get the wireless statistics in station mode"""
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -456,8 +453,9 @@ def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point,
         test_case = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
-        zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point, ping_after_power_save=True,
-                                            retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
+        zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point,
+                                                     ping_after_power_save=True,
+                                                     retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
 
         state, ssid, bssid, band, channel, iface_mode, link_mode, wpa3_ent_type, security, mfp, rssi, dtim_period, beacon_interval, twt_capable, current_phy_tx_rate = wifi_dut.interfaces.wifi.get_wifi_operational_stats(
             timeout=15)
@@ -487,9 +485,10 @@ def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point,
     }
 )
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": 'TESTTEST-ASUS-ANSHUL', "security": 'Open'})
+                    wifi={"ssid": 'TESTTEST-ASUS-OPEN', "security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
+def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                             zephyr_wifi_collections,
                                                              request,
                                                              utf_constants):
     """ Test case verifies the device is able to get the wireless statistics in station mode"""
@@ -503,8 +502,9 @@ def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_acce
         test_case = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
-        zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point, ping_after_power_save=True,
-                                            retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
+        zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point,
+                                                     ping_after_power_save=True,
+                                                     retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
 
         state, ssid, bssid, band, channel, iface_mode, link_mode, wpa3_ent_type, security, mfp, rssi, dtim_period, beacon_interval, twt_capable, current_phy_tx_rate = wifi_dut.interfaces.wifi.get_wifi_operational_stats(
             timeout=15)
@@ -526,11 +526,19 @@ def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_acce
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-'''
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+
+    }
+)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
-                                            sniffer_filter, zephyr_wifi_collections):
+def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+                                                          request,
+                                                          sniffer_filter, zephyr_wifi_collections):
+    """ Test case verifies the device is able to get the wireless statistics in station mode in WPA3 security mode"""
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
@@ -541,8 +549,9 @@ def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_acc
         test_case = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
-        zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point, ping_after_power_save=True,
-                                            retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
+        zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point,
+                                                     ping_after_power_save=False,
+                                                     retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
 
         state, ssid, bssid, band, channel, iface_mode, link_mode, wpa3_ent_type, security, mfp, rssi, dtim_period, beacon_interval, twt_capable, current_phy_tx_rate = wifi_dut.interfaces.wifi.get_wifi_operational_stats(
             timeout=15)
@@ -551,7 +560,7 @@ def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_acc
         assert ssid == wifi_access_point.interfaces.wifi.ssid, "SSID details retrieved using WIFI_IFACE_STATUS API are wrong"
         assert int(
             channel) == wifi_access_point.interfaces.wifi.channel, "Channel info retrieved using WIFI_IFACE_STATUS API is wrong"
-        assert int(security) == 0, "Security info retrieved using WIFI_IFACE_STATUS API is wrong"
+        assert int(security) == 3, "Security info retrieved using WIFI_IFACE_STATUS API is wrong"
         assert bssid.upper() == wifi_access_point.interfaces.wifi.bssid, "BSSID info retrieved using WIFI_IFACE_STATUS API is wrong"
         assert int(
             dtim_period) == wifi_access_point.interfaces.wifi.dtim, "DTIM period set in AP, and retrieved using WIFI_IFACE_STATUS API is not same"
@@ -562,4 +571,3 @@ def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_acc
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-'''
