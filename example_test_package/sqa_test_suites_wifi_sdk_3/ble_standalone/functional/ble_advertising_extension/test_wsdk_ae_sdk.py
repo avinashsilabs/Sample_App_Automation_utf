@@ -74,7 +74,7 @@ def calculate_offset(df):
                     timestamp_39 = df.loc[i + 2, 'Timestamp']
                     timestamp_random = df.loc[i + 3, 'Timestamp']
                     time_diff_microseconds = (timestamp_random - timestamp_39).total_seconds() * 1e6
-                    if abs(offset_39 - time_diff_microseconds) <= 15:
+                    if abs((offset_39 - time_diff_microseconds)/1e6) <= 15:
                         return True
         return False
 
