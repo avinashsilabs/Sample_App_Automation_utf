@@ -1788,11 +1788,10 @@ def test_ble_hogp_smp_slave_mode_C703319(ble_dut, ble_client, sl_collections):
 def test_ble_sdk_connect_disconnect_multiple_times_from_RD1_C19875(wifi_dut, ble_client, sl_collections):
     """verify gatt connection and disconnection multiple times"""
     try:
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(bond_info=1)
-        assert bt_dut_address is not None, "gatt init failed in DUT"
-        timeout = 120
         for i in range(0, 5):
-            wifi_dut.interfaces.wifi.ble_set_smp(set_smp=1)
+            bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(bond_info=0)
+            assert bt_dut_address, "gatt init failed in DUT"
+            timeout = 120
             ble_client.interfaces.bluetooth.close()
             bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
                 bt_dut_address=bt_dut_address, service_classes=["BatteryService"]
