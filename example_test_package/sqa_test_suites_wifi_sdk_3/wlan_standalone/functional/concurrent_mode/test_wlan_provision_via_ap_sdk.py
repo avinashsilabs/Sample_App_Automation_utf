@@ -255,6 +255,7 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": SecurityMode.Open, "channel": 1, "ssid": 'ThirdPartyAP'})
+@pytest.mark.deployed_25q4
 def test_wifi_provisioning_via_ap_open_c667576(wifi_dut, wifi_client, channel, wifi_access_point,
                                                                  wiseconnect_web, request, wifi_sniffer, sl_collections):
     """
@@ -295,6 +296,7 @@ def test_wifi_provisioning_via_ap_open_c667576(wifi_dut, wifi_client, channel, w
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', 'passphrase': 'test1234'})
+@pytest.mark.deployed_25q4
 def test_wifi_provisioning_via_ap_WPA2_c694946(wifi_dut, wifi_client, channel, wifi_access_point,
                                                                  wiseconnect_web, request, wifi_sniffer, sl_collections):
     """
@@ -335,6 +337,7 @@ def test_wifi_provisioning_via_ap_WPA2_c694946(wifi_dut, wifi_client, channel, w
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', 'passphrase': 'test1234'})
+@pytest.mark.deployed_25q4
 def test_wifi_provisioning_via_ap_loop_c667577(wifi_dut, wifi_client, channel, wifi_access_point,
                                                                  wiseconnect_web, request, wifi_sniffer, sl_collections):
     """
@@ -378,6 +381,7 @@ def test_wifi_provisioning_via_ap_loop_c667577(wifi_dut, wifi_client, channel, w
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA3', "channel": 1, "ssid": 'ThirdPartyAP', 'passphrase': 'test1234'})
+@pytest.mark.deployed_25q4
 def test_wifi_provisioning_via_ap_WPA3_c694947(wifi_dut, wifi_client, channel, wifi_access_point,
                                                                  wiseconnect_web, request, wifi_sniffer, sl_collections):
     """
@@ -418,6 +422,7 @@ def test_wifi_provisioning_via_ap_WPA3_c694947(wifi_dut, wifi_client, channel, w
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA3', "channel": 1, "ssid": 'ThirdPartyAP', 'passphrase': 'test1234'})
+@pytest.mark.deployed_25q4
 def test_wifi_provisioning_via_ap_WPA3Transition_c783506(wifi_dut, wifi_client, channel, wifi_access_point,
                                                                  wiseconnect_web, request, wifi_sniffer, sl_collections):
     """
@@ -458,6 +463,7 @@ def test_wifi_provisioning_via_ap_WPA3Transition_c783506(wifi_dut, wifi_client, 
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', 'passphrase': 'test123456789012345678901234567890'})
+@pytest.mark.deployed_25q4
 def test_wifi_provisioning_via_ap_psk_len_more_than_32_c780931(wifi_dut, wifi_client, channel, wifi_access_point,
                                                                  wiseconnect_web, request, wifi_sniffer, sl_collections):
     """
@@ -498,6 +504,7 @@ def test_wifi_provisioning_via_ap_psk_len_more_than_32_c780931(wifi_dut, wifi_cl
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": SecurityMode.WPAWPA2MixedMode, "channel": 1, "ssid": 'ThirdPartyAP', 'passphrase': 'test1234'})
+@pytest.mark.deployed_25q4
 def test_wifi_provisioning_via_ap_mixed_mode_c789510(wifi_dut, wifi_client, channel, wifi_access_point,
                                                                  wiseconnect_web, request, wifi_sniffer, sl_collections):
     """

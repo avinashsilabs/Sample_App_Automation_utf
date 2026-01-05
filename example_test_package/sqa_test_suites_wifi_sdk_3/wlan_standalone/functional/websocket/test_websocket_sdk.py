@@ -1941,6 +1941,7 @@ def test_wifi_sdk_websocket_functionality_with_pong_frame_c688096(wifi_dut, wifi
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_websocket_keepalive_pong_response_c687985(wifi_dut, wifi_access_point, wifi_sniffer, http_server, utf_constants,
                                                    request, sl_collections, sniffer_filter, wifi_client):
     """

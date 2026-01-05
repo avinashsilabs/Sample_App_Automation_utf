@@ -489,6 +489,7 @@ def test_wifi_sdk_scan_and_connect_in_world_domain_c19078(wifi_dut, utf_constant
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_scan_and_connect_in_world_domain_c19076(wifi_access_points, wifi_dut, utf_constants, remote_wiseconnect3, wifi_sniffer, request, sniffer_filter, sl_collections):
     """ Set STAUT to World Mode Domain in 2.4 Ghz__(TC_3)Case3:
         1. Place US regeion AP in channel 1 and place JP regeion AP in channel 6 and place EU regeion AP in channel 13 3.

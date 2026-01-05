@@ -2401,6 +2401,7 @@ def test_wifi_sdk_verify_remote_socket_termination_c538011(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.skip("This testcase is not announced yet")
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_verify_socket_select_functionality_ssl_tx_rx_with_16k_length_c538018(
     wifi_sniffer,
     wifi_dut,

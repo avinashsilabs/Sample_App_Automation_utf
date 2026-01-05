@@ -1998,6 +1998,7 @@ def test_wifi_sdk_wpa3_conc_mode_12_hour_ping_C468633(wifi_sniffer, wifi_access_
 )
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa3_conc_LI_based_ps_enabled_11n_mode_C463713(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client, protocol, net_perf_client):
@@ -2188,6 +2189,7 @@ def test_wifi_sdk_wpa3_conc_LI_based_ps_enabled_11n_mode_C463713(wifi_sniffer, w
 )
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa3_conc_with_11n_mode_tcp_rx_C463724(wifi_sniffer, wifi_access_point, wifi_dut,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client, protocol, net_perf_client):
@@ -2337,6 +2339,7 @@ def test_wifi_sdk_wpa3_conc_with_11n_mode_tcp_rx_C463724(wifi_sniffer, wifi_acce
 )
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa3_conc_mode_12_hour_ping_disable_11ax_mode_C537925(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                       sl_collections, remote_wiseconnect3, wifi_client):
     """
@@ -2578,6 +2581,7 @@ def test_wifi_sdk_wpa3_transition_conc_start_stop_ap_C468607(wifi_sniffer, wifi_
 )
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_conn_wpa3_in_concurrent_mode_11n_full_sae_C468611(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     try:

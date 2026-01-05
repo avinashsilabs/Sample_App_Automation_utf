@@ -2461,6 +2461,7 @@ def test_wifi_sdk_max_psp_enable_disable_c19682(wifi_sniffer, wifi_access_point,
         Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_enhanced_max_psp_ulp_c19693(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                               sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name
@@ -2576,6 +2577,7 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19693(wifi_sniffer, wifi_access_point, w
         Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                           sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name
@@ -2690,6 +2692,7 @@ def test_wifi_sdk_enhanced_max_psp_c19694(wifi_sniffer, wifi_access_point, wifi_
         Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_enhanced_max_psp_ulp_c19695(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                               sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name
@@ -2815,6 +2818,7 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19695(wifi_sniffer, wifi_access_point, w
         Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_enhanced_max_psp_ulp_c19696(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                               sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name
@@ -2940,6 +2944,7 @@ def test_wifi_sdk_enhanced_max_psp_ulp_c19696(wifi_sniffer, wifi_access_point, w
         Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_enhanced_max_psp_ulp_c19697(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                               sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name
@@ -3145,6 +3150,7 @@ def test_wifi_sdk_max_psp_enable_disable_c19698(wifi_sniffer, wifi_access_point,
         Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_enhanced_max_psp_ulp_c19699(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                               sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name
@@ -3602,6 +3608,7 @@ def test_wifi_sdk_enhanced_max_psp_with_ulp_mode_dtim_c19704(wifi_sniffer, wifi_
         Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_enhanced_max_psp_listen_interval_c19705(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                                           sl_collections, request, utf_constants, wifi_client,
                                                           net_perf_client):
@@ -3710,6 +3717,7 @@ def test_wifi_sdk_enhanced_max_psp_listen_interval_c19705(wifi_sniffer, wifi_acc
         Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_enhanced_max_psp_dtim_c19706(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                                sl_collections, request, utf_constants, wifi_client, net_perf_client):
     test_name = request.node.name
@@ -3816,6 +3824,7 @@ def test_wifi_sdk_enhanced_max_psp_dtim_c19706(wifi_sniffer, wifi_access_point, 
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_maxpsp_listen_interval_11ms_c19167(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                                      sl_collections, request, wifi_client):
     test_name = request.node.name
@@ -4121,6 +4130,7 @@ def test_wifi_sdk_cmdbased_maxpsp_listen_interval_c19173(wifi_sniffer, wifi_acce
         Feature32KHzBypassClockOnUULP_GPIO_3
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_maxpsp_multiple_listen_interval_c19174(wifi_sniffer, wifi_access_point, wifi_dut, sniffer_filter,
                                                          sl_collections, request, utf_constants, wifi_client,
                                                          net_perf_client):

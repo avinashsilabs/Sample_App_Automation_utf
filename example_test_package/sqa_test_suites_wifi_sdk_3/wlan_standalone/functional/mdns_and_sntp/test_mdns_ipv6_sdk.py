@@ -209,6 +209,7 @@ def _strict_prefix():
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mdns_ipv6_stateless_with_avahi_loop_c767019(
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
@@ -279,6 +280,7 @@ def test_wifi_sdk_mdns_ipv6_stateless_with_avahi_loop_c767019(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mdns_ipv6_stateful_with_avahi_loop_c767020(
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
@@ -354,6 +356,7 @@ def test_wifi_sdk_mdns_ipv6_stateful_with_avahi_loop_c767020(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ipv6_c767022(
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
@@ -467,6 +470,7 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ipv6_c767022(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mdns_avahi_discover_1hr_loop_c767026(
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):

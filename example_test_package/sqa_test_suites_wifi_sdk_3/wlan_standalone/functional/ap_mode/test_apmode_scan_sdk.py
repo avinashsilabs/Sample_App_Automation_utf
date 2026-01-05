@@ -453,6 +453,7 @@ def test_wifi_sdk_ap_mode_scan_for_5mins_c535824(wifi_dut, wifi_access_point, wi
 )
 @pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11"})
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 11, "region": 'US'})
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_ap_mode_scan_with_ADV_SCAN_TYPE_C688243(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                           sl_collections, sniffer_filter):
     """ Scan for available APs in the vicinity after Soft AP Started for 5 minutes in loop """
@@ -503,6 +504,7 @@ def test_wifi_sdk_ap_mode_scan_with_ADV_SCAN_TYPE_C688243(wifi_dut, wifi_access_
 )
 @pytest.mark.config("wifi_client", wifi={"country": "US", "channel": "11"})
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'bgnax', "security": 'WPA2', "channel": 11, "region": 'US'})
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_ap_mode_scan_with_PASSIVE_SCAN_TYPE_C688244(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                               sl_collections, sniffer_filter):
     """ Scan for available APs in the vicinity after Soft AP Started for 5 minutes in loop """

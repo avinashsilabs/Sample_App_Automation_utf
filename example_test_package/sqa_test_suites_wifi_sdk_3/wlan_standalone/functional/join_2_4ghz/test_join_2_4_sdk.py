@@ -2628,6 +2628,7 @@ def test_wifi_sdk_connectivity_with_wpa_security_hidden_psk_c770027(wifi_dut, wi
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_connectivity_with_wpa2_security_hidden_psk_conc_mode_c770032(wifi_dut, wifi_access_point,
                                                                                wifi_sniffer, utf_constants,
                                                                                sl_collections, sniffer_filter, request):

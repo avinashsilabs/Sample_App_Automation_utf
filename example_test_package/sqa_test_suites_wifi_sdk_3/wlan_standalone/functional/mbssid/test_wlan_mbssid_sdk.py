@@ -2441,6 +2441,7 @@ def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.test_src_map_id('C219292')
 @pytest.mark.legacy_deployed
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
     wifi_sniffer,
     wifi_access_point,

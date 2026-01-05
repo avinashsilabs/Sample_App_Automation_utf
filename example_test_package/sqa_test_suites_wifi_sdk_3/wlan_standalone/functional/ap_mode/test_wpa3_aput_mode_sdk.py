@@ -1808,6 +1808,7 @@ def test_wifi_sdk_rejoin_functionality_c463734(wifi_sniffer, wifi_dut, remote_wi
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_APUT_wpa3_functionality_client_interface_up_down_c468622(wifi_sniffer, wifi_dut, remote_wiseconnect3,
                                                                            sniffer_filter, request, utf_constants,
                                                                            sl_collections):

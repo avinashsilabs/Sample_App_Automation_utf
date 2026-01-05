@@ -487,6 +487,7 @@ def test_wifi_sdk_twt_resume_back_immediately_suspend_for_duration_c540481(firmw
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", 'disable_twt'])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_reschedule_TwT_With_No_TwT_c540482(firmware_loader, wifi_dut, wifi_access_point, sl_collections,
                                                                            wifi_sniffer, sniffer_filter, utf_constants):
     try:
@@ -579,6 +580,7 @@ def test_wifi_sdk_twt_autoconfig_fails_or_not_c540490(firmware_loader, wifi_dut,
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_TwT_With_No_Params_Enabled_c544490(firmware_loader,wifi_dut, wifi_access_point, sl_collections,
                                                      wifi_sniffer, sniffer_filter, utf_constants):
     try:

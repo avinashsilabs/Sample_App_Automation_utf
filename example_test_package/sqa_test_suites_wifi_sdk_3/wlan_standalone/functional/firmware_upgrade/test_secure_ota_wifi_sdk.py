@@ -853,6 +853,7 @@ def test_wifi_sdk_http_combine_image_download_c510704(firmware_loader, wifi_clie
 @pytest.mark.config("sdk_server", server={"firmware_file_name": "combined_ta_secure_m4_plain.rps"})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_tcp_combine_image_ta_secure_m4_plain_c510727(firmware_loader, wifi_client, sdk_server,
                                                                wifi_access_point, wifi_dut, wifi_sniffer,
                                                                sl_collections):
@@ -907,6 +908,7 @@ def test_wifi_sdk_tcp_fw_abort_with_full_security_mode_c540475(firmware_loader, 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_tcp_fw_abort_m4_with_full_security_mode_c540476(firmware_loader, wifi_client, sdk_server,
                                                                   wifi_access_point, wifi_dut, wifi_sniffer,
                                                                   sl_collections, utf_constants):
@@ -991,6 +993,7 @@ def test_wifi_sdk_tcp_fw_upgrade_with_mic_encryption_sign_security_c540495(firmw
 @pytest.mark.config("sdk_server", server={"firmware_file_name": "mic_only_SiWG917-B.2.14.5.0.0.2.rps"})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_tcp_fw_upgrade_with_mic_only_security_mode_c540496(firmware_loader, wifi_client, sdk_server,
                                                                      wifi_access_point, wifi_dut, wifi_sniffer,
                                                                      sl_collections):

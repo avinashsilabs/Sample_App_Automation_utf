@@ -1520,6 +1520,7 @@ def test_wifi_sdk_aws_mqtt_connect_with_wpa3_eap_C686554(radius_server, wifi_sni
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mqtt_wpa3_transition_enterprise_c680004(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter, radius_server,
                                                sl_collections, request, mqtt_server, mqtt_client, wifi_client):
     """ Verify whether DUT is able to scan and connect to AP with WAP3 Transition
@@ -1739,6 +1740,7 @@ def test_wifi_sdk_ssl_tx_socket_connection_in_wpa3_transition_enterprise_c680002
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_ssl_rx_socket_connection_in_wpa3_transition_enterprise_c680003(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                    sniffer_filter, radius_server, sl_collections,
                                                                    request, ssl_server, wifi_client):
@@ -1845,6 +1847,7 @@ def test_wifi_sdk_ssl_rx_socket_connection_in_wpa3_transition_enterprise_c680003
                        wifi=["multicast_leave", "unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa3_transition_enterprise_eap_tls_multicast_rx_c680001(multicast_client, wifi_dut, wifi_access_point,
                                                                            wifi_sniffer, sniffer_filter, radius_server,
                                                                            sl_collections, request, net_perf_client, wifi_client, protocol):
@@ -1935,6 +1938,7 @@ def test_wifi_sdk_wpa3_transition_enterprise_eap_tls_multicast_rx_c680001(multic
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs", "reset_wifi_conn_stats"])
+@pytest.mark.deployed_25q4
 def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha384_C680013(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                          wifi_client, radius_server, sl_collections, request,
                                                          net_perf_client, protocol):
@@ -2018,6 +2022,7 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha384_C680013(wifi_dut, wi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs", "reset_wifi_conn_stats"])
+@pytest.mark.deployed_25q4
 def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha512_C680015(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                          wifi_client, radius_server, sl_collections, request,
                                                          net_perf_client, protocol):
@@ -2103,6 +2108,7 @@ def test_wsdk_WPA3_EAP_transition_Conn_TLS_conn_with_sha512_C680015(wifi_dut, wi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa_3enterprise_eap_tls_C680024(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                   sniffer_filter, radius_server, sl_collections, request):
     """ This test case verifies the WPA2 Enterprise Connectivity while using EAP TLS Method when the certificate
@@ -2980,6 +2986,7 @@ def test_wifi_sdk_wpa3_enterprise_eap_fast_multicast_rx_c680000(multicast_client
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa3_enterprise_eap_peap_safe1_tcp_tx_c708572(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                           radius_server, sl_collections, request,
                                                           net_perf_client, wifi_client, protocol):
@@ -3081,6 +3088,7 @@ def test_wifi_sdk_wpa3_enterprise_eap_peap_safe1_tcp_tx_c708572(wifi_dut, wifi_a
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa3_enterprise_eap_peap_safe2_tcp_tx_c708573(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                           radius_server, sl_collections, request,
                                                           net_perf_client, wifi_client, protocol):

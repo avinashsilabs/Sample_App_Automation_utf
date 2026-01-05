@@ -1333,6 +1333,7 @@ def test_wifi_sdk_dtls_multithread_dtls1_0_and_dtls1_2_c766271(wifi_sniffer, wif
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_dtls_negative_version_mismatch_server1_2_and_dut_1_0_c766289(wifi_sniffer, wifi_client, wifi_dut,
                                                                                wifi_access_point, openssl,
                                                                                sl_collections, sniffer_filter):
@@ -1351,6 +1352,7 @@ def test_wifi_sdk_dtls_negative_version_mismatch_server1_2_and_dut_1_0_c766289(w
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_dtls_negative_version_mismatch_server1_0_and_dut_1_2_c766290(wifi_sniffer, wifi_client, wifi_dut,
                                                                                wifi_access_point, openssl,
                                                                                sl_collections, sniffer_filter):
@@ -1453,6 +1455,7 @@ def test_wifi_sdk_dtls_multithread_dtls_1_0_and_dtls_1_2_max_data_length_1370_c7
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_process_c766275(wifi_sniffer, wifi_client, wifi_dut,
                                                                          wifi_access_point, openssl, switch,
                                                                          sl_collections, sniffer_filter):
@@ -1514,6 +1517,7 @@ def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_process_c766275(wifi_sn
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_dtls_client_data_transfer_after_rejoin_failure_c766276(wifi_sniffer, wifi_client, wifi_dut,
                                                                          wifi_access_point, openssl, switch,
                                                                          sl_collections, sniffer_filter):

@@ -347,6 +347,7 @@ def test_wifi_sdk_query_webpage_http_server_c641388(
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
 )
+@pytest.mark.deployed_25q4
 def test_Verify_http_server_with_GET_PUT_POST_using_3rd_party_curl_client_C641377(wifi_dut, wifi_client,
                                                                                   wifi_sniffer, wifi_access_point,
                                                                                   request, http_client,

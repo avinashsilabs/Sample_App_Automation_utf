@@ -5307,6 +5307,7 @@ def test_wifi_sdk_qos0_mqtt_two_topic_and_three_condition_C498669(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect","unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mqtt_ssl_username_diff_length_with_diff_bytes_C463960(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         utf_constants):
@@ -6885,6 +6886,7 @@ def test_wifi_sdk_mqtt_qos2_connection_failed_c537968(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_verify_multithread_using_https_and_mqtt_over_ssl_c563984(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, http_server, http_client):
     """
@@ -6990,6 +6992,7 @@ def test_wifi_sdk_verify_multithread_using_https_and_mqtt_over_ssl_c563984(
     "wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"]
 )
 @pytest.mark.parametrize("keep_alive_time, idle_time", [(1200, 43200)])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mqtt_long_run_keep_alive_1200_ssl_qos1_TC127787(
     wifi_sniffer,
     mqtt_server,
@@ -7317,6 +7320,7 @@ def test_wifi_sdk_mqtt_recovery_after_ip_failure_c562244(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mqtt_two_dut_connection_tx_rx_C537962(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, remote_wiseconnect3,
         request, sl_collections, sniffer_filter):
@@ -7515,6 +7519,7 @@ def test_wifi_sdk_mqtt_two_dut_connection_tx_rx_C537962(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_sntp_mqtt_ssl_simultaneous_connection_C537963(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """
@@ -7599,6 +7604,7 @@ def test_wifi_sdk_sntp_mqtt_ssl_simultaneous_connection_C537963(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_multi_thread_mqtt_publish_udp_tx_encrypted_C766799(
         wifi_sniffer, mqtt_server, wifi_client, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections,
         remote_socket_factory):
@@ -7663,6 +7669,7 @@ def test_wifi_sdk_multi_thread_mqtt_publish_udp_tx_encrypted_C766799(
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_verify_multithread_using_https_post_and_mqtt_over_ssl_c537964(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter,
         http_server, http_client, index_path):
@@ -7758,6 +7765,7 @@ def test_wifi_sdk_verify_multithread_using_https_post_and_mqtt_over_ssl_c537964(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                            wifi=["mqtt_disconnect", "unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mqtt_tx_rx_simultaneously_with_two_topics_and_lengths_C551108(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections,
         sniffer_filter,
@@ -7866,6 +7874,7 @@ def test_wifi_sdk_mqtt_tx_rx_simultaneously_with_two_topics_and_lengths_C551108(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mqtt_ssl_tx_rx_simultaneously_with_two_topics_and_lengths_C551109(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections,
         sniffer_filter,
@@ -7971,6 +7980,7 @@ def test_wifi_sdk_mqtt_ssl_tx_rx_simultaneously_with_two_topics_and_lengths_C551
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("mqtt_client", wifi={"interface": 'eth0'})
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mqtt_subscribe_publish_with_TCP_internet_connection_C537961(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """QOS1: Subscribe to MQTT server with TCP Internet connection and publish data oversubscribed topic"""
@@ -8040,6 +8050,7 @@ def test_wifi_sdk_mqtt_subscribe_publish_with_TCP_internet_connection_C537961(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("mqtt_client", wifi={"interface": 'eth0'})
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_verify_mqtt_conn_when_AP_OFF_initially_C662093(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, switch):
 
@@ -8126,6 +8137,7 @@ def test_wifi_sdk_verify_mqtt_conn_when_AP_OFF_initially_C662093(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_mqtt_will_topic_length_62_to_202_bytes_C708546(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, mqtt_client):
     """Verify Embedded MQTT connection when will topic length between 62 to 202 bytes"""
@@ -8196,6 +8208,7 @@ def test_wifi_sdk_mqtt_will_topic_length_62_to_202_bytes_C708546(
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_MQTT_publish_STA_using_provisioning_c778871(wifi_dut, wifi_client, channel, wifi_access_point, mqtt_server, mqtt_client,
                                                                  wiseconnect_web, request, wifi_sniffer, sl_collections, sniffer_filter):
     """

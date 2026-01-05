@@ -550,6 +550,7 @@ def test_wifi_sdk_sta_korea_region_ap_c477831(wifi_sniffer, wifi_dut,
         "security": "WPA2", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa2_deauth_based_keep_alive_c551269(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                   sl_collections):
     """Verify APUT Keep alive functionality with DEAUTH_BASED_KEEP_ALIVE configuration in WPA2"""
@@ -639,6 +640,7 @@ def test_wifi_sdk_wpa2_deauth_based_keep_alive_c551269(wifi_sniffer, wifi_dut, r
         "security": "WPA2", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa2_null_based_keep_alive_C551270(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                 sl_collections):
     """Verify APUT Keep alive functionality with NULL_BASED_KEEP_ALIVE configuration in WPA2 mode"""

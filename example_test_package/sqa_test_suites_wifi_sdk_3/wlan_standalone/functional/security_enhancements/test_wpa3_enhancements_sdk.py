@@ -305,6 +305,7 @@ def test_wifi_sdk_conn_STA_AP_in_Transition_mode_C113912(wifi_sniffer, wifi_acce
 
     }
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_conn_STA_AP_in_WPA3_mixed_mode_C34506(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                          request, sl_collections):
     """ Verify the DUT connectivity with 3rd party AP in WPA3 mixed mode """

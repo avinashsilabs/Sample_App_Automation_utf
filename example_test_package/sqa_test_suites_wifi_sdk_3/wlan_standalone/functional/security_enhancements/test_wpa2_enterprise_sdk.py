@@ -3953,6 +3953,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_fast_1_0_udp_tx_11w_c679990(wifi_dut, wifi
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa2_enterprise_with_websocket_ssl_c113802(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
                                                              utf_constants, radius_server,
                                                              request, sl_collections, sniffer_filter):
@@ -4049,6 +4050,7 @@ def test_wifi_sdk_wpa2_enterprise_with_websocket_ssl_c113802(wifi_dut, wifi_acce
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa2_enterprise_pmk_caching_c113790(wifi_dut, wifi_access_point, wifi_sniffer,
                                                          utf_constants, radius_server,
                                                          request, sl_collections, sniffer_filter):
@@ -4132,6 +4134,7 @@ def test_wifi_sdk_wpa2_enterprise_pmk_caching_c113790(wifi_dut, wifi_access_poin
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa2_enterprise_eap_peap_safe1_tcp_tx_c708570(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                        radius_server, sl_collections, request, utf_constants,
                                                        net_perf_client, wifi_client, protocol):
@@ -4217,6 +4220,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_peap_safe1_tcp_tx_c708570(wifi_dut, wifi_a
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa2_enterprise_eap_peap_safe2_tcp_tx_c708571(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                        radius_server, sl_collections, request, utf_constants,
                                                        net_perf_client, wifi_client, protocol):

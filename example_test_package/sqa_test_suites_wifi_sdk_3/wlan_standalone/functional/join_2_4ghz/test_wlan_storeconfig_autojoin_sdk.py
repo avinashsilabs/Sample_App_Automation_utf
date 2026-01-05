@@ -827,6 +827,7 @@ Map_security = {
         "channel": 1,
     },
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_with_one_profile_and_one_credential_C769960(
     wifi_dut,
     wifi_access_point,
@@ -959,6 +960,7 @@ def test_RAM_autojoin_with_one_profile_and_one_credential_C769960(
         "net_down",
     ],
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_with_wpa2_wpa_two_profiles_c769961(
     wifi_dut,
     wifi_access_point,
@@ -1231,6 +1233,7 @@ def test_RAM_autojoin_auto_join_with_wpa2_open_two_profiles_c769962(
         "channel": 1,
     },
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_with_wpa3_enterprise_tls_peap_security_c769967(
     wifi_dut,
     radius_server,
@@ -1431,6 +1434,7 @@ def test_RAM_autojoin_with_wpa3_enterprise_tls_peap_security_c769967(
         "channel": 1,
     },
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769968(
     wifi_dut,
     radius_server,
@@ -1575,6 +1579,7 @@ def test_RAM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769968(
         "net_down",
     ],
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_after_sl_net_deinit_with_wpa3_C769963(
     wifi_dut,
     wifi_access_point,
@@ -1697,6 +1702,7 @@ def test_RAM_autojoin_after_sl_net_deinit_with_wpa3_C769963(
         "net_down",
     ],
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_while_doing_SNTP_data_transfer_c769974(
     wifi_dut,
     wifi_access_point,
@@ -1817,6 +1823,7 @@ def test_RAM_autojoin_while_doing_SNTP_data_transfer_c769974(
         "net_down",
     ],
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_while_doing_MQTTS_data_transfer_c769975(
     wifi_dut,
     wifi_access_point,
@@ -1934,6 +1941,7 @@ def test_RAM_autojoin_while_doing_MQTTS_data_transfer_c769975(
         "channel": 6,
     },
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_with_incorrect_psk_first_try_C769980(
     wifi_dut,
     wifi_access_point,
@@ -2061,6 +2069,7 @@ def test_RAM_autojoin_with_incorrect_psk_first_try_C769980(
         ],
     },
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_with_two_profiles_mbssid_c769982(
     wifi_dut,
     wifi_access_point,
@@ -2182,6 +2191,7 @@ def test_RAM_autojoin_with_two_profiles_mbssid_c769982(
         ),
     ],
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_error_with_invalid_credential_C769984(
     wifi_dut, profiles, sl_collections
 ):
@@ -2246,6 +2256,7 @@ def test_RAM_autojoin_error_with_invalid_credential_C769984(
         ),
     ],
 )
+@pytest.mark.deployed_25q4
 def test_RAM_autojoin_error_with_three_profiles_and_credentials_C769985(
     wifi_dut, profiles, sl_collections
 ):

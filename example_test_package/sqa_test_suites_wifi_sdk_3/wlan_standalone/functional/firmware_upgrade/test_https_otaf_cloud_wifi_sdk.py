@@ -611,6 +611,7 @@ def test_wifi_sdk_https_M4_fw_url_length_1500_disable_http_url_c510789(aws_s3, w
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_https_fw_url_length_2048_enable_http_url_c500498(aws_s3, wifi_sniffer, wifi_access_point,
                                                            wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ update functionality with URL length is more than 2048 (i-e ~2048) and enable long http bit"""
@@ -633,6 +634,7 @@ def test_wifi_sdk_https_fw_url_length_2048_enable_http_url_c500498(aws_s3, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_https_fw_url_length_2048_disable_http_url_c500499(aws_s3, wifi_sniffer, wifi_access_point,
                                                            wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ update functionality with URL length is more than 2048 (i-e ~2048) and disable long http bit"""
@@ -777,6 +779,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_30min_delay_after_connect_to
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_https_fw_url_length_1500_c501263(aws_s3,
                                                    wifi_sniffer, wifi_access_point,
                                                    wifi_dut, sl_collections, utf_constants):

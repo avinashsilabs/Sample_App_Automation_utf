@@ -2965,6 +2965,7 @@ def test_wifi_sdk_beacon_miss_count_stats_90_c641350(wifi_sniffer, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_wpa3_rejoin_eap_security_with_pmf_c680006(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                             sl_collections, request, radius_server, switch,
                                                             net_perf_client,
@@ -3279,6 +3280,7 @@ def test_wifi_sdk_rejoin_with_rpi4_after_deauth_frame_c782337(wifi_dut, wifi_cli
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_join_failure_with_max_retry_1_rejoin_disable_c877263(switch, wifi_sniffer, wifi_access_point,
                                                                        wifi_dut, utf_constants,
                                                                        request,
@@ -3347,6 +3349,7 @@ def test_wifi_sdk_join_failure_with_max_retry_1_rejoin_disable_c877263(switch, w
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.deployed_25q4
 def test_wifi_sdk_Rejoin_functionality_RSSI_value_80dbm_c19727(switch, wifi_sniffer, wifi_access_point, wifi_dut,
                                                                utf_constants, request,
                                                                sl_collections, rf_attenuator):

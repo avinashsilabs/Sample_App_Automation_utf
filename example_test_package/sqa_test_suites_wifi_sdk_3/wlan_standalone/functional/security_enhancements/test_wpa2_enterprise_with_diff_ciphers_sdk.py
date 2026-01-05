@@ -5075,6 +5075,7 @@ def test_wifi_sdk_wpa2_enterprise_eap_tls_with_wrong_private_key_C113886(wifi_du
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs", "reset_wifi_conn_stats"])
+@pytest.mark.deployed_25q4
 def test_wsdk_WPA2_EAP_Conn_TLS_when_client_inter_root_ca_with_invalid_algorithm_C113900(wifi_dut, wifi_access_point,
                                                                                      wifi_sniffer, sniffer_filter,
                                                                                      radius_server,
