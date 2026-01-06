@@ -43,7 +43,7 @@ def ble_adv_and_scan(ble_dut=None, ble_client=None, ble_sniffer=None, capture_fi
     ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=ble_dut_address)
     assert ble_client_address, "Unable to get ble_client_address"
 
-    if (test_case==19819) or (test_case==537346) or (test_case==663404) or (test_case==663405):
+    if (test_case==19819) or (test_case==537346) or (test_case==663404) or (test_case==663405) or (test_case==537345):
         logger().info("enabling the power save modes ")
         ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
         ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode8,
@@ -55,7 +55,7 @@ def ble_adv_and_scan(ble_dut=None, ble_client=None, ble_sniffer=None, capture_fi
     time.sleep(3)
 
     if ((test_case==19811) or (test_case==19812) or (test_case==19813) or (test_case==19814) or (test_case==19815) or
-        (test_case==19816) or (test_case==19817) or (test_case==19818) or (test_case==537345) or (test_case==663401) or
+        (test_case==19816) or (test_case==19817) or (test_case==19818) or (test_case==663401) or
         (test_case==663402) or (test_case==663403)):
         logger().info(f"\n\n ****Enabling Wlan and BLE power save**** \n\n")
         ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
