@@ -33,6 +33,32 @@ from utf.interfaces.bluetooth.bluez.gatt_application.health_thermometer_service 
     Author: Saurabh Sharma
 """
 
+webpage = '''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" 
+content="width=device-width, initial-scale=1.0"><title>Login Page</title><style>body {font-family: Arial, 
+sans-serif;margin: 0;padding: 0;display: flex;justify-content: center;align-items: center;height: 
+100vh;background-color: #f0f0f0;}#connect-form {text-align: center;padding: 20px;border: 1px solid 
+#ccc;border-radius: 8px;background-color: #fff;}input[type="text"],input[type="password"] {width: 100%;padding: 
+10px;margin: 10px 0;border-radius: 5px;border: 1px solid #ccc;box-sizing: border-box;}input[type="submit"] {width: 
+100%;padding: 10px;margin: 10px 0;border: none;border-radius: 5px;background-color: #007bff;color: #fff;cursor: 
+pointer;}input[type="submit"]:hover {background-color: #0056b3;}#heading {margin-bottom: 20px;width: 100%;}select[
+name="security-type"] {width: 100%;padding: 10px;margin: 10px 0;border-radius: 5px;border: 1px solid #ccc;box-sizing: 
+border-box;}.form-row {display: flex;justify-content: space-between;align-items: center;margin: 10px 0;}.form-row 
+label {width: 100px;text-align: right;margin-right: 10px;white-space: nowrap;}.form-row input,.form-row select {flex: 
+2;}</style></head><body><div id="connect-form"><h3 id="heading">Silicon Labs</h3><form id="connect-form" 
+action="/connect" method="post"><div class="form-row"><label for="ssid">SSID:</label><input type="text" id="ssid" 
+name="ssid" placeholder="SSID" required></div><div class="form-row"><label for="password">Password:</label><input 
+type="text" id="password" name="password" placeholder="Password" required></div><div class="form-row"><label 
+for="security-type">Security Type:</label><select id="security-type" name="security-type"><option 
+value="WPA">WPA</option><option value="WPA2">WPA2</option><option value="WPA3">WPA3</option><option value="Mixed 
+Mode">Mixed Mode</option></select></div><input type="submit" 
+value="Connect"></form></div><script>document.getElementById('connect-form').addEventListener('submit', 
+function (event) {event.preventDefault();var xhr = new XMLHttpRequest();xhr.open('POST', '/connect', 
+true);xhr.setRequestHeader('Content-Type', 'application/json');var id = document.getElementsByName('ssid')[
+0].value;var password = document.getElementsByName('password')[0].value;var securityType = document.getElementById(
+'security-type').value;console.log('SSID: ' + id);console.log('Password: ' + password);console.log('Security Type: ' 
++ securityType);var data = {id: id,password: password,securityType: securityType};xhr.send(JSON.stringify(
+data));});</script></body></html>'''
+
 
 def logger():
     return get_logger(__name__)
@@ -44,8 +70,8 @@ class ProvisioningFunctionality(ThreadBase):
                  utf_constants=None, wifi_access_point=None, wifi_sniffer=None, bt_dut_address=None, credentials=None,
                  ble_client_address=None, char_path=None, char_uid=None, min_conn_interval=160, sniffer_filter=None,
                  max_conn_interval=160, conn_latency=0, supervision_timeout=3200, svc=None, charc=None,
-                 write_handle = None, wifi_access_points=None, device_ip=None, device_ip_two=None,
-                 dut_mac_address_two=None, dut_mac_address=None, set_smp=None, adv_int=100):
+                 write_handle = None, wifi_access_points=None, device_ip=None, device_ip_two=None, scan_type=None,
+                 dut_mac_address_two=None, dut_mac_address=None, set_smp=None, adv_int=100, beacon_stop=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
@@ -80,6 +106,12 @@ class ProvisioningFunctionality(ThreadBase):
         self.psk = self.wifi_access_point.interfaces.wifi.passphrase
         self.ap_channel = self.wifi_access_point.interfaces.wifi.channel
         self.sniffer_filter = sniffer_filter
+        self.beacon_stop = beacon_stop
+        self.scan_type = scan_type
+
+        logger().info("******************** initializing ble in dut ********************")
+        self.bt_dut_address = self.ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=self.set_smp)
+        assert self.bt_dut_address, "failed to initialize ble in dut"
 
     def run(self):
         try:
@@ -87,10 +119,6 @@ class ProvisioningFunctionality(ThreadBase):
             self.char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
             self.svc = 'HealthThermometerService'
             self.charc = 'CustomNotifyCharacteristic'
-
-            logger().info("******************** initializing ble in dut ********************")
-            self.bt_dut_address = self.ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=self.set_smp)
-            assert self.bt_dut_address, "failed to initialize ble in dut"
 
             self.wifi_dut.interfaces.wifi.ble_add_service(uid=0x1AA1)
             self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1)
@@ -103,12 +131,19 @@ class ProvisioningFunctionality(ThreadBase):
                 wifi_dut=self.wifi_dut, ble_client=self.ble_client, ble_dut_address=self.bt_dut_address,
                 services=[self.svc])
 
-            self.sl_collections.connect_ble(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
-                                            ble_dut_address=self.bt_dut_address,
-                                            min_conn_interval=self.min_conn_interval,
-                                            max_conn_interval=self.max_conn_interval,
-                                            conn_latency=self.conn_latency,
-                                            supervision_timeout=self.supervision_timeout)
+            # self.sl_collections.connect_ble(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
+            #                                 ble_dut_address=self.bt_dut_address,
+            #                                 min_conn_interval=self.min_conn_interval,
+            #                                 max_conn_interval=self.max_conn_interval,
+            #                                 conn_latency=self.conn_latency,
+            #                                 supervision_timeout=self.supervision_timeout)
+
+            logger().info(f'*** BLE is Connecting with Connection Interval {int(int(self.min_conn_interval)/1.25)} ***')
+            self.ble_client.interfaces.bluetooth.connect(dev_addr=self.bt_dut_address,
+                                                        min_conn_interval=int(int(self.min_conn_interval) / 1.25),
+                                                        max_conn_interval=int(int(self.max_conn_interval) / 1.25),
+                                                        conn_latency=self.conn_latency,
+                                                        supervision_timeout=self.supervision_timeout)
             time.sleep(10)
 
             logger().info(".... checking ble connection stability ....")
@@ -205,8 +240,8 @@ class ProvisioningFunctionality(ThreadBase):
 
     def power_save(self):
         logger().info(f"....Applying performance profile mode and Enable_bt_power_save....")
-        self.ble_dut.interfaces.bluetooth.set_performance_profile(mode="power_save_low_latency")
-        self.ble_dut.interfaces.bluetooth.enable_bt_power_save()
+        self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+        self.wifi_dut.interfaces.wifi.enable_bt_power_save()
 
     def ping_after_power_save(self):
         logger().info(f"....Pinging to DUT after Power Save")
@@ -214,7 +249,8 @@ class ProvisioningFunctionality(ThreadBase):
         assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
     def sl_net_deinit(self):
-        self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
+        # self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
+        self.wifi_dut.interfaces.wifi.deinit()
 
     def wifi_scan(self):
         scan_result_ssid_security = []
@@ -310,6 +346,17 @@ class ProvisioningFunctionality(ThreadBase):
             'packet_count']
         assert snif_pkt_count, "No beacon found in sniffer"
 
+    def check_no_beacon(self):
+        dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address(interface=2)
+        logger().info(f"*********{dut_mac_address}**********")
+
+        packet_filter2 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, filter_name='beacon')
+        logger().info(f"***** Validating no beacon packet ******")
+        snif_pkt_count = self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter2, negative_test=True)['packet_count']
+        assert not snif_pkt_count, "found beacon packet in sniffer"
+
     def ble_remove_servie(self):
         logger().info("******************** ble_remove_service ***********************")
         self.wifi_dut.interfaces.wifi.ble_remove_service()
@@ -361,6 +408,10 @@ class ProvisioningFunctionality(ThreadBase):
         self.wifi_dut.interfaces.wifi.leave()
         logger().info("....Successfully disconnected from the AP....")
 
+    def stop_ap_interface(self):
+        self.wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+        logger().info("....Successfully stopped the AP interface....")
+
     def ap_mode_start(self):
         """
         Method to start the DUT as an Access Point.
@@ -372,12 +423,32 @@ class ProvisioningFunctionality(ThreadBase):
             logger().info(" ********** Starting DUT as an AP ********* ")
             self.wifi_dut.interfaces.wifi.start_ap(
                 ssid=self.ssid, security='wpa2', psk=self.psk, channel=self.ap_channel, dtim_beacon_count="1",
-                beacon_interval="100")
+                beacon_interval="100", beacon_stop=self.beacon_stop)
         else:
             logger().info(" ********** Starting DUT as an AP ********* ")
             self.wifi_dut.interfaces.wifi.start_ap(
                 ssid=self.ssid, security=self.security, psk=self.psk, channel=self.ap_channel, dtim_beacon_count="1",
-                beacon_interval="100")
+                beacon_interval="100", beacon_stop=self.beacon_stop)
+
+    def start_http_server(self):
+        self.wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        self.wifi_dut.interfaces.wifi.http_server_start()
+
+    def stop_http_server(self):
+        self.wifi_dut.interfaces.wifi.http_server_stop()
+        self.wifi_dut.interfaces.wifi.http_server_deinit()
+
+    def scan_on_ap_interface(self):
+        scan_result_ssid_security = []
+        logger().info("******* scanning on AP interface ********")
+        scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, interface="ap", scan_type=self.scan_type)
+
+        for scan in scan_results:
+            ssid = re.findall(r"((?<=ssid:\s)[\w\W]+?(?=\sbssid))", str(scan))
+            security = re.findall(r"((?<=security_mode:\s)\d+)", str(scan))
+            scan_result_ssid_security.append((ssid[0], security[0]))
+
+        logger().info(f".... scan result for ssid and security is : {scan_result_ssid_security} ....")
 
 
 def wifi_dut_marker(IEEE802_11W=0, memory_config=0):
@@ -385,7 +456,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0):
         Common method to generate wifi_dut marker for pytest.mark.config decorator..
     """
     config = {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
@@ -408,13 +479,17 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0):
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
-@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_ble_provision_path_c887610(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
     """Verify BLE provisioning in WPA2 security and also verify wifi connection to the third party home AP with the
     received credentials over BLE"""
+
+    ble_obj =None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -428,18 +503,43 @@ def test_wifi_sdk_ble_provision_path_c887610(
             sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
+            coex_mode= Si91xCoexMode.WLANOnly,
             features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
             tcpip_features=Si91xTCPIPFeatureBitMap.Default)
-        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False, timeout=30)
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect()
 
@@ -448,8 +548,15 @@ def test_wifi_sdk_ble_provision_path_c887610(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -460,6 +567,9 @@ def test_wifi_sdk_ble_provision_path_conn_45ms_c887611(
         sniffer_filter):
     """Verify BLE provisioning in WPA2 security with BLE connection interval 45ms and also verify wifi connection to
     the third party home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -473,12 +583,36 @@ def test_wifi_sdk_ble_provision_path_conn_45ms_c887611(
             min_conn_interval=45, max_conn_interval=45, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -493,8 +627,15 @@ def test_wifi_sdk_ble_provision_path_conn_45ms_c887611(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -505,6 +646,9 @@ def test_wifi_sdk_ble_provision_path_adv_30ms_c887612(
         sniffer_filter):
     """Verify BLE provisioning with adv int 30ms in WPA2 security and also verify wifi connection to the third
     party home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -518,12 +662,36 @@ def test_wifi_sdk_ble_provision_path_adv_30ms_c887612(
             min_conn_interval=200, max_conn_interval=200, adv_int=30, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -538,8 +706,15 @@ def test_wifi_sdk_ble_provision_path_adv_30ms_c887612(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @pytest.mark.skip(reason="WPA3 connection is not working - need to verify manually")
@@ -552,6 +727,9 @@ def test_wifi_sdk_ble_provision_path_adv_45ms_c887613(
         sniffer_filter):
     """Verify BLE provisioning with adv int 45ms in WPA3 security and also verify wifi connection to the third party
     home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -565,20 +743,44 @@ def test_wifi_sdk_ble_provision_path_adv_45ms_c887613(
             min_conn_interval=200, max_conn_interval=200, adv_int=45, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient, coex_mode=Si91xCoexMode.WLANOnly,
             features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
             tcpip_features=Si91xTCPIPFeatureBitMap.Default,
             ext_custom_features=Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.IEEE802_11W |
-                                 Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode |
-                                 Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid)
+                                Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode |
+                                Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid)
         wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect()
@@ -588,8 +790,15 @@ def test_wifi_sdk_ble_provision_path_adv_45ms_c887613(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -600,6 +809,9 @@ def test_wifi_sdk_ble_provision_path_adv_120ms_c887614(
         sniffer_filter):
     """Verify BLE provisioning with adv int 120ms in OPEN security and also verify wifi connection to the third party
     home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -613,12 +825,36 @@ def test_wifi_sdk_ble_provision_path_adv_120ms_c887614(
             min_conn_interval=200, max_conn_interval=200, adv_int=120, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -633,8 +869,15 @@ def test_wifi_sdk_ble_provision_path_adv_120ms_c887614(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -645,6 +888,9 @@ def test_wifi_sdk_ble_provision_path_adv_500ms_c887615(
         sniffer_filter):
     """Verify BLE provisioning with adv int 500ms in WPA2 security and also verify wifi connection to the third party
     home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -658,12 +904,36 @@ def test_wifi_sdk_ble_provision_path_adv_500ms_c887615(
             min_conn_interval=200, max_conn_interval=200, adv_int=500, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -678,8 +948,15 @@ def test_wifi_sdk_ble_provision_path_adv_500ms_c887615(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -690,6 +967,9 @@ def test_wifi_sdk_ble_provision_path_adv_conn_95ms_c887640(
         sniffer_filter):
     """Verify BLE provisioning in WPA2 security with BLE connection interval  and adv interval as 95ms and also
     verify wifi connection to the third party home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -703,12 +983,36 @@ def test_wifi_sdk_ble_provision_path_adv_conn_95ms_c887640(
             min_conn_interval=95, max_conn_interval=95, adv_int=95, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -723,8 +1027,15 @@ def test_wifi_sdk_ble_provision_path_adv_conn_95ms_c887640(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -735,6 +1046,9 @@ def test_wifi_sdk_ble_provision_path_adv_conn_110ms_c887641(
         sniffer_filter):
     """Verify BLE provisioning with adv int 110ms in WPA2 security and also verify wifi connection to the third party
     home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -748,12 +1062,36 @@ def test_wifi_sdk_ble_provision_path_adv_conn_110ms_c887641(
             min_conn_interval=200, max_conn_interval=200, adv_int=110, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -768,11 +1106,18 @@ def test_wifi_sdk_ble_provision_path_adv_conn_110ms_c887641(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
-@pytest.mark.skip(reason="BLE connection is not working when configuring adv interval more than 10240ms - WIFI_BT_UTFHELP-4773")
+@pytest.mark.skip(reason="BLE connection is not working when configuring adv interval 10240ms - WIFI_BT_UTFHELP-4773")
 @wifi_dut_marker()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -781,6 +1126,9 @@ def test_wifi_sdk_ble_provision_path_adv_10240ms_c887616(
         sniffer_filter):
     """Verify BLE provisioning with adv int 10240ms in WPA2 security and also verify wifi connection to the third party
     home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -794,12 +1142,36 @@ def test_wifi_sdk_ble_provision_path_adv_10240ms_c887616(
             min_conn_interval=200, max_conn_interval=200, adv_int=10240, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -814,8 +1186,15 @@ def test_wifi_sdk_ble_provision_path_adv_10240ms_c887616(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -826,6 +1205,9 @@ def test_wifi_sdk_ble_provision_path_ssid_32bytes_c887617(
         sniffer_filter):
     """Verify BLE provisioning with SSID 32bytes and also verify wifi connection to the third party home AP with the
     received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -839,12 +1221,36 @@ def test_wifi_sdk_ble_provision_path_ssid_32bytes_c887617(
             min_conn_interval=200, max_conn_interval=200, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -859,8 +1265,15 @@ def test_wifi_sdk_ble_provision_path_ssid_32bytes_c887617(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -873,6 +1286,9 @@ def test_wifi_sdk_ble_provision_path_passphrase_63bytes_c887618(
         sniffer_filter):
     """Verify BLE provisioning with PSK 63bytes and also verify WLAN connection to the third party home AP with the
     received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -886,12 +1302,36 @@ def test_wifi_sdk_ble_provision_path_passphrase_63bytes_c887618(
             min_conn_interval=200, max_conn_interval=200, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -906,8 +1346,15 @@ def test_wifi_sdk_ble_provision_path_passphrase_63bytes_c887618(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -918,6 +1365,9 @@ def test_wifi_sdk_ble_provision_path_wrong_passphrase_c887619(
         sniffer_filter):
     """Verify DUT behaviour via BLE provisioning when configuring wrong PSK and also verify wifi  connection to the
     third party home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -931,12 +1381,36 @@ def test_wifi_sdk_ble_provision_path_wrong_passphrase_c887619(
             min_conn_interval=200, max_conn_interval=200, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -951,8 +1425,15 @@ def test_wifi_sdk_ble_provision_path_wrong_passphrase_c887619(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @pytest.mark.skip(reason="slave connection is not working in second iteration in loop - WIFI_BT_UTFHELP-5662")
@@ -1027,6 +1508,9 @@ def test_wifi_sdk_ble_provision_path_mixed_mode_security_c887621(
         sniffer_filter):
     """Verify BLE provisioning with Mixed Mode security and also verify WLAN connection to the third party home AP with
     the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -1040,12 +1524,36 @@ def test_wifi_sdk_ble_provision_path_mixed_mode_security_c887621(
             min_conn_interval=200, max_conn_interval=200, sniffer_filter=sniffer_filter, test_case=887621)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -1058,12 +1566,17 @@ def test_wifi_sdk_ble_provision_path_mixed_mode_security_c887621(
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
 
-        ble_obj.ble_cleanup_disconn()
-
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -1074,6 +1587,9 @@ def test_wifi_sdk_ble_provision_path_conn_30ms_c887622(
         sniffer_filter):
     """Verify BLE provisioning in WPA2 security with BLE connection interval 30ms and also verify wifi connection to
     the third party home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -1087,12 +1603,36 @@ def test_wifi_sdk_ble_provision_path_conn_30ms_c887622(
             min_conn_interval=30, max_conn_interval=30, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -1107,8 +1647,15 @@ def test_wifi_sdk_ble_provision_path_conn_30ms_c887622(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -1119,6 +1666,9 @@ def test_wifi_sdk_ble_provision_path_max_conn_int_c887623(
         sniffer_filter):
     """Verify BLE provisioning in WPA2 security with BLE max connection interval and also verify wifi connection to
     the third party home AP with the received credentials over BLE"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -1132,13 +1682,37 @@ def test_wifi_sdk_ble_provision_path_max_conn_int_c887623(
             sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.update_conn_params()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -1153,17 +1727,27 @@ def test_wifi_sdk_ble_provision_path_max_conn_int_c887623(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable""unassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 def test_wifi_sdk_ble_provision_path_with_power_save_and_ping_c887624(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
     """Verify BLE provisioning and enable power save post wifi connection to provisioned AP and run ping"""
+
+    ble_obj = None
+    ap_started = False
     try:
         test_name = request.node.name
 
@@ -1177,12 +1761,36 @@ def test_wifi_sdk_ble_provision_path_with_power_save_and_ping_c887624(
             sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
         time.sleep(10)
         ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
         ble_obj.start()
         ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
         ble_obj.credentials_send_over_ble()
         ble_obj.sl_net_deinit()
+        ap_started = False
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
@@ -1199,5 +1807,12 @@ def test_wifi_sdk_ble_provision_path_with_power_save_and_ping_c887624(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
