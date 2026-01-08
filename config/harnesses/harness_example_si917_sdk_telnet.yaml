@@ -318,8 +318,9 @@ devices:
             linux_shell:
                 type: 'shell.shell'
             mqtt:
-                type: 'mqtt.client.paho_client'
-                disable_certificate_verification: true
+                type: 'mqtt.client.rpc_client'
+                forward_to: 'secondary_raspi:mqtt'
+                host: 'docker_host'
             tc:
                 type: 'traffic_controller.tc_cli'
                 shell: 'linux_shell'
@@ -346,6 +347,28 @@ devices:
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
                 firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                secondary_raspi:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        mqtt:
+                            type: 'mqtt.client.paho_client'
+                            disable_certificate_verification: True
+            defaults: { }
 
     raspi_wifi_ssh:
         interfaces:
@@ -561,7 +584,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.16.82'
+                ip_address: '192.168.150.3'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
                 username: pi
                 password: 'raspberry'
@@ -627,20 +650,44 @@ devices:
     # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled
     raspi_mosquitto:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
-            mqtt:
-                type: 'mqtt.server.mosquitto_linux'
-                shell: 'linux_shell'
-                # (optional) listen address for broker (defaults to 0.0.0.0)
-                server_listen_address: '0.0.0.0'
-                # (optional) port on which the broker is listening (defaults to 1883)
-                port: 1883
-                # (required) network interface to which the broker is bound
-                interface: 'eth1'
-                # (optional) controls whether tls is enabled. defaults to false
-                tls_enabled: false
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
 
+            mqtt:
+                type: 'mqtt.server.rpc_client'
+                forward_to: 'raspi_mosquitto:mqtt'
+                host: 'docker_host'
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                raspi_mosquitto:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        mqtt:
+                            type: 'mqtt.server.mosquitto_linux'
+                            shell: 'linux_shell'
+                            # (optional) listen address for broker (defaults to 0.0.0.0)
+                            server_listen_address: '0.0.0.0'
+                            # (optional) port on which the broker is listening (defaults to 1883)
+                            port: 1883
+                            # (required) network interface to which the broker is bound
+                            interface: 'eth0'
+                            # (optional) controls whether tls is enabled. defaults to false
+                            tls_enabled: false
+
+            defaults: { }
+   
     raspi_mosquitto_ipv6:
         interfaces:
             linux_shell:
@@ -768,13 +815,37 @@ devices:
 
     raspi_lighttpd:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             http:
-                type: 'http.server.http_linux'
-                shell: 'linux_shell'
-                port: 80
-                interface: 'eth1'
+                type: 'http.server.rpc_client'
+                forward_to: 'raspi_http_server:http'
+                host: 'docker_host'
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                raspi_http_server:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        http:
+                            type: 'http.server.http_linux'
+                            shell: 'linux_shell'
+                            port: 80
+                            interface: 'eth0'
+
+            defaults: { }
 
     raspi_lighttpd_tls:
         interfaces:
@@ -806,19 +877,68 @@ devices:
 
     python_http_server:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             http:
-                type: 'http.server.python_http'
-                shell: 'linux_shell'
-                port: 80
-                interface: 'eth1'
+                type: 'http.server.python_http.rpc_client'
+                forward_to: 'python_http_server:http'
+                host: 'docker_host'
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                python_http_server:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        http:
+                            type: 'http.server.python_http'
+                            shell: 'linux_shell'
+                            port: 80
+                            interface: 'eth0'
+
+            defaults: { }
 
     raspi_http_client:
         interfaces:
-            http_client:
-                type: 'http.client.requests_client'
-                disable_certificate_verification: True
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
+            http:
+                type: 'http.client.rpc_client'
+                forward_to: 'raspi_http_client:http'
+                host: 'docker_host'
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                raspi_http_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        http:
+                            type: 'http.client.requests_client'
+                            disable_certificate_verification: True
+            defaults: { }
 
     static_http:
         interfaces:
@@ -1334,6 +1454,25 @@ devices:
             client:
                 type: 'wolfssl.client'
 
+    dummy_sniffer:
+        interfaces:
+            capture:
+                type: 'wifi.sniffer.dummy_sniffer'
+                interface: 'wlp0s20f3'
+
+    local_http_client:
+        interfaces:
+            http:
+                type: 'http.client.requests_client'
+                disable_certificate_verification: True
+
+    local_mqtt_client:
+        interfaces:
+            mqtt:
+                type: 'mqtt.client.paho_client'
+                disable_certificate_verification: True
+
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1362,7 +1501,7 @@ defaults:
     # The wifi_client entry is needed for any test cases that require the wifi_client fixture
     # This should be set to the name of the device in the "devices" section to be used as a wifi client
     # (needed in order to test the host AP mode on the DUT)
-    wifi_client: 'remote_wiseconnect3'
+    wifi_client: 'raspi_wifi'
 
     aws_s3: 'aws_s3_boto3'
 
@@ -1382,7 +1521,7 @@ defaults:
         - 'raspi_wifi'
         - 'raspi_wifi_ssh'
 
-    wifi_sniffer: 'airpcap'
+    wifi_sniffer: 'dummy_sniffer'
 
     sniffer_filter: 'sniffer_filter'
     dtls_server: 'raspi_dtls_server'
@@ -1475,7 +1614,7 @@ defaults:
 
     net_perf_server: 'secondary_raspi_iperf'
 
-    net_perf_client: 'raspi_iperf'
+    net_perf_client: 'secondary_raspi_net_perf'
 
     net_perf_clients:
         - 'raspi_iperf'
