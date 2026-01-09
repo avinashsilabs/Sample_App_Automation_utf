@@ -19,7 +19,7 @@ pipeline {
     stages {
         stage('Run Sanity test') {
             agent {
-                label 'LAB0015312-cbs-infrasw-2ac7c528'
+                label 'LAB0015312-cbs-infrasw-9a079a79'
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
