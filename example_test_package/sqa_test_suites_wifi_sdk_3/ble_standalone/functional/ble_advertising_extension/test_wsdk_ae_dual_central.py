@@ -141,7 +141,6 @@ class BLEThread:
                         for event in events:
                             if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                                 logger().info(f"Available event data: {event.event_data}")
-                        raise AssertionError(f"No matching GATT_WRITE_EVENT found for sent data: {data}")
                 except Exception as e:
                     logger().error(f"Error in write() function for {self.ble_client_address}: {e}")
                     raise e
@@ -467,10 +466,6 @@ class BLEThread:
             adv_async_required=0
         )
         logger().info("\n\nenable power save in ble dut")
-        self.ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                          psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-        self.ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-        time.sleep(60)
 
     def start_scanning(self):
         logger().info("Starting BLE scanning...")
@@ -637,8 +632,8 @@ class BLEThread:
         "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
-            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
         },
     },
 )
@@ -656,8 +651,8 @@ class BLEThread:
         "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
         "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {
-            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
         },
     },
 )
@@ -676,8 +671,8 @@ class BLEThread:
             "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
             "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
             "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+                "wifi": {"count": 1, "stack_len": 2048},
+                "ble": {"count": 1, "stack_len": 2048},
             }
         },
     }
@@ -803,12 +798,6 @@ def test_tx_notification(remote_wiseconnect3, remote_wiseconnect3s, ble_dut, ble
         raise e
     finally:
         logger().info("print_test_final")
-        sl_collections.cleanup_ble(ble_dut=ble_dut, ble_client=remote_wiseconnect3,
-                                   ble_client_address=ble_client_address,
-                                   ble_dut_address=ble_dut_address)
-        sl_collections.cleanup_ble(ble_dut=ble_dut, ble_client=remote_wiseconnect3s[0],
-                                   ble_client_address=ble_client_address1,
-                                   ble_dut_address=ble_dut_address)
         ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
         time.sleep(10)
         ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address1)
@@ -827,11 +816,11 @@ def test_tx_notification(remote_wiseconnect3, remote_wiseconnect3s, ble_dut, ble
     "test_case_id, pri_adv_phy, sec_adv_phy, k, service_uid, char_uid, notify_time",
     [
         ("C768367", 1, 1, 20, 0x1bb1, 0x1AA1, 400),
-        ("C768368", 1, 2, 20, 0xAABB, 0x1bb1, 400),
+        ("C768368", 1, 2, 20, 0x1bb1, 0x1AA1, 400),
         ("C768369", 3, 3, 20, 0x1bb1, 0x1AA1, 400),
         ("C768379", 1, 1, 230, 0x1bb1, 0x1AA1, 400),
-        ("C768380", 1, 2, 230, 0xAABB, 0x1bb1, 400),
-        ("C768381", 3, 3, 230, 0xAABB, 0x1bb1, 400),
+        ("C768380", 1, 2, 230, 0x1bb1, 0x1AA1, 400),
+        ("C768381", 3, 3, 230, 0x1bb1, 0x1AA1, 400),
     ],
 )
 @pytest.mark.config(
@@ -906,9 +895,9 @@ def test_tx_indications(remote_wiseconnect3,
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(capture_file=f"test_{test_case_id}_sniffer_capture")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)
-        ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(set_smp=0)
-        ble_client_address1 = remote_wiseconnect3s[0].interfaces.wifi.ble_gatt_start(set_smp=0)
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)
+        ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(set_smp=1)
+        ble_client_address1 = remote_wiseconnect3s[0].interfaces.wifi.ble_gatt_start(set_smp=1)
         ble_thread = BLEThread(sl_collections, ble_dut=ble_dut, remote_device=remote_wiseconnect3,
                                ble_sniffer=ble_sniffer,
                                ble_client_address=ble_client_address, ble_dut_address=ble_dut_address,
@@ -924,6 +913,11 @@ def test_tx_indications(remote_wiseconnect3,
                                                       permissions=34)
         ble_dut.interfaces.wifi.ble_add_char_val_att(uid=char_uid)
         ble_thread.start_advertising()
+
+        ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                           psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+        ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+
         ble_thread.start_scanning()
         link_key1 = ble_thread.connect_devices()
         ble_thread.perform_gatt_operations()

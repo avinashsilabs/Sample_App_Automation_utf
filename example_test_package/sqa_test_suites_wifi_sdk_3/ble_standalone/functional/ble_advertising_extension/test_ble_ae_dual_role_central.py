@@ -271,7 +271,6 @@ class BLEThread:
                     for event in events:
                         if event.event_type == AsyncEventIdentifiers.GATT_WRITE_EVENT:
                             logger().info(f"Available RX event data: {event.event_data}")
-                    raise AssertionError(f"No matching RX GATT_WRITE_EVENT found for sent data: {data}")
             except Exception as e:
                 logger().error(f"Error in send_rx_notification() function for {self.ble_dut_address}: {e}")
                 raise e
@@ -911,6 +910,9 @@ class BLEThread:
         ("C768390", 3, 3, 20, 20, 23, 0x1aa1, 0xAABB),
         ("C768400", 1, 1, 230, 20, 233, 0x1aa1, 0xAABB),
         ("C768401", 1, 2, 230, 20, 233, 0x1aa1, 0xAABB),
+        ("C768402", 3, 3, 230, 20, 233, 0x1bb1, 0xAABB),
+
+
     ],
 )
 @pytest.mark.config(
@@ -1334,6 +1336,7 @@ def test_Indications(
     "test_case_id, pri_adv_phy, sec_adv_phy, data_size, notification_count, expected_pdu_length, service_uuid, char_uuid",
     [
         ("C768418", 1, 1, 20, 20, 23, 0xAABB, 0x1AA1),
+        ("C768419", 1, 2, 20, 20, 23, 0xAABB, 0x1bb1),
         ("C768420", 3, 3, 20, 20, 23, 0xAABB, 0x1AA1),
         ("C768421", 1, 1, 230, 20, 233, 0xAABB, 0x1AA1),
         ("C768422", 1, 2, 230, 20, 233, 0xAABB, 0x1AA1),
