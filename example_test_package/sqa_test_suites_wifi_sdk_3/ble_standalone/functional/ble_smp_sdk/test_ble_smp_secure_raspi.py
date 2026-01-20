@@ -1122,3 +1122,126 @@ def test_verify_numeric_comparision_pairing_method_DUT_as_peripheral_random_addr
                                    ble_client_address=ble_obj.ble_client_address,
                                    ble_dut_address=ble_obj.ble_dut_address)
 
+
+@pytest.mark.parametrize(
+    "dut_capability, client_capability, pin_code",
+    [
+        (0, "KeyboardDisplay", "-8"),  # -8 to wait for pass_key
+    ],
+)
+@pytest.mark.ble_sniffer("frontline_sniffer")
+def test_ble_smp_timeout_C165699(
+        wifi_dut, ble_client, pin_code, client_capability, dut_capability, ble_sniffer, sl_collections):
+    """ Verify ble SMP timeout if the the remote device doesn't confirm the pairing popup within a couple of seconds."""
+    layer_name = ["LE LL", "SMP"]
+    ble_sniffer.interfaces.sniffer.init_sniffer()
+    logger().info("sniffer capture started")
+    ble_sniffer.interfaces.sniffer.start_capture(capture_file="frontline_capture_C165699")
+    logger().info("Initiate ble service in DUT")
+    ble_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0, set_smp=0)
+    assert ble_dut_address, "failed to initiate ble in dut"
+    wifi_dut.interfaces.wifi.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0,
+                                                   smp_auth_req_bonding=1,
+                                                   smp_auth_req_mitm=1,
+                                                   smp_auth_req_sc=1, smp_max_enc_key_size=16,
+                                                   smp_local_oob_data_flag_not_present=0,
+                                                   smp_enc_key=1, smp_id_key=0,
+                                                   smp_sign_key=0)
+    wifi_dut.interfaces.wifi.ble_modify_passkey_event(passkey_state=0)
+    wifi_dut.interfaces.wifi.ble_start_advertising()
+    wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+    wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                       psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+    logger().info("Set MITM and security requirements in BLE client 0x04 0x00 0x01")
+    ble_client.interfaces.bluetooth.set_mitm_sc_bits("0x04 0x00 0x01")
+    logger().info("Start smp scan from the remote device")
+    ble_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
+        bt_dut_address=ble_dut_address,
+        capability="KeyboardDisplay",
+        pin_code="-8")
+    assert ble_client_address, "failed to initiate ble in remote device"
+    time.sleep(5)
+    logger().info("stop scanning ....")
+    ble_client.interfaces.bluetooth.stop_scanning()
+    logger().info("Check the dut is listed...")
+    ble_client.interfaces.bluetooth.get_devices()
+    def connect():
+        logger().info("Connect to the dut with mac address..")
+        ble_client.interfaces.bluetooth.pair_and_connect(ble_dut_address)
+
+    t = threading.Thread(target=connect)
+    t.start()
+    tw = Stopwatch()
+    time.sleep(20)
+    tw = Stopwatch()
+    pass_key_found = False
+    while tw.elapsed_sec < 120:
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if "passkey" in event.event_data:
+                passkey = re.findall(r"passkey: ([\d]*)", event.event_data)
+                if passkey[0] is not None:
+                    pass_key_value = str(passkey[0])
+                    logger().info(f"passkey : {pass_key_value}")
+                    time.sleep(20)
+                    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+                    state_int = int(state) if state.isdigit() else -1
+                    logger().info(f"********{state_int}*********")
+                    pass_key_found = True
+                    break
+            time.sleep(1)
+        if pass_key_found:
+            break
+    time.sleep(180)
+    ble_dut_address_hex = re.split(":", ble_dut_address)
+    ble_client_address_hex = re.split(":", ble_client_address)
+    master_address = "0x"
+    for hex_data_part in ble_dut_address_hex:
+        master_address = master_address + hex_data_part
+    slave_address = "0x"
+    for hex_data_part in ble_client_address_hex:
+        slave_address = slave_address + hex_data_part
+    logger().info("selecting bt devices for sniffer capture")
+    ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address])
+    time.sleep(30)
+    logger().info("Waiting for sniffer capture to complete...")
+    ble_sniffer.interfaces.sniffer.stop_capture()
+    captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+    logger().info(f"captured_files : {captured_files}")
+    time.sleep(30)
+    for layer in layer_name:
+        logger().info(f"layer : {layer_name}")
+        logger().info(f"Exporting layer : {layer}")
+        layer_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", layer)
+        logger().info(f"layer_file : {layer_file}")
+        layer_file = layer_file.replace("/tmp/reports", "/app/reports")
+        logger().info(f"layer_file after replace : {layer_file}")
+        file_size = os.path.getsize(layer_file)
+        logger().info(f"file_size : {file_size}, layer_file : {layer_file}")
+        assert file_size > 0
+        if layer == "LE LL":
+            sniffer_data_df_1 = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(
+                layer_file)
+            logger().info(f"sniffer_data_df_1 : {sniffer_data_df_1}")
+            assert sniffer_data_df_1 is not None
+        else:
+            sniffer_data_df_2 = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(
+                layer_file)
+            logger().info(f"sniffer_data_df_2 : {sniffer_data_df_2}")
+            assert sniffer_data_df_2 is not None
+    logger().info("Checking for sniffer data")
+    assert len(sniffer_data_df_1.loc[
+                   (sniffer_data_df_1['Control Pkt'] == "LL_TERMINATE_IND")]), "unable to get the terminate indication"
+    assert len(sniffer_data_df_2.loc[
+                   (sniffer_data_df_2['Code'] == "Pairing Request") & (
+                           sniffer_data_df_2['IO Capabilities'] == "KeyboardDisplay") & (
+                           sniffer_data_df_2["Secure Connection Pairing"] == "Yes") & (
+                           sniffer_data_df_2[
+                               'MITM'] == "MITM Protection:  Yes")]), "unable to find Pairing request"
+    logger().info("Pairing request has observed in sniffer")
+    assert len(sniffer_data_df_2.loc[(sniffer_data_df_2['Code'] == "Pairing Response") & (
+            sniffer_data_df_2['IO Capabilities'] == "DisplayOnly") & (sniffer_data_df_2[
+                                                                                   "Secure Connection Pairing"] == "Yes") & (
+                                                     sniffer_data_df_2[
+                                                         'MITM'] == "MITM Protection:  Yes")]), "unable to find Pairing response"
+    logger().info("Pairing response has observed in sniffer")
