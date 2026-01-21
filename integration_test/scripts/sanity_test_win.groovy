@@ -19,7 +19,7 @@ pipeline {
     stages {
         stage('Run Sanity test') {
             agent {
-                label 'NB0015361'
+                label 'LAB0015312-cbs-infrasw-9a079a79'
             }
             environment {
                 UTF_HWMUX_TOKEN = credentials('utf-dev-hwmux-token')
@@ -31,12 +31,14 @@ pipeline {
                 HARNESS_NAME= "__hwmux__integration_tests_3.yaml"
                 TEST_CONFIG_FILE = ".sequence_manager/test_execution_definitions/sanity_test.yaml"
                 MWLABUSER_JENKINS_SSH = credentials('mwlabuser_jenkins_ssh')
+                DOCKER_BUILD_TIMEOUT = '10800'  // 3 hours (10800 seconds) for Docker image build timeout
             }
             stages {
                 stage('Setup Environment') {
                     steps {
                             bat """
                                 if not exist %PYTHON3_HOME% (
+                                    set GIT_SSH_COMMAND=ssh -i "%MWLABUSER_JENKINS_SSH%" -o StrictHostKeyChecking=no
                                     git clone --depth 1 -b %PYTHON3_TAG% ssh://git@stash.silabs.com/toolchain_external/python_3_9_12_win64.git %PYTHON3_HOME%
                                 )
                                 if not EXIST venv\\pyvenv.cfg (
@@ -51,7 +53,7 @@ pipeline {
                         script {
                             withCredentials([sshUserPrivateKey(credentialsId: 'mwlabuser_jenkins_ssh', keyFileVariable: 'MWLABUSER_JENKINS_SSH', passphraseVariable: 'PASSPHRASE_UNUSED', usernameVariable: 'USERNAME_UNUSED')]) {
                                 hwmuxReserveAnyGroupFromLabel(HWMUX_GROUP_LABEL, null, UTF_HWMUX_TOKEN, "HWMUX_GROUP_JSON")  {
-                                    timeout(time: 120, unit: 'MINUTES') {
+                                    timeout(time: 180, unit: 'MINUTES') {
                                         writeFile(file: env.HWMUX_GROUP_JSON_FILE_NAME, text: env.HWMUX_GROUP_JSON)
                                         bat(label: "Run UTF Launcher", script: """
                                             type %HWMUX_GROUP_JSON_FILE_NAME% | utf_core\\tools\\jq.exe -r .metadata.host_ip  > tmp_host_ip
