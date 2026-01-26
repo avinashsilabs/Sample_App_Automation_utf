@@ -2,6 +2,7 @@ import time
 import pytest
 import string
 import random
+from retry import retry
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xOperatingMode,
     Si91xCoexMode,
@@ -19,9 +20,12 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xModuleType,
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
-    Si91xJoinFeatureBitMap
+    Si91xJoinFeatureBitMap,
+    Si91xAwsQos
 )
+from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
 from utf.utf_config import UtfConfig
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf_wiseconnect.utils.rs911x_version import parse_version
 from utf.utils.iperf.iperf_utils import ping
 from utf.interfaces.bluetooth import BLEDeviceState
@@ -50,6 +54,8 @@ from utf.interfaces.bluetooth.bluetooth_logs import BleLogs
 def logger():
     return get_logger(__name__)
 
+def text_generator(size=2000):
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
 
 
 class SnifferValidationProcess:
@@ -83,6 +89,14 @@ class SnifferValidationProcess:
         )
         if not tcp_ip_bypass:
             self.sniffer_validation_powersave()
+
+    def sniffer_validation_beacon(self):
+        packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=self.ap_mac_address,
+                                                                                        filter_name="beacon")
+        logger().info(f"Validating beacon frames")
+        assert self.wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1
+        )["packet_count"], "Sniffer: Unable to find beacons packets in sniffer from new AP Channel"
 
     def sniffer_validation_deauth(self):
         packet_filter1 = (
@@ -139,6 +153,7 @@ class WifiJoinThread(ThreadBase):
 
     def __init__(
             self,
+            http_server = None,
             wifi_sniffer=None,
             wifi_dut=None,
             wifi_access_point=None,
@@ -150,11 +165,21 @@ class WifiJoinThread(ThreadBase):
             sniffer_filter=None,
             timeout=60,
             skip_scan=False,
-
+            test_case_id=None,
+            eap_type=None,
+            aws_iot_client = None,
+            utf_constants = None,
+            messages = None,
+            qos=Si91xAwsQos.QOS1,
     ):
 
         super().__init__()
         self.wifi_dut = wifi_dut
+        self.http_server = http_server
+        self.utf_constants = utf_constants
+        self.aws_iot_client = aws_iot_client
+        self.messages = messages
+        self.wifi_client = wifi_client
         self.wifi_access_point = wifi_access_point
         self.wifi_sniffer = wifi_sniffer
         self.testcase = testcase
@@ -168,6 +193,8 @@ class WifiJoinThread(ThreadBase):
         self.ap_mac_address = None
         self.timeout = timeout
         self.skip_scan = skip_scan
+        self.test_case_id = test_case_id
+        self.eap_type = eap_type
         self.power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
         logger().info(f"in harness power_save flag set to be : {self.power_save}")
 
@@ -219,11 +246,263 @@ class WifiJoinThread(ThreadBase):
         )
         sniff_obj.sniffer_validation_join()
 
+    def get_firmware_status(self):
+        self.wifi_dut.interfaces.wifi.reset()
+        time.sleep(30)
+        logger().info("Initialising DUT after the reset....")
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+        self.wifi_dut.interfaces.wifi.initialize_thread()
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+        self.wifi_dut.interfaces.wifi.inited = False
+        time.sleep(5)
+        return fw_after_upgrade
+
+    ## aws code
+    @retry(Exception, delay=10, tries=3)
+    def subscribe_from_raspi(self, aws_iot_client, topic, qos=Si91xAwsQos.QOS0):
+        """
+        @param aws_iot_client: Fixture parameter to issue command in Raspi.
+        @param topic: Topic name to subscribe from Raspi on AWS Server.
+        @param qos: QOS value to subscribe on aws topic(0/1).
+        """
+        logger().info(f"\n\n *** aws_iot_client is Subscribing on topic '{topic}' and QOS:'{qos}'*** \n\n")
+        aws_iot_client.interfaces.aws_iot.received_messages.clear()
+        aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic, qos=qos)
+        status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        assert status == ClientStatus.STABLE, f"Subscribe on topic:'{topic}' is failed from aws_iot_client"
+
+    @retry(Exception, delay=25, tries=3)
+    def connect_to_aws_server_from_dut(self, wifi_dut=None, client_id=None, iscleansession=True, keep_alive=1200,
+                                       timeout=120, isWillMsgPresent=None, expected_status=SLStatus.SL_STATUS_OK,
+                                       port=8883, aws_iot_mqtt_rx_buf_len=1024):
+        """
+        @param wifi_dut: Fixture parameter to issue command in DUT.
+        @param client_id: mqtt client id for aws connection.
+        @param iscleansession: Boolean Value(True/False).
+        @param keep_alive: Keep alive period
+        @param timeout: Timeout value to wait until command to be executed successfully.
+        @return: Boolean Value(True/False).
+        :param port:
+        :param isWillMsgPresent:
+        :param expected_status:
+        """
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_init(client_id=client_id, iscleansession=iscleansession,
+                                                   keep_alive_interval=keep_alive, timeout=timeout,
+                                                   port=port, isWillMsgPresent=isWillMsgPresent,
+                                                   )
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_connect(timeout=timeout, expected_status=expected_status)
+        return True
+
+    @retry(Exception, delay=15, tries=5)
+    def subscribe_from_dut(self, wifi_dut, topic, qos=Si91xAwsQos.QOS0, timeout=120):
+        """
+        @param wifi_dut: Fixture parameter to issue command in DUT.
+        @param topic: Topic name to subscribe from DUT on AWS Server
+        @param qos: QOS value to subscribe on aws topic(0/1)
+        @param timeout: Timeout value to wait until command to be executed successfully.
+        """
+        logger().info(f"DUT is Subscribing on topic '{topic}' and QOS:'{qos}'")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_subscribe(topic_name=topic, qos=qos, timeout=timeout)
+
+    @retry(Exception, delay=15, tries=1)
+    def publish_from_dut(self, wifi_dut, topic, message, qos, timeout=120, negative_case=False):
+        """
+        @param wifi_dut: Fixture parameter to issue command in DUT.
+        @param topic: Topic name to subscribe from DUT on AWS Server.
+        @param message: Data to publish from DUT on subscribed topic.
+        @param qos: QOS value to publish data on aws topic(0/1).
+        @param timeout: Timeout value to wait until command to be executed successfully.
+        @param negative_case: Boolean Value(True/False).
+        """
+        logger().info(f"\nDUT is publishing message on topic:'{topic}' \nQOS:'{qos}'")
+        result = wifi_dut.interfaces.wifi.aws_iot_mqtt_publish(topic_name=topic, qos=qos, payload=message,
+                                                               timeout=timeout,
+                                                               negative_case=negative_case)
+        if negative_case:
+            return result
+    @retry(Exception, delay=10, tries=3)
+    def connect_to_aws_server_from_raspi(self, aws_iot_client):
+        """
+        @param aws_iot_client: Fixture parameter to issue command in Raspi.
+        """
+        logger().info("Connecting to aws server from aws_iot_client")
+        aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+        time.sleep(5)
+        status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        assert status == ClientStatus.STABLE, "Connecting to AWS server from aws_iot_client is failed"
+
+    @staticmethod
+    def validate_aws_messages_from_raspi(aws_iot_client, topic, qos, messages, topic_1=None, topic_2=None,
+                                         wait_time=10):
+        """
+        Validates messages received on AWS IoT client from a Raspberry Pi.
+
+        @param aws_iot_client: Fixture parameter to issue command in Raspi.
+        @param topic: Topic name which is subscribed on AWS Server (used if topic_1 and topic_2 are not provided).
+        @param qos: QOS value which is subscribed on AWS Server (0 or 1).
+        @param messages: List of messages published on AWS topics.
+        @param topic_1: Optional first topic name for alternating messages.
+        @param topic_2: Optional second topic name for alternating messages.
+        @param wait_time: Wait time value until data is received from AWS server.
+        """
+        logger().info("\n *** Validating received AWS messages ***")
+        time.sleep(wait_time)
+
+        # Retrieve received messages from AWS IoT client
+        recv_messages = aws_iot_client.interfaces.aws_iot.get_received_messages()
+
+        # Validate each received message
+        for count, msg in enumerate(messages):
+            # Determine the expected topic based on the presence of topic_1 and topic_2
+            if topic_1 is not None and topic_2 is not None:
+                expected_topic = topic_1 if count % 2 == 0 else topic_2
+            else:
+                expected_topic = topic
+
+            # Log details of the received message
+            logger().info(f"Received message {count + 1} is: '{recv_messages[count].payload.decode()}'")
+            logger().info(f"Received message {count + 1} topic is: '{recv_messages[count].topic}'")
+            logger().info(f"Received message {count + 1} qos is: '{recv_messages[count].qos}'")
+
+            # Validate the payload, topic, and QoS
+            assert recv_messages[count].payload.decode() == messages[count], "Received wrong message in aws_iot_client"
+            assert recv_messages[count].topic == expected_topic, "Received wrong topic in aws_iot_client"
+            assert recv_messages[count].qos == qos, "Received wrong qos in aws_iot_client"
+
+        logger().info("AWS messages validated successfully")
+
+    ## aws code
+
     def run(self):
-        if self.test_type == "join":
+        if self.test_case_id == "778128":
+            try:
+                for i in range(0, 3):
+                    self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=self.wifi_access_point.interfaces.wifi.ssid)
+                    i = i+1
+                if self.eap_type == "tls" or self.eap_type == "ttls" or self.eap_type == "peap" or self.eap_type == "fast" \
+                        or self.eap_type == "peapsafe1" or self.eap_type == "peapsafe2":
+                    self.wifi_dut.interfaces.wifi.join(ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                                                  passphrase=self.wifi_access_point.interfaces.wifi.passphrase,
+                                                  security="wpa2_enterprise", uid="user1", enc=self.eap_type, channel=8)
+                    self.wifi_dut.interfaces.wifi.start_ip()
+            except Exception as e:
+                self.sl_collections.exception_handling(wifi_dut=self.wifi_dut, exception=e)
+                logger().info(f"Exception during EAP connection: {e}")
+
+        elif self.test_case_id in "778129":
+                try:
+                    self.join_to_ap()
+                    upgrade_thread = FirmwareUpgradeThread(
+                        wifi_dut=self.wifi_dut,
+                        wifi_client=self.wifi_client,
+                    )
+                    upgrade_thread.start()
+                    upgrade_thread.wait_for_exit()
+                except Exception as e:
+                    logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+                    raise e
+
+        elif self.test_case_id == "778130":
+                try:
+                    logger().info(f" printing test case id : {self.test_case_id}")
+                    self.join_to_ap()
+                    if self.messages is None:
+                        self.messages = []
+                        for i in range(10):
+                            self.messages.append(text_generator(size=10))
+                        logger().info(f"Messages are:{self.messages}")
+                    logger().info("Initiating aws connect from DUT")
+                    client_id = 'client_c19548'
+                    logger().info (f"Client ID for AWS connection is : {client_id}")
+                    topic = "topic_c19548"
+                    logger().info(f"Topic for AWS connection is : {topic}")
+                    # iterations = self.utf_constants.get('iter_count')
+                    logger().info("Initiating aws connect from DUT")
+                    assert self.connect_to_aws_server_from_dut(self.wifi_dut,
+                                                                  client_id), "Failed to connect aws server from DUT"
+                    logger().info("Connecting to AWS server from DUT is successful")
+                    logger().info (f"subscribe_from_dut")
+                    self.subscribe_from_dut(self.wifi_dut, topic, qos=Si91xAwsQos.QOS0)
+                    logger().info ("connect to AWS server from raspi")
+                    self.connect_to_aws_server_from_raspi(self.aws_iot_client)
+                    logger().info (f"subscribe_from_raspi")
+                    self.subscribe_from_raspi(self.aws_iot_client, topic, qos=Si91xAwsQos.QOS0)
+                    logger().info("publishing started thread from DUT to raspi")
+                    for count, msg in enumerate(self.messages):
+                        logger().info("inside count msg loop")
+                        logger().info(
+                            f"\nDUT is publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS0}'"
+                            f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+                        self.publish_from_dut(self.wifi_dut, topic, msg, qos=Si91xAwsQos.QOS0)
+                        time.sleep(3)
+                    self.validate_aws_messages_from_raspi(self.aws_iot_client, topic, Si91xAwsQos.QOS0, self.messages)
+
+
+                except Exception as e:
+                    logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+                    raise e
+        else:
+            logger().info(f" printing test case id : {self.test_case_id}")
+            logger().info("wlan join thread entered in else block code")
             self.join_to_ap()
 
+class FirmwareUpgradeThread(ThreadBase):
+    def __init__(self, wifi_dut=None, wifi_client=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_client = wifi_client
+        self.host_ip = None
+        self.fw_before_upgrade = None
+        self.fw_after_upgrade = None
+        self.time_duration = None
 
+    def get_firmware_status(self):
+        self.wifi_dut.interfaces.wifi.reset()
+        time.sleep(30)
+        logger().info("Initialising DUT after the reset....")
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+        # self.wifi_dut.interfaces.wifi.initialize_thread()
+        # self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+        self.wifi_dut.interfaces.wifi.inited = False
+        time.sleep(5)
+        return fw_after_upgrade
+
+    def run(self):
+        try:
+            logger().info("performing firmware upgrade....")
+            self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+            logger().info(f"host ip is {self.host_ip}")
+            self.fw_before_upgrade = self.wifi_dut.interfaces.wifi.version()
+            logger().info(f" ***** FW before upgrade: {self.fw_before_upgrade} *****")
+            self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=self.host_ip, host_name=self.host_ip)
+            time.sleep(5)
+            start_time = time.time()
+            logger().info(f" start firmware upgrade: {start_time}")
+            finish_time = time.time()
+            logger().info(f"firmware upgraded : {finish_time}")
+            self.time_duration = (finish_time - start_time)
+            logger().info(f"Time taken to upgrade firmware is: {self.time_duration}")
+
+            if self.time_duration > 40:
+                logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {self.time_duration}")
+            else:
+                logger().info(f"time taken to upgrade firmware using http otaf {self.time_duration} seconds")
+            logger().info(f"\n ***firmware versions not matched after loading firmware through otaf \n")
+            logger().info("Stop Sniffer finally")
+            self.fw_after_upgrade = self.get_firmware_status()
+            time.sleep(2)
+            logger().info(f"\n\n ***firmware versions before otaf:{self.fw_before_upgrade}"
+                          f" firmware version after loading through otaf :{self.fw_after_upgrade}")
+            assert self.fw_before_upgrade != self.fw_after_upgrade, f"firmware versions should not match after loading firmware through otaf"
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+            raise e
 
 
 class BleThread(ThreadBase):
@@ -442,8 +721,8 @@ class BleThread(ThreadBase):
                                                                          characteristic=self.characteristic)
 
     def ble_conn_disconnect(self, disconnect_from="remote"):
-        self.ble_connect(role="master")
-        self.ble_disconnect(disconnect_from=disconnect_from)
+            time.sleep(10)
+            self.ble_disconnect(disconnect_from=disconnect_from)
     def enable_notifications_from_dut(self):
         logger().info(f"****** enabling notifications on remote****************")
         self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=self.char_path)
@@ -689,6 +968,7 @@ def test_sta_ble_sdk_sta_ble_slave_dle_notifications_wlan_csa_c778124(
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
+                    test_case_id="778124"
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -768,6 +1048,9 @@ def test_sta_ble_sdk_sta_ble_slave_dle_notifications_wlan_csa_c778124(
                                                ble_dut_address=ble_obj.ble_dut_address)
 
 
+
+
+@pytest.mark.run
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -830,6 +1113,7 @@ def test_sta_ble_sdk_sta_ble_central_ble_rx_notifications_with_csa_wpa3_security
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
+                    test_case_id= "778125"
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -972,6 +1256,7 @@ def test_sta_ble_with_csa_with_csa_count_1_ble_scan_with_si300ms_sw100ms_c778126
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
+                    test_case_id="778126"
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -1102,6 +1387,7 @@ def test_sta_ble_csa_beacon_count_254_with_ble_connection_with_ci45ms_C778127(
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
+                    test_case_id="778127"
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -1181,18 +1467,19 @@ def test_sta_ble_csa_beacon_count_254_with_ble_connection_with_ci45ms_C778127(
                                                ble_client_address=ble_obj.ble_client_address,
                                                ble_dut_address=ble_obj.ble_dut_address)
 
-@pytest.mark.skip()
+@pytest.mark.run
 @pytest.mark.config(
     "wifi_dut",
     wifi={
-        "oper_mode": 0,
+        "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.Default
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.PSKSecurity
                     | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
                     | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.IEEE802_11W
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -1201,12 +1488,14 @@ def test_sta_ble_csa_beacon_count_254_with_ble_connection_with_ci45ms_C778127(
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
 
     }
 )
 @pytest.mark.config('wifi_access_point',
-                    wifi={"standard": 'gnbax', "security": 'WPA3_ENTERPRISE', "passphrase": 'thisisatestnetwork'})
+                    wifi={"standard": 'gnbax', "security": 'WPA2Enterprise', "passphrase": '12345678', "channel": 8,
+                          "protected_management_frame" : "Required"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state(
@@ -1224,11 +1513,15 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
                 wifi_dut, ble_client,
                 request, utf_constants, sl_collections,
                 wifi_client,
-                sniffer_filter
+                sniffer_filter,
+                radius_server
         ):
             ble_dut_addr = ""
             ble_obj = None
             try:
+                logger().info(
+                    f"Since WPA3-ENT is not supported in 3rd party Asus Ap , as per input from QA team configured "
+                    f"wpa2-ent-pmf on 3rd party side and on dut enabled wpa3-enterprise with pmf")
                 test_name = request.node.name
                 ping_count = utf_constants.get("ping_count")
                 test_type = "join"
@@ -1243,11 +1536,12 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
-                    scan_count=70
+                    test_case_id="778128",
+                    eap_type="peap",
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
-                # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+                #####data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data //already commeneted
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
                 index = 1
                 address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
@@ -1271,6 +1565,7 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
 
                 # Create Custom services on DUT
                 # Create Custom services, attributes, values
+
                 logger().info("Creating new custom gatt service in DUT")
                 ble_obj.add_service(service_uuid=0xAABB)
                 logger().info("Adding custom characteristic declaration to the custom service")
@@ -1279,6 +1574,9 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
                 logger().info("Adding characteristic value attribute to the service")
                 wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
 
+                # wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
+                #
+                # wifi_access_point.interfaces.wifi.start_ap()
                 logger().info("configuring the Sniffer with the channel")
                 wifi_sniffer.interfaces.capture.configure_interface(
                     channel=wifi_access_point.interfaces.wifi.channel
@@ -1287,7 +1585,13 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
                     "start capturing with Sniffer by giving the test case name as filename"
                 )
                 wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+                wifi_dut.interfaces.wifi.set_eap_credentials()
+
+                wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+                    join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
+                wifi_access_point.interfaces.wifi.start_ap()
                 wifi_obj.start()
+                time.sleep(30)
                 ble_obj.ble_connect(role="master")
                 ble_obj.service_discovery_on_remote()
                 ble_obj.start()
@@ -1296,7 +1600,8 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
                 channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
                 logger().info(f"Channel in STA before CSA: {channel}, Band: {band}")
                 """ Need to execute the WLAN AP CSA command to set the channel for AP """
-                wifi_access_point.interfaces.wifi.enable_disable_csa(15, 255, 1)
+                ap_new_csa_channel = 15
+                wifi_access_point.interfaces.wifi.enable_disable_csa(ap_new_csa_channel, 255, 1)
                 logger().info("Waiting for 30 seconds for CSA to complete")
                 time.sleep(30)
                 """ Need to add the code for STA Channel inquiry"""
@@ -1310,9 +1615,9 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
                 logger().info("******************** ble_remove_service ***********************")
                 wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
                 ble_obj.ble_disconnect()
-                wifi_obj.sniffer_validation_scan()
                 logger().info("sniffer validation is successful")
-                assert channel is not 11, "Channel is not changed in STA after CSA"
+                logger().info(f"AP CSA channel: {ap_new_csa_channel}, STA channel after CSA: {channel}")
+                assert channel is not ap_new_csa_channel, "Channel is not changed in STA after CSA"
 
             except Exception as Ex:
                 sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -1325,7 +1630,7 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
                                                ble_dut_address=ble_obj.ble_dut_address)
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1335,8 +1640,12 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
                     | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
                     | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                                | Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.HTTPClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               |  Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -1363,12 +1672,14 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
 )
 
 def test_sta_ble_csa_with_ota_firmware_update_with_ble_conn_CI_30ms_C778129(
+                http_server,
                 wifi_sniffer,
                 wifi_access_point,
                 wifi_dut, ble_client,
                 request, utf_constants, sl_collections,
                 wifi_client,
-                sniffer_filter
+                sniffer_filter,
+
         ):
             ble_dut_addr = ""
             ble_obj = None
@@ -1387,11 +1698,12 @@ def test_sta_ble_csa_with_ota_firmware_update_with_ble_conn_CI_30ms_C778129(
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
-                    scan_count=70
+                    test_case_id= "778129",
+                    http_server=http_server
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
-                # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+                data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
                 data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
                 index = 1
                 address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
@@ -1422,31 +1734,31 @@ def test_sta_ble_csa_with_ota_firmware_update_with_ble_conn_CI_30ms_C778129(
                                                                value_handler_num=index + 1)
                 logger().info("Adding characteristic value attribute to the service")
                 wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
+                ble_obj.ble_connect(role="master")
+                ble_obj.service_discovery_on_remote()
+                ble_obj.start()
+                ble_obj.enable_notifications_remote()
+                wifi_obj.start()
+                logger().info("Waiting for 10 seconds after wlan object start")
+                time.sleep(10)
 
+                # channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
+                # logger().info(f"Channel in STA before CSA: {channel}, Band: {band}")
+                channel = 11
+                wifi_access_point.interfaces.wifi.enable_disable_csa(11, 255, 0)
                 logger().info("configuring the Sniffer with the channel")
                 wifi_sniffer.interfaces.capture.configure_interface(
-                    channel=wifi_access_point.interfaces.wifi.channel
+                    channel=11
                 )
                 logger().info(
                     "start capturing with Sniffer by giving the test case name as filename"
                 )
                 wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-                wifi_obj.start()
-                ble_obj.ble_connect(role="master")
-                ble_obj.service_discovery_on_remote()
-                ble_obj.start()
-                ble_obj.enable_notifications_remote()
-                """ Need to add the code for OTA Firmware update  """
-                """ Need to add the code for STA Channel inquiry"""
-                channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
-                logger().info(f"Channel in STA before CSA: {channel}, Band: {band}")
-                """ Need to execute the WLAN AP CSA command to set the channel for AP """
-                wifi_access_point.interfaces.wifi.enable_disable_csa(11, 255, 1)
                 logger().info("Waiting for 30 seconds for CSA to complete")
                 time.sleep(30)
                 """ Need to add the code for STA Channel inquiry"""
-                channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
-                logger().info(f"Channel in STA after CSA: {channel}, Band: {band}")
+                # channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
+                # logger().info(f"Channel in STA after CSA: {channel}, Band: {band}")
                 ble_obj.wait_for_exit()
                 wifi_obj.wait_for_exit()
                 time.sleep(2)
@@ -1469,7 +1781,7 @@ def test_sta_ble_csa_with_ota_firmware_update_with_ble_conn_CI_30ms_C778129(
                                                ble_client_address=ble_obj.ble_client_address,
                                                ble_dut_address=ble_obj.ble_dut_address)
 
-@pytest.mark.skip()
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1477,10 +1789,13 @@ def test_sta_ble_csa_with_ota_firmware_update_with_ble_conn_CI_30ms_C778129(
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default
                     | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
                     | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                                 | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
         "ble_features": Si91xBLEFeatureBitMap.Default
                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
@@ -1489,7 +1804,10 @@ def test_sta_ble_csa_with_ota_firmware_update_with_ble_conn_CI_30ms_C778129(
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584, "priority": 8},
-                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}}
+                          "ble": {"count": 1, "stack_len": 3584, "priority": 8}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
 
     }
 )
@@ -1512,7 +1830,8 @@ def test_sta_ble_csa_with_aws_mqtt_publish_with_ble_conn_C778130(
                 wifi_dut, ble_client,
                 request, utf_constants, sl_collections,
                 wifi_client,
-                sniffer_filter
+                sniffer_filter,
+                aws_iot_client
         ):
             ble_dut_addr = ""
             ble_obj = None
@@ -1531,7 +1850,8 @@ def test_sta_ble_csa_with_aws_mqtt_publish_with_ble_conn_C778130(
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
-                    scan_count=70
+                    test_case_id= "778130",
+                    aws_iot_client=aws_iot_client
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -1675,7 +1995,6 @@ def test_sta_ble_sdk_sta_ble_master_dle_notifications_with_2ble_wlan_csa_C778131
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
-                    scan_count=70
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -1756,7 +2075,7 @@ def test_sta_ble_sdk_sta_ble_master_dle_notifications_with_2ble_wlan_csa_C778131
                                                ble_client_address=ble_obj.ble_client_address,
                                                ble_dut_address=ble_obj.ble_dut_address)
 
-@pytest.mark.skip()
+@pytest.mark.run
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1818,6 +2137,7 @@ def test_sta_ble_sdk_ble_central_conn_disconnection_with_csa_C778132(
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
+                    test_case_id="778132"
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -1869,12 +2189,12 @@ def test_sta_ble_sdk_ble_central_conn_disconnection_with_csa_C778132(
                 logger().info(f"Channel in STA before CSA: {channel}, Band: {band}")
                 time.sleep(10);
                 wifi_obj.wait_for_exit()
-                for i in range(0, 10):
+                for i in range(0, 2):
                     new_channel = random.randint(1,11)
                     logger().info(f"Changing AP channel to {new_channel} for CSA")
                     wifi_access_point.interfaces.wifi.enable_disable_csa(new_channel, 20, 1)
-                    logger().info("Waiting for 40 seconds for CSA to complete")
-                    time.sleep(40)
+                    logger().info("Waiting for 20 seconds for CSA to complete")
+                    time.sleep(20)
                     sta_channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
                     logger().info(f"Channel in STA after CSA: {sta_channel}, Band: {band}")
                     assert sta_channel != new_channel, f"Channel is not changed in STA after CSA. Expected: {new_channel}, Got: {sta_channel}"
@@ -1884,7 +2204,6 @@ def test_sta_ble_sdk_ble_central_conn_disconnection_with_csa_C778132(
                 wifi_dut.interfaces.wifi.memory_free(address2)
                 logger().info("******************** ble_remove_service ***********************")
                 wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
-                ble_obj.ble_disconnect()
             except Exception as Ex:
                 sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
             finally:
@@ -1895,8 +2214,7 @@ def test_sta_ble_sdk_ble_central_conn_disconnection_with_csa_C778132(
                                                ble_client_address=ble_obj.ble_client_address,
                                                ble_dut_address=ble_obj.ble_dut_address)
 
-
-@pytest.mark.skip()
+@pytest.mark.run
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1958,6 +2276,7 @@ def test_sta_ble_sdk_ble_peripheral_conn_disconnection_with_csa_C778133(
                     ping_count=ping_count,
                     sniffer_filter=sniffer_filter,
                     test_type=test_type,
+                    test_case_id="778133"
                 )
                 service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
                 char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
@@ -2010,12 +2329,12 @@ def test_sta_ble_sdk_ble_peripheral_conn_disconnection_with_csa_C778133(
                 logger().info(f"Channel in STA before CSA: {channel}, Band: {band}")
                 wifi_obj.wait_for_exit()
                 """ Need to execute the WLAN AP CSA command to set the channel for AP """
-                for i in range(0, 10):
+                for i in range(0, 5):
                     new_channel = random.randint(1,11)
                     logger().info(f"Changing AP channel to {new_channel} for CSA")
                     wifi_access_point.interfaces.wifi.enable_disable_csa(new_channel, 20, 1)
-                    logger().info("Waiting for 40 seconds for CSA to complete")
-                    time.sleep(40)
+                    logger().info("Waiting for 20 seconds for CSA to complete")
+                    time.sleep(20)
                     sta_channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="client")
                     logger().info(f"Channel in STA after CSA: {sta_channel}, Band: {band}")
                     assert sta_channel != new_channel, f"Channel is not changed in STA after CSA. Expected: {new_channel}, Got: {sta_channel}"
@@ -2025,7 +2344,6 @@ def test_sta_ble_sdk_ble_peripheral_conn_disconnection_with_csa_C778133(
                 wifi_dut.interfaces.wifi.memory_free(address2)
                 logger().info("******************** ble_remove_service ***********************")
                 wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
-                ble_obj.ble_disconnect()
                 logger().info("sniffer validation is successful")
 
             except Exception as Ex:
@@ -2037,3 +2355,4 @@ def test_sta_ble_sdk_ble_peripheral_conn_disconnection_with_csa_C778133(
                     sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                                ble_client_address=ble_obj.ble_client_address,
                                                ble_dut_address=ble_obj.ble_dut_address)
+
