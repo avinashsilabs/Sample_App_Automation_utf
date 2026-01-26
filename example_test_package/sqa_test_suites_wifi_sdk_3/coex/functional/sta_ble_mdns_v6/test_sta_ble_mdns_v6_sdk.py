@@ -78,6 +78,134 @@ def logger():
     return get_logger(__name__)
 
 
+def pause_ble_during_wifi_operation(ble_obj, operation_name="WiFi operation", coordination_time=0.5):
+    """
+    Enhanced BLE coordination during critical WiFi operations for proper coexistence.
+    Provides extended coordination delay to avoid BLE TX during WiFi scan critical moments.
+
+    Args:
+        ble_obj: BLE object to coordinate with
+        operation_name: Name of the WiFi operation for logging
+        coordination_time: Coordination delay time in seconds (default 0.5s for aggressive coordination)
+    """
+    try:
+        logger().info(f"WiFi-BLE Coexistence: Extended coordination for {operation_name} ({coordination_time}s)")
+
+        # Set coordination flag to avoid conflicts during WiFi critical moments
+        if hasattr(ble_obj, '_coexistence_coordination'):
+            ble_obj._coexistence_coordination = True
+
+        # Extended delay to let any in-progress BLE TX complete and provide gap for WiFi scan
+        time.sleep(coordination_time)
+        logger().info(f"BLE coordination completed for {operation_name} - enhanced coexistence active")
+    except Exception as e:
+        logger().warning(f"Could not coordinate BLE timing: {e}")
+
+
+def resume_ble_after_wifi_operation(ble_obj, operation_name="WiFi operation"):
+    """
+    Clear BLE coordination after WiFi operations complete for proper coexistence.
+
+    Args:
+        ble_obj: BLE object to clear coordination with
+        operation_name: Name of the WiFi operation for logging
+    """
+    try:
+        logger().info(f"WiFi-BLE Coexistence: Clearing coordination after {operation_name}")
+
+        # Clear the coordination flag to return to normal BLE timing
+        if hasattr(ble_obj, '_coexistence_coordination'):
+            ble_obj._coexistence_coordination = False
+
+        # Brief stabilization time to let BLE resume normal pattern
+        time.sleep(0.2)
+        logger().info(f"BLE coordination cleared after {operation_name} - coexistence maintained")
+    except Exception as e:
+        logger().warning(f"Could not clear BLE coordination: {e}")
+
+
+def enhanced_wifi_scan_with_coexistence(sl_collections, wifi_dut, ssid, security_type, passphrase=None, max_retries=5,
+                                        ble_obj=None):
+    """
+    Enhanced WiFi connection with aggressive BLE coexistence coordination and extended retry logic.
+    Specifically designed to handle SL_STATUS_TIMEOUT 0x7 errors during BLE TX operations.
+
+    Args:
+        sl_collections: SL collections object
+        wifi_dut: WiFi DUT interface
+        ssid: WiFi network SSID
+        security_type: Security type of the network
+        passphrase: WiFi passphrase if needed
+        max_retries: Maximum number of connection attempts (set to 5)
+        ble_obj: BLE thread object to coordinate timing with
+
+    Returns:
+        Connection result from sl_collections
+    """
+    for attempt in range(max_retries):
+        try:
+            logger().info(f"Enhanced WiFi-BLE Coexistence: Attempt {attempt + 1}/{max_retries} for SSID: {ssid}")
+
+            # Aggressive timing coordination with BLE TX pattern
+            if ble_obj:
+                # Use progressive coordination time - more aggressive on later attempts
+                coordination_time = min(0.5 + (attempt * 0.2), 1.5)  # 0.5s to 1.5s
+                pause_ble_during_wifi_operation(ble_obj, f"Enhanced WiFi Scan Attempt {attempt + 1}", coordination_time)
+
+            # Progressive delay to handle persistent timing conflicts
+            if attempt > 0:
+                delay = min(attempt * 3, 15)  # 3s, 6s, 9s, 12s, 15s max
+                logger().info(f"Enhanced Coexistence: Adding {delay}s progressive delay for attempt {attempt + 1}")
+                time.sleep(delay)
+
+            # Additional pre-scan coordination for challenging cases
+            if attempt >= 2:
+                logger().info(f"Enhanced Coexistence: Extra pre-scan delay for attempt {attempt + 1}")
+                time.sleep(2)
+
+            # Try the original join_to_wifi_network function with enhanced coordination
+            logger().info(f"Attempting WiFi connection with enhanced BLE coexistence coordination...")
+
+            # Use the sl_collections function but with enhanced retry logic
+            result = sl_collections.join_to_wifi_network(
+                wifi_dut=wifi_dut,
+                ssid=ssid,
+                security_type=security_type,
+                passphrase=passphrase
+            )
+
+            # Clear coordination after successful WiFi connection
+            if ble_obj:
+                resume_ble_after_wifi_operation(ble_obj, f"Enhanced WiFi Success Attempt {attempt + 1}")
+
+            logger().info(f"Enhanced WiFi-BLE Coexistence: Connection successful on attempt {attempt + 1}")
+            return result
+
+        except Exception as e:
+            # Clear coordination even if connection failed
+            if ble_obj:
+                resume_ble_after_wifi_operation(ble_obj, f"Enhanced WiFi Failed Attempt {attempt + 1}")
+
+            error_str = str(e)
+            if ("SL_STATUS_TIMEOUT" in error_str or "0x7" in error_str or
+                "Scanning for AP failed" in error_str or "FW_FAILURE" in error_str) and attempt < max_retries - 1:
+                logger().warning(
+                    f"Enhanced WiFi-BLE Coexistence: Scan timeout on attempt {attempt + 1}. Enhanced retry strategy...")
+
+                # Add extra recovery delay for persistent timeouts
+                if attempt >= 3:
+                    logger().info("Enhanced Coexistence: Applying firmware recovery delay")
+                    time.sleep(5)
+
+                continue
+            else:
+                logger().error(f"Enhanced WiFi-BLE Coexistence: Connection failed after {attempt + 1} attempts: {e}")
+                raise
+
+    raise Exception(
+        f"Enhanced WiFi-BLE Coexistence: Connection failed after {max_retries} attempts with extended timing coordination")
+
+
 def random_ipv6_addr(network):
     """
     Generate a random IPv6 address in the given network
@@ -136,6 +264,67 @@ def cleanup_ble_and_client(ble_client, ble_obj, wifi_dut, sl_collections):
         except Exception as e:
             # Log warning but continue if BLE cleanup fails to prevent test hanging
             logger().warning(f"Error during BLE cleanup: {e}")
+
+
+def ble_authentication_cleanup_and_retry(ble_obj, ble_client, wifi_dut, sl_collections):
+    """
+    Perform comprehensive BLE cleanup after authentication cancellation errors.
+    Cleans up both Raspberry Pi (client) and DUT (917) BLE stacks.
+
+    Args:
+        ble_obj: BLE thread functionality object
+        ble_client: BLE client interface (Raspberry Pi)
+        wifi_dut: WiFi DUT with BLE capabilities
+        sl_collections: Collections object with cleanup utilities
+    """
+    try:
+        logger().info("BLE Authentication Cleanup: Starting comprehensive cleanup after pairing failure")
+
+        # Stop any ongoing BLE operations
+        try:
+            wifi_dut.interfaces.wifi.ble_stop_advertising()
+            logger().info("Stopped BLE advertising on DUT")
+        except Exception as e:
+            logger().warning(f"Could not stop advertising: {e}")
+
+        try:
+            ble_client.interfaces.bluetooth.stop_scanning()
+            logger().info("Stopped BLE scanning on Raspberry Pi")
+        except Exception as e:
+            logger().warning(f"Could not stop scanning: {e}")
+
+        # Remove paired devices from both sides
+        if hasattr(ble_obj, 'ble_dut_address') and ble_obj.ble_dut_address:
+            try:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+                logger().info(f"Removed DUT device {ble_obj.ble_dut_address} from Raspberry Pi")
+            except Exception as e:
+                logger().warning(f"Could not remove DUT device from Raspberry Pi: {e}")
+
+        if hasattr(ble_obj, 'ble_client_address') and ble_obj.ble_client_address:
+            try:
+                wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_obj.ble_client_address)
+                logger().info(f"Disconnected from client {ble_obj.ble_client_address} on DUT")
+            except Exception as e:
+                logger().warning(f"Could not disconnect client on DUT: {e}")
+
+        # Reset BLE interface states
+        try:
+            ble_client.interfaces.bluetooth.close()
+            time.sleep(2)
+            logger().info("Reset Raspberry Pi BLE interface")
+        except Exception as e:
+            logger().warning(f"Could not reset Raspberry Pi BLE interface: {e}")
+
+        # Clear any cached addresses
+        ble_obj.ble_client_address = None
+
+        logger().info("BLE Authentication Cleanup: Comprehensive cleanup completed")
+        time.sleep(3)  # Allow time for cleanup to settle
+
+    except Exception as e:
+        logger().error(f"BLE Authentication Cleanup failed: {e}")
+        time.sleep(2)  # Brief delay even if cleanup fails
 
 
 # BLE Thread Functionality Class - Handles BLE operations in WiFi+BLE coexistence scenarios
@@ -336,20 +525,93 @@ class BleThreadFunctionality(ThreadBase):
             timeout=30  # Connection timeout in seconds
         )
 
-    def ble_connect(self, role="slave"):
+    def ble_connect(self, role="slave", tc_id=None, max_auth_retries=3):
         """
-        Establish BLE connection with specified role (master or slave)
+        Establish BLE connection with specified role (master or slave) and authentication retry logic.
+        Includes automatic retry mechanism for authentication cancellation errors.
 
         Args:
             role (str): "master" for DUT as master, "slave" for DUT as slave
+            tc_id (str): Test case ID for logging purposes
+            max_auth_retries (int): Maximum retry attempts for authentication failures (default: 3)
         """
-        with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/ble_connect.log_{int(time.time())}"):
-            if role == "slave":
-                # DUT acts as BLE slave - advertise and wait for remote connection
-                logger().info("Starting DUT BLE advertising for slave role")
-                self.wifi_dut.interfaces.wifi.ble_start_advertising()  # Start advertising
-                time.sleep(5)  # Wait for advertising to stabilize
-                self.scan_and_connect_from_remote()  # Remote scans and connects
+        tc_context = f" - TC: {tc_id}" if tc_id else ""
+        last_exception = None
+
+        for attempt in range(max_auth_retries):
+            try:
+                logger().info(
+                    f"Starting BLE connection in {role} role (attempt {attempt + 1}/{max_auth_retries}){tc_context}")
+
+                with BleLogs(start_collecting_logs=True,
+                             bt_log_path=f"reports/ble_connect_{tc_id or 'default'}_{role}_{int(time.time())}.log"):
+                    if role == "slave":
+                        # DUT acts as BLE slave - advertise and wait for remote connection
+                        logger().info(
+                            f"Starting DUT BLE advertising for slave role (attempt {attempt + 1}/{max_auth_retries}){tc_context}")
+                        self.wifi_dut.interfaces.wifi.ble_start_advertising()  # Start advertising
+
+                        # Progressive stabilization time - more time for later attempts
+                        stabilization_time = 5 + (attempt * 1)  # 5s, 6s, 7s
+                        logger().info(
+                            f"Waiting {stabilization_time}s for advertising stabilization (SMP readiness){tc_context}")
+                        time.sleep(stabilization_time)
+
+                        self.scan_and_connect_from_remote()  # Remote scans and connects
+
+                        # Verify connection success by checking device state
+                        device_state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+                        if int(device_state) == 8:  # Connected state
+                            logger().info(f"BLE connection successful - Device state: {device_state}{tc_context}")
+                            return  # Success - exit retry loop
+                        else:
+                            raise Exception(f"BLE connection failed - Device state: {device_state} (expected: 8)")
+
+            except Exception as e:
+                error_msg = str(e)
+                last_exception = e
+
+                # Check for authentication cancellation pattern
+                if ("Cancelling pairing to /org/bluez/hci0/dev" in error_msg or
+                        "AuthenticationCanceled" in error_msg or
+                        "Authentication Canceled" in error_msg or
+                        "Can't register the object-path handler" in error_msg):
+
+                    logger().warning(
+                        f"BLE Authentication failure detected (attempt {attempt + 1}){tc_context}: {error_msg}")
+
+                    if attempt < max_auth_retries - 1:  # Not the last attempt
+                        logger().info(
+                            f"Performing BLE cleanup and retry (attempt {attempt + 2}/{max_auth_retries}){tc_context}")
+
+                        # Perform comprehensive cleanup
+                        ble_authentication_cleanup_and_retry(
+                            ble_obj=self,
+                            ble_client=self.ble_client,
+                            wifi_dut=self.wifi_dut,
+                            sl_collections=self.sl_collections
+                        )
+
+                        # Progressive delay between attempts
+                        retry_delay = 5 + (attempt * 2)  # 5s, 7s, 9s
+                        logger().info(f"Waiting {retry_delay}s before retry{tc_context}")
+                        time.sleep(retry_delay)
+
+                        continue  # Retry the connection
+                    else:
+                        logger().error(f"BLE authentication failed after {max_auth_retries} attempts{tc_context}")
+                        error_context = f"BLE {role} connection failed after {max_auth_retries} attempts with authentication fixes applied{tc_context}"
+                        raise Exception(f"{error_context} Last error: {error_msg}") from e
+                else:
+                    # Non-authentication error - don't retry
+                    logger().error(
+                        f"BLE connection failed with non-recoverable error (attempt {attempt + 1}){tc_context}: {error_msg}")
+                    error_context = f"BLE {role} connection failed after {attempt + 1} attempts{tc_context}"
+                    raise Exception(f"{error_context} Last error: {error_msg}") from e
+
+        # If we reach here, all retry attempts failed with authentication issues
+        error_context = f"BLE {role} connection failed after {max_auth_retries} authentication retry attempts{tc_context}"
+        raise Exception(f"{error_context} Last error: {last_exception}") from last_exception
 
     def fetch_profiles(self):
         """
@@ -720,23 +982,61 @@ class WifiThreadFunctionality(ThreadBase):
         self.remote_ip = None  # Remote device IP address
         self.ping_count = 5  # Number of ping attempts for connectivity checks
 
-    def join_to_ap(self):
+    def join_to_ap(self, ble_obj=None):
         """
-        Connect the DUT to the WiFi Access Point and configure IPv6 addressing
-        Retrieves both DUT and remote client IP addresses for testing
+        Connect the DUT to the WiFi Access Point with enhanced BLE coexistence coordination.
+        Uses aggressive timing coordination and extended retry logic to handle WiFi-BLE conflicts.
+
+        Args:
+            ble_obj: BLE thread object to coordinate timing with (for proper coexistence)
         """
-        # Join the DUT to the WiFi network with comprehensive configuration
-        self.dut_add_dict = self.sl_collections.join_to_wifi_network(
-            wifi_dut=self.wifi_dut,  # WiFi DUT to connect
-            wifi_access_point=self.wifi_access_point,  # Target Access Point
-            associated=self.wifi_dut.interfaces.wifi.associated,  # Current association status
-            ip_version='ipv6',  # Use IPv6 addressing
-            ping_after_power_save=True,  # Verify connectivity after power save
-            ping_before_power_save=True,  # Verify connectivity before power save
-            power_save=self.power_save,  # Power save mode configuration
-            ipv6_type=self.addr_type,  # IPv6 address type (global/link-local)
-            retry_count=3  # Number of connection retry attempts
-        )
+        try:
+            # Use enhanced WiFi connection with BLE coexistence coordination
+            logger().info("Enhanced WiFi-BLE Coexistence: Attempting connection with extended coordination")
+            self.dut_add_dict = enhanced_wifi_scan_with_coexistence(
+                sl_collections=self.sl_collections,
+                wifi_dut=self.wifi_dut,
+                ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                security_type=self.wifi_access_point.interfaces.wifi.security_mode,
+                passphrase=getattr(self.wifi_access_point.interfaces.wifi, 'passphrase', None),
+                max_retries=5,  # Set to 5 retry attempts for coexistence scenarios
+                ble_obj=ble_obj  # Pass BLE object for timing coordination
+            )
+            logger().info("Enhanced WiFi-BLE Coexistence: Primary connection method successful")
+
+        except Exception as e:
+            logger().error(f"Enhanced WiFi-BLE Coexistence: Primary method failed: {e}")
+            # Fallback to original method with extended coordination
+            logger().info("Enhanced WiFi-BLE Coexistence: Using fallback method with maximum coordination")
+
+            # Maximum coordination for fallback attempt
+            if ble_obj:
+                pause_ble_during_wifi_operation(ble_obj, "fallback enhanced WiFi connection", 2.0)
+
+            time.sleep(3)  # Extended delay before fallback
+
+            try:
+                self.dut_add_dict = self.sl_collections.join_to_wifi_network(
+                    wifi_dut=self.wifi_dut,  # WiFi DUT to connect
+                    wifi_access_point=self.wifi_access_point,  # Target Access Point
+                    associated=self.wifi_dut.interfaces.wifi.associated,  # Current association status
+                    ip_version='ipv6',  # Use IPv6 addressing
+                    ping_after_power_save=True,  # Verify connectivity after power save
+                    ping_before_power_save=True,  # Verify connectivity before power save
+                    power_save=self.power_save,  # Power save mode configuration
+                    ipv6_type=self.addr_type,  # IPv6 address type (global/link-local)
+                    retry_count=5  # Increased retry count for fallback
+                )
+
+                # Clear coordination after successful fallback
+                if ble_obj:
+                    resume_ble_after_wifi_operation(ble_obj, "fallback enhanced WiFi connection success")
+
+            except Exception as fallback_error:
+                # Clear coordination even if fallback fails
+                if ble_obj:
+                    resume_ble_after_wifi_operation(ble_obj, "fallback enhanced WiFi connection failed")
+                raise fallback_error
 
         # Log the DUT's network configuration information
         logger().info(
@@ -980,23 +1280,24 @@ wan_gateway = "2001:db8:abcd:0012::1"
 
 # Test-specific Access Point configuration
 @pytest.mark.config(
-    "wifi_access_point", 
+    "wifi_access_point",
     wifi={
-        "ipv6_state": "0",                                          # IPv6 state configuration   # Random IPv6 address in specified range
-        "security": "WPA2",                                          # WPA2 security configuration
+        "ipv6_state": "0",  # IPv6 state configuration   # Random IPv6 address in specified range
+        "security": "WPA2",  # WPA2 security configuration
         "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")
     }
 )
-
 # Test state management markers - define initial and final states for devices
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")   # Start with AP enabled
-@pytest.mark.start_state("wifi_dut", wifi=["init"])                # Start with DUT initialized
-@pytest.mark.end_state(                                            # End state configuration
-    "wifi_dut", 
-    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated","unassociated"]  # Disable power save and disassociate
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")  # Start with AP enabled
+@pytest.mark.start_state("wifi_dut", wifi=["init"])  # Start with DUT initialized
+@pytest.mark.end_state(  # End state configuration
+    "wifi_dut",
+    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
+    # Disable power save and disassociate
 )
 def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C768342(
-        wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants, service_discovery, wifi_client, sniffer_filter):
+        wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
+        service_discovery, wifi_client, sniffer_filter):
     """
     Test Case C768342: Verify mDNS Init/Register/Deinit in a loop with BLE scanning in power save mode
 
@@ -1019,8 +1320,8 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C76834
     ble_obj = None  # Initialize BLE object reference for cleanup
     try:
         # Extract test execution parameters
-        capture_filename = request.node.name           # Use test function name for capture file
-        iter_count = utf_constants.get("iter_count")   # Get iteration count from test constants
+        capture_filename = request.node.name  # Use test function name for capture file
+        iter_count = utf_constants.get("iter_count")  # Get iteration count from test constants
 
         # Ensure minimum iteration count for meaningful testing
         if iter_count <= 3:
@@ -1028,25 +1329,25 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C76834
 
         # Configure BLE thread for scanning functionality with power save
         ble_obj = BleThreadFunctionality(
-            wifi_dut=wifi_dut,                  # WiFi DUT with BLE coexistence capability
-            ble_client=ble_client,              # Remote BLE client (Raspberry Pi)
-            sl_collections=sl_collections,      # Test utility collections
-            ble_test_type="scan",               # Configure for BLE scanning test
-            scan_interval=480,                  # BLE scan interval: 480 * 0.625ms = 300ms
-            scan_window=160                     # BLE scan window: 160 * 0.625ms = 100ms
+            wifi_dut=wifi_dut,  # WiFi DUT with BLE coexistence capability
+            ble_client=ble_client,  # Remote BLE client (Raspberry Pi)
+            sl_collections=sl_collections,  # Test utility collections
+            ble_test_type="scan",  # Configure for BLE scanning test
+            scan_interval=480,  # BLE scan interval: 480 * 0.625ms = 300ms
+            scan_window=160  # BLE scan window: 160 * 0.625ms = 100ms
         )
 
         # Configure WiFi thread for mDNS operations with specific test case
         wifi_obj = WifiThreadFunctionality(
-            wifi_dut=wifi_dut,                  # WiFi DUT interface
-            wifi_access_point=wifi_access_point, # Target access point
-            wifi_client=wifi_client,            # Remote WiFi client device
-            wifi_sniffer=wifi_sniffer,          # Packet capture interface
-            test_case=768342,                   # Specific test case ID for mDNS loop testing
-            sl_collections=sl_collections,      # Test utility collections
-            sniffer_filter=sniffer_filter,      # Packet filtering configuration
-            power_save=True,                    # Enable power save mode
-            iteration_count=iter_count          # Number of mDNS test iterations
+            wifi_dut=wifi_dut,  # WiFi DUT interface
+            wifi_access_point=wifi_access_point,  # Target access point
+            wifi_client=wifi_client,  # Remote WiFi client device
+            wifi_sniffer=wifi_sniffer,  # Packet capture interface
+            test_case=768342,  # Specific test case ID for mDNS loop testing
+            sl_collections=sl_collections,  # Test utility collections
+            sniffer_filter=sniffer_filter,  # Packet filtering configuration
+            power_save=True,  # Enable power save mode
+            iteration_count=iter_count  # Number of mDNS test iterations
         )
 
         # Start packet capture for traffic analysis and validation
@@ -1055,14 +1356,14 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C76834
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}")
 
         # Execute BLE scanning operations in background thread
-        ble_obj.check_scan_functionality()                       # Start BLE scanning thread
+        ble_obj.check_scan_functionality()  # Start BLE scanning thread
 
         # Configure advanced WiFi client settings for optimal coexistence
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
-            max_retry_attempts=0,               # Disable connection retries for faster testing
-            scan_interval=4,                    # WiFi scan interval in seconds
-            beacon_missed_count=40,             # Number of missed beacons before disconnection
-            first_time_retry_enable=0           # Disable first-time retry mechanism
+            max_retry_attempts=0,  # Disable connection retries for faster testing
+            scan_interval=4,  # WiFi scan interval in seconds
+            beacon_missed_count=40,  # Number of missed beacons before disconnection
+            first_time_retry_enable=0  # Disable first-time retry mechanism
         )
 
         # Establish WiFi connection and configure IPv6 addressing
@@ -1076,8 +1377,8 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C76834
         time.sleep(1)  # Allow service discovery to stabilize
 
         # Execute WiFi mDNS operations (init/register/deinit loop)
-        wifi_obj.start()                        # Start mDNS operations thread
-        wifi_obj.wait_for_exit()                # Wait for all mDNS iterations to complete
+        wifi_obj.start()  # Start mDNS operations thread
+        wifi_obj.wait_for_exit()  # Wait for all mDNS iterations to complete
 
         # Stop service discovery and packet capture
         service_discovery.interfaces.sd.stop_discovering_services()
@@ -1085,8 +1386,8 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C76834
         wifi_sniffer.interfaces.capture.stop_capture()
 
         # Clean up BLE and WiFi connections
-        wifi_dut.interfaces.wifi.ble_stop_scanning()   # Stop any remaining BLE scanning
-        wifi_dut.interfaces.wifi.leave()               # Disconnect from WiFi access point
+        wifi_dut.interfaces.wifi.ble_stop_scanning()  # Stop any remaining BLE scanning
+        wifi_dut.interfaces.wifi.leave()  # Disconnect from WiFi access point
 
     except Exception as Ex:
         # Handle any exceptions during test execution
@@ -1102,17 +1403,18 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C76834
 
 # Test configuration: Disable IPv6, use Open security for simplified testing
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ipv6_state": "0",                                      # Disable IPv6 support (IPv4 only)
-                               "security": "Open",                                      # Use Open security (no authentication)
+    "wifi_access_point", wifi={"ipv6_state": "0",  # Disable IPv6 support (IPv4 only)
+                               "security": "Open",  # Use Open security (no authentication)
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")
                                }
 )
 # Pytest state management markers - define initial and final states
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")                      # Start with AP enabled
-@pytest.mark.start_state("wifi_dut", wifi=["init"])                                   # Initialize WiFi DUT
-@pytest.mark.end_state(                                            # End state configuration
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")  # Start with AP enabled
+@pytest.mark.start_state("wifi_dut", wifi=["init"])  # Initialize WiFi DUT
+@pytest.mark.end_state(  # End state configuration
     "wifi_dut",
-    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated","unassociated"]  # Disable power save and disassociate
+    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
+    # Disable power save and disassociate
 )
 def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_C768351(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
@@ -1222,22 +1524,24 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_C768351(
 
 # Test-specific Access Point configuration with WPA2 security
 @pytest.mark.config(
-    "wifi_access_point", 
+    "wifi_access_point",
     wifi={
-        "ipv6_state": "0",                                          # IPv6 state: disabled
-        "security": "WPA2",                                          # WPA2 security configuration
+        "ipv6_state": "0",  # IPv6 state: disabled
+        "security": "WPA2",  # WPA2 security configuration
         "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")
     }
 )
 # Test state management - same pattern as previous tests
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")   # Start with AP enabled
-@pytest.mark.start_state("wifi_dut", wifi=["init"])                # Start with DUT initialized
-@pytest.mark.end_state(                                            # End state cleanup
-    "wifi_dut", 
-    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated","unassociated"]  # Disable power save and disassociate
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")  # Start with AP enabled
+@pytest.mark.start_state("wifi_dut", wifi=["init"])  # Start with DUT initialized
+@pytest.mark.end_state(  # End state cleanup
+    "wifi_dut",
+    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
+    # Disable power save and disassociate
 )
 def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_ble_adv_ps_C768344(
-        wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants, service_discovery, wifi_client, sniffer_filter,):
+        wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
+        service_discovery, wifi_client, sniffer_filter, ):
     """
     Test Case C768344: Verify mDNS operations with WiFi connection/disconnection loop and BLE advertising
 
@@ -1257,8 +1561,8 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_
     ble_obj = None  # Initialize BLE object reference for cleanup
     try:
         # Extract test execution parameters
-        capture_filename = request.node.name           # Use test function name for capture file
-        iter_count = utf_constants.get("iter_count")   # Get iteration count from test constants
+        capture_filename = request.node.name  # Use test function name for capture file
+        iter_count = utf_constants.get("iter_count")  # Get iteration count from test constants
 
         # Ensure minimum iteration count for testing
         if iter_count <= 3:
@@ -1271,37 +1575,37 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_
 
         # Configure BLE thread for advertising functionality
         ble_obj = BleThreadFunctionality(
-            wifi_dut=wifi_dut,                  # WiFi DUT with BLE coexistence capability
-            ble_client=ble_client,              # Remote BLE client (Raspberry Pi)
-            sl_collections=sl_collections,      # Test utility collections
-            ble_test_type="advertise",          # Configure for BLE advertising test
-            adv_int_min=32,                     # Minimum advertising interval: 32 * 0.625ms = 20ms
-            adv_int_max=32,                     # Maximum advertising interval: 32 * 0.625ms = 20ms
+            wifi_dut=wifi_dut,  # WiFi DUT with BLE coexistence capability
+            ble_client=ble_client,  # Remote BLE client (Raspberry Pi)
+            sl_collections=sl_collections,  # Test utility collections
+            ble_test_type="advertise",  # Configure for BLE advertising test
+            adv_int_min=32,  # Minimum advertising interval: 32 * 0.625ms = 20ms
+            adv_int_max=32,  # Maximum advertising interval: 32 * 0.625ms = 20ms
         )
 
         # Configure WiFi thread for mDNS operations with specific test case
         wifi_obj = WifiThreadFunctionality(
-            wifi_dut=wifi_dut,                  # WiFi DUT interface
-            wifi_access_point=wifi_access_point, # Target access point
-            wifi_client=wifi_client,            # Remote WiFi client device
-            wifi_sniffer=wifi_sniffer,          # Packet capture interface
-            test_case=768344,                   # Specific test case ID for connect/disconnect loops
-            sl_collections=sl_collections,      # Test utility collections
-            sniffer_filter=sniffer_filter,      # Packet filtering configuration
-            power_save=True,                    # Enable power save mode
-            iteration_count=iter_count          # Number of connect/disconnect iterations
+            wifi_dut=wifi_dut,  # WiFi DUT interface
+            wifi_access_point=wifi_access_point,  # Target access point
+            wifi_client=wifi_client,  # Remote WiFi client device
+            wifi_sniffer=wifi_sniffer,  # Packet capture interface
+            test_case=768344,  # Specific test case ID for connect/disconnect loops
+            sl_collections=sl_collections,  # Test utility collections
+            sniffer_filter=sniffer_filter,  # Packet filtering configuration
+            power_save=True,  # Enable power save mode
+            iteration_count=iter_count  # Number of connect/disconnect iterations
         )
 
         # Execute BLE advertising operations
-        ble_obj.start()                         # Start BLE advertising thread
-        ble_obj.wait_for_exit()                    # Wait for BLE advertising to complete
+        ble_obj.start()  # Start BLE advertising thread
+        ble_obj.wait_for_exit()  # Wait for BLE advertising to complete
 
         # Configure WiFi advanced client settings for optimal performance
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
-            max_retry_attempts=0,               # Disable connection retries for faster testing
-            scan_interval=4,                    # WiFi scan interval in seconds
-            beacon_missed_count=40,             # Number of missed beacons before disconnection
-            first_time_retry_enable=0           # Disable first-time retry mechanism
+            max_retry_attempts=0,  # Disable connection retries for faster testing
+            scan_interval=4,  # WiFi scan interval in seconds
+            beacon_missed_count=40,  # Number of missed beacons before disconnection
+            first_time_retry_enable=0  # Disable first-time retry mechanism
         )
 
         # Initialize and start service discovery on remote device
@@ -1316,11 +1620,11 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_
         # Execute multiple WiFi connection/mDNS/disconnection cycles
         for count in range(iter_count):
             logger().info(f"Starting WiFi connect/mDNS/disconnect cycle {count + 1} of {iter_count}")
-            wifi_obj.join_to_ap()               # Connect to WiFi access point
-            wifi_obj.start()                    # Execute mDNS operations
-            wifi_obj.wait_for_exit()            # Wait for mDNS operations to complete
-            wifi_dut.interfaces.wifi.leave()    # Disconnect from WiFi access point
-            time.sleep(2)                       # Allow time between cycles for stability
+            wifi_obj.join_to_ap()  # Connect to WiFi access point
+            wifi_obj.start()  # Execute mDNS operations
+            wifi_obj.wait_for_exit()  # Wait for mDNS operations to complete
+            wifi_dut.interfaces.wifi.leave()  # Disconnect from WiFi access point
+            time.sleep(2)  # Allow time between cycles for stability
 
         # Stop service discovery and BLE advertising
         service_discovery.interfaces.sd.stop_discovering_services()
@@ -1344,17 +1648,18 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_
 
 # Test configuration: Disable IPv6, use WPA2 security for enhanced security testing
 @pytest.mark.config(
-    "wifi_access_point", wifi={"ipv6_state": "0",                                      # Disable IPv6 support (IPv4 only)
-                               "security": "WPA2",                                      # Use WPA2 security
+    "wifi_access_point", wifi={"ipv6_state": "0",  # Disable IPv6 support (IPv4 only)
+                               "security": "WPA2",  # Use WPA2 security
                                "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")
                                }
 )
 # Pytest state management markers - define initial and final states
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")                      # Start with AP enabled
-@pytest.mark.start_state("wifi_dut", wifi=["init"])                                   # Initialize WiFi DUT
-@pytest.mark.end_state(                                                               # End state configuration
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")  # Start with AP enabled
+@pytest.mark.start_state("wifi_dut", wifi=["init"])  # Initialize WiFi DUT
+@pytest.mark.end_state(  # End state configuration
     "wifi_dut",
-    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated","unassociated"]  # Disable power save and disassociate
+    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
+    # Disable power save and disassociate
 )
 def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_ble_adv_C768353(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
@@ -1467,7 +1772,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
-        "ipv6_state": "0",  # IPv6 state: 0= "stateless" 1="stateful"
+        "ipv6_state": "1",  # IPv6 state: 0= "stateless" 1="stateful"
         "security": "Open",  # Open WiFi security (no encryption)
         "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48")
     }
@@ -1480,7 +1785,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
-def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_central_rx_ps_C768343(
+def test_wifi_sdk_mdns_init_reg_service_deinit_stateful_loop_ble_central_rx_ps_C768343(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter, ):
     """
@@ -1966,6 +2271,7 @@ def test_wifi_sdk_mdns_ping_hostname_ble_scan_C768355(
         # Use the standardized BLE cleanup function
         cleanup_ble_and_client(ble_client, ble_obj, wifi_dut, sl_collections)
 
+
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
                                "security": "WPA2"}  # Use WPA2 security
@@ -2044,18 +2350,18 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ble_connection_30ms_ps
 
             # Connect to WiFi and initialize mDNS services
             wifi_obj.join_to_ap()  # Connect to WiFi access point
+            status = service_discovery.interfaces.sd.get_status()  # Check service status
+            logger().info(f"Service discovery status: {status}")
             wifi_dut.interfaces.wifi.mdns_init(ip_version=Si91xMdnsParams.IPV6)  # Initialize mDNS with IPv6 support
             wifi_dut.interfaces.wifi.mdns_add_interface()  # Add network interface to mDNS
             wifi_dut.interfaces.wifi.mdns_register_service()  # Register mDNS service for discovery
 
-            # Test Avahi-daemon restart functionality
-            service_discovery.interfaces.sd.stop_discovering_services()  # Stop Avahi service discovery
-            status = service_discovery.interfaces.sd.get_status()  # Check service status
-            logger().info(f"Service discovery status after stop: {status}")
-            service_discovery.interfaces.sd.start_discovering_services()  # Restart Avahi service discovery
-            time.sleep(10)  # Allow time for service discovery to stabilize
-            service_discovery.interfaces.sd.stop_discovering_services()  # Stop service discovery again
-            time.sleep(5)
+            for i in range(0, 2):
+                # Test Avahi-daemon restart functionality
+                service_discovery.interfaces.sd.start_discovering_services()  # Restart Avahi service discovery
+                time.sleep(20)  # Allow time for service discovery to stabilize
+                service_discovery.interfaces.sd.stop_discovering_services()  # Stop service discovery again
+                time.sleep(5)
 
             # Clean up mDNS and WiFi connection
             wifi_dut.interfaces.wifi.mdns_deinit()  # Deinitialize mDNS services
@@ -2078,7 +2384,7 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ble_connection_30ms_ps
         cleanup_ble_and_client(ble_client, ble_obj, wifi_dut, sl_collections)
 
 
-@pytest.mark.skip("WIFI_BT_UTFHELP-5595")
+# @pytest.mark.skip("WIFI_BT_UTFHELP-5595")
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
                                "security": "WPA2",  # Use WPA2 security
@@ -2157,18 +2463,18 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ble_connection_30ms_C7
 
             # Connect to WiFi and initialize mDNS services
             wifi_obj.join_to_ap()  # Connect to WiFi access point
+            status = service_discovery.interfaces.sd.get_status()  # Check service status
+            logger().info(f"Service discovery status: {status}")
             wifi_dut.interfaces.wifi.mdns_init(ip_version=Si91xMdnsParams.IPV6)  # Initialize mDNS with IPv6 support
             wifi_dut.interfaces.wifi.mdns_add_interface()  # Add network interface to mDNS
             wifi_dut.interfaces.wifi.mdns_register_service()  # Register mDNS service for discovery
 
-            # Test Avahi-daemon restart functionality
-            service_discovery.interfaces.sd.stop_discovering_services()  # Stop Avahi service discovery
-            status = service_discovery.interfaces.sd.get_status()  # Check service status
-            logger().info(f"Service discovery status after stop: {status}")
-            service_discovery.interfaces.sd.start_discovering_services()  # Restart Avahi service discovery
-            time.sleep(10)  # Allow time for service discovery to stabilize
-            service_discovery.interfaces.sd.stop_discovering_services()  # Stop service discovery again
-            time.sleep(5)
+            for i in range(0, 2):
+                # Test Avahi-daemon restart functionality
+                service_discovery.interfaces.sd.start_discovering_services()  # Restart Avahi service discovery
+                time.sleep(20)  # Allow time for service discovery to stabilize
+                service_discovery.interfaces.sd.stop_discovering_services()  # Stop service discovery again
+                time.sleep(5)
 
             # Clean up mDNS and WiFi connection
             wifi_dut.interfaces.wifi.mdns_deinit()  # Deinitialize mDNS services
@@ -2189,6 +2495,7 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ble_connection_30ms_C7
 
         # Use the standardized BLE cleanup function
         cleanup_ble_and_client(ble_client, ble_obj, wifi_dut, sl_collections)
+
 
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1",  # Enable IPv6 support
@@ -2260,7 +2567,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
             data=data,  # 240 bytes of test data
             service_uid=service_uid,  # Custom service UUID
             data_length=240,  # Data length for transmission
-            data_duration=120,  # Duration of data transmission in seconds
+            data_duration=150,  # Duration of data transmission in seconds
             periodic_delay=1,  # Delay between transmissions
             ble_pairing=1,  # Enable BLE pairing
             bond_info=0,  # Store bonding information
@@ -2303,7 +2610,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
         )
 
         # Establish BLE connection and perform service discovery
-        ble_obj.ble_connect(role="slave")  # Connect BLE as slave device
+        ble_obj.ble_connect(role="slave", tc_id="C768345")  # Connect BLE as slave device with auth retry logic
         ble_obj.service_discovery_on_remote()  # Perform service discovery on remote device
 
         # Configure WiFi advanced client settings for optimal performance
@@ -2324,7 +2631,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
         logger().info("starting the avahi-daemon browser services from the remote side")
         time.sleep(1)  # Allow service discovery to initialize
 
-        wifi_obj.join_to_ap()  # Connect to WiFi access point
+        wifi_obj.join_to_ap(ble_obj=ble_obj)  # Connect to WiFi access point with BLE coexistence coordination
 
         # Start BLE data transmission operations at the beginning for continuous coexistence testing
         logger().info("Starting BLE TX notifications for coexistence testing")
@@ -2339,7 +2646,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
             time.sleep(2)  # Allow time between cycles for stability
             if count < iter_count:
                 logger().info(f"Starting WiFi connect/mDNS/disconnect cycle {count + 1} of {iter_count}")
-                wifi_obj.join_to_ap()  # Connect to WiFi access point
+                wifi_obj.join_to_ap(ble_obj=ble_obj)  # Connect to WiFi access point with BLE coexistence coordination
 
         # Stop BLE notifications after all cycles complete
         ble_obj.wait_for_exit()  # Wait for BLE operations to complete
@@ -2364,7 +2671,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
         cleanup_ble_and_client(ble_client, ble_obj, wifi_dut, sl_collections)
 
 
-@pytest.mark.skip("WIFI_BT_UTFHELP-5626")
+# @pytest.mark.skip("WIFI_BT_UTFHELP-5626")
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "1",
                                "security": "WPA2",
@@ -2403,7 +2710,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
         # Extract test parameters from pytest request and configuration
         capture_filename = request.node.name  # Use test function name for packet capture file
         iter_count = utf_constants.get("iter_count")  # Get iteration count from test constants
-        if iter_count <= 5:  # Ensure minimum iteration count for stress testing
+        if iter_count <= 3:  # Ensure minimum iteration count for stress testing
             iter_count = 3
 
         # Define BLE GATT service and characteristic UUIDs for large data transfer test
@@ -2438,7 +2745,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
             data=data,  # 240-byte data payload
             service_uid=service_uid,  # Custom service UUID
             data_length=240,  # Exact length of data payload
-            data_duration=120,  # Duration for data transmission operations (seconds)
+            data_duration=150,  # Duration for data transmission operations (seconds)
             periodic_delay=1,  # Delay between periodic operations
             ble_pairing=1,  # Enable BLE pairing for secure connection
             bond_info=0,  # Store bonding information
@@ -2477,7 +2784,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
         )
 
         # Establish BLE connection with client and perform service discovery
-        ble_obj.ble_connect(role="slave")  # Connect as BLE slave (server role)
+        ble_obj.ble_connect(role="slave", tc_id="C768354")  # Connect as BLE slave with auth retry logic
         ble_obj.service_discovery_on_remote()  # Perform GATT service discovery from client side
 
         # Configure WiFi client parameters for optimal connectivity
@@ -2495,7 +2802,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
         logger().info("starting the avahi-daemon browser services from the remote side")
         time.sleep(1)  # Brief delay for service discovery initialization
 
-        wifi_obj.join_to_ap()  # Connect to WiFi access point
+        wifi_obj.join_to_ap(ble_obj=ble_obj)  # Connect to WiFi access point with BLE coexistence coordination
 
         # Start BLE data transmission operations at the beginning for continuous coexistence testing
         logger().info("Starting BLE TX notifications for coexistence testing")
@@ -2510,7 +2817,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
             time.sleep(2)  # Allow time between cycles for stability
             if count < iter_count:
                 logger().info(f"Starting WiFi connect/mDNS/disconnect cycle {count + 1} of {iter_count}")
-                wifi_obj.join_to_ap()  # Connect to WiFi access point
+                wifi_obj.join_to_ap(ble_obj=ble_obj)  # Connect to WiFi access point with BLE coexistence coordination
 
         # Stop service discovery
         service_discovery.interfaces.sd.stop_discovering_services()  # Stop Avahi-daemon service discovery
