@@ -73,7 +73,7 @@ def test_scan_c19056(wifi_sniffer, wifi_dut, wifi_access_point):
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
             assert (len(scan_results) >= 1), "Scan failed"
             logger().info(scan_results)
-            time.sleep(10)
+            time.sleep(20)
         wifi_sniffer.interfaces.capture.stop_capture()
 
         logger().info(f"Validate Probe req(Broadcast)")
@@ -105,6 +105,7 @@ def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
     # enables the scan in dut on channel 0
     logger().info("Initiating scan from DUT...")
     scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+    time.sleep(20)
     logger().info(scan_results)
     scan_count = len(scan_results)
     assert scan_count > 0, "Scan results not found"
@@ -158,6 +159,7 @@ def test_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point):
         time.sleep(10)
         logger().info(f"Initiating the scan from DUT with ssid {ssid}..")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=ssid)
+        time.sleep(10)
         logger().info(scan_results)
         assert len(scan_results) >= 1, f"32 bytes ssid not found in scan results"
     logger().info(f"Validate Probe req(Broadcast)")
@@ -214,7 +216,7 @@ def test_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=channel_bitmap_5,
                                                                            scan_feature=scan_feature_extend)
-            time.sleep(5)
+            time.sleep(20)
             logger().info(scan_results)
             assert len(scan_results) >= 1, "scan results not found"
             for count in scan_results:
@@ -244,6 +246,7 @@ def test_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point
                                                             scan_bitmap_2_4=channel_bitmap_2_4,
                                                             scan_bitmap_5=channel_bitmap_5,
                                                             scan_feature=scan_feature_extend)
+            time.sleep(20)
             # Validate Broadcast probe request not there in other than selected channel
             logger().info(f"Checking broadcast probe request in channel:'{channel}'")
             packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {channel})"
@@ -307,7 +310,7 @@ def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=channel_bitmap_5,
                                                                            scan_feature=scan_feature_extend)
-            time.sleep(5)
+            time.sleep(20)
             logger().info(scan_results)
             assert len(scan_results) >= 1, "Scan results not found"
             for count in scan_results:
@@ -337,6 +340,7 @@ def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point
                                                             scan_bitmap_2_4=channel_bitmap_2_4,
                                                             scan_bitmap_5=channel_bitmap_5,
                                                             scan_feature=scan_feature_extend)
+            time.sleep(20)
             # Validate Broadcast probe request in other than selected channel
             logger().info(f"\n\nChecking broadcast probe request in channel:'{channel}'")
             packet_filter2 = f"(wlan.fc.type_subtype == 0x0004) and (wlan.sa == {dut_mac_address} && wlan.da == ff:ff:ff:ff:ff:ff) and (wlan_radio.channel == {channel})"
@@ -400,7 +404,7 @@ def test_scan_selective_channel_c19057(wifi_sniffer, wifi_dut, wifi_access_point
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_bitmap_5=channel_bitmap_5,
                                                                            scan_feature=scan_feature_extend)
-            time.sleep(10)
+            time.sleep(20)
             logger().info(scan_results)
             assert len(scan_results) >= 1, "Scan results not found"
             channel_selected = 0
@@ -478,7 +482,7 @@ def test_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_point):
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            time.sleep(10)
+            time.sleep(20)
             assert (len(scan_results) >= 1), "scan failed"
             logger().info(scan_results)
 
@@ -524,6 +528,7 @@ def test_scan_max_aps_c19061(wifi_dut, wifi_access_point):
     scan_results = wifi_dut.interfaces.wifi.scan_selective_channel(channel=channel, ssid=None,
                                                                    scan_bitmap_2_4=channel_bitmap_2_4,
                                                                    scan_feature=scan_feature_extend)
+    time.sleep(20)
     logger().info(scan_results)
     logger().info(len(scan_results))
     if len(scan_results) == 11:
@@ -578,7 +583,7 @@ def test_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_access_poi
         logger().info("Initiating scan...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_point.interfaces.wifi.ssid)
         logger().info(scan_results)
-        time.sleep(10)
+        time.sleep(20)
         assert len(scan_results) >= 1, "scan failed"
         for count in scan_results:
             assert count.ssid == wifi_access_point.interfaces.wifi.ssid
@@ -642,7 +647,7 @@ def test_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_access_point):
         logger().info("Starting the access point with custom channel...")
         wifi_access_point.interfaces.wifi.start_ap(channel=channel)
         # enables the scan in DUT with the given channel bitmap value
-        time.sleep(5)
+        time.sleep(10)
 
         for i in range(0, 2):
             logger().info("Initiating Scan...")
@@ -650,7 +655,7 @@ def test_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_access_point):
                                                                            ssid=wifi_access_point.interfaces.wifi.ssid, \
                                                                            scan_bitmap_2_4=channel_bitmap_2_4,
                                                                            scan_feature=scan_feature_extend)
-            time.sleep(5)
+            time.sleep(20)
             logger().info(scan_results)
             assert len(scan_results) >= 1
             for count in scan_results:
@@ -750,7 +755,7 @@ def test_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, wifi_clie
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            time.sleep(10)
+            time.sleep(20)
             assert (len(scan_results) >= 1), "scan failed"
             logger().info(scan_results)
 
@@ -803,7 +808,7 @@ def test_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_c
             # enables the scan in dut on channel 0
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            time.sleep(15)
+            time.sleep(20)
             assert (len(scan_results) >= 1), "Scan Failed"
             logger().info(scan_results)
 
