@@ -253,7 +253,7 @@ class StandBy_Associated(ThreadBase):
     def __init__(self, dtim=None, wifi_dut=None, wifi_access_point=None, sl_collections=None, power_meter=None,
                  deep_sleep=False, dtim_aligned_type=1, remote_socket=None, send_data=False, capture_time=60,
                  m4_sleep_time=120000, bcast_filter=True, tcp_ka_time=240, send_ka=False, listen_case=False,
-                 ble_client=None, ble_advertisement=None, ble_with_connection=None):
+                 ble_client=None, ble_advertisement=None, ble_with_connection=None, utf_constants=None, long_run=None):
         self.dtim = dtim
         self.wifi_dut = wifi_dut
         self.sl_collections = sl_collections
@@ -272,6 +272,8 @@ class StandBy_Associated(ThreadBase):
         self.ble_client = ble_client
         self.ble_advertisement = ble_advertisement
         self.ble_with_connection = ble_with_connection
+        self.utf_constants = utf_constants
+        self.long_run = long_run
 
     def run(self):
         dut = UtfConfig.instance().defaults.get("dut", {})
@@ -396,7 +398,12 @@ class StandBy_Associated(ThreadBase):
                                          deep_sleep_without_ret=True)
             else:
                 m4_obj = M4_Sleep_Thread(wifi_dut=self.wifi_dut, m4_sleep_time=self.m4_sleep_time)
-        pm_obj = Power_Measurement_Thread(power_meter=self.power_meter, capture_time=self.capture_time)
+
+        if self.long_run:
+            pm_obj = Power_Measurement_Thread(power_meter=self.power_meter,
+                                              capture_time=self.utf_constants.get("long_duration"))
+        else:
+            pm_obj = Power_Measurement_Thread(power_meter=self.power_meter, capture_time=self.capture_time)
 
         if dut != "si917_ncp_sl_wifi":
             m4_obj.start()
@@ -629,5 +636,80 @@ def test_wlan_conn_with_DTIM_10_ble_conn_rc_clock_C537358(firmware_loader, power
                                                           file_path = performance_file_root_dir,
                                                           file_name = perf_file_name
                                                           )
+
+# ********************************************************************************************************************
+
+
+# ********************************************************************************************************************
+
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
+@pytest.mark.parametrize("dtim", [10])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "enable_ble_power_index_params": 1,
+        "power_index": 63,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wlan_conn_DTIM_10_with_ble_conn_long_run_C206502(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                sl_collections, dtim, ble_client, request, performance_data,
+                                                custom_performance_fixture, utf_constants):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[
+        0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                   ble_client=ble_client, sl_collections=sl_collections, power_meter=power_meter,
+                                   ble_with_connection=True, utf_constants=utf_constants, long_run=True)
+    stdby_obj.start()
+    stdby_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name,
+                                                             opn=opn,
+                                                             build_number=build_number,
+                                                             memory_configuration="test_480K_M4SS_192K",
+                                                             parsed_result=parsed_result["Output"],
+                                                             file_path=performance_file_root_dir,
+                                                             file_name=perf_file_name
+                                                             )
 
 # ********************************************************************************************************************
