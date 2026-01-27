@@ -107,8 +107,17 @@ def test_wifi_sdk_wireless_get_info_in_wpa2_11n_c777564(wifi_dut,request, wifi_a
         stats['MAC_address'] = re.findall(r"(?<=MAC address\s:)[0-9a-fA-F:]+", str(data))[0]
         # Security type
         stats['Security_type'] = re.findall(r"(?<=Security type\s:)\d+", str(data))[0]
-        # PMF
-        stats['pmk'] = re.findall(r"(?<=\n)\w+(?=ipv4_address)", str(data))[0]
+        # PMF - Extract PMK (hex string) between Security type and ipv4_address
+        # PMK may be split across multiple lines, so we extract all hex characters in that section
+        pmk_section = re.search(r"Security type\s*:\s*\d+\s*(.*?)\s*ipv4_address", str(data), re.DOTALL)
+        if pmk_section:
+            # Extract all hex characters from the section between Security type and ipv4_address
+            pmk_hex = re.findall(r"[0-9a-fA-F]+", pmk_section.group(1))
+            stats['pmk'] = ''.join(pmk_hex) if pmk_hex else ""
+        else:
+            # Fallback to original pattern if the section match fails
+            pmk_match = re.findall(r"(?<=\n)([0-9a-fA-F]+)(?=\s*\n?\s*ipv4_address)", str(data), re.MULTILINE)
+            stats['pmk'] = pmk_match[0] if pmk_match else ""
         # IPv4 address
         # stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\.]+", str(data))[0]
         stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\:]+", str(data))[0]
@@ -233,8 +242,17 @@ def test_wifi_sdk_wireless_get_info_in_wpa3_personal_11ax_c777565(wifi_dut, requ
         stats['MAC_address'] = re.findall(r"(?<=MAC address\s:)[0-9a-fA-F:]+", str(data))[0]
         # Security type
         stats['Security_type'] = re.findall(r"(?<=Security type\s:)\d+", str(data))[0]
-        # PMF
-        stats['pmk'] = re.findall(r"(?<=\n)\w+(?=ipv4_address)", str(data))[0]
+        # PMF - Extract PMK (hex string) between Security type and ipv4_address
+        # PMK may be split across multiple lines, so we extract all hex characters in that section
+        pmk_section = re.search(r"Security type\s*:\s*\d+\s*(.*?)\s*ipv4_address", str(data), re.DOTALL)
+        if pmk_section:
+            # Extract all hex characters from the section between Security type and ipv4_address
+            pmk_hex = re.findall(r"[0-9a-fA-F]+", pmk_section.group(1))
+            stats['pmk'] = ''.join(pmk_hex) if pmk_hex else ""
+        else:
+            # Fallback to original pattern if the section match fails
+            pmk_match = re.findall(r"(?<=\n)([0-9a-fA-F]+)(?=\s*\n?\s*ipv4_address)", str(data), re.MULTILINE)
+            stats['pmk'] = pmk_match[0] if pmk_match else ""
         # IPv4 address
 
         stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\:]+", str(data))[0]
@@ -373,8 +391,17 @@ def test_wifi_sdk_wireless_get_info_in_wpa3_enterprise_11ax_c777567(wifi_dut, wi
         stats['MAC_address'] = re.findall(r"(?<=MAC address\s:)[0-9a-fA-F:]+", str(data))[0]
         # Security type
         stats['Security_type'] = re.findall(r"(?<=Security type\s:)\d+", str(data))[0]
-        # PMF
-        stats['pmk'] = re.findall(r"(?<=\n)\w+(?=ipv4_address)", str(data))[0]
+        # PMF - Extract PMK (hex string) between Security type and ipv4_address
+        # PMK may be split across multiple lines, so we extract all hex characters in that section
+        pmk_section = re.search(r"Security type\s*:\s*\d+\s*(.*?)\s*ipv4_address", str(data), re.DOTALL)
+        if pmk_section:
+            # Extract all hex characters from the section between Security type and ipv4_address
+            pmk_hex = re.findall(r"[0-9a-fA-F]+", pmk_section.group(1))
+            stats['pmk'] = ''.join(pmk_hex) if pmk_hex else ""
+        else:
+            # Fallback to original pattern if the section match fails
+            pmk_match = re.findall(r"(?<=\n)([0-9a-fA-F]+)(?=\s*\n?\s*ipv4_address)", str(data), re.MULTILINE)
+            stats['pmk'] = pmk_match[0] if pmk_match else ""
         # IPv4 address
         # stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\.]+", str(data))[0]
         stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\:]+", str(data))[0]
@@ -516,8 +543,17 @@ def test_wifi_sdk_wireless_get_info_in_open_11b_c777566(wifi_dut,wifi_client,req
         stats['MAC_address'] = re.findall(r"(?<=MAC address\s:)[0-9a-fA-F:]+", str(data))[0]
         # Security type
         stats['Security_type'] = re.findall(r"(?<=Security type\s:)\d+", str(data))[0]
-        # PMF
-        stats['pmk'] = re.findall(r"(?<=\n)\w+(?=ipv4_address)", str(data))[0]
+        # PMF - Extract PMK (hex string) between Security type and ipv4_address
+        # PMK may be split across multiple lines, so we extract all hex characters in that section
+        pmk_section = re.search(r"Security type\s*:\s*\d+\s*(.*?)\s*ipv4_address", str(data), re.DOTALL)
+        if pmk_section:
+            # Extract all hex characters from the section between Security type and ipv4_address
+            pmk_hex = re.findall(r"[0-9a-fA-F]+", pmk_section.group(1))
+            stats['pmk'] = ''.join(pmk_hex) if pmk_hex else ""
+        else:
+            # Fallback to original pattern if the section match fails
+            pmk_match = re.findall(r"(?<=\n)([0-9a-fA-F]+)(?=\s*\n?\s*ipv4_address)", str(data), re.MULTILINE)
+            stats['pmk'] = pmk_match[0] if pmk_match else ""
         # IPv4 address
         # stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\.]+", str(data))[0]
         stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\:]+", str(data))[0]
@@ -654,8 +690,17 @@ def test_wifi_sdk_wireless_get_info_in_wpa2_11g_c777568(wifi_dut,wifi_client,req
         stats['MAC_address'] = re.findall(r"(?<=MAC address\s:)[0-9a-fA-F:]+", str(data))[0]
         # Security type
         stats['Security_type'] = re.findall(r"(?<=Security type\s:)\d+", str(data))[0]
-        # PMF
-        stats['pmk'] = re.findall(r"(?<=\n)\w+(?=ipv4_address)", str(data))[0]
+        # PMF - Extract PMK (hex string) between Security type and ipv4_address
+        # PMK may be split across multiple lines, so we extract all hex characters in that section
+        pmk_section = re.search(r"Security type\s*:\s*\d+\s*(.*?)\s*ipv4_address", str(data), re.DOTALL)
+        if pmk_section:
+            # Extract all hex characters from the section between Security type and ipv4_address
+            pmk_hex = re.findall(r"[0-9a-fA-F]+", pmk_section.group(1))
+            stats['pmk'] = ''.join(pmk_hex) if pmk_hex else ""
+        else:
+            # Fallback to original pattern if the section match fails
+            pmk_match = re.findall(r"(?<=\n)([0-9a-fA-F]+)(?=\s*\n?\s*ipv4_address)", str(data), re.MULTILINE)
+            stats['pmk'] = pmk_match[0] if pmk_match else ""
         # IPv4 address
         # stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\.]+", str(data))[0]
         stats['ipv4_address'] = re.findall(r"(?<=ipv4_address:)[0-9\:]+", str(data))[0]
