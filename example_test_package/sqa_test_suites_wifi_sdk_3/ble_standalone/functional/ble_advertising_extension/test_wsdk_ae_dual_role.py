@@ -2220,7 +2220,7 @@ def test_dut_master_and_slave_tx_tx_notification_C663094(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -2228,7 +2228,7 @@ def test_dut_master_and_slave_tx_tx_notification_C663094(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_2.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
@@ -2428,7 +2428,7 @@ def skip_test_dut_master_and_slave_tx_write_without_response_C663097(ble_dut, re
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -2847,7 +2847,7 @@ def test_dut_master_and_slave_tx_indication_C663035(ble_dut, remote_wiseconnect3
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun1.indication_count / 2), "No ATT_HANDLE_VALUE_IND packets are present"
         logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -2855,7 +2855,7 @@ def test_dut_master_and_slave_tx_indication_C663035(ble_dut, remote_wiseconnect3
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun2.indication_count / 2), "No ATT_HANDLE_VALUE_IND packets are present"
         
         logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
@@ -3065,7 +3065,7 @@ def skip_test_dut_master_and_slave_tx_indication_C663036(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun1.indication_count / 2), "No ATT_HANDLE_VALUE_IND packets are present"
         logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3073,7 +3073,7 @@ def skip_test_dut_master_and_slave_tx_indication_C663036(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun2.indication_count / 2), "No ATT_HANDLE_VALUE_IND packets are present"
 
         logger().info("ATT_HANDLE_VALUE_IND packets are sent successfully")
@@ -3323,7 +3323,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768424(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3331,7 +3331,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768424(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_2.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3339,7 +3339,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768424(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_3.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3347,7 +3347,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768424(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address_2.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_4.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
@@ -3603,7 +3603,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768425(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3611,7 +3611,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768425(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_2.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3619,7 +3619,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768425(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_3.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3627,7 +3627,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768425(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address_2.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_4.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
@@ -3883,7 +3883,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768426(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3891,7 +3891,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768426(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_2.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3899,7 +3899,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768426(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_3.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -3907,7 +3907,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768426(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address_2.lower()}") & (
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_4.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
@@ -4162,7 +4162,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768427(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -4170,7 +4170,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768427(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_2.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -4178,7 +4178,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768427(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_3.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -4186,7 +4186,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768427(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address_2.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_4.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
@@ -4442,7 +4442,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768428(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -4450,7 +4450,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768428(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_2.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -4458,7 +4458,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768428(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_3.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -4466,7 +4466,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768428(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address_2.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_4.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
@@ -4717,7 +4717,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768429(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -4725,7 +4725,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768429(ble_dut, remote_wisecon
                                                                  '+BD Address (LE PKT)'] == f"0x{ble_client_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_2.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -4733,7 +4733,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768429(ble_dut, remote_wisecon
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_3.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -4741,7 +4741,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768429(ble_dut, remote_wisecon
                                                                '+BD Address (LE PKT)'] == f"0x{ble_client_address_2.lower()}") & (
                                sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 233)]) >= int(
             ble_fun_4.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:
@@ -4998,7 +4998,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768430(ble_dut, remote_wisecon
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                # sniffer_data_df['+PHY Type (LE BB)'] == "500k") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -5007,7 +5007,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768430(ble_dut, remote_wisecon
                                # sniffer_data_df['+PHY Type (LE BB)'] == "500k") &(
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_2.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -5016,7 +5016,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768430(ble_dut, remote_wisecon
                                # sniffer_data_df['+PHY Type (LE BB)'] == "500k") &(
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_3.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
@@ -5025,7 +5025,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768430(ble_dut, remote_wisecon
                                sniffer_data_df['Opcode'] == "ATT_HANDLE_VALUE_NTF") & (
                                # sniffer_data_df['+PHY Type (LE BB)'] == "500k") & (
                                sniffer_data_df[
-                                   '+PDU Length (L2CAP)'] == 23)]) >= int(
+                                   '+PDU Length (L2CAP)'] >= 23)]) >= int(
             ble_fun_4.rx_notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as error:

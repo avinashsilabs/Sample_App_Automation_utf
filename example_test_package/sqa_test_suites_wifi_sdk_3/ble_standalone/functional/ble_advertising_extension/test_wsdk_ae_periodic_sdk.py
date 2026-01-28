@@ -683,7 +683,7 @@ def test_verify_periodic_scanning_by_disabling_Duplicate_filtering_bit_C539207(b
             remote_dev_addr=ble_dut_address,  # Use public address
             adv_addr_type=1,  # 0 = public address
             adv_sid=0,  # 1 i need check #0 before
-            fil_policy=4,
+            fil_policy=0,
             skip=0,
             sync_timeout=48,
             BLE_AE_PER_SYNC=2
