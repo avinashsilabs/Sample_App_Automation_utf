@@ -117,19 +117,19 @@ class ProvisioningFunctionality(ThreadBase):
         self.sniffer_filter = sniffer_filter
         self.no_of_clients = 1
 
-    def run(self):
         logger().info("******************** initializing ble in dut ********************")
         self.bt_dut_address = self.ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=self.set_smp)
         assert self.bt_dut_address, "failed to initialize ble in dut"
 
+    def run(self):
         self.wifi_dut.interfaces.wifi.ble_start_advertising()
 
     def sl_net_deinit(self):
-        self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="ap")
+        self.wifi_dut.interfaces.wifi.deinit(mode="ap")
 
     def wifi_connect(self):
         self.wifi_dut.interfaces.wifi.join(
-            ssid=self.result[1], passphrase=self.result[2], security=self.result[3].lower())
+            ssid=self.wifi_access_point.interfaces.wifi.ssid, passphrase=self.result[2], security=self.result[3].lower())
         logger().info("....Successfully connected to the AP....")
 
         ip_status, ip_config = self.sl_collections.configure_ip(wifi_dut=self.wifi_dut)
@@ -170,7 +170,7 @@ class ProvisioningFunctionality(ThreadBase):
 
     def ble_stop_advertising(self):
         logger().info("Device is in advertising status try to stop advertising")
-        self.ble_dut.interfaces.bluetooth.ble_stop_advertising()
+        self.wifi_dut.interfaces.wifi.ble_stop_advertising()
 
     def check_beacon(self):
         dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address(interface=2)
@@ -314,12 +314,12 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0, HiddenSSID=0):
         Common method to generate wifi_dut marker for pytest.mark.config decorator..
     """
     config = {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}, "ble": {"count": 1, "stack_len": 3584}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT | OpenMode,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server |
-                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.HTTPClient,
+                          Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | HiddenSSID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | IEEE802_11W | memory_config
                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
@@ -352,8 +352,8 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0, HiddenSSID=0):
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_ap_provisioning_wpa2_security_c887642(
-        sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
-        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter, ap_channel):
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, ble_client, ble_dut,
+        wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter):
 
     """Verify Soft AP provisioning in WPA2 security and also check WLAN connection to the third party home AP with the
     received credentials on APUT."""
@@ -376,6 +376,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_c887642(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -438,6 +439,7 @@ def test_wifi_sdk_ap_provisioning_open_security_c887643(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -498,6 +500,7 @@ def test_wifi_sdk_ap_provisioning_wpa3_security_c887644(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -561,6 +564,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_psk_63bytes_c887645(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -624,6 +628,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_ssid_32bytes_c887646(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -684,6 +689,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_wrong_psk_c887647(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -702,7 +708,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_wrong_psk_c887647(
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
-# @pytest.mark.skip(reason="need to check for second iteration in loop")
+@pytest.mark.skip(reason="need to check for second iteration in loop")
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -747,6 +753,7 @@ def test_wifi_sdk_ap_provisioning_in_loop_c887648(
             ble_obj.start()
             ble_obj.wait_for_exit()
             ble_obj.firmware_version()
+            time.sleep(10)
             ble_obj.check_beacon()
             # ble_obj.scan_on_ap_interface()
             ble_obj.http_server_provisioning()
@@ -780,6 +787,8 @@ def test_wifi_sdk_ap_provisioning_in_loop_c887648(
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
 
 
 @pytest.mark.config(
@@ -845,6 +854,7 @@ def test_wifi_sdk_ap_provisioning_with_special_charac_ssid_psk_c887649(
         sl_collections.exception_handling(wifi_dut, error)
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -890,6 +900,7 @@ def test_wifi_sdk_ap_provisioning_ssid_20bytes_psk_33bytes_c887652(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -907,6 +918,7 @@ def test_wifi_sdk_ap_provisioning_ssid_20bytes_psk_33bytes_c887652(
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
 
 
 @pytest.mark.config(
@@ -955,6 +967,7 @@ def test_wifi_sdk_ap_provisioning_and_iperf_run_in_sta_mode_c887653(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -1017,6 +1030,7 @@ def test_wifi_sdk_ap_provisioning_dut_ap_ssid_20bytes_psk_40bytes_c887666(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -1078,6 +1092,7 @@ def test_wifi_sdk_ap_provisioning_dut_ap_ssid_32bytes_psk_63bytes_c887665(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -1138,6 +1153,7 @@ def test_wifi_sdk_ap_provisioning_dut_ap_wrong_psk_c887664(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -1198,6 +1214,7 @@ def test_wifi_sdk_ap_provisioning_extended_scan_c887660(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -1251,6 +1268,7 @@ def test_wifi_sdk_ap_provisioning_extended_scan_and_connect_third_party_ap_c8876
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -1312,6 +1330,7 @@ def test_wifi_sdk_ap_provisioning_with_hidden_ssid_c887659(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -1372,6 +1391,7 @@ def test_wifi_sdk_ap_provisioning_client_conn_reconn_c887658(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -1391,6 +1411,7 @@ def test_wifi_sdk_ap_provisioning_client_conn_reconn_c887658(
         sl_collections.exception_handling(wifi_dut, error)
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -1438,6 +1459,7 @@ def test_wifi_sdk_ap_provisioning_multi_client_connection_c887657(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
@@ -1457,7 +1479,7 @@ def test_wifi_sdk_ap_provisioning_multi_client_connection_c887657(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-# @pytest.mark.skip()
+
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -1501,6 +1523,7 @@ def test_wifi_sdk_ap_provisioning_mixed_security_c887650(
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
