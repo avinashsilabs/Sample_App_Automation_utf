@@ -125,7 +125,7 @@ class WifiJoin(ThreadBase):
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
             logger().info("dut fw version before upgrade...")
             fw_before_upgrade = self.wifi_dut.interfaces.wifi.version()
-            logger().info(f" ***** FW before upgrade: {fw_before_upgrade} *****")
+            logger().info(f" \n ***** FW before upgrade: {fw_before_upgrade} *****\n")
 
             logger().info("join WIFI network...")
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
@@ -178,8 +178,10 @@ class WifiJoin(ThreadBase):
                                                                          retry_count=3,
                                                                          associated=self.wifi_dut.interfaces.wifi.associated,
                                                                          power_save=False)
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=host_ip, port=443, http_url=self.rps_path,
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=host_ip, port=443,
+                                                               http_url=self.rps_path,
                                                                host_name=host_ip)
+
             if self.test_case_no == 19772:
                 logger().info("performing fw upgrade on dut non rps....")
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=host_ip, port=443, host_name=host_ip,
@@ -200,12 +202,12 @@ class WifiJoin(ThreadBase):
             self.wifi_sniffer.interfaces.capture.stop_capture()
             fw_after_upgrade = self.get_firmware_status()
             time.sleep(2)
-            logger().info(f"\n\n ***firmware versions before otaf:{fw_before_upgrade}"
-                          f" firmware version after loading through otaf :{fw_after_upgrade}")
-            if self.fw_before_upgrade == self.fw_after_upgrade:
-                logger().info("Firmware after upgrade matched with the previous firmware")
-            else:
-                logger().info("Firmware upgrade successful. Versions are different.")
+            logger().info(f"\n\n **** firmware default version is : {fw_before_upgrade} *****\n\n ")
+            logger().info(f"\n\n **** firmware upgraded version is : {fw_after_upgrade} *****\n\n ")
+            if str(fw_before_upgrade) == str(fw_after_upgrade):
+                assert False, "\n\n **** Firmware versions are same. Downgrade/Upgrade failed.**** \n\n"
+            logger().info("\n\n **** Firmware upgraded/downgraded successfully. ****\n\n ")
+            # If versions are different, test passes
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
@@ -219,6 +221,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.legacy_deployed
 def test_http_fw_upgrade_downgrade_overnight_c19793(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                     request, wifi_client, sl_collections, utf_constants):
+    """Verify continuous firmware upgrade and downgrade works seamlessly overnight and measure the up-gradation time"""
     try:
         rps_path = utf_constants.get("rps_filename")
         long_duration = utf_constants.get("long_duration")
@@ -234,7 +237,11 @@ def test_http_fw_upgrade_downgrade_overnight_c19793(http_server, wifi_sniffer, w
             wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        try:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        except Exception as handling_ex:
+            raise Ex from handling_ex
+        raise
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -244,6 +251,7 @@ def test_http_fw_upgrade_downgrade_overnight_c19793(http_server, wifi_sniffer, w
 @pytest.mark.legacy_deployed
 def test_http_fw_upgrade_overnight_corrupted_file_c19794(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                          request, wifi_client, sl_collections, utf_constants):
+    """Verify continuous firmware upgrade and downgrade unsuccessful with corrupted firmware overnight"""
     try:
         long_duration = utf_constants.get("long_duration")
         sw = Stopwatch()
@@ -258,7 +266,11 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19794(http_server, wifi_sniff
             wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        try:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        except Exception as handling_ex:
+            raise Ex from handling_ex
+        raise
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -268,6 +280,7 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19794(http_server, wifi_sniff
 @pytest.mark.legacy_deployed
 def test_http_fw_upgrade_overnight_corrupted_file_c19795(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                          request, wifi_client, sl_collections, utf_constants):
+    """Verify continuous firmware upgrade unsuccessful with non RPS file"""
     try:
         long_duration = utf_constants.get("long_duration")
         sw = Stopwatch()
@@ -282,7 +295,11 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19795(http_server, wifi_sniff
             wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        try:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        except Exception as handling_ex:
+            raise Ex from handling_ex
+        raise
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -292,6 +309,7 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19795(http_server, wifi_sniff
 @pytest.mark.legacy_deployed
 def test_https_fw_upgrade_downgrade_overnight_file_c19771(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                           request, wifi_client, sl_collections, utf_constants):
+    """Verify continuous firmware upgrade and downgrade works seamlessly overnight and measure the upgradation time"""
     try:
         rps_path = utf_constants.get("rps_filename")
         long_duration = utf_constants.get("long_duration")
@@ -307,7 +325,11 @@ def test_https_fw_upgrade_downgrade_overnight_file_c19771(http_server, wifi_snif
             wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        try:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        except Exception as handling_ex:
+            raise Ex from handling_ex
+        raise
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -317,6 +339,7 @@ def test_https_fw_upgrade_downgrade_overnight_file_c19771(http_server, wifi_snif
 @pytest.mark.legacy_deployed
 def test_https_fw_upgrade_overnight_corrupted_rps_file_c19772(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                               request, wifi_client, sl_collections, utf_constants):
+    """Verify continuous firmware upgrade and downgrade unsuccessful with corrupted firmware overnight"""
     try:
         rps_path = utf_constants.get("rps_filename")
         long_duration = utf_constants.get("long_duration")
@@ -332,7 +355,11 @@ def test_https_fw_upgrade_overnight_corrupted_rps_file_c19772(http_server, wifi_
             wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        try:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        except Exception as handling_ex:
+            raise Ex from handling_ex
+        raise
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -342,6 +369,7 @@ def test_https_fw_upgrade_overnight_corrupted_rps_file_c19772(http_server, wifi_
 @pytest.mark.legacy_deployed
 def test_https_fw_upgrade_overnight_corrupted_text_file_c19773(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                                request, wifi_client, sl_collections, utf_constants):
+    """Verify continuous firmware upgrade successful with non RPS file(text format)"""
     try:
         rps_path = utf_constants.get("rps_filename")
         long_duration = utf_constants.get("long_duration")
@@ -357,4 +385,8 @@ def test_https_fw_upgrade_overnight_corrupted_text_file_c19773(http_server, wifi
             wifi_obj.wait_for_exit()
 
     except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        try:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        except Exception as handling_ex:
+            raise Ex from handling_ex
+        raise
