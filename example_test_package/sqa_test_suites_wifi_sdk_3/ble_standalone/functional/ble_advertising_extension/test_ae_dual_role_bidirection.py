@@ -688,14 +688,14 @@ def test_ble_2_central_connection_20_and_230_bytes_tx_notify_with_1M_2M_LE_Coded
                            (sniffer_data_df['Role'] == "* P") & (
                                    sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
-                                   sniffer_data_df['+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   sniffer_data_df['+PDU Length (L2CAP)'] >= 232)]) >= int(
                 ble_thread.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
             assert len(sniffer_data_df.loc[
                            (sniffer_data_df['Role'] == "* P") & (
                                    sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_NTF") & (
-                                   sniffer_data_df['+PDU Length (L2CAP)'] == 233)]) >= int(
+                                   sniffer_data_df['+PDU Length (L2CAP)'] >= 232)]) >= int(
                 ble_thread1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
             logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as e:

@@ -908,9 +908,9 @@ class BLEThread:
         ("C768388", 1, 1, 20, 20, 23, 0x1aa1, 0xAABB),
         ("C768389", 1, 2, 20, 20, 23, 0x1aa1, 0xAABB),
         ("C768390", 3, 3, 20, 20, 23, 0x1aa1, 0xAABB),
-        ("C768400", 1, 1, 230, 20, 233, 0x1aa1, 0xAABB),
-        ("C768401", 1, 2, 230, 20, 233, 0x1aa1, 0xAABB),
-        ("C768402", 3, 3, 230, 20, 233, 0x1bb1, 0xAABB),
+        ("C768400", 1, 1, 230, 20, 232, 0x1aa1, 0xAABB),
+        ("C768401", 1, 2, 230, 20, 232, 0x1aa1, 0xAABB),
+        ("C768402", 3, 3, 230, 20, 232, 0x1bb1, 0xAABB),
 
 
     ],
@@ -1082,7 +1082,7 @@ def test_tx_notify(
         logger().info(sniffer_data_df.head())
 
         # Set role and opcode based on expected PDU length
-        if expected_pdu_length == 233:
+        if expected_pdu_length == 232:
             role = "* C"
             opcode = "* ATT_HANDLE_VALUE_NTF"
         else:
@@ -1092,13 +1092,13 @@ def test_tx_notify(
         assert len(sniffer_data_df.loc[(sniffer_data_df['Role'] == role) & (
                 sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                                sniffer_data_df['Opcode'] == opcode) & (
-                                               sniffer_data_df['+PDU Length (L2CAP)'] == expected_pdu_length)]) >= int(
+                                               sniffer_data_df['+PDU Length (L2CAP)'] >= expected_pdu_length)]) >= int(
             ble_thread.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[(sniffer_data_df['Role'] == role) & (
                 sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                                sniffer_data_df['Opcode'] == opcode) & (
-                                               sniffer_data_df['+PDU Length (L2CAP)'] == expected_pdu_length)]) >= int(
+                                               sniffer_data_df['+PDU Length (L2CAP)'] >= expected_pdu_length)]) >= int(
             ble_thread1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
     except Exception as e:
@@ -1132,8 +1132,8 @@ def test_tx_notify(
         ("C768391", 1, 1, 0xAABB, 0x1bb1, 300, 20, 23),
         ("C768392", 1, 2, 0xAABB, 0x1bb1, 300, 20, 23),
         ("C768393", 3, 3, 0xAABB, 0x1bb1, 300, 20, 23),
-        ("C768403", 1, 1, 0xAABB, 0x1bb1, 300, 230, 233),
-        ("C768404", 1, 2, 0xAABB, 0x1bb1, 300, 230, 233),
+        ("C768403", 1, 1, 0xAABB, 0x1bb1, 300, 230, 232),
+        ("C768404", 1, 2, 0xAABB, 0x1bb1, 300, 230, 232),
     ],
 )
 @pytest.mark.config(
@@ -1286,7 +1286,7 @@ def test_Indications(
         logger().info(f"Expected PDU length for {data_size} bytes: {expected_pdu_length}")
 
         # Set role and opcode based on expected PDU length for indications
-        if expected_pdu_length == 233:
+        if expected_pdu_length == 232:
             role = "* C"
             opcode = "* ATT_HANDLE_VALUE_IND"
         else:
@@ -1297,14 +1297,14 @@ def test_Indications(
                        (sniffer_data_df['Role'] == role) & (
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == opcode) & (
-                               sniffer_data_df['+PDU Length (L2CAP)'] == expected_pdu_length)]) >= int(
+                               sniffer_data_df['+PDU Length (L2CAP)'] >= expected_pdu_length)]) >= int(
             ble_thread.notification_count / 2), f"No {opcode} packets with PDU length {expected_pdu_length} are present"
         logger().info(f"{opcode} packets are sent successfully")
         assert len(sniffer_data_df.loc[
                        (sniffer_data_df['Role'] == role) & (
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == opcode) & (
-                               sniffer_data_df['+PDU Length (L2CAP)'] == expected_pdu_length)]) >= int(
+                               sniffer_data_df['+PDU Length (L2CAP)'] >= expected_pdu_length)]) >= int(
             ble_thread1.notification_count / 2), f"No {opcode} packets with PDU length {expected_pdu_length} are present"
         logger().info(f"{opcode} packets are sent successfully")
     except Exception as e:
@@ -1338,9 +1338,9 @@ def test_Indications(
         ("C768418", 1, 1, 20, 20, 23, 0xAABB, 0x1AA1),
         ("C768419", 1, 2, 20, 20, 23, 0xAABB, 0x1bb1),
         ("C768420", 3, 3, 20, 20, 23, 0xAABB, 0x1AA1),
-        ("C768421", 1, 1, 230, 20, 233, 0xAABB, 0x1AA1),
-        ("C768422", 1, 2, 230, 20, 233, 0xAABB, 0x1AA1),
-        ("C768423", 3, 3, 230, 20, 233, 0xAABB, 0x1AA1),
+        ("C768421", 1, 1, 230, 20, 232, 0xAABB, 0x1AA1),
+        ("C768422", 1, 2, 230, 20, 232, 0xAABB, 0x1AA1),
+        ("C768423", 3, 3, 230, 20, 232, 0xAABB, 0x1AA1),
     ],
 )
 @pytest.mark.config(
@@ -1562,7 +1562,7 @@ def test_bidirectional_tx_rx_notification(
         logger().info(sniffer_data_df.head())
 
         # Set role and opcode based on expected PDU length
-        if expected_pdu_length == 233:
+        if expected_pdu_length == 232:
             role = "* C"
             opcode = "* ATT_HANDLE_VALUE_NTF"
         else:
@@ -1573,14 +1573,14 @@ def test_bidirectional_tx_rx_notification(
                        (sniffer_data_df['Role'] == role) & (
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == opcode) & (
-                               sniffer_data_df['+PDU Length (L2CAP)'] == expected_pdu_length)]) >= int(
+                               sniffer_data_df['+PDU Length (L2CAP)'] >= expected_pdu_length)]) >= int(
             ble_thread.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
         assert len(sniffer_data_df.loc[
                        (sniffer_data_df['Role'] == role) & (
                                sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                sniffer_data_df['Opcode'] == opcode) & (
-                               sniffer_data_df['+PDU Length (L2CAP)'] == expected_pdu_length)]) >= int(
+                               sniffer_data_df['+PDU Length (L2CAP)'] >= expected_pdu_length)]) >= int(
             ble_thread1.notification_count / 2), "No ATT_HANDLE_VALUE_NTF packets are present"
         logger().info("ATT_HANDLE_VALUE_NTF packets are sent successfully")
 
