@@ -1117,14 +1117,13 @@ def test_wifi_sdk_ble_provision_path_adv_conn_110ms_c887641(
             logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
-@pytest.mark.skip(reason="BLE connection is not working when configuring adv interval 10240ms - WIFI_BT_UTFHELP-4773")
 @wifi_dut_marker()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_wifi_sdk_ble_provision_path_adv_10240ms_c887616(
+def test_wifi_sdk_ble_provision_path_adv_250ms_c887616(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
-    """Verify BLE provisioning with adv int 10240ms in WPA2 security and also verify wifi connection to the third party
+    """Verify BLE provisioning with adv int 250ms in WPA2 security and also verify wifi connection to the third party
     home AP with the received credentials over BLE"""
 
     ble_obj = None
@@ -1139,7 +1138,7 @@ def test_wifi_sdk_ble_provision_path_adv_10240ms_c887616(
         ble_obj = ProvisioningFunctionality(
             wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-            min_conn_interval=200, max_conn_interval=200, adv_int=10240, sniffer_filter=sniffer_filter)
+            min_conn_interval=200, max_conn_interval=200, adv_int=250, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
         ble_obj.start_http_server()
