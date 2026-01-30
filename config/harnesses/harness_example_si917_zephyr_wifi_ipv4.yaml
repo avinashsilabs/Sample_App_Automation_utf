@@ -1432,13 +1432,19 @@ constants:
         value: 'rs9116test'
     m4_rps_filename:
         value: '/zephyr_test_app.rps'
+    m4_rps_filename_non_rps:
+        value: '/zephyr_test_app.txt'
     m4_full_secure_rps_filename:
-        value: '/secure_zephyr_test_app.rps'
+        value: '/secure_zephyr_test_app_ga2.rps'
     rps_filename:
-        value: '/secure_SiWG917-B.2.14.5.0.0.11.rps'
+        value: '/secure_SiWG917-B.2.14.5.0.0.11_ga2.rps'
     rps_filename_alternative:
-        value: '/secure_SiWG917-B.2.14.5.2.0.8_new.rps'
+        value: '/secure_SiWG917-B.2.14.5.2.0.8_ga2.rps'
+    rps_filename_non_secure:
+        value: '/SiWG917-B.2.14.5.0.0.11.rps'
+    rps_filename_alternative_non_secure:
+            value: '/SiWG917-B.2.14.5.2.0.8.rps'
     rps_mic_only_filename:
-        value: '/secure_zephyr_test_app_mic_only.rps'
+        value: '/secure_zephyr_ga2_mic_only.rps'
 
 recovery_error_codes: ['0xffffffe2', '0xffffffd5']

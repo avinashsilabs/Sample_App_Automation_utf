@@ -200,7 +200,7 @@ class WifiJoin(ThreadBase):
                         socket_id = self.wifi_dut.interfaces.wifi.socket(domain=Si91xBSDSocketParams.AF_INET,
                                                                          stream_type=Si91xBSDSocketParams.SOCK_STREAM,
                                                                          protocol=Si91xBSDSocketParams.IPPROTO_TCP)
-                        thread = Thread(target=close_socket, args=(self.wifi_dut, wait_time, socket_id), )
+                        thread = Thread(target=close_socket, args=(self.wifi_dut, wait_time, socket_id + 1), )
                         thread.start()
                         self.wifi_dut.interfaces.wifi.wifi_http_otaf_upgrade(ip_address=host_ip, port=80,
                                                                              expected_status=SLStatus.SL_STATUS_TIMEOUT)
@@ -232,268 +232,35 @@ class WifiJoin(ThreadBase):
             raise e
 
 
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#     }
-# )
-# @pytest.mark.start_state("wifi_dut", wifi="init")
-# @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-# def test_zephyr_http_fw_upgrade_in_STA_alone_mode_and_measure_time_c19780(http_server, wifi_sniffer, wifi_access_point,
-#                                                                           wifi_dut, request, wifi_client,
-#                                                                           zephyr_wifi_collections,
-#                                                                           sniffer_filter):
-#     capture_filename = request.node.name
-#     try:
-#         logger().info(f"******** AP MAC ADD *******")
-#         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-#         logger().info(f"***** Start get IP address ******")
-#         logger().info(f"ap mac is {ap_mac_address}")
-#         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-#         logger().info(f"host ip is {host_ip}")
-#         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-#                             wifi_client=wifi_client, capture_filename=capture_filename,
-#                             zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server)
-#         wifi_obj.start()
-#         wifi_obj.wait_for_exit()
-#
-#     except Exception as Ex:
-#         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-#
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#     }
-# )
-# @pytest.mark.start_state("wifi_dut", wifi="init")
-# @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-# def test_zephyr_http_fw_upgrade_in_STA_alone_mode_after_idle_for_10_min_c29780(http_server, wifi_sniffer,
-#                                                                                wifi_access_point,
-#                                                                                wifi_dut, request, wifi_client,
-#                                                                                zephyr_wifi_collections,
-#                                                                                sniffer_filter):
-#     capture_filename = request.node.name
-#     try:
-#         logger().info(f"******** AP MAC ADD *******")
-#         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-#         logger().info(f"***** Start get IP address ******")
-#         logger().info(f"ap mac is {ap_mac_address}")
-#         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-#         logger().info(f"host ip is {host_ip}")
-#         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-#                             wifi_client=wifi_client, capture_filename=capture_filename,
-#                             zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
-#                             test_case_no=29780)
-#         wifi_obj.start()
-#         wifi_obj.wait_for_exit()
-#
-#     except Exception as Ex:
-#         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-#
-#
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#     }
-# )
-# @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-# def test_zephyr_http_fw_upgrade_using_c498660(http_server, wifi_sniffer, wifi_access_point,
-#                                               wifi_dut, request, wifi_client, zephyr_wifi_collections,
-#                                               utf_constants):
-#     ''' Verify M4 firmware update functionality using HTTP otaf (port 80)with local apache server  '''
-#     capture_filename = request.node.name
-#     try:
-#         rps_path = utf_constants.get("m4_rps_filename")
-#         logger().info(f"******** AP MAC ADD *******")
-#         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-#         logger().info(f"***** Start get IP address ******")
-#         logger().info(f"ap mac is {ap_mac_address}")
-#         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-#         logger().info(f"host ip is {host_ip}")
-#         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-#                             wifi_client=wifi_client, capture_filename=capture_filename, rps_path=rps_path,
-#                             zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
-#                             test_case_no=498660)
-#         wifi_obj.start()
-#         wifi_obj.wait_for_exit()
-#
-#     except Exception as Ex:
-#         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-#
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#     }
-# )
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# def test_zephyr_http_fw_upgrade_failure_with_empty_rps_c19800(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
-#                                                               request, wifi_client, zephyr_wifi_collections,
-#                                                               sniffer_filter):
-#     capture_filename = request.node.name
-#     try:
-#         logger().info(f"******** AP MAC ADD *******")
-#         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-#         logger().info(f"ap mac is {ap_mac_address}")
-#         logger().info(f"***** Start get IP address ******")
-#         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-#         logger().info(f"host ip is {host_ip}")
-#         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-#                             wifi_client=wifi_client, capture_filename=capture_filename,
-#                             zephyr_wifi_collections=zephyr_wifi_collections,
-#                             http_server=http_server, test_case_no=19800)
-#         wifi_obj.start()
-#         wifi_obj.wait_for_exit()
-#         wifi_dut.interfaces.wifi.reset()
-#         wifi_sniffer.interfaces.capture.stop_capture()
-#
-#     except Exception as Ex:
-#         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-#
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#     }
-# )
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# def test_zephyr_http_fw_upgrade_failure_with_junk_rps_c19797(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
-#                                                              request, wifi_client, zephyr_wifi_collections,
-#                                                              sniffer_filter):
-#     capture_filename = request.node.name
-#     try:
-#         logger().info(f"******** AP MAC ADD *******")
-#         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-#         logger().info(f"ap mac is {ap_mac_address}")
-#         logger().info(f"***** Start get IP address ******")
-#         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-#         logger().info(f"host ip is {host_ip}")
-#         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-#                             wifi_client=wifi_client, capture_filename=capture_filename,
-#                             zephyr_wifi_collections=zephyr_wifi_collections,
-#                             http_server=http_server, test_case_no=19797)
-#         wifi_obj.start()
-#         wifi_obj.wait_for_exit()
-#         wifi_dut.interfaces.wifi.reset()
-#         wifi_sniffer.interfaces.capture.stop_capture()
-#
-#     except Exception as Ex:
-#         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-#
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#     }
-# )
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-# def test_zephyr_http_fw_upgrade_using_c19798(http_server, wifi_sniffer, wifi_access_point,
-#                                              wifi_dut, request, wifi_client, zephyr_wifi_collections
-#                                              ):
-#     ''' verify the firmware upgrade functionality unsuccessful with non rps format(text or word or xls file)  '''
-#     capture_filename = request.node.name
-#     try:
-#         logger().info(f"******** AP MAC ADD *******")
-#         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-#         logger().info(f"***** Start get IP address ******")
-#         logger().info(f"ap mac is {ap_mac_address}")
-#         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-#         logger().info(f"host ip is {host_ip}")
-#         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-#                             wifi_client=wifi_client, capture_filename=capture_filename,
-#                             zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
-#                             test_case_no=19798)
-#         wifi_obj.start()
-#         wifi_obj.wait_for_exit()
-#         wifi_dut.interfaces.wifi.reset()
-#         wifi_sniffer.interfaces.capture.stop_capture()
-#
-#     except Exception as Ex:
-#         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-#
-#
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#     }
-# )
-# @pytest.mark.start_state("wifi_dut", wifi="init")
-# @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-# @pytest.mark.firmware_app("firmware_security_encrypted_1")
-# def test_zephyr_http_fw_upgrade_in_STA_alone_mode_secure_image_and_measure_time_c19780(firmware_loader, http_server,
-#                                                                                        wifi_sniffer,
-#                                                                                        wifi_access_point,
-#                                                                                        wifi_dut, request, wifi_client,
-#                                                                                        zephyr_wifi_collections,
-#                                                                                        sniffer_filter,
-#                                                                                        utf_constants):
-#     capture_filename = request.node.name
-#     try:
-#         rps_path = utf_constants.get("rps_filename")
-#         logger().info(f"******** AP MAC ADD *******")
-#         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-#         logger().info(f"***** Start get IP address ******")
-#         logger().info(f"ap mac is {ap_mac_address}")
-#         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-#         logger().info(f"host ip is {host_ip}")
-#         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-#                             wifi_client=wifi_client, capture_filename=capture_filename,
-#                             zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server, rps_path=rps_path)
-#         wifi_obj.start()
-#         wifi_obj.wait_for_exit()
-#
-#     except Exception as Ex:
-#         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-#
-#
-# @pytest.mark.start_state("wifi_dut", wifi=['init'])
-# @pytest.mark.config(
-#     "wifi_dut",
-#     wifi=
-#     {
-#         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-#     }
-# )
-# @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-# def test_zephyr_http_m4_full_security_fw_upgrade_using_c498660(http_server, wifi_sniffer, wifi_access_point,
-#                                                                wifi_dut, request, wifi_client, zephyr_wifi_collections,
-#                                                                utf_constants):
-#     ''' Verify M4 firmware update functionality using HTTP otaf (port 80)with local apache server  '''
-#     capture_filename = request.node.name
-#     try:
-#         rps_path = utf_constants.get("m4_full_secure_rps_filename")
-#         logger().info(f"******** AP MAC ADD *******")
-#         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-#         logger().info(f"***** Start get IP address ******")
-#         logger().info(f"ap mac is {ap_mac_address}")
-#         host_ip = wifi_client.interfaces.wifi.get_ip_address()
-#         logger().info(f"host ip is {host_ip}")
-#         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-#                             wifi_client=wifi_client, capture_filename=capture_filename, rps_path=rps_path,
-#                             zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
-#                             test_case_no=498660)
-#         wifi_obj.start()
-#         wifi_obj.wait_for_exit()
-#
-#     except Exception as Ex:
-#         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_zephyr_http_fw_upgrade_in_STA_alone_mode_and_measure_time_c19780(http_server, wifi_sniffer, wifi_access_point,
+                                                                          wifi_dut, request, wifi_client,
+                                                                          zephyr_wifi_collections,
+                                                                          sniffer_filter):
+    capture_filename = request.node.name
+    try:
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"***** Start get IP address ******")
+        logger().info(f"ap mac is {ap_mac_address}")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename,
+                            zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+    except Exception as Ex:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.config(
@@ -505,8 +272,204 @@ class WifiJoin(ThreadBase):
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-@pytest.mark.firmware_app("firmware_security_encrypted_1")
-def test_zephyr_http_otaf_when_file_not_found_c19780(firmware_loader, http_server,
+def test_zephyr_http_fw_upgrade_in_STA_alone_mode_after_idle_for_10_min_c29780(http_server, wifi_sniffer,
+                                                                               wifi_access_point,
+                                                                               wifi_dut, request, wifi_client,
+                                                                               zephyr_wifi_collections,
+                                                                               sniffer_filter):
+    capture_filename = request.node.name
+    try:
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"***** Start get IP address ******")
+        logger().info(f"ap mac is {ap_mac_address}")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename,
+                            zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
+                            test_case_no=29780)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+    except Exception as Ex:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_zephyr_http_fw_upgrade_m4_c498660(http_server, wifi_sniffer, wifi_access_point,
+                                           wifi_dut, request, wifi_client, zephyr_wifi_collections,
+                                           utf_constants):
+    ''' Verify M4 firmware update functionality using HTTP otaf (port 80)with local apache server  '''
+    capture_filename = request.node.name
+    try:
+        rps_path = utf_constants.get("m4_rps_filename")
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"***** Start get IP address ******")
+        logger().info(f"ap mac is {ap_mac_address}")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename, rps_path=rps_path,
+                            zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
+                            test_case_no=498660)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+    except Exception as Ex:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_zephyr_http_fw_upgrade_m4_valid_firmware_with_non_rps_format(http_server, wifi_sniffer, wifi_access_point,
+                                                                      wifi_dut, request, wifi_client,
+                                                                      zephyr_wifi_collections,
+                                                                      utf_constants):
+    ''' Verify M4 firmware update functionality using HTTP otaf (port 80)with local apache server when file type is text '''
+    capture_filename = request.node.name
+    try:
+        rps_path = utf_constants.get("m4_rps_filename_non_rps")
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"***** Start get IP address ******")
+        logger().info(f"ap mac is {ap_mac_address}")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename, rps_path=rps_path,
+                            zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
+                            test_case_no=498660)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+    except Exception as Ex:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_zephyr_http_fw_upgrade_failure_with_empty_rps_c19800(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
+                                                              request, wifi_client, zephyr_wifi_collections,
+                                                              sniffer_filter):
+    capture_filename = request.node.name
+    try:
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap mac is {ap_mac_address}")
+        logger().info(f"***** Start get IP address ******")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename,
+                            zephyr_wifi_collections=zephyr_wifi_collections,
+                            http_server=http_server, test_case_no=19800)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.reset()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+def test_zephyr_http_fw_upgrade_failure_with_junk_rps_c19797(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
+                                                             request, wifi_client, zephyr_wifi_collections,
+                                                             sniffer_filter):
+    capture_filename = request.node.name
+    try:
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"ap mac is {ap_mac_address}")
+        logger().info(f"***** Start get IP address ******")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename,
+                            zephyr_wifi_collections=zephyr_wifi_collections,
+                            http_server=http_server, test_case_no=19797)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.reset()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_zephyr_http_fw_upgrade_using_c19798(http_server, wifi_sniffer, wifi_access_point,
+                                             wifi_dut, request, wifi_client, zephyr_wifi_collections
+                                             ):
+    ''' verify the firmware upgrade functionality unsuccessful with non rps format(text or word or xls file)  '''
+    capture_filename = request.node.name
+    try:
+        logger().info(f"******** AP MAC ADD *******")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"***** Start get IP address ******")
+        logger().info(f"ap mac is {ap_mac_address}")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"host ip is {host_ip}")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename,
+                            zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
+                            test_case_no=19798)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.reset()
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as Ex:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi="init")
+def test_zephyr_http_otaf_when_file_not_found_c19780(http_server,
                                                      wifi_sniffer,
                                                      wifi_access_point,
                                                      wifi_dut, request, wifi_client,
@@ -541,14 +504,14 @@ def test_zephyr_http_otaf_when_file_not_found_c19780(firmware_loader, http_serve
 
 @pytest.mark.config(
     "wifi_dut",
-    wifi={
+    wifi=
+    {
         "thread_config": {"wifi": {"count": 2, "stack_len": 2048}},
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-@pytest.mark.firmware_app("firmware_security_encrypted_1")
-def test_zephyr_close_connection_while_firmware_upgrade_c19780(firmware_loader, http_server,
+def test_zephyr_close_connection_while_firmware_upgrade_c19780(http_server,
                                                                wifi_sniffer,
                                                                wifi_access_point,
                                                                wifi_dut, request, wifi_client,
@@ -576,116 +539,3 @@ def test_zephyr_close_connection_while_firmware_upgrade_c19780(firmware_loader, 
         wifi_dut.interfaces.wifi.reset()
 
 
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-    }
-)
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-@pytest.mark.firmware_app("firmware_security_encrypted_1")
-def test_zephyr_http_otaf_neg_load_mic_only_image_when_full_sec_enabled_c19780(firmware_loader, http_server,
-                                                                               wifi_sniffer,
-                                                                               wifi_access_point,
-                                                                               wifi_dut, request, wifi_client,
-                                                                               zephyr_wifi_collections,
-                                                                               sniffer_filter,
-                                                                               utf_constants):
-    capture_filename = request.node.name
-    try:
-        rps_mic_only_filename = utf_constants.get("rps_mic_only_filename")
-        logger().info(f"******** AP MAC ADD *******")
-        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"***** Start get IP address ******")
-        logger().info(f"ap mac is {ap_mac_address}")
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"host ip is {host_ip}")
-        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                            wifi_client=wifi_client, capture_filename=capture_filename,
-                            zephyr_wifi_collections=zephyr_wifi_collections,
-                            http_server=http_server, test_case_no=12347, rps_path=rps_mic_only_filename)
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-        wifi_dut.interfaces.wifi.reset()
-        wifi_sniffer.interfaces.capture.stop_capture()
-
-    except Exception as Ex:
-        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-    finally:
-        wifi_dut.interfaces.wifi.reset()
-
-
-@pytest.mark.config(
-    "wifi_dut",
-    wifi=
-    {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
-    }
-)
-@pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-@pytest.mark.firmware_app("firmware_security_encrypted_1")
-def test_zephyr_secure_http_fw_upgrade_overnight_c19780(firmware_loader, http_server,
-                                                        wifi_sniffer,
-                                                        wifi_access_point,
-                                                        wifi_dut, request, wifi_client,
-                                                        zephyr_wifi_collections,
-                                                        sniffer_filter,
-                                                        utf_constants):
-    capture_filename = request.node.name
-    try:
-        rps_path = utf_constants.get("rps_filename")
-        rps_path_secondary = utf_constants.get("rps_filename_alternative")
-        http_iter_count = utf_constants.get("http_otaf_long_run_duration")
-        logger().info(f"******** AP MAC ADD *******")
-        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"***** Start get IP address ******")
-        logger().info(f"ap mac is {ap_mac_address}")
-        host_ip = wifi_client.interfaces.wifi.get_ip_address()
-        logger().info(f"host ip is {host_ip}")
-        for count in range(0, http_iter_count):
-            logger().info(f"Running the test case for {count} time")
-            for test_count in range(0, 2):
-                wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                    wifi_client=wifi_client, capture_filename=capture_filename,
-                                    zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
-                                    test_case_no=12348)
-                wifi_obj.start()
-                wifi_obj.wait_for_exit()
-                wifi_sniffer.interfaces.capture.stop_capture()
-                time.sleep(2)
-                wifi_sniffer.interfaces.capture.start_capture(
-                    capture_file=f"{capture_filename + str(http_iter_count)}.pcap")
-                logger().info("dut fw version before upgrade...")
-                start_time = time.time()
-                fw_before_upgrade = wifi_dut.interfaces.wifi.version()
-                logger().info(f" start firmware upgrade: {start_time}")
-                if test_count == 0:
-                    firmware_rps_file = rps_path
-                else:
-                    firmware_rps_file = rps_path_secondary
-                wifi_dut.interfaces.wifi.wifi_http_otaf_upgrade(ip_address=host_ip, port=80, http_url=firmware_rps_file)
-                finish_time = time.time()
-                logger().info(f"firmware upgraded : {finish_time}")
-                time_duration = (finish_time - start_time)
-                logger().info(f"Time taken to upgrade firmware is: {time_duration}")
-
-                if time_duration > 40:
-                    logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration}")
-                else:
-                    logger().info(f"time taken to upgrade firmware using http otaf {time_duration} seconds")
-                logger().info(f"\n ***firmware versions not matched after loading firmware through otaf \n")
-                logger().info("Stop Sniffer finally")
-                wifi_sniffer.interfaces.capture.stop_capture()
-                fw_after_upgrade = wifi_obj.get_firmware_status()
-                time.sleep(2)
-                logger().info(f"\n\n ***firmware versions before otaf:{fw_before_upgrade}"
-                              f" firmware version after loading through otaf :{fw_after_upgrade}")
-                assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
-                                                              f" firmware through otaf"
-
-
-    except Exception as Ex:
-        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
