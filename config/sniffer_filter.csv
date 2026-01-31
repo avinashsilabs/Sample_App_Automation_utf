@@ -240,4 +240,6 @@ ap_wps_pbc_beacon, ((wlan.addr == {{wlan_addr}}), and (wps.selected_registrar_co
 dut_wps_pbc_probe_req, ((wlan.addr == {{wlan_addr}}), and (wps.config_methods == 0x0280) && (wps.request_type == 0x01)),
 ap_wps_assoc_resp, ((wlan.addr == {{wlan_addr}}), and (wlan.fc.type_subtype == 0x01 ) and  (wps.response_type == 0x03)),
 dut_wps_assoc_req, ((wlan.addr == {{wlan_addr}}), and (wps.request_type == 0x01) and wlan.fc.type_subtype == 0x00),
-vendor_information_element,(wlan.tag.number == 221 and wlan.tag.length == {{tag_length}} and wlan.tag.vendor.oui.type == {{oui_type_subtype}} and wlan.tag.oui == {{oui}} and wlan.tag.vendor.data == {{vendor_data}}),,,
+vendor_information_element,(wlan.tag.number == 221 and wlan.tag.length == {{tag_length}} and wlan.tag.vendor.oui.type == {{oui_type_subtype}} and wlan.tag.oui == {{oui}} and wlan.tag.vendor.data == {{vendor_data}}),
+gratuitous_packet, (arp and arp.src.proto_ipv4 == arp.dst.proto_ipv4),
+no_adc_conflict, (arp.opcode == 2), and (arp.src.proto_ipv4 == {{dut_ip}}) and (eth.src != {{sa_addr}}),,,

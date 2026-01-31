@@ -48,6 +48,43 @@ Map_security = {
     "WPA3_TRANSITION_ENTERPRISE": 10,
 }
 
+class UDPTXThread(ThreadBase):
+    """This thread is responsible for TCP data transfer"""
+
+    def __init__(self, wifi_dut=None, wifi_client=None, device_ip=None, protocol=None, net_perf_client=None,
+                 remote_socket_factory=None, port=8001, no_of_pkts=1, data_transfer=True):
+        super().__init__()
+        self.thread_lock = threading.Lock()
+        self.wifi_dut = wifi_dut
+        self.wifi_client = wifi_client
+        self.device_ip = device_ip
+        self.protocol = protocol
+        self.net_perf_client = net_perf_client
+        self.port = port
+
+
+    def run(self):
+        transfer_type = 2  # UDP
+        throughput_type = 2  # UDP TX
+        pkt_size = 1460
+        duration = 40
+        timeout = duration + 5
+        dut_ip = self.device_ip
+        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        self.net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=dut_ip, protocol=self.protocol)
+        self.net_perf_client.interfaces.net_perf.start()
+
+        self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=17,
+                                       local_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                       local_ip=dut_ip, remote_ip=host_ip,
+                                       remote_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                       size=pkt_size, ttl=duration, throughput_type=throughput_type, timeout=timeout,
+                                       host_tcp_ip_stack_enable=1)
+        tp = self.net_perf_client.interfaces.net_perf.process_output()
+        assert tp is not None, f"throughput not Found"
+        logger().info("\n ================ data transfer is successful ================= \n ")
+        self.net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        time.sleep(5)
 
 class TCPTXThread(ThreadBase):
     """This thread is responsible for TCP data transfer"""
@@ -341,9 +378,9 @@ class WifiJoinThread(ThreadBase):
         "dhcp_lease": "120",
     },
 )
-def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_LWIP_c919174(wifi_sniffer, wifi_access_point, wifi_dut,
+def test_wifi_sdk_dhcp_2_min_renewal_func_lwip_c919174(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                        request, sl_collections, sniffer_filter):
-    """This test case verifies DHCP renewal time to 2 min renewal functionality in LWIP stack for 30 min duration"""
+    """This test case verifies DHCP renewal time to 2 min renewal functionality in LWIP stack for 30 min duration using LWIP Stack"""
     capture_filename = request.node.name
     time_delta = 60
     packet_filter2 = '        DHCP: Request (3)'
@@ -466,7 +503,7 @@ def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_LWIP_c919174(wifi_snif
 def test_wifi_sdk_tcp_open_send_close_socket_c919180(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client, protocol):
-    """This test case Verifies the tcp client socket is open, send data,close functionality"""
+    """This test case Verifies the tcp client socket is open, send data,close functionality using LWIP Stack"""
     try:
         test_name = request.node.name
         capture_filename = request.node.name
@@ -561,7 +598,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c919180(
 def test_wifi_sdk_verify_tcp_keep_alive_functionality_c919181(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client, protocol):
-    """This test case Verifies the tcp keep alive functionality"""
+    """This test case Verifies the tcp keep alive functionality using LWIP Stack"""
     try:
         test_name = request.node.name
         capture_filename = request.node.name
@@ -653,7 +690,7 @@ def test_wifi_sdk_verify_tcp_keep_alive_functionality_c919181(
 def test_wifi_sdk_tcp_tx_rx_simultaneously_c919183(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client, protocol):
-    """This test case Verifies the tcp client socket is open, send data,close functionality"""
+    """This test case Verifies the tcp client socket is open, send TX and RX data,close functionality using LWIP Stack"""
     try:
         test_name = request.node.name
         capture_filename = request.node.name
@@ -670,7 +707,7 @@ def test_wifi_sdk_tcp_tx_rx_simultaneously_c919183(
         wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                      sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
                                      wifi_client=wifi_client,
-                                     test_case_no=919180, leave=False, stop_capture=False)
+                                     test_case_no=919183, leave=False, stop_capture=False)
 
         wifi_thread.start()
         wifi_thread.wait_for_exit()
@@ -750,7 +787,7 @@ def test_wifi_sdk_tcp_tx_rx_simultaneously_c919183(
 def test_wifi_sdk_2_tcp_client_data_transfer_using_1_socket_c919184(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client, protocol):
-    """This test case Verifies the tcp client socket is open, send data,close functionality"""
+    """This test case verifies 2 TCP client data transfer using 1 socket functionality using LWIP Stack"""
     try:
         test_name = request.node.name
         capture_filename = request.node.name
@@ -767,7 +804,7 @@ def test_wifi_sdk_2_tcp_client_data_transfer_using_1_socket_c919184(
         wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                      sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
                                      wifi_client=wifi_client,
-                                     test_case_no=919180, leave=False, stop_capture=False)
+                                     test_case_no=919184, leave=False, stop_capture=False)
 
         wifi_thread.start()
         wifi_thread.wait_for_exit()
@@ -845,7 +882,7 @@ def test_wifi_sdk_2_tcp_client_data_transfer_using_1_socket_c919184(
 )
 def test_wifi_sdk_dhcp_garp_verification_c919194(sniffer_filter, wifi_access_point, wifi_dut, sl_collections,
                                                  wifi_sniffer, request, wifi_client):
-    """this test case verifies DHCP ACD no conflict GARP functionality"""
+    """this test case verifies DHCP ACD no conflict GARP functionality using LWIP Stack"""
     try:
         test_name = request.node.name
         capture_filename = request.node.name
@@ -865,7 +902,7 @@ def test_wifi_sdk_dhcp_garp_verification_c919194(sniffer_filter, wifi_access_poi
         wifi_thread.start()
         wifi_thread.wait_for_exit()
 
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(filter_name='garp_packet')
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(filter_name='gratuitous_packet')
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Sniffer: GARP packet not found in sniffer packets'
 
@@ -909,7 +946,7 @@ def test_wifi_sdk_dhcp_garp_verification_c919194(sniffer_filter, wifi_access_poi
 )
 def test_wifi_sdk_dhcp_discon_connect_garp_verification_c919223(sniffer_filter, wifi_access_point, wifi_dut,
                                                                 sl_collections, wifi_sniffer, request, wifi_client):
-    """this test case verifies DHCP ACD no conflict GARP functionality"""
+    """this test case verifies DHCP ACD no conflict GARP functionality upon disconnect and connect cycle, using LWIP Stack"""
     try:
         test_name = request.node.name
         capture_filename = request.node.name
@@ -931,12 +968,12 @@ def test_wifi_sdk_dhcp_discon_connect_garp_verification_c919223(sniffer_filter, 
                                          wifi_sniffer=wifi_sniffer,
                                          sl_collections=sl_collections, profile=profile,
                                          capture_filename=capture_filename, wifi_client=wifi_client,
-                                         test_case_no=919224)
+                                         test_case_no=919223)
 
             wifi_thread.start()
             wifi_thread.wait_for_exit()
 
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(filter_name='garp_packet')
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(filter_name='gratuitous_packet')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 'Sniffer: GARP packet not found in sniffer packets'
 
@@ -984,7 +1021,7 @@ def test_wifi_sdk_dhcp_discon_connect_garp_verification_c919223(sniffer_filter, 
 )
 def test_wifi_sdk_dhcp_deinit_init_cycle_garp_verification_c919225(sniffer_filter, wifi_access_point, wifi_dut,
                                                                    sl_collections, wifi_sniffer, request, wifi_client):
-    """this test case verifies DHCP ACD no conflict GARP functionality"""
+    """this test case verifies DHCP ACD no conflict GARP functionality upon deinit and init cycle, using LWIP Stack"""
     try:
         test_name = request.node.name
         capture_filename = request.node.name
@@ -1015,7 +1052,7 @@ def test_wifi_sdk_dhcp_deinit_init_cycle_garp_verification_c919225(sniffer_filte
             wifi_thread.start()
             wifi_thread.wait_for_exit()
 
-            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(filter_name='garp_packet')
+            packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(filter_name='gratuitous_packet')
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
                 'Sniffer: GARP packet not found in sniffer packets'
 
@@ -1036,3 +1073,232 @@ def test_wifi_sdk_dhcp_deinit_init_cycle_garp_verification_c919225(sniffer_filte
     finally:
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+    },
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "channel": 6,
+        "dhcp_lease": "120",
+    },
+)
+def test_wifi_sdk_dhcp_renewal_LWIP_congestion_env_c919228(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                                       request, sl_collections, sniffer_filter):
+    """This test case verifies DHCP renewal functionality in LWIP stack under congestion environment using LWIP Stack"""
+    capture_filename = request.node.name
+
+    profile = {
+        "ssid": "ssid_profile1",
+        "channel": 6,
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
+    }
+    wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
+                              test_case_no=919228, leave=False, stop_capture=False)
+
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        logger().info(" wait for 300 seconds to capture DHCP renewal packets")
+        time.sleep(300)
+        logger().info("\n ============== Stop the sniffer =============== \n")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("\n =================== Disconnection will issued after verification ==================== \n")
+        wifi_dut.interfaces.wifi.leave()
+
+        device_address = {'sa_addr': wlan_obj.dut_addr, 'da_addr': wlan_obj.ap_addr, 'wlan_addr': wlan_obj.dut_addr}
+        filters_name = {1: 'power_mgmt_bit', 2: 'dhcp', 3: 'dhcp_renewal'}
+        output_1 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name)
+        logger().info(f'\n OUTPUT = {output_1}\n')
+        assert all(output_1.values()), 'Unable to find expected filter'
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.ap_addr,
+            da_addr=wlan_obj.dut_addr,
+            filter_name='dhcp_ack')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
+            'packet_count'], \
+            'Sniffer: DHCP ACK packet from AP not found in sniffer packets'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+    },
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "channel": 6,
+        "dhcp_lease": "120",
+    },
+)
+def test_wifi_sdk_dhcp_renewal_LWIP_after_AP_reboot_c919227(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                           request, sl_collections, sniffer_filter, switch):
+    """This test case verifies DHCP renewal functionality in LWIP stack after AP reboot using LWIP Stack"""
+    capture_filename = request.node.name
+
+    profile = {
+        "ssid": "ssid_profile1",
+        "channel": 6,
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
+    }
+    wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
+                              test_case_no=919227, leave=False, stop_capture=False)
+
+    try:
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        logger().info("\n =================== Turning off the AP ===================\n")
+        switch.interfaces.pdu_switch.turn_off(delay=20)
+        logger().info("\n =================== Again turning on the AP ===================\n")
+        switch.interfaces.pdu_switch.turn_on(delay=100)
+        logger().info("\n =================== Successfully powered on AP ===================\n")
+        logger().info(" wait for 300 seconds to capture DHCP renewal packets")
+        time.sleep(300)
+
+
+        logger().info("\n ============== Stop the sniffer =============== \n")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("\n =================== Disconnection will issued after verification ==================== \n")
+        wifi_dut.interfaces.wifi.leave()
+
+        device_address = {'sa_addr': wlan_obj.dut_addr, 'da_addr': wlan_obj.ap_addr, 'wlan_addr': wlan_obj.dut_addr}
+        filters_name = {1: 'power_mgmt_bit', 2: 'dhcp', 3: 'dhcp_renewal'}
+        output_1 = sl_collections.sniffer_validation_for_packet_filters(wifi_sniffer, sniffer_filter,
+                                                                        device_address, filters_name=filters_name)
+
+        packet_filter2 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.ap_addr,
+            da_addr=wlan_obj.dut_addr,
+            filter_name='dhcp_ack')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
+                'packet_count'], \
+            'Sniffer: DHCP ACK packet from AP not found in sniffer packets'
+
+        logger().info(f'\n OUTPUT = {output_1}\n')
+        assert all(output_1.values()), 'Unable to find expected filter'
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity
+                    | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "channel": 6,
+    },
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+def test_wifi_sdk_udp_tx_lwip_c919195(sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        net_perf_client, wifi_client, protocol):
+    """This test case Verifies the udp client socket is open, send data,close functionality using LWIP Stack"""
+    try:
+        test_name = request.node.name
+        capture_filename = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        profile = {
+            "ssid": "ssid_profile1",
+            "channel": 6,
+            "security": "OPEN",
+            "passphrase": "1234567890",
+            "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
+        }
+        wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                     sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
+                                     wifi_client=wifi_client,
+                                     test_case_no=919195, leave=False, stop_capture=False)
+
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+
+        udp_tx_thread = UDPTXThread(wifi_dut=wifi_dut, wifi_client=wifi_client, device_ip=wifi_thread.device_ip,
+                                    protocol=protocol, net_perf_client=net_perf_client)
+        udp_tx_thread.start()
+        udp_tx_thread.wait_for_exit()
+
+    except Exception as ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=ex)
+        raise
