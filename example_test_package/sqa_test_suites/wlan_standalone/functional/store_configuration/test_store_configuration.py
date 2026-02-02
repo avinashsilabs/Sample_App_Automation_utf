@@ -1041,7 +1041,7 @@ def test_store_config_without_powersave_C19103(wifi_sniffer, wifi_access_point, 
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
                     | RS9116FeatureBitMap.PSKSecurity,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.HTTPServer
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
         "rejoin_max_retry": 10,
@@ -1199,7 +1199,7 @@ def test_store_config_aggregation_C19101(wifi_sniffer, wifi_access_point, wifi_d
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
                     | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.Default | RS9116TCPIPFeatureBitMap.HTTPServer,
+        "tcpip_features": RS9116TCPIPFeatureBitMap.Default ,
         "rejoin_max_retry": 0,
         "beacon_missed_count": 40,
         "first_time_retry": 0,
@@ -1350,7 +1350,7 @@ def test_wireless_config_WPA2_C19093(wifi_sniffer, wifi_access_point, wifi_clien
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
                     | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.HTTPServer
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
         "rejoin_max_retry": 10,
@@ -1502,7 +1502,7 @@ def test_wireless_config_5GHZ_C19097(wifi_sniffer, wifi_access_point, wifi_clien
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
                     | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.HTTPServer
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
         "rejoin_max_retry": 10,
@@ -1657,7 +1657,7 @@ def test_wireless_config_Dual_1_C19095(wifi_sniffer, wifi_access_point, wifi_cli
         "features": RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.Aggregation
                     | RS9116FeatureBitMap.OpenMode,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.HTTPServer
+        "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.WaitForSocketClose | RS9116ExtTCPIPFeatureBitMap.Default,
         "rejoin_max_retry": 10,

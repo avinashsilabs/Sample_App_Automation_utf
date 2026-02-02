@@ -260,6 +260,7 @@ def test_scan_and_connect_in_world_domain_c19075(wifi_dut, wifi_access_points, w
         logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
         wifi_sniffer.interfaces.capture.start_capture(capture_file='test_scan_and_connect_in_world_domain_c19075')
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        time.sleep(20)
         logger().info(scan_results)
         assert len(scan_results) >= 1, "scan results not found"
 
