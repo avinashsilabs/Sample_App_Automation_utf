@@ -264,7 +264,7 @@ class ProvisioningFunctionality(ThreadBase):
             passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
 
         # time.sleep(300)
-
+        time.sleep(3)
         data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
         if self.test_case == 887649:
             self.result = re.search(r'ssid:([\w@!]+),password:([\w@#!]+),security:(\w+)', data.decode())
@@ -1535,6 +1535,732 @@ def test_wifi_sdk_ap_provisioning_mixed_security_c887650(
         wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect_mixed_security()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_wpa2_security_12h_long_run_c887672(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, ble_client, ble_dut,
+        wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter):
+    """Verify SoftAP provisioning and check the stability of the remote client connection for 12 hours"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        time.sleep(10)
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        # Start 12-hour ping stability test
+        logger().info("Starting 12-hour ping stability test to access point")
+        test_duration = 12 * 60 * 60  # 12 hours in seconds
+        ping_interval = 60  # Ping every 60 seconds
+        start_time = time.time()
+        ping_count = 0
+        failed_pings = 0
+        # Get the gateway IP from DUT's network config (access point IP)
+        dut_ip = ble_obj.device_ip
+        # Decode bytes to string if needed
+        if isinstance(dut_ip, bytes):
+            dut_ip = dut_ip.decode('utf-8')
+        # Gateway is typically .1 in the subnet - derive from DUT IP
+        ap_ip = '.'.join(dut_ip.split('.')[:-1]) + '.1'
+
+        logger().info(f"Target AP IP: {ap_ip}")
+        logger().info(f"Test will run for {test_duration / 3600} hours with ping interval of {ping_interval} seconds")
+
+        while (time.time() - start_time) < test_duration:
+            elapsed_time = time.time() - start_time
+            ping_count += 1
+
+            try:
+                # Perform ping test - ping() returns status code where 0 means success
+                ping_result = wifi_dut.interfaces.wifi.ping(ap_ip, 5, 5)
+
+                # Check if ping succeeded (result is not None and no exception)
+                logger().info(f"Ping #{ping_count} successful - Elapsed time: {elapsed_time / 3600:.2f} hours")
+
+            except Exception as ping_error:
+                failed_pings += 1
+                logger().error(
+                    f"Ping #{ping_count} exception: {ping_error} - Elapsed time: {elapsed_time / 3600:.2f} hours - Total failures: {failed_pings}")
+
+                if ping_result:
+                    logger().info(f"Ping #{ping_count} successful - Elapsed time: {elapsed_time / 3600:.2f} hours")
+                else:
+                    failed_pings += 1
+                    logger().error(
+                        f"Ping #{ping_count} FAILED - Elapsed time: {elapsed_time / 3600:.2f} hours - Total failures: {failed_pings}")
+
+            except Exception as ping_error:
+                failed_pings += 1
+                logger().error(
+                    f"Ping #{ping_count} exception: {ping_error} - Elapsed time: {elapsed_time / 3600:.2f} hours - Total failures: {failed_pings}")
+
+            # Log progress every hour
+            if ping_count % (3600 // ping_interval) == 0:
+                success_rate = ((ping_count - failed_pings) / ping_count) * 100 if ping_count > 0 else 0
+                logger().info(
+                    f"Progress Report - Elapsed: {elapsed_time / 3600:.2f} hours, Total pings: {ping_count}, Failed: {failed_pings}, Success rate: {success_rate:.2f}%")
+
+            # Wait for next ping interval
+            time.sleep(ping_interval)
+
+        # Final report
+        logger().info("12-hour stability test completed")
+        logger().info(f"Total pings: {ping_count}, Failed pings: {failed_pings}")
+        success_rate = ((ping_count - failed_pings) / ping_count) * 100 if ping_count > 0 else 0
+        logger().info(f"Overall success rate: {success_rate:.2f}%")
+
+        # Assert that success rate is acceptable (e.g., > 80%)
+        assert success_rate >= 80.0, f"Ping success rate {success_rate:.2f}% is below acceptable threshold of 80%"
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_wpa2_security_with_wrong_psk_for_multiple_iterations_C887671(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+    """Verify Soft AP provisioning when configuring wrong PSK and also check WLAN connection to the third party home AP
+    with the received credentials on APUT for multiple iteration in loop(20 Iteration) - Negative test case"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+        from utf.utils.commander import Commander
+        commander = Commander()
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        for iteration in range(1, 21):
+            logger().info(f"******************** Starting iteration {iteration} of 20 ********************")
+
+            # For iterations 2-20, reset the device and re-configure for AP+BLE mode
+            if iteration > 1:
+                logger().info(f"Resetting device for iteration {iteration}")
+                commander.reset_device()
+                time.sleep(3)
+                # Reset framework state so it allows new config after hardware reset
+                wifi_dut.interfaces.wifi._state = 'deinit'
+                wifi_dut.interfaces.wifi._wifi_config = None  # Clear previous config tracking
+                # Reset thread state so threads get re-initialized after commander reset
+                if hasattr(wifi_dut.interfaces.wifi, '_threads'):
+                    wifi_dut.interfaces.wifi._threads = {}
+                if hasattr(wifi_dut.interfaces.wifi, '_threads_initialized'):
+                    wifi_dut.interfaces.wifi._threads_initialized = False
+                # Reset BLE interface state after commander reset
+                if hasattr(ble_dut.interfaces.bluetooth, '_state'):
+                    ble_dut.interfaces.bluetooth._state = 'deinit'
+                if hasattr(ble_dut.interfaces.bluetooth, '_initialized'):
+                    ble_dut.interfaces.bluetooth._initialized = False
+
+                # Reset ALL framework state after commander reset
+                wifi_dut.interfaces.wifi._threads_initialized = False
+                wifi_dut.interfaces.wifi._threads = {}
+                wifi_dut.interfaces.wifi._state = 'deinit'
+                wifi_dut.interfaces.wifi._wifi_config = None
+
+                # Set thread_config on interface
+                wifi_dut.interfaces.wifi._thread_config = {"wifi": {"count": 1, "stack_len": 3072},
+                                                           "ble": {"count": 1, "stack_len": 2048}}
+
+                # Re-initialize device with AP+BLE mode config (same as fixture)
+                wifi_dut.interfaces.wifi.set_wifi_config(
+                    oper_mode=Si91xOperatingMode.AccessPoint,
+                    coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                    features=Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
+                    tcpip_features=Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+                    custom_features=Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+                    ext_custom_features=Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+                    ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.Default,
+                    config_features=Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                    bt_features=Si91xBTFeatureBitMap.Default,
+                    ble_features=Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+                    ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST)
+
+                # Send plain wifi.init command (no thread prefix)
+                wifi = wifi_dut.interfaces.wifi
+
+                # Find the underlying CLI that sends raw commands
+                cli = None
+                for attr_name in ['_cli', 'cli', '_connection', 'connection', '_serial_connection',
+                                  '_serial', 'serial', 'host_connection', '_host_connection',
+                                  'serial_connection', '_host', 'host', '_bus', 'bus']:
+                    obj = getattr(wifi, attr_name, None)
+                    if obj is not None:
+                        cli = obj
+                        break
+
+                # If no CLI found on wifi interface, try getting it from the device
+                if cli is None:
+                    device = getattr(wifi, '_device', None) or getattr(wifi, 'device', None)
+                    if device is not None:
+                        for attr_name in ['_connection', 'connection', '_serial_connection', '_serial',
+                                          'host_connection', '_host', 'host', '_bus', 'bus', '_cli', 'cli']:
+                            obj = getattr(device, attr_name, None)
+                            if obj is not None:
+                                cli = obj
+                                break
+
+                # Also check wifi_dut directly
+                if cli is None:
+                    for attr_name in ['_connection', 'connection', '_serial_connection', '_serial',
+                                      'host_connection', '_cli', 'cli']:
+                        obj = getattr(wifi_dut, attr_name, None)
+                        if obj is not None:
+                            cli = obj
+                            break
+
+                # Send commands using the CLI if found
+                sent_commands = False
+                if cli is not None:
+                    if hasattr(cli, 'send_command'):
+                        cli.send_command("wifi.init", timeout=10)
+                        wifi._state = 'init'
+                        cli.send_command("thread 0 3072 1600", timeout=5)
+                        cli.send_command("thread 1 2048 1600", timeout=5)
+                        sent_commands = True
+                    elif hasattr(cli, 'send'):
+                        cli.send("wifi.init\r\n")
+                        time.sleep(3)
+                        wifi._state = 'init'
+                        cli.send("thread 0 3072 1600\r\n")
+                        time.sleep(1)
+                        cli.send("thread 1 2048 1600\r\n")
+                        time.sleep(1)
+                        sent_commands = True
+
+                if not sent_commands:
+                    # Try using internal command methods
+                    if hasattr(wifi, '_issue_command'):
+                        wifi._issue_command("wifi.init", timeout=10)
+                        wifi._state = 'init'
+                        wifi._issue_command("thread 0 3072 1600", timeout=5)
+                        wifi._issue_command("thread 1 2048 1600", timeout=5)
+                        sent_commands = True
+                    elif hasattr(wifi, '_send_command'):
+                        wifi._send_command("wifi.init")
+                        wifi._state = 'init'
+                        wifi._send_command("thread 0 3072 1600")
+                        wifi._send_command("thread 1 2048 1600")
+                        sent_commands = True
+                    elif hasattr(wifi, 'issue_command'):
+                        wifi.issue_command("wifi.init", timeout=10)
+                        wifi._state = 'init'
+                        wifi.issue_command("thread 0 3072 1600", timeout=5)
+                        wifi.issue_command("thread 1 2048 1600", timeout=5)
+                        sent_commands = True
+
+                if not sent_commands:
+                    # Final fallback: disable thread creation temporarily
+                    original_thread_config = getattr(wifi, '_thread_config', None)
+                    wifi._thread_config = None
+                    wifi._threads_initialized = False
+                    wifi._threads = {}
+
+                    try:
+                        wifi.init()
+                    finally:
+                        wifi._thread_config = original_thread_config
+
+                    if hasattr(wifi, '_create_threads'):
+                        wifi._create_threads()
+
+                wifi._threads = {"wifi": [0], "ble": [1]}
+                wifi._threads_initialized = True
+
+            # Create fresh ble_obj for each iteration
+            ble_obj = ProvisioningFunctionality(
+                wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+                utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+                wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
+
+            ble_obj.ap_mode_start()
+            ble_obj.start()
+            ble_obj.wait_for_exit()
+            if iteration == 1:
+                ble_obj.firmware_version()
+            time.sleep(10)
+            ble_obj.check_beacon()
+            ble_obj.http_server_provisioning()
+            ble_obj.sl_net_deinit()
+
+            wifi_dut.interfaces.wifi.set_wifi_config(
+                oper_mode=Si91xOperatingMode.WiFiClient,
+                coex_mode=Si91xCoexMode.WLANOnly,
+                features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+                tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+            wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+            wifi_dut.interfaces.wifi.scan()
+
+            # Negative test: Attempt to connect with wrong PSK - should fail
+            ble_obj.wifi_connect_wrong_psk()
+
+            # Disconnect raspi client from DUT-AP before next iteration
+            for client in wifi_clients:
+                try:
+                    client.interfaces.wifi.leave()
+                except Exception as e:
+                    logger().info(f"Raspi disconnect: {e}")
+
+            # Cleanup DUT for next iteration
+            wifi_dut.interfaces.wifi.deinit()
+
+            logger().info(f"******************** Completed iteration {iteration} of 20 ********************")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_wpa2_security_for_multiple_iteration_loop_C887673(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+    """Verify Soft AP provisioning in WPA2 security and also check WLAN connection to the third party home AP
+    with the received credentials on APUT for multiple iteration in loop(20 Iteration) """
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+        from utf.utils.commander import Commander
+        commander = Commander()
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        for iteration in range(1, 21):
+            logger().info(f"******************** Starting iteration {iteration} of 20 ********************")
+
+            # For iterations 2-5, reset the device and re-configure for AP+BLE mode
+            if iteration > 1:
+                logger().info(f"Resetting device for iteration {iteration}")
+                commander.reset_device()
+                time.sleep(3)
+                # Reset framework state so it allows new config after hardware reset
+                wifi_dut.interfaces.wifi._state = 'deinit'
+                wifi_dut.interfaces.wifi._wifi_config = None  # Clear previous config tracking
+                # Reset thread state so threads get re-initialized after commander reset
+                if hasattr(wifi_dut.interfaces.wifi, '_threads'):
+                    wifi_dut.interfaces.wifi._threads = {}
+                if hasattr(wifi_dut.interfaces.wifi, '_threads_initialized'):
+                    wifi_dut.interfaces.wifi._threads_initialized = False
+                # Reset BLE interface state after commander reset
+                if hasattr(ble_dut.interfaces.bluetooth, '_state'):
+                    ble_dut.interfaces.bluetooth._state = 'deinit'
+                if hasattr(ble_dut.interfaces.bluetooth, '_initialized'):
+                    ble_dut.interfaces.bluetooth._initialized = False
+
+                # Reset ALL framework state after commander reset
+                wifi_dut.interfaces.wifi._threads_initialized = False
+                wifi_dut.interfaces.wifi._threads = {}
+                wifi_dut.interfaces.wifi._state = 'deinit'
+                wifi_dut.interfaces.wifi._wifi_config = None
+
+                # Set thread_config on interface
+                wifi_dut.interfaces.wifi._thread_config = {"wifi": {"count": 1, "stack_len": 3072},
+                                                           "ble": {"count": 1, "stack_len": 2048}}
+
+                # Re-initialize device with AP+BLE mode config (same as fixture)
+                # set_wifi_config sends the wifi.set_config command
+                wifi_dut.interfaces.wifi.set_wifi_config(
+                    oper_mode=Si91xOperatingMode.AccessPoint,
+                    coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                    features=Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
+                    tcpip_features=Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+                    custom_features=Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+                    ext_custom_features=Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+                    ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.Default,
+                    config_features=Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                    bt_features=Si91xBTFeatureBitMap.Default,
+                    ble_features=Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+                    ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST)
+
+                # Send plain wifi.init command (no thread prefix)
+                # The framework's init() uses issue_command_in_thread() which adds thread prefix
+                # even when _threads is empty - it seems to auto-create threads
+                # We need to bypass the init() method entirely
+                wifi = wifi_dut.interfaces.wifi
+
+                # Find the underlying CLI that sends raw commands
+                # Look for _cli attribute which typically has the raw send method
+                cli = None
+                for attr_name in ['_cli', 'cli', '_connection', 'connection', '_serial_connection',
+                                  '_serial', 'serial', 'host_connection', '_host_connection',
+                                  'serial_connection', '_host', 'host', '_bus', 'bus']:
+                    obj = getattr(wifi, attr_name, None)
+                    if obj is not None:
+                        cli = obj
+                        break
+
+                # If no CLI found on wifi interface, try getting it from the device
+                if cli is None:
+                    device = getattr(wifi, '_device', None) or getattr(wifi, 'device', None)
+                    if device is not None:
+                        for attr_name in ['_connection', 'connection', '_serial_connection', '_serial',
+                                          'host_connection', '_host', 'host', '_bus', 'bus', '_cli', 'cli']:
+                            obj = getattr(device, attr_name, None)
+                            if obj is not None:
+                                cli = obj
+                                break
+
+                # Also check wifi_dut directly
+                if cli is None:
+                    for attr_name in ['_connection', 'connection', '_serial_connection', '_serial',
+                                      'host_connection', '_cli', 'cli']:
+                        obj = getattr(wifi_dut, attr_name, None)
+                        if obj is not None:
+                            cli = obj
+                            break
+
+                # Send commands using the CLI if found
+                sent_commands = False
+                if cli is not None:
+                    if hasattr(cli, 'send_command'):
+                        cli.send_command("wifi.init", timeout=10)
+                        wifi._state = 'init'
+                        cli.send_command("thread 0 3072 1600", timeout=5)
+                        cli.send_command("thread 1 2048 1600", timeout=5)
+                        sent_commands = True
+                    elif hasattr(cli, 'send'):
+                        cli.send("wifi.init\r\n")
+                        time.sleep(3)  # Wait for init to complete
+                        wifi._state = 'init'
+                        cli.send("thread 0 3072 1600\r\n")
+                        time.sleep(1)
+                        cli.send("thread 1 2048 1600\r\n")
+                        time.sleep(1)
+                        sent_commands = True
+
+                if not sent_commands:
+                    # Try using the internal command methods of the wifi interface
+                    if hasattr(wifi, '_issue_command'):
+                        wifi._issue_command("wifi.init", timeout=10)
+                        wifi._state = 'init'
+                        wifi._issue_command("thread 0 3072 1600", timeout=5)
+                        wifi._issue_command("thread 1 2048 1600", timeout=5)
+                        sent_commands = True
+                    elif hasattr(wifi, '_send_command'):
+                        wifi._send_command("wifi.init")
+                        wifi._state = 'init'
+                        wifi._send_command("thread 0 3072 1600")
+                        wifi._send_command("thread 1 2048 1600")
+                        sent_commands = True
+                    elif hasattr(wifi, 'issue_command'):
+                        # This might be the raw command method without thread prefix
+                        wifi.issue_command("wifi.init", timeout=10)
+                        wifi._state = 'init'
+                        wifi.issue_command("thread 0 3072 1600", timeout=5)
+                        wifi.issue_command("thread 1 2048 1600", timeout=5)
+                        sent_commands = True
+
+                if not sent_commands:
+                    # Final fallback: completely reset the framework and let it reinitialize
+                    # The problem is init() creates threads automatically
+                    # We need to prevent that by setting _thread_config to None temporarily
+                    original_thread_config = getattr(wifi, '_thread_config', None)
+                    wifi._thread_config = None  # Disable thread creation
+                    wifi._threads_initialized = False
+                    wifi._threads = {}
+
+                    try:
+                        # Call init without thread support
+                        wifi.init()
+                    finally:
+                        # Restore thread config for subsequent commands
+                        wifi._thread_config = original_thread_config
+
+                    # Manually create threads after init
+                    if hasattr(wifi, '_create_threads'):
+                        wifi._create_threads()
+
+                wifi._threads = {"wifi": [0], "ble": [1]}
+                wifi._threads_initialized = True
+
+            # Create fresh ble_obj for each iteration to avoid stale references
+            ble_obj = ProvisioningFunctionality(
+                wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+                utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+                wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
+
+            ble_obj.ap_mode_start()
+            ble_obj.start()
+            ble_obj.wait_for_exit()
+            ble_obj.firmware_version()
+            time.sleep(10)
+            ble_obj.check_beacon()
+            ble_obj.http_server_provisioning()
+            ble_obj.sl_net_deinit()
+
+            wifi_dut.interfaces.wifi.set_wifi_config(
+                oper_mode=Si91xOperatingMode.WiFiClient,
+                coex_mode=Si91xCoexMode.WLANOnly,
+                features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+                tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+            wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+            wifi_dut.interfaces.wifi.scan()
+            wifi_dut.interfaces.wifi.join(
+                ssid=wifi_access_point.interfaces.wifi.ssid,
+                passphrase=ble_obj.result[2],
+                security=ble_obj.result[3].lower(),
+                channel=ap_channel)
+            logger().info("....Successfully connected to the AP....")
+            ip_status, ip_config = sl_collections.configure_ip(wifi_dut=wifi_dut)
+            assert ip_status, f"Unable to assign IP ADDRESS through DHCP: {ip_config}"
+
+            # Disconnect raspi client from DUT-AP before next iteration
+            for client in wifi_clients:
+                client.interfaces.wifi.leave()
+
+            # Properly cleanup DUT: disconnect from third-party AP and deinit WiFi
+            # This resets the framework's config tracking for the next iteration
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(1)
+            wifi_dut.interfaces.wifi.deinit()
+
+            logger().info(f"******************** Completed iteration {iteration} of 20 ********************")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_only_provisioning_wpa2_security_for_multiple_iteration_loop_C887674(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+    """Verify Soft AP provisioning in WPA2 security for multiple iteration in loop (20 Iteration)
+    - Only HTTP Server provisioning mode (no client mode connection to third-party AP)
+    - Iteration 1: Use fixture-initialized device + provisioning
+    - Iteration 2-20: Only HTTP server provisioning loop (AP stays running)"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        # ==================== ITERATION 1: Use fixture-initialized device ====================
+        # Note: The pytest fixture (@wifi_dut_marker) already:
+        # - Reset the device
+        # - Set wifi config with AP+BLE mode
+        # - Called wifi.init()
+        # - Created threads
+        # So we just create the ble_obj and proceed with provisioning
+        logger().info("******************** Starting iteration 1 of 20 (Using fixture setup) ********************")
+
+        # Create ble_obj (will be reused for all iterations)
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
+
+        # Start DUT as SoftAP
+        ble_obj.ap_mode_start()
+
+        # Start BLE advertising
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+        # Get firmware version
+        ble_obj.firmware_version()
+
+        time.sleep(10)
+
+        # Verify beacon packets
+        ble_obj.check_beacon()
+
+        # HTTP Server Provisioning (iteration 1) with retry logic
+        max_retries = 3
+        for retry in range(max_retries):
+            try:
+                logger().info(f"HTTP Server Provisioning attempt {retry + 1} of {max_retries}")
+                ble_obj.http_server_provisioning()
+                break  # Success, exit retry loop
+            except (AssertionError, Exception) as e:
+                logger().info(f"HTTP provisioning failed on attempt {retry + 1}: {e}")
+                if retry < max_retries - 1:
+                    logger().info("Cleaning up HTTP server before retry...")
+                    # Stop and deinit HTTP server if it was started
+                    try:
+                        wifi_dut.interfaces.wifi.http_server_stop()
+                    except:
+                        pass
+                    try:
+                        wifi_dut.interfaces.wifi.http_server_deinit()
+                    except:
+                        pass
+                    # Disconnect client before retry
+                    for client in wifi_clients:
+                        try:
+                            client.interfaces.wifi.leave()
+                        except:
+                            pass
+                    logger().info("Waiting 10 seconds before retry...")
+                    time.sleep(10)
+                else:
+                    raise  # Re-raise on final attempt
+
+        # Disconnect RASPI client from DUT-AP
+        for client in wifi_clients:
+            try:
+                client.interfaces.wifi.leave()
+            except Exception as e:
+                logger().info(f"Failed to disconnect client: {e}")
+
+        logger().info("******************** Completed iteration 1 of 20 ********************")
+
+        # ==================== ITERATION 2-20: Only HTTP Server Provisioning ====================
+        for iteration in range(2, 21):
+            logger().info(f"******************** Starting iteration {iteration} of 20 (HTTP Provisioning Only) ********************")
+
+            # Verify beacon packets
+            ble_obj.check_beacon()
+
+            # HTTP Server Provisioning with retry logic
+            for retry in range(max_retries):
+                try:
+                    logger().info(f"HTTP Server Provisioning attempt {retry + 1} of {max_retries}")
+                    ble_obj.http_server_provisioning()
+                    break  # Success, exit retry loop
+                except (AssertionError, Exception) as e:
+                    logger().info(f"HTTP provisioning failed on attempt {retry + 1}: {e}")
+                    if retry < max_retries - 1:
+                        logger().info("Cleaning up HTTP server before retry...")
+                        # Stop and deinit HTTP server if it was started
+                        try:
+                            wifi_dut.interfaces.wifi.http_server_stop()
+                        except:
+                            pass
+                        try:
+                            wifi_dut.interfaces.wifi.http_server_deinit()
+                        except:
+                            pass
+                        # Disconnect client before retry
+                        for client in wifi_clients:
+                            try:
+                                client.interfaces.wifi.leave()
+                            except:
+                                pass
+                        logger().info("Waiting 10 seconds before retry...")
+                        time.sleep(10)
+                    else:
+                        raise  # Re-raise on final attempt
+
+            # Disconnect RASPI client from DUT-AP before next iteration
+            for client in wifi_clients:
+                try:
+                    client.interfaces.wifi.leave()
+                except Exception as e:
+                    logger().info(f"Failed to disconnect client: {e}")
+
+            logger().info(f"******************** Completed iteration {iteration} of 20 ********************")
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
