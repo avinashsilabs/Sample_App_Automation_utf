@@ -226,7 +226,7 @@ class EAP_Connectivity_with_ciphers:
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -274,7 +274,7 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA256_TLSv12_C113821(rs_helper, utf_constants,
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -327,7 +327,7 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA256_TLSv12_C113822(rs_helper, utf_constants,
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -375,7 +375,7 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv12_C113823(rs_helper, utf_constants, ra
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -422,7 +422,7 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv12_C113824(rs_helper, utf_constants, ra
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -469,7 +469,7 @@ def test_WPA2_EAP_AES256_SHA256_TLSv12_C113825(rs_helper, utf_constants, radius_
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -516,7 +516,7 @@ def test_WPA2_EAP_AES128_SHA256_TLSv12_C113826(rs_helper, utf_constants, radius_
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -563,7 +563,7 @@ def test_WPA2_EAP_AES256_SHA_TLSv12_C113827(rs_helper, utf_constants, radius_ser
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -659,7 +659,7 @@ def test_WPA2_EAP_RSA_AES256_SHA256_and_RSA_AES256_SHA_TLSv12_C113832(rs_helper,
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -748,7 +748,7 @@ def test_WPA2_EAP_non_supported_ciphers_TLSv12_C113834(rs_helper, utf_constants,
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -795,7 +795,7 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv10_C113835(rs_helper, utf_constants, ra
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -842,7 +842,7 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv10_C113836(rs_helper, utf_constants, ra
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -889,7 +889,7 @@ def test_WPA2_EAP_AES256_SHA_TLSv10_C113837(rs_helper, utf_constants, radius_ser
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -936,7 +936,7 @@ def test_WPA2_EAP_AES128_SHA_TLSv10_C113838(rs_helper, utf_constants, radius_ser
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
                           | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
@@ -1219,7 +1219,8 @@ def test_WPA2_EAP_TLS_conn_with_wrong_cert_C113850(utf_constants, wifi_sniffer, 
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def test_WPA2_EAP_conn_with_wrong_pwd_C113848(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
+def \
+        test_WPA2_EAP_conn_with_wrong_pwd_C113848(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                               radius_server, request):
     testcase = request.node.name
     eap_obj = EAP_Connectivity_negative(utf_constants, wifi_dut, wifi_sniffer, wifi_access_point, testcase,
@@ -1237,7 +1238,7 @@ def test_WPA2_EAP_conn_with_wrong_pwd_C113848(utf_constants, wifi_sniffer, wifi_
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |
                           RS9116TCPIPFeatureBitMap.TCPIPBypass,
@@ -1312,7 +1313,7 @@ def test_WPA2_EAP_conn_with_wrong_eapmethod_C113853(utf_constants, wifi_sniffer,
     {
         "oper_mode": 2,
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake
+        "features": RS9116FeatureBitMap.OpenMode | RS9116FeatureBitMap.ULPGPIOHandshake | RS9116FeatureBitMap.TLS_PATH_LENGTH_SUPPORT
                     | RS9116FeatureBitMap.Aggregation,
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
