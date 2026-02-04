@@ -1434,9 +1434,11 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_
             logger.info(f"\naws_iot_client publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
                         f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
             aws_obj.publish_from_raspi(aws_iot_client, topic, msg, qos=Si91xAwsQos.QOS1)
+            time.sleep(0.5)  # Small delay to allow DUT to process each message
             recv_msg = aws_obj.receive_aws_messages_from_dut(wifi_dut)
-            assert msg == recv_msg, f"Failed to receive published message{count + 1} in DUT"
-            logger.info(f"Received message{count + 1}: '{recv_msg}'")
+            logger.info(f"Attempting to receive message{count + 1} for size {len(msg)} bytes")
+            assert msg == recv_msg, f"Failed to receive published message{count + 1} in DUT. Expected: {msg[:50]}..., Received: {recv_msg[:50]}..."
+            logger.info(f"Received message{count + 1}: '{recv_msg[:50]}...'")
         logger.info("Successfully received all published messages\n")
 
         logger.info("Stop sniffer finally")
@@ -4348,3 +4350,188 @@ def test_wifi_sdk_aws_connect_sub_publish_and_http_c537900(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut, error)
     finally:
         wifi_dut.interfaces.wifi.http_client_deinit()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"channel": 7})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "disassociated"])
+
+def test_wifi_sdk_aws_publish_data_with_more_data_lengths_c708581(wifi_sniffer, wifi_access_point,
+                                                                  wifi_dut, logger, sl_collections, aws_iot_client,
+                                                                  sniffer_filter):
+    """
+    Publish data oversubscribed topic with different lengths(1500, 2000, 3000 bytes) - each length published 5 times
+    """
+    client_id = 'client_708581'
+    topic = "topic_708581"
+    try:
+        # Generate one message for each size
+        message_sizes = [1500, 2000, 3000]
+        messages = {}
+        for size in message_sizes:
+            messages[size] = ''.join(random.choice(string.ascii_uppercase) for _ in range(size))
+        logger.info(f"Generated messages for sizes: {message_sizes}")
+
+        capture_filename = "test_wifi_sdk_aws_publish_data_with_more_data_lengths_c708581"
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, [0, 4, 40, 0])
+        dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        aws_obj = AwsConnection()
+        logger.info("Initiating aws connect from DUT")
+        assert aws_obj.connect_to_aws_server_from_dut(wifi_dut, client_id), "Failed to connect aws server from DUT"
+        logger.info("Connecting to AWS server from DUT is successful")
+        aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS0)
+        aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
+        aws_obj.subscribe_from_raspi(aws_iot_client, topic, qos=Si91xAwsQos.QOS0)
+        received_messages = []
+        # Publish each message length 5 times
+        for size in message_sizes:
+            msg = messages[size]
+            for iteration in range(5):
+                logger.info(
+                    f"\nDUT publishing message with size {size} bytes (iteration {iteration + 1}/5) on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS0}'"
+                    f"\nMessage length:'{len(msg)} bytes'\nMessage is:'{msg}'")
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_publish_more(topic, Si91xAwsQos.QOS0, msg)
+                time.sleep(10)
+
+                received = aws_iot_client.interfaces.aws_iot.get_received_messages()[-1]
+                received_messages.append(received.payload.decode('latin-1'))
+
+        # Validate that all messages were received
+        for size in message_sizes:
+            message = messages[size]
+            count = sum(1 for recv_msg in received_messages if message in recv_msg)
+            assert count >= 5, f"Expected at least 5 messages of size {size} bytes, but received only {count}"
+            logger.info(f"Successfully received {count} messages of size {size} bytes")
+
+        logger.info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter)
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+@pytest.mark.config('wifi_access_point', wifi={"channel": 11})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "disassociated"])
+def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_more_data_lengths_c708787(
+    wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, logger, sl_collections, sniffer_filter
+):
+    """
+    Receive data over subscribed topic with different lengths (1500, 2000, 3000 bytes), 5 messages each.
+    """
+    client_id = 'client_c708787'
+    topic = "topic_708787"
+    try:
+        messages_by_size = {}
+        for size in (1500, 2000, 3000):
+            messages_by_size[size] = []
+            for _ in range(5):
+                msg = ''.join(random.choice(string.ascii_uppercase) for _ in range(size))
+                messages_by_size[size].append(msg)
+        logger.info(f"Messages by size: {messages_by_size}")
+
+        capture_filename = "test_wifi_sdk_aws_receive_data_with_different_len_c708787"
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, [0, 4, 40, 0])
+        dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+        logger.info(f"Device mac address: {dut_mac_address}")
+
+        aws_obj = AwsConnection()
+        logger.info("Initiating aws connect from DUT")
+        assert aws_obj.connect_to_aws_server_from_dut(wifi_dut, client_id), "Failed to connect aws server from DUT"
+        logger.info("Connecting to AWS server from DUT is successful")
+        aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
+        aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS1)
+        time.sleep(5)
+        # Publish and receive each message one-by-one for each size
+        for size in (1500, 2000, 3000):
+            logger.info(f"Testing 5 messages of size {size} bytes...")
+            for count, msg in enumerate(messages_by_size[size]):
+                logger.info(f"aws_iot_client publishing message {count + 1} of size {size} on topic:'{topic}' QOS:'{Si91xAwsQos.QOS1}' Message with length:'{len(msg)} bytes'")
+                aws_obj.publish_from_raspi(aws_iot_client, topic, msg, qos=Si91xAwsQos.QOS1)
+                time.sleep(2)  # Allow DUT to process each message
+                # Retry receive for up to 10 seconds
+                recv_msg = None
+                for attempt in range(10):
+                    recv_msg = aws_obj.receive_aws_messages_from_dut(wifi_dut)
+                    if recv_msg == msg:
+                        logger.info(f"Received message {count + 1}: '{recv_msg[:50]}...'")
+                        break
+                    time.sleep(1)
+                if recv_msg != msg:
+                    logger.warning(f"Failed to receive published message {count + 1} of size {size} in DUT after retries. Expected: {msg[:50]}..., Received: {recv_msg[:50] if recv_msg else ''}...")
+                assert recv_msg == msg, f"Failed to receive published message {count + 1} of size {size} in DUT. Expected: {msg[:50]}..., Received: {recv_msg[:50] if recv_msg else ''}..."
+        logger.info("Successfully received all published messages\n")
+
+        logger.info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter)
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
