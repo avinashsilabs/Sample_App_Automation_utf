@@ -1352,20 +1352,20 @@ def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, wifi
     logger().info(f'device ip {device_ip}')
 
     logger().info("performing fw upgrade on dut by removing data in .xls file....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "RS9116.2.5.0.4_remove.xls")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "RS9116.2.5.0.4_corrupted_remove_header.xls")
 
     time.sleep(120)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.get_http_otaf_status()
-    assert exc_info.value.error_code == 0xFFFD, "observed wrong error code expected is 0xFFFD"
+    assert exc_info.value.error_code == 0xBB49, "observed wrong error code expected is 0xBB49"
 
     logger().info("performing fw upgrade on dut by adding data in .xls file....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "RS9116.2.5.0.4_add.xls")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "RS9116.2.5.0.4_corrupted_add_header.xls")
 
     time.sleep(120)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.get_http_otaf_status()
-    assert exc_info.value.error_code == 0xBB41, "observed wrong error code expected is 0xBB41"
+    assert exc_info.value.error_code == 0xBB49, "observed wrong error code expected is 0xBB49"
 
     time.sleep(5)
     logger().info("resetting DUT....")
