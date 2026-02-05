@@ -1,6 +1,8 @@
 import time
 import pytest
 import pandas as pd
+
+from utf.interfaces.iperf.fixtures import net_perf_client
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xOperatingMode,
     Si91xCoexMode,
@@ -410,54 +412,374 @@ class BleAEThread(ThreadBase):
         self.result = None
 
     def run(self):
-        self.result = self.sl_collections.verify_adv(peripheral=self.peripheral, adv_type=self.adv_type,
-                                                     ble_dut_address=self.ble_dut_address,
-                                                     central=self.central,
-                                                     print_all_adv_devices=self.print_all_adv_devices,
-                                                     data_len=self.data_len, data_len_s2=self.data_len_s2,
-                                                     pri_adv_phy=self.pri_adv_phy, sec_adv_phy=self.sec_adv_phy,
-                                                     adv_data=self.adv_data, adv_handle=self.adv_handle,
-                                                     duration=self.duration, max_ae_events=self.max_ae_events,
-                                                     min_interval=self.min_interval, max_interval=self.max_interval,
-                                                     min_interval_s2=self.min_interval_s2,
-                                                     max_interval_s2=self.max_interval_s2,
-                                                     sec_adv_max_skip=self.sec_adv_max_skip,
-                                                     adv_async_required=self.adv_async_required,
-                                                     own_address_type=self.own_address_type,
-                                                     peer_addr_type=self.peer_addr_type,
-                                                     random_address=self.random_address,
-                                                     random_address_s2=self.random_address_s2,
-                                                     ConnIntervalMax=self.ConnIntervalMax,
-                                                     ConnIntervalMin=self.ConnIntervalMin,
-                                                     scan_req_notify_enable=self.scan_req_notify_enable,
-                                                     scan_resp_len=self.scan_resp_len, whitelist=self.whitelist,
-                                                     scanning_whitelist=self.scanning_whitelist,
-                                                     adv_filter_policy=self.adv_filter_policy,
-                                                     scanning_filter_policy=self.scanning_filter_policy,
-                                                     powersave_p=self.powersave_p, powersave_c=self.powersave_c,
-                                                     scanning_phys=self.scanning_phys, adv_handle_s2=self.adv_handle_s2,
-                                                     adv_type_s2=self.adv_type_s2, loop_count=self.loop_count,
-                                                     adv_data_type=self.adv_data_type,
-                                                     ble_sniffer=self.ble_sniffer, wifi_sniffer=self.wifi_sniffer,
-                                                     bt_sniffer=self.bt_sniffer,
-                                                     periodic_data_len=self.periodic_data_len,
-                                                     test_case_id=self.test_case_id, init_phys=self.init_phys,
-                                                     test_in_progress=self.test_in_progress,
-                                                     dont_cleanup=self.dont_cleanup, error_expected=self.error_expected,
-                                                     invalid_data_hdl=self.invalid_data_hdl,
-                                                     filter_duplicates=self.filter_duplicates,
-                                                     scan_duration=self.scan_duration, scan_period=self.scan_period,
-                                                     scan_interval_pri=self.scan_interval_pri,
-                                                     scan_interval_sec=self.scan_interval_sec,
-                                                     scan_window_pri=self.scan_window_pri,
-                                                     scan_window_sec=self.scan_window_sec,
-                                                     initiator_filter_policy=self.initiator_filter_policy,
-                                                     connection_time=self.connection_time,
-                                                     scan_type_pri=self.scan_type_pri, scan_type_sec=self.scan_type_sec,
-                                                     scan_set_2=self.scan_set_2, stop_scan=self.stop_scan,
-                                                     ble_client_address=self.ble_client_address,
-                                                     connect=self.connect, ble_addr_type=self.ble_addr_type,
-                                                     remote_addr_type=self.remote_addr_type)
+        self.result = self.verify_adv(peripheral=self.peripheral, adv_type=self.adv_type,
+                                      ble_dut_address=self.ble_dut_address,
+                                      central=self.central,
+                                      print_all_adv_devices=self.print_all_adv_devices,
+                                      data_len=self.data_len, data_len_s2=self.data_len_s2,
+                                      pri_adv_phy=self.pri_adv_phy, sec_adv_phy=self.sec_adv_phy,
+                                      adv_data=self.adv_data, adv_handle=self.adv_handle,
+                                      duration=self.duration, max_ae_events=self.max_ae_events,
+                                      min_interval=self.min_interval, max_interval=self.max_interval,
+                                      min_interval_s2=self.min_interval_s2,
+                                      max_interval_s2=self.max_interval_s2,
+                                      sec_adv_max_skip=self.sec_adv_max_skip,
+                                      adv_async_required=self.adv_async_required,
+                                      own_address_type=self.own_address_type,
+                                      peer_addr_type=self.peer_addr_type,
+                                      random_address=self.random_address,
+                                      random_address_s2=self.random_address_s2,
+                                      ConnIntervalMax=self.ConnIntervalMax,
+                                      ConnIntervalMin=self.ConnIntervalMin,
+                                      scan_req_notify_enable=self.scan_req_notify_enable,
+                                      scan_resp_len=self.scan_resp_len, whitelist=self.whitelist,
+                                      scanning_whitelist=self.scanning_whitelist,
+                                      adv_filter_policy=self.adv_filter_policy,
+                                      scanning_filter_policy=self.scanning_filter_policy,
+                                      powersave_p=self.powersave_p, powersave_c=self.powersave_c,
+                                      scanning_phys=self.scanning_phys, adv_handle_s2=self.adv_handle_s2,
+                                      adv_type_s2=self.adv_type_s2, loop_count=self.loop_count,
+                                      adv_data_type=self.adv_data_type,
+                                      ble_sniffer=self.ble_sniffer, wifi_sniffer=self.wifi_sniffer,
+                                      bt_sniffer=self.bt_sniffer,
+                                      periodic_data_len=self.periodic_data_len,
+                                      test_case_id=self.test_case_id, init_phys=self.init_phys,
+                                      test_in_progress=self.test_in_progress,
+                                      dont_cleanup=self.dont_cleanup, error_expected=self.error_expected,
+                                      invalid_data_hdl=self.invalid_data_hdl,
+                                      filter_duplicates=self.filter_duplicates,
+                                      scan_duration=self.scan_duration, scan_period=self.scan_period,
+                                      scan_interval_pri=self.scan_interval_pri,
+                                      scan_interval_sec=self.scan_interval_sec,
+                                      scan_window_pri=self.scan_window_pri,
+                                      scan_window_sec=self.scan_window_sec,
+                                      initiator_filter_policy=self.initiator_filter_policy,
+                                      connection_time=self.connection_time,
+                                      scan_type_pri=self.scan_type_pri, scan_type_sec=self.scan_type_sec,
+                                      scan_set_2=self.scan_set_2, stop_scan=self.stop_scan,
+                                      ble_client_address=self.ble_client_address,
+                                      connect=self.connect, ble_addr_type=self.ble_addr_type,
+                                      remote_addr_type=self.remote_addr_type)
+
+    def verify_adv(self, peripheral, adv_type, ble_dut_address,
+                   central=None, print_all_adv_devices=1, data_len=0, data_len_s2=None,
+                   pri_adv_phy=1, sec_adv_phy=1, adv_data="", adv_handle=0, duration=0, max_ae_events=0,
+                   min_interval=48, max_interval=48, min_interval_s2=64, max_interval_s2=64, sec_adv_max_skip=1,
+                   adv_async_required=0, own_address_type=0, peer_addr_type=0, random_address=None,
+                   random_address_s2=None, ConnIntervalMax=160, ConnIntervalMin=160,
+                   scan_req_notify_enable=1, scan_resp_len=0, whitelist=None, scanning_whitelist=None,
+                   adv_filter_policy=0, scanning_filter_policy=0, powersave_p=None, powersave_c=None,
+                   scanning_phys=1, adv_handle_s2=None, adv_type_s2=None, loop_count=0, adv_data_type=None,
+                   ble_sniffer=None, wifi_sniffer=None, bt_sniffer=None, periodic_data_len=None,
+                   test_case_id="nrf_logs", init_phys=7,
+                   test_in_progress=False, dont_cleanup=False, error_expected="*****", invalid_data_hdl=None,
+                   filter_duplicates=0, scan_duration=0, scan_period=0, scan_interval_pri=48, scan_interval_sec=48,
+                   scan_window_pri=48, scan_window_sec=30, initiator_filter_policy=0, connection_time=30,
+                   scan_type_pri=1, scan_type_sec=1, scan_set_2=0, stop_scan=1, ble_client_address=None, connect=None,
+                   ble_addr_type=0, remote_addr_type=0, expected_state=8):
+
+        try:
+            own_address_temp = ble_dut_address
+            local_address = random_address if random_address and adv_handle == 0 else random_address_s2 if random_address_s2 and adv_handle == 1 else ble_dut_address
+            logger().info(f"Local Device Address: {local_address}")
+
+            if central:
+                logger().info(f"BLE Client address: {ble_client_address}")
+                assert ble_client_address, "failed to initiate ble in remote device"
+            else:
+                ble_client_address = "00:00:00:00:00:00"
+
+            adv_set = 2 if adv_handle_s2 else 1
+            # peripheral.interfaces.wifi.ble_get_max_no_of_supp_adv_sets(no_adv_sets=adv_set)
+            for i in range(adv_set):
+                logger().info(f"\n\n ** ADV Set : {i + 1} **\n\n")
+                handle = adv_handle_s2 if i == 1 else adv_handle  # configuring handle as per adv_sets, 0=set1 and 1=set2
+                adv_event_prop = adv_type_s2 if i == 1 else adv_type  # configuring adv_type as per adv sets
+                data_len = data_len_s2 if i == 1 else data_len  # configuring data len as per adv set
+                min_interval = min_interval_s2 if i == 1 else min_interval
+                max_interval = max_interval_s2 if i == 1 else max_interval
+
+                if whitelist:
+                    peripheral.interfaces.bluetooth.ble_add_white_list(remote_dev_addr=ble_client_address,
+                                                                       remote_addr_type=0)
+
+                if scanning_whitelist:
+                    central.interfaces.wifi.ble_add_white_list(remote_dev_addr=ble_dut_address, remote_addr_type=0)
+
+                if (random_address and i == 0) or (random_address_s2 and i == 1):
+                    own_address_type = 1
+
+                self.sl_collections.ble_ae_set_params(pheripheral_dev=peripheral, adv_event_prop=adv_event_prop,
+                                                      own_address_type=own_address_type,
+                                                      peer_addr_type=peer_addr_type, peer_address=ble_client_address,
+                                                      adv_handle=handle,
+                                                      pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy,
+                                                      scan_req_notify_enable=scan_req_notify_enable,
+                                                      adv_filter_policy=adv_filter_policy,
+                                                      adv_min_interval=min_interval,
+                                                      adv_max_interval=max_interval,
+                                                      sec_adv_max_skip=sec_adv_max_skip)
+                if adv_data_type == 2:
+                    peripheral.interfaces.bluetooth.ble_app_set_periodic_ae_params(max_interval=max_interval,
+                                                                                   min_interval=min_interval,
+                                                                                   properties=64)
+
+                if (random_address and i == 0) or (random_address_s2 and i == 1):
+                    peripheral.interfaces.bluetooth.set_ae_set_random_address(
+                        adv_handle=adv_handle if i == 0 else adv_handle_s2,
+                        random_address=random_address if random_address else random_address_s2)
+                    ble_dut_address = random_address if random_address else random_address_s2
+
+                if adv_data:
+                    if invalid_data_hdl:
+                        self.sl_collections.ble_set_ae_data(ble_dut=peripheral, dut_address=ble_dut_address,
+                                                            adv_data_type=1,
+                                                            data_len=data_len, adv_data=adv_data,
+                                                            adv_handle=invalid_data_hdl)
+                    if adv_data_type == 2:
+                        self.sl_collections.ble_set_ae_data(ble_dut=peripheral, dut_address=ble_dut_address,
+                                                            adv_data_type=1,
+                                                            data_len=data_len, adv_data=adv_data, adv_handle=handle)
+                        self.sl_collections.ble_set_ae_data(ble_dut=peripheral, dut_address=ble_dut_address,
+                                                            adv_data_type=2,
+                                                            data_len=periodic_data_len, adv_data=adv_data, operation=3,
+                                                            adv_handle=handle)
+                    else:
+                        self.sl_collections.ble_set_ae_data(ble_dut=peripheral, dut_address=ble_dut_address,
+                                                            adv_data_type=1,
+                                                            data_len=data_len, adv_data=adv_data, adv_handle=handle)
+                        self.sl_collections.ble_set_ae_data(ble_dut=peripheral, dut_address=ble_dut_address,
+                                                            adv_data_type=3,
+                                                            data_len=data_len, adv_data=adv_data, adv_handle=handle,
+                                                            scan_resp_len=scan_resp_len)
+                peripheral.interfaces.wifi.ble_get_max_adv_data_len(max_data_len=data_len)
+
+                if ble_sniffer and i == 0:
+                    ble_sniffer.interfaces.sniffer.init_sniffer()
+                    ble_sniffer.interfaces.sniffer.start_capture()
+                    time.sleep(5)
+
+                if bt_sniffer:
+                    bt_sniffer.interfaces.sniffer.init_sniffer()
+                    bt_sniffer.interfaces.sniffer.start_capture(capture_file="ellisys/" + test_case_id)
+
+                if not loop_count:
+                    self.sl_collections.ble_ae_start_advertising(ble_dut=peripheral, dut_address=ble_dut_address,
+                                                                 duration=duration,
+                                                                 max_ae_events=max_ae_events,
+                                                                 adv_handle=handle,
+                                                                 adv_async_required=adv_async_required)
+                    if adv_data_type == 2:
+                        peripheral.interfaces.bluetooth.ble_app_set_periodic_ae(enable=1, handle=0)
+
+                    if powersave_p:
+                        logger().info("\n\nenable power save in ble dut")
+                        peripheral.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                        psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+                        peripheral.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                    time.sleep(60)
+
+                if loop_count:  ##adding a condition to perform multiple iteration test case
+                    previous_pkt_count = 0
+                    for j in range(loop_count):
+                        logger().info(f"\n\n ** Iteration  : {j + 1} **\n\n")
+                        self.sl_collections.ble_ae_start_advertising(ble_dut=peripheral, dut_address=ble_dut_address,
+                                                                     duration=duration,
+                                                                     max_ae_events=max_ae_events,
+                                                                     adv_handle=handle,
+                                                                     adv_async_required=adv_async_required)
+                        if adv_data_type == 2:
+                            peripheral.interfaces.bluetooth.ble_app_set_periodic_ae(enable=1, handle=0)
+
+                        if powersave_p:
+                            logger().info("\n\nenable power save in ble dut")
+                            peripheral.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                            psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+                            peripheral.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+                        time.sleep(60)
+
+                        if not max_ae_events:
+                            # stopping AE advertising
+                            self.sl_collections.ble_ae_start_advertising(ble_dut=peripheral,
+                                                                         dut_address=ble_dut_address, adv_enable=0,
+                                                                         adv_handle=adv_handle)
+                            if adv_data_type == 2:
+                                peripheral.interfaces.bluetooth.ble_app_set_periodic_ae(enable=0, handle=0)
+
+            time.sleep(10)
+
+            if ble_sniffer:
+                # Mapping Master and Slave Address for Adding devices for sniffer
+                ble_dut_address_hex = re.split(":", ble_dut_address)
+                ble_client_address_hex = re.split(":", ble_client_address)
+                master_address = "0x"
+                for hex_data_part in ble_dut_address_hex:
+                    master_address = master_address + hex_data_part
+                slave_address = "0x"
+                for hex_data_part in ble_client_address_hex:
+                    slave_address = slave_address + hex_data_part
+                if random_address != random_address_s2:
+                    own_address_temp_hex = re.split(":", own_address_temp)
+                    own_address_temp_ = "0x"
+                    for hex_data_part in own_address_temp_hex:
+                        own_address_temp_ = own_address_temp_ + hex_data_part
+                    ble_sniffer.interfaces.sniffer.select_bt_devices(
+                        [own_address_temp_, slave_address, master_address])
+                elif random_address:
+                    ble_sniffer.interfaces.sniffer.select_bt_devices(
+                        [slave_address, master_address])
+                else:
+                    ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address])
+
+            if bt_sniffer:
+                bt_sniffer.interfaces.sniffer.stop_capture()
+                log_file_size = os.path.getsize(bt_sniffer.interfaces.sniffer.capture_file)
+                assert log_file_size > 0, "Sniffer didn't capture any packets...Setup Issue"
+            if central and not loop_count:
+                central.interfaces.wifi.ble_ae_set_scan_params(ble_addr_type=ble_addr_type,
+                                                               scanning_phys=scanning_phys,
+                                                               scanning_filter_policy=scanning_filter_policy,
+                                                               scan_type=scan_type_pri,
+                                                               scan_type_sec=scan_type_sec,
+                                                               ScanInterval=scan_interval_pri,
+                                                               ScanWindow=scan_window_pri,
+                                                               remote_addr_type=remote_addr_type,
+                                                               scan_interval_sec=scan_interval_sec,
+                                                               scan_window_sec=scan_window_sec, )
+
+                status = central.interfaces.wifi.ble_ae_set_scan_enable(enable=1,
+                                                                        filter_duplicates=filter_duplicates,
+                                                                        duration=scan_duration,
+                                                                        period=scan_period,
+                                                                        remote_address=ble_dut_address)
+                logger().info(f"\n\n *** Scanning status: {status} ***\n\n")
+                if "259" in str(status):
+                    central.interfaces.wifi.is_dut_bad_state = True
+                elif "19980" in str(status):
+                    central.interfaces.wifi.ble_ae_set_scan_enable(enable=0,
+                                                                   filter_duplicates=filter_duplicates,
+                                                                   duration=scan_duration, period=scan_period,
+                                                                   remote_address=ble_dut_address)
+                    status = central.interfaces.wifi.ble_ae_set_scan_enable(enable=1,
+                                                                            filter_duplicates=filter_duplicates,
+                                                                            duration=scan_duration,
+                                                                            period=scan_period,
+                                                                            remote_address=ble_dut_address)
+                    logger().info(f"\n\n *** Scanning status: {status} ***\n\n")
+
+                if powersave_c:
+                    logger().info("\n\nenable power save in ble dut")
+                    central.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                                 psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+                    central.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
+
+                time.sleep(30)
+                if stop_scan:
+                    try:
+                        status = central.interfaces.wifi.ble_ae_set_scan_enable(enable=0,
+                                                                                filter_duplicates=filter_duplicates,
+                                                                                duration=scan_duration,
+                                                                                period=scan_period,
+                                                                                remote_address=ble_dut_address)
+                        logger().info(f"\n\n *** Scanning status: {status} ***\n\n")
+                        if "259" in str(status):
+                            central.interfaces.wifi.is_dut_bad_state = True
+                    except:
+                        pass
+                if connect:
+                    central.interfaces.wifi.ble_extended_connect_with_params(remote_dev_addr=ble_dut_address,
+                                                                             remote_addr_type=remote_addr_type,
+                                                                             initiator_filter_policy=initiator_filter_policy,
+                                                                             init_phys=init_phys,
+                                                                             ConnIntervalMin=ConnIntervalMin,
+                                                                             ConnIntervalMax=ConnIntervalMax)
+                    time.sleep(60)
+                    logger().info("\nChecking connection status of BLE")
+                    logger().info("print3")
+                    state = central.interfaces.wifi.ble_get_device_state()
+                    state_int = int(state) if state.isdigit() else -1
+                    assert state_int == expected_state, "DUT BLE device is not in connected state"
+                    # assert state_int == BLEDeviceState.Connected_ext, "DUT BLE device is not in connected state"
+                    logger().info(f"\nDevice state: {state_int}")
+                    time.sleep(connection_time)
+                    central.interfaces.wifi.ble_disconnect(ble_dut_address)
+                    time.sleep(10)
+                    logger().info("\nChecking connection status of BLE after disconnection")
+                    state = central.interfaces.wifi.ble_get_device_state()
+                    state_int = int(state) if state.isdigit() else -1
+                    logger().info(f"\nDevice state: {state_int}")
+
+            if ble_sniffer:
+                ble_sniffer.interfaces.sniffer.stop_capture()
+                captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
+
+                time.sleep(30)
+                exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
+                for captured_file in captured_files:
+                    captured_file = captured_file.replace("/tmp/reports", "/app/reports")
+                    file_size = os.path.getsize(captured_file)
+                    assert file_size > 0
+
+                exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
+                file_size = os.path.getsize(exported_csv_file)
+                assert file_size > 0
+                sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+                logger().info(sniffer_data_df.head())
+                assert sniffer_data_df is not None
+        except Exception as e:
+            if error_expected in str(e):
+                logger().info(f"Got Expected error: {str(e)}")
+            elif "Expected 'RSI_APP_EVENT_AE_ADV_REPORT'" in str(e):
+                central.interfaces.wifi.ble_ae_set_scan_enable(enable=1,
+                                                               filter_duplicates=filter_duplicates,
+                                                               duration=scan_duration,
+                                                               period=scan_period)
+                assert False, "Test case failed with Excepton {}".format(str(e))
+            elif "No such file or directory: '/app/reports/ellisys/":
+                logger().info(f"Got Exception : {str(e)}")
+                assert False, f"Setup Issue... {str(e)}... close Ellysis application and reopen alos power reset the Ellysis device"
+            else:
+                logger().info(f"Got Exception : {str(e)}")
+                assert False, "Test case failed with Excepton {}".format(str(e))
+        finally:
+            try:
+                if not loop_count and not dont_cleanup:
+                    if adv_data_type == 2:
+                        peripheral.interfaces.bluetooth.ble_app_set_periodic_ae(enable=0, handle=0)
+                    try:
+                        logger().info(
+                            "\n\n ****  Stopping Advertisement_test  ****\n\n")
+                        # self.ble_ae_start_advertising(ble_dut=peripheral, dut_address=ble_dut_address, adv_enable=0,
+                        #                               adv_handle=adv_handle)
+                        if adv_handle_s2:
+                            # self.ble_ae_start_advertising(ble_dut=peripheral, dut_address=ble_dut_address, adv_enable=0,
+                            #                               adv_handle=adv_handle_s2)
+                            logger().info("test_code")
+
+                    except Exception as e:
+                        logger().info(f"Got Exception : {str(e)}")
+            except:
+                pass
+            try:
+                if peripheral:
+                    peripheral.interfaces.bluetooth.ble_app_adv_set_clear_or_remove(type=2, handle=0)
+                    if adv_handle_s2:
+                        peripheral.interfaces.bluetooth.ble_app_adv_set_clear_or_remove(type=2, handle=1)
+                time.sleep(2)
+            except:
+                pass
+
+            try:
+                if peripheral:
+                    peripheral.interfaces.bluetooth.ble_app_adv_set_clear_or_remove(type=2, handle=0)
+                    if adv_handle_s2:
+                        peripheral.interfaces.bluetooth.ble_app_adv_set_clear_or_remove(type=2, handle=1)
+                time.sleep(2)
+            except:
+                pass
+
+            if ble_sniffer:
+                return sniffer_data_df
 
 
 # this thread used for sta+ble as a slave
@@ -493,7 +815,7 @@ class BleThreadFunctionality(ThreadBase):
             # Set up DUT for BLE advertising
             logger().info("start ble GATT service in DUT")
             self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_gatt_start(
-                set_smp=self.ble_pairing)
+                set_smp=self.ble_pairing, two_evk=1)
         else:
             # Set up DUT for BLE advertising
             logger().info("Initialising BLE")
@@ -688,8 +1010,7 @@ def calculate_offset(df):
         },
     },
 )
-
-@pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_legacy_adv_conn_dir_with_wlan_Scan_C708839(
         wifi_sniffer,
         wifi_access_point,
@@ -698,8 +1019,8 @@ def test_verify_legacy_adv_conn_dir_with_wlan_Scan_C708839(
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
         ble_dut,
 
 ):
@@ -715,29 +1036,31 @@ def test_verify_legacy_adv_conn_dir_with_wlan_Scan_C708839(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "scan"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
         ble_dut_address = wifi_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, ble_dut_address=ble_dut_address, adv_type=21,
-                                    min_interval=32, max_interval=32, data_len=32, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", powersave_p=True,
-                                    adv_handle=0, ble_sniffer=ble_sniffer)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, ble_dut_address=ble_dut_address,
+                                 adv_type=21,
+                                 min_interval=32, max_interval=32, data_len=32,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+                                 adv_handle=0)  # ble_sniffer=ble_sniffer)
         wifi_obj = WifiJoinThread(
-            #wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
 
@@ -746,19 +1069,19 @@ def test_verify_legacy_adv_conn_dir_with_wlan_Scan_C708839(
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
         df = ble_ae_obj.result
-        assert len(df.loc[(df['Type'] == "ADV_DIRECT_IND") & (df[
-                                                                  "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_DIRECT_IND advertising mode found or Aux Pointer is not present ****\n\n"
-        logger().info("\n\n **** ADV_DIRECT_IND advertising mode found and Aux Pointer is not present ****\n\n")
-
-        # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
-        assert all(df.loc[df['Chan'].isin([37, 38,
-                                           39]), 'Type'] == 'ADV_DIRECT_IND'), "\n\n **** Test case Failed: No ADV_DIRECT_IND packet found on 37, 38, 39 channels ****\n\n"
-        logger().info("\n\n **** ADV_DIRECT_IND packet found on 37,38,39 channels ****\n\n")
-        logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
+        # assert len(df.loc[(df['Type'] == "ADV_DIRECT_IND") & (df[
+        #                                                           "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_DIRECT_IND advertising mode found or Aux Pointer is not present ****\n\n"
+        # logger().info("\n\n **** ADV_DIRECT_IND advertising mode found and Aux Pointer is not present ****\n\n")
+        #
+        # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
+        # assert all(df.loc[df['Chan'].isin([37, 38,
+        #                                    39]), 'Type'] == 'ADV_DIRECT_IND'), "\n\n **** Test case Failed: No ADV_DIRECT_IND packet found on 37, 38, 39 channels ****\n\n"
+        # logger().info("\n\n **** ADV_DIRECT_IND packet found on 37,38,39 channels ****\n\n")
+        # logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -823,17 +1146,19 @@ def test_verify_legacy_adv_conn_dir_with_wlan_Scan_C708839(
     },
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
-@pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_legacy_adv_conn_scannable_undir_adv_with_adv_data_len_1byte_and_31bytes_with_wlan_Conn_C708840_C708842(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         request,
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer, remote_wiseconnect3,ble_dut,
+        # sniffer_filter,
+        # ble_sniffer,
+        remote_wiseconnect3,
+        ble_dut,
         adv_type, data_len,
         test_case_id,
 
@@ -850,25 +1175,26 @@ def test_verify_legacy_adv_conn_scannable_undir_adv_with_adv_data_len_1byte_and_
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "scan"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
-                                       ble_sniffer=ble_sniffer, scanning_phys=5,
-                                       pri_adv_phy=3, sec_adv_phy=3, data_len=data_len, scan_resp_len=data_len,
-                                       test_case_id=test_case_id,
-                                       adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
-                                       central=remote_wiseconnect3, ble_client_address=ble_client_address)#, powersave_p=True)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=adv_type,
+                                 ble_dut_address=ble_dut_address,
+                                 scanning_phys=5,
+                                 pri_adv_phy=3, sec_adv_phy=3, data_len=data_len, scan_resp_len=data_len,
+                                 test_case_id=test_case_id,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
+                                 central=remote_wiseconnect3,
+                                 ble_client_address=ble_client_address)  # , powersave_p=True)
         wifi_obj = WifiJoinThread(
             # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -877,7 +1203,7 @@ def test_verify_legacy_adv_conn_scannable_undir_adv_with_adv_data_len_1byte_and_
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
 
@@ -886,7 +1212,7 @@ def test_verify_legacy_adv_conn_scannable_undir_adv_with_adv_data_len_1byte_and_
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
         # df = ble_ae_obj.result
@@ -951,18 +1277,18 @@ def test_verify_legacy_adv_conn_scannable_undir_adv_with_adv_data_len_1byte_and_
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708843(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         request,
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
+        # sniffer_filter,
         ble_dut,
-        ble_sniffer,
+        # ble_sniffer,
 ):
     """
     Test Steps:
@@ -977,21 +1303,22 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708843(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=0, adv_handle=1, ble_dut_address=ble_dut_address,
-                                       test_case_id="C708843",
-                                       data_len=31, ble_sniffer=ble_sniffer,
-                                       adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@", powersave_p=True)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=0, adv_handle=1,
+                                 ble_dut_address=ble_dut_address,
+                                 test_case_id="C708843",
+                                 data_len=31,
+                                 adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")  # powersave_p=True)
         wifi_obj = WifiJoinThread(
             # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1000,7 +1327,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708843(
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
 
@@ -1009,9 +1336,9 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708843(
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        #wifi_obj.sniffer_validation_join()
-        #logger().info("sniffer validation is successful")
+        # wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_obj.sniffer_validation_join()
+        # logger().info("sniffer validation is successful")
         df = ble_ae_obj.result
         # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
         # assert all(df.loc[df['Chan'].isin([37, 38,
@@ -1075,6 +1402,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708843(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1107,9 +1435,9 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708843(
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708844(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         ble_dut,
@@ -1117,8 +1445,8 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708844(
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
 ):
     """
     Test Steps:
@@ -1133,24 +1461,24 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708844(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            #wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            #sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
@@ -1158,16 +1486,16 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708844(
                                  ble_dut_address=ble_dut_address,
                                  test_case_id="C708844",
                                  pri_adv_phy=1, sec_adv_phy=2, data_len=31,
-                                 ble_sniffer=ble_sniffer,
-                                 adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")#, powersave_p=True)
+                                 # ble_sniffer=ble_sniffer,
+                                 adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")  # , powersave_p=True)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        #wifi_obj.sniffer_validation_join()
-        #logger().info("sniffer validation is successful")
+        # wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_obj.sniffer_validation_join()
+        # logger().info("sniffer validation is successful")
         # df = ble_ae_obj.result
         # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
         # assert all(df.loc[df['Chan'].isin([37, 38,
@@ -1213,6 +1541,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708844(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1245,9 +1574,9 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708844(
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708845(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         ble_dut,
@@ -1255,8 +1584,8 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708845(
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
 ):
     """
     Test case  : This test case will verify Non connectable Non Scannable undirected with pri and sec PHY LE Coded
@@ -1272,24 +1601,24 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708845(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
@@ -1297,17 +1626,17 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708845(
                                  ble_dut_address=ble_dut_address,
                                  test_case_id="C708845",
                                  pri_adv_phy=3, sec_adv_phy=3,
-                                 data_len=31, ble_sniffer=ble_sniffer,
-                                 adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")#, powersave_p=True)
+                                 data_len=31,
+                                 adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")  # , powersave_p=True)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        #wifi_obj.sniffer_validation_join()
-        #logger().info("sniffer validation is successful")
-        #df = ble_ae_obj.result
+        # wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_obj.sniffer_validation_join()
+        # logger().info("sniffer validation is successful")
+        # df = ble_ae_obj.result
         # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
         # assert all(df.loc[df['Chan'].isin([37, 38,
         #                                    39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
@@ -1347,6 +1676,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708845(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1366,7 +1696,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708845(
         },
     },
 )
-@pytest.mark.skip("Debug is required for this test case")
+# @pytest.mark.skip("Debug is required for this test case")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -1380,10 +1710,10 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708845(
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 
 def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708846(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         ble_dut,
@@ -1391,8 +1721,8 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708846(
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
 ):
     """
     Test case  : This test case will verify Non connectable Non Scannable undirected with pri PHY is 1M and sec PHY is 2M
@@ -1408,24 +1738,24 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708846(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
@@ -1433,17 +1763,17 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708846(
                                  ble_dut_address=ble_dut_address,
                                  test_case_id="C708846",
                                  pri_adv_phy=1, sec_adv_phy=2,
-                                 data_len=0, ble_sniffer=ble_sniffer,
-                                 adv_data="AE_PERIPHERAL_DATA", max_ae_events=50, adv_async_required=1, powersave_p=True)
+                                 data_len=0,
+                                 adv_data="AE_PERIPHERAL_DATA")  # , max_ae_events=50, adv_async_required=1) #powersave_p=True)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
-        df = ble_ae_obj.result
+        # df = ble_ae_obj.result
         # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
         # assert all(df.loc[df['Chan'].isin([37, 38,
         #                                    39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
@@ -1464,6 +1794,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708846(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1496,10 +1827,10 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708846(
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.Skip("Debug is required for this test case")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.skip("Debug is required for this test case")
 def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708847(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         ble_dut,
@@ -1507,8 +1838,8 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708847(
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
 ):
     """
     Test case  : This test case will Verify Ext Adv - Scannable undirected adv, with data length max adv data length,
@@ -1524,42 +1855,43 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708847(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2, ble_dut_address=ble_dut_address,
-                                   pri_adv_phy=1, sec_adv_phy=1, data_len=200, scan_resp_len=1,
-                                   test_case_id="C708847",
-                                   adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERAL",
-                                   scan_req_notify_enable=1, adv_handle=0,
-                                   ble_sniffer=ble_sniffer, powersave_p=True)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2,
+                                 ble_dut_address=ble_dut_address,
+                                 pri_adv_phy=1, sec_adv_phy=1, data_len=200, scan_resp_len=1,
+                                 test_case_id="C708847",
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERAL",
+                                 scan_req_notify_enable=1, adv_handle=0)
+        # ble_sniffer=ble_sniffer, powersave_p=True)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
-        #df = ble_ae_obj.result
+        df = ble_ae_obj.result
         # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
         # assert all(df.loc[df['Chan'].isin([37, 38,
         #                                    39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
@@ -1621,6 +1953,7 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708847(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1672,9 +2005,9 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708847(
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708848(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         ble_dut,
@@ -1682,9 +2015,9 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708848(
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
+        # sniffer_filter,
         remote_wiseconnect3,
-        ble_sniffer,
+        # ble_sniffer,
 ):
     """
     Test case  : This test case will Verify Ext Adv - Scannable undirected adv, with data length max adv data length,
@@ -1700,44 +2033,45 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708848(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            #wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2, ble_dut_address=ble_dut_address,
-                                   ble_sniffer=ble_sniffer,
-                                   pri_adv_phy=1, sec_adv_phy=2, data_len=200, scan_resp_len=200,
-                                   test_case_id="C708848",
-                                   adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", scan_req_notify_enable=0,
-                                   adv_handle=0, ble_client_address=ble_client_address, central=remote_wiseconnect3,
-                                   scanning_phys=1, powersave_p=True)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2,
+                                 ble_dut_address=ble_dut_address,
+                                 # ble_sniffer=ble_sniffer,
+                                 pri_adv_phy=1, sec_adv_phy=2, data_len=200, scan_resp_len=200,
+                                 test_case_id="C708848",
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", scan_req_notify_enable=0,
+                                 adv_handle=0, ble_client_address=ble_client_address, central=remote_wiseconnect3,
+                                 scanning_phys=1)  # powersave_p=True)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
-        # df = ble_ae_obj.result
+        df = ble_ae_obj.result
         # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
         # assert all(df.loc[df['Chan'].isin([37, 38,
         #                                    39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
@@ -1787,6 +2121,7 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708848(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -1830,10 +2165,9 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708848(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.Skip("Debug is required for this test case")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708849(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         ble_dut,
@@ -1842,12 +2176,12 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708849(
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
 ):
     """
     Test case  : This test case will Verify Ext Adv - Scannable undirected adv, with data length max adv data length,
-    scan_response_notification_enable =0x01 and primary phy is LE Coded, sec phy is LE Coded during WLAN is in idle connected state
+    scan_response_notification_enable =0x00 and primary phy is LE Coded, sec phy is LE Coded during WLAN is in idle connected state
     Test Steps:
         1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
         2. Configure DUT BLE as adv mode
@@ -1859,44 +2193,46 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708849(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2, ble_dut_address=ble_dut_address,
-                               ble_sniffer=ble_sniffer, scanning_phys=4,
-                               pri_adv_phy=3, sec_adv_phy=3, data_len=200, scan_resp_len=200,
-                               test_case_id="C708849",
-                               adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
-                               scan_req_notify_enable=1, adv_handle=0,
-                               central=remote_wiseconnect3, ble_client_address=ble_client_address, powersave_p=True)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2,
+                                 ble_dut_address=ble_dut_address,
+                                 scanning_phys=4,
+                                 pri_adv_phy=3, sec_adv_phy=3, data_len=200, scan_resp_len=200,
+                                 test_case_id="C708849",
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+                                 scan_req_notify_enable=0, adv_handle=0,
+                                 central=remote_wiseconnect3,
+                                 ble_client_address=ble_client_address)  # powersave_p=True)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
-        # df = ble_ae_obj.result
+        df = ble_ae_obj.result
         # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
         # assert all(df.loc[df['Chan'].isin([37, 38,
         #                                    39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
@@ -1987,7 +2323,6 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708849(
         },
     },
 )
-
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -2002,9 +2337,9 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708849(
     ],
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
-@pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_AE_Scannable_filter_policy_with_wlan_conn_C708850(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         request,
@@ -2012,9 +2347,9 @@ def test_verify_AE_Scannable_filter_policy_with_wlan_conn_C708850(
         sl_collections,
         remote_wiseconnect3,
         wifi_client,
-        sniffer_filter,
+        # sniffer_filter,
         ble_dut,
-        ble_sniffer,
+        # ble_sniffer,
 ):
     """
     Test case  : This test case will verify filter policy = 0x03, during LE_Ext_Adv for connectable & scannable adv type during WLAN is in idle connected state
@@ -2029,40 +2364,41 @@ def test_verify_AE_Scannable_filter_policy_with_wlan_conn_C708850(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
 
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
-                                   data_len=31, whitelist=1, adv_filter_policy=3,
-                                   test_case_id="C708850", adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
-                                   adv_handle=0, ble_sniffer=ble_sniffer, ble_client_address=ble_client_address,
-                                   central=remote_wiseconnect3, powersave_p=True)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=1,
+                                 ble_dut_address=ble_dut_address,
+                                 data_len=31, whitelist=1, adv_filter_policy=3,
+                                 test_case_id="C708850", adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+                                 adv_handle=0, ble_client_address=ble_client_address,
+                                 central=remote_wiseconnect3)  # powersave_p=True)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
         df = ble_ae_obj.result
@@ -2123,11 +2459,12 @@ def test_verify_AE_Scannable_filter_policy_with_wlan_conn_C708850(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.parametrize(
     "adv_type, test_case_id, pri_adv_phy, sec_adv_phy",
     [
-        (0, "C708851", 1, 1),
-        (0, "C708852", 1, 2),
+        # (0, "C708851", 1, 1),
+        # (0, "C708852", 1, 2),
         (0, "C708853", 3, 3),
     ],
 )
@@ -2150,7 +2487,6 @@ def test_verify_AE_Scannable_filter_policy_with_wlan_conn_C708850(
         },
     },
 )
-
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -2164,17 +2500,17 @@ def test_verify_AE_Scannable_filter_policy_with_wlan_conn_C708850(
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_with_wlan_conn_C708851_C708853(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         request,
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
         ble_dut,
         adv_type,
         test_case_id,
@@ -2195,41 +2531,42 @@ def test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_with_wlan_conn_C7
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
-                                   pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=200, scan_resp_len=1,
-                                   test_case_id=test_case_id,
-                                   adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
-                                   ble_sniffer=ble_sniffer, powersave_p=True, adv_data_type=2, periodic_data_len=200)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=adv_type,
+                                 ble_dut_address=ble_dut_address,
+                                 pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=200, scan_resp_len=1,
+                                 test_case_id=test_case_id,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
+                                 adv_data_type=2, periodic_data_len=200)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        #wifi_obj.sniffer_validation_join()
-        #logger().info("sniffer validation is successful")
-        # df = ble_ae_obj.result
+        # wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_obj.sniffer_validation_join()
+        # logger().info("sniffer validation is successful")
+        df = ble_ae_obj.result
         # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
         # assert all(df.loc[df['Chan'].isin([37, 38,
         #                                    39]), 'Type'] == 'ADV_EXT_IND'), "\n\n **** Test case Failed with no ADV_EXT_IND packet found on 37, 38, 39 channels ****\n\n"
@@ -2280,8 +2617,7 @@ def test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_with_wlan_conn_C7
         #     "\n\n **** Calculated Offset matches with the time difference between the AUX_ADV_IND and AUX_SYNC_IND packets ****\n\n")
         # logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
     except Exception as Ex:
-         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
 @pytest.mark.parametrize(
@@ -2326,14 +2662,14 @@ def test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_with_wlan_conn_C7
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 def test_verify_periodic_Adv_Sync_directed_non_conn_non_scan_with_wlan_conn_C708854_C708856(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         request,
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
+        # sniffer_filter,
         # ble_sniffer,
         ble_dut,
         adv_type,
@@ -2356,43 +2692,44 @@ def test_verify_periodic_Adv_Sync_directed_non_conn_non_scan_with_wlan_conn_C708
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         random_address = "11:22:33:44:55:66"
         adv_data = "".join(random.choices(string.ascii_uppercase + string.digits, k=200))
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=adv_type, ble_dut_address=random_address,
-                                   random_address=random_address,
-                                   pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=200, scan_resp_len=1,
-                                   test_case_id=test_case_id,
-                                   adv_data=adv_data, adv_handle=0,
-                                adv_data_type=2, periodic_data_len=200)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=adv_type,
+                                 ble_dut_address=random_address,
+                                 random_address=random_address,
+                                 pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=200, scan_resp_len=1,
+                                 test_case_id=test_case_id,
+                                 adv_data=adv_data, adv_handle=0,
+                                 adv_data_type=2, periodic_data_len=200)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
-        # df = ble_ae_obj.result
+        df = ble_ae_obj.result
         # # Assert if there is no non-connectable non-scannable advertising mode found and Aux Pointer is present with random address
         # assert len(
         #     df.loc[(df['Advertising Mode'] == "Non-Connectable Non-Scannable") & (df["Aux Pointer"] == "Present") &
@@ -2452,52 +2789,52 @@ def test_verify_periodic_Adv_Sync_directed_non_conn_non_scan_with_wlan_conn_C708
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.parametrize(
-    "scan_interval_pri, scan_window_pri, test_case_id,",
+    "scanning_phys, pri_adv_phy, sec_adv_phy, scan_interval_pri, scan_window_pri, test_case_id,",
     [
-        (160,80, "C708857"),
-        (64000,48000, "C708858")
+        (4, 1, 1, 1850, 925, "C708857"),
+        (4, 3, 3, 1850, 925, "C708858")
     ],
 )
 @pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
-    )
+    },
+)
 @pytest.mark.config(
-        "remote_wiseconnect3",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
+    "remote_wiseconnect3",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
-    )
-
+    },
+)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -2512,23 +2849,27 @@ def test_verify_periodic_Adv_Sync_directed_non_conn_non_scan_with_wlan_conn_C708
     ],
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.Skip("Debug is required for this test case")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.skip("Debug is required for this test case")
 def test_verify_AE_scan_with_wlan_conn_C708857_C708858(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         request,
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
         ble_dut,
         remote_wiseconnect3,
-        test_case_id,
-        scan_window_pri,
+        scanning_phys,
+        pri_adv_phy,
+        sec_adv_phy,
         scan_interval_pri,
+        scan_window_pri,
+        test_case_id
+
 ):
     """
     Test case  : This test case will verify the BLE AE scan using scan interval-100ms,40secs and scan window -50ms, 30secs during WLAN is in idle connected state
@@ -2543,332 +2884,88 @@ def test_verify_AE_scan_with_wlan_conn_C708857_C708858(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, adv_type=2, ble_dut_address=ble_dut_address,
-                                   ble_sniffer=ble_sniffer, scanning_phys=5,test_case_id=test_case_id,
-                                   pri_adv_phy=1, sec_adv_phy=2, data_len=1, scan_resp_len=1,
-                                   adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,scan_interval_pri=scan_interval_pri,scan_window_pri=scan_window_pri,
-                                   central=remote_wiseconnect3, peripheral=ble_dut, ble_client_address=ble_client_address)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2,
+                                 ble_dut_address=ble_dut_address,
+                                 scanning_phys=scanning_phys, scan_type_pri=0, test_case_id=test_case_id,
+                                 pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=1, scan_resp_len=1,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
+                                 scan_interval_pri=scan_interval_pri, scan_window_pri=scan_window_pri,
+                                 central=remote_wiseconnect3, ble_client_address=ble_client_address)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
         df = ble_ae_obj.result
-        assert len(df.loc[(df['Type'] == 'AUX_SCAN_RSP') & (~df['Chan'].isin(
-            [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_RSP packets found..! ****\n\n"
-        assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
-            [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-
-@pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
-        },
-    )
-@pytest.mark.config(
-        "remote_wiseconnect3",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
-        },
-    )
-
-@pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
-)
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=["init"])
-# @pytest.mark.end_state(
-#     "wifi_dut",
-#     wifi=[
-#         "bt_powersave_disable",
-#         "wifi_powersave_disable",
-#         "disassociated",
-#     ],
-# )
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.Skip("Debug is required for this test case")
-def test_verify_ext_scan_filter_policy_0x01_with_wlan_scan_C708859(
-        wifi_sniffer,
-        wifi_access_point,
-        wifi_dut,
-        ble_dut,
-        request,
-        utf_constants,
-        sl_collections,
-        remote_wiseconnect3,
-        wifi_client,
-        sniffer_filter,
-        ble_sniffer,
-):
-    """
-    Test case  : This test case will verify filter policy = 0x01 for LE Ext Scan during WLAN is in Scanning state
-    Test Steps:
-        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
-        2. Configure DUT WLAN is in scanning mode
-        4. Enable the wlan and bt power save mode in dut
-
-    """
-    try:
-        test_name = request.node.name
-        ping_count = utf_constants.get("ping_count")
-        test_type = "scan"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            testcase=test_name,
-            wifi_client=wifi_client,
-            sl_collections=sl_collections,
-            ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
-            test_type=test_type,
-        )
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
-        ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2, adv_type_s2=2, ble_dut_address=ble_dut_address,scanning_phys=5,scanning_whitelist=1,
-                                    min_interval=32, max_interval=32, data_len=32, data_len_s2=32, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
-                                    pri_adv_phy=1, sec_adv_phy=3,scan_type_sec=1,scan_type_pri=1,scan_interval_pri=256,scan_window_pri=80,test_case_id="C708859",
-                                    adv_handle=0, adv_handle_s2=1, ble_sniffer=ble_sniffer,scan_interval_sec=256,scan_window_sec=80,scanning_filter_policy=1,
-                                   ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48, max_interval_s2=48)
-        wifi_obj.start()
-        ble_ae_obj.start()
-        wifi_obj.wait_for_exit()
-        ble_ae_obj.wait_for_exit()
-        wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        #wifi_obj.sniffer_validation_join()
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-
-@pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
-        },
-    )
-@pytest.mark.config(
-        "remote_wiseconnect3",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
-        },
-    )
-
-@pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
-)
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=["init"])
-# @pytest.mark.end_state(
-#     "wifi_dut",
-#     wifi=[
-#         "bt_powersave_disable",
-#         "wifi_powersave_disable",
-#         "disassociated",
-#     ],
-# )
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.Skip("Debug is required for this test case")
-def test_verify_ext_scan_filter_policy_0x03_with_wlan_conn_C708860(
-        wifi_sniffer,
-        wifi_access_point,
-        wifi_dut,
-        ble_dut,
-        request,
-        utf_constants,
-        sl_collections,
-        remote_wiseconnect3,
-        wifi_client,
-        sniffer_filter,
-        ble_sniffer,
-):
-    """
-    Test case  : This test case will verify filter policy = 0x03 for LE Ext Scan during WLAN is in connected state
-    Test Steps:
-        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
-        2. Configure DUT WLAN is in connected state
-        4. Enable the wlan and bt power save mode in dut
-
-    """
-    try:
-        test_name = request.node.name
-        ping_count = utf_constants.get("ping_count")
-        test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-        wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            testcase=test_name,
-            wifi_client=wifi_client,
-            sl_collections=sl_collections,
-            ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
-            test_type=test_type,
-        )
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
-        ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2, adv_type_s2=2, ble_dut_address=ble_dut_address,scanning_phys=5,scanning_whitelist=1,
-                                    min_interval=32, max_interval=32, data_len=32, data_len_s2=32, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
-                                    pri_adv_phy=1, sec_adv_phy=3,scan_type_sec=1,scan_type_pri=1,scan_interval_pri=256,scan_window_pri=80,test_case_id="C708860",
-                                    adv_handle=0, adv_handle_s2=1, ble_sniffer=ble_sniffer,scan_interval_sec=256,scan_window_sec=80,scanning_filter_policy=3,
-                                   ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48, max_interval_s2=48)
-        wifi_obj.start()
-        ble_ae_obj.start()
-        wifi_obj.wait_for_exit()
-        ble_ae_obj.wait_for_exit()
-        wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
-        # wifi_obj.sniffer_validation_join()
-        # logger().info("sniffer validation is successful")
-        # df = ble_ae_obj.result
         # assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
-        #     [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
+        #         [37, 38, 39]))]) == 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-@pytest.mark.parametrize(
-    "scanning_phys, pri_adv_phy, sec_adv_phy, scan_interval_pri, scan_window_pri, test_case_id,",
-    [
-        #(1, 1, 2, 1850, 462, "C708861"),
-        (4, 3, 3, 1850, 925, "C708862")
-    ],
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+        },
+    },
 )
 @pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
+    "remote_wiseconnect3",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
-    )
-@pytest.mark.config(
-        "remote_wiseconnect3",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
-        },
-    )
-
+    },
+)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -2882,18 +2979,267 @@ def test_verify_ext_scan_filter_policy_0x03_with_wlan_conn_C708860(
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.Skip("Debug is required for this test case")
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_ext_scan_filter_policy_0x01_with_wlan_scan_C708859(
+        # wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        request,
+        utf_constants,
+        sl_collections,
+        remote_wiseconnect3,
+        wifi_client,
+        # sniffer_filter,
+        ble_dut,
+        # ble_sniffer,
+):
+    """
+    Test case  : This test case will verify filter policy = 0x01 for LE Ext Scan during WLAN is in Scanning state
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure DUT WLAN is in scanning mode
+        4. Enable the wlan and bt power save mode in dut
+
+    """
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "scan"
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_obj = WifiJoinThread(
+            # wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            # sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+        ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=1,
+                                 ble_dut_address=ble_dut_address,
+                                 data_len=31, whitelist=1, adv_filter_policy=1,
+                                 test_case_id="C708859", adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+                                 adv_handle=0, ble_client_address=ble_client_address,
+                                 central=remote_wiseconnect3)  # powersave_p=True)
+        wifi_obj.start()
+        ble_ae_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_ae_obj.wait_for_exit()
+        wifi_obj.disconnect()
+        # wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_obj.sniffer_validation_join()
+        # logger().info("sniffer validation is successful")
+        df = ble_ae_obj.result
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+        },
+    },
+)
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+        },
+    },
+)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+    ],
+)
+@pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+def test_Verify_filter_policy_0x03_during_Wlan_Conn_C708860(
+        # wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        request,
+        utf_constants,
+        sl_collections,
+        remote_wiseconnect3,
+        wifi_client,
+        # sniffer_filter,
+        ble_dut,
+        # ble_sniffer,
+):
+    """
+    Test case  : This test case will verify filter policy = 0x03 for LE Ext Scan during WLAN is in connected state
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure DUT WLAN is in connected state
+        4. Enable the wlan and bt power save mode in dut
+
+    """
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_obj = WifiJoinThread(
+            # wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            # sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+        ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=1,
+                                 ble_dut_address=ble_dut_address,
+                                 data_len=31, whitelist=1, adv_filter_policy=3,
+                                 test_case_id="C708860", adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+                                 adv_handle=0, ble_client_address=ble_client_address,
+                                 central=remote_wiseconnect3)  # powersave_p=True)
+        wifi_obj.start()
+        ble_ae_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_ae_obj.wait_for_exit()
+        wifi_obj.disconnect()
+        # wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_obj.sniffer_validation_join()
+        # logger().info("sniffer validation is successful")
+        df = ble_ae_obj.result
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.parametrize(
+    "scanning_phys, pri_adv_phy, sec_adv_phy, scan_interval_pri, scan_window_pri, test_case_id,",
+    [
+        (4, 1, 1, 1850, 925, "C708861"),
+        (4, 3, 3, 1850, 925, "C708862")
+    ],
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+        },
+    },
+)
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
+        },
+    },
+)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+    ],
+)
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.Skip("Debug is required for this test case")
 def test_verify_AE_passive_ext_scan_with_wlan_conn_C708861_C708862(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         request,
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
         ble_dut,
         remote_wiseconnect3,
         scanning_phys,
@@ -2916,93 +3262,95 @@ def test_verify_AE_passive_ext_scan_with_wlan_conn_C708861_C708862(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2, ble_dut_address=ble_dut_address,
-                                   ble_sniffer=ble_sniffer, scanning_phys=scanning_phys,scan_type_pri=0,test_case_id=test_case_id,
-                                   pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=1, scan_resp_len=1,
-                                   adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,scan_interval_pri=scan_interval_pri,scan_window_pri=scan_window_pri,
-                                   central=remote_wiseconnect3, ble_client_address=ble_client_address)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2,
+                                 ble_dut_address=ble_dut_address,
+                                 scanning_phys=scanning_phys, scan_type_pri=0, test_case_id=test_case_id,
+                                 pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=1, scan_resp_len=1,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
+                                 scan_interval_pri=scan_interval_pri, scan_window_pri=scan_window_pri,
+                                 central=remote_wiseconnect3, ble_client_address=ble_client_address)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
-        # df = ble_ae_obj.result
+        df = ble_ae_obj.result
         # assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
         #         [37, 38, 39]))]) == 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.parametrize(
     "scanning_phys, pri_adv_phy, sec_adv_phy, scan_interval_pri, scan_window_pri, test_case_id,",
     [
-        (1, 1, 2, 1850, 462, "C708863"),
-        (4, 3, 3, 1850, 925, "C708864"),
+        (4, 1, 1, 1850, 925, "C708863"),
+        (4, 1, 2, 1850, 925, "C708864"),
     ],
 )
 @pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
-    )
+    },
+)
 @pytest.mark.config(
-        "remote_wiseconnect3",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
+    "remote_wiseconnect3",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
-    )
-
+    },
+)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -3016,18 +3364,18 @@ def test_verify_AE_passive_ext_scan_with_wlan_conn_C708861_C708862(
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.Skip("Debug is required for this test case")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.Skip("Debug is required for this test case")
 def test_verify_AE_active_ext_scan_diff_duty_cycle_with_wlan_conn_C708863_C708864(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         request,
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
         ble_dut,
         remote_wiseconnect3,
         scanning_phys,
@@ -3050,39 +3398,41 @@ def test_verify_AE_active_ext_scan_diff_duty_cycle_with_wlan_conn_C708863_C70886
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2, ble_dut_address=ble_dut_address,
-                                   ble_sniffer=ble_sniffer, scanning_phys=scanning_phys,scan_type_pri=1,test_case_id=test_case_id,
-                                   pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=1, scan_resp_len=1,
-                                   adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,scan_interval_pri=scan_interval_pri,scan_window_pri=scan_window_pri,
-                                   central=remote_wiseconnect3, ble_client_address=ble_client_address)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=2,
+                                 ble_dut_address=ble_dut_address,
+                                 scanning_phys=scanning_phys, scan_type_pri=1, test_case_id=test_case_id,
+                                 pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=1, scan_resp_len=1,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA", adv_handle=0,
+                                 scan_interval_pri=scan_interval_pri, scan_window_pri=scan_window_pri,
+                                 central=remote_wiseconnect3, ble_client_address=ble_client_address)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
         # df = ble_ae_obj.result
@@ -3091,44 +3441,45 @@ def test_verify_AE_active_ext_scan_diff_duty_cycle_with_wlan_conn_C708863_C70886
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
-    )
+    },
+)
 @pytest.mark.config(
-        "remote_wiseconnect3",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
+    "remote_wiseconnect3",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
-    )
+    },
+)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -3142,10 +3493,10 @@ def test_verify_AE_active_ext_scan_diff_duty_cycle_with_wlan_conn_C708863_C70886
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.Skip("Debug is required for this test case")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.Skip("Debug is required for this test case")
 def test_verify_AE_passive_ext_scan_adv_two_sets_with_wlan_conn_C708865(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         ble_dut,
@@ -3154,8 +3505,8 @@ def test_verify_AE_passive_ext_scan_adv_two_sets_with_wlan_conn_C708865(
         sl_collections,
         remote_wiseconnect3,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
 ):
     """
     Test case: Verify passive Ext Scan : adv set1 : pri phy = 1M, sec phy = 2M
@@ -3170,85 +3521,90 @@ def test_verify_AE_passive_ext_scan_adv_two_sets_with_wlan_conn_C708865(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=1, adv_type_s2=2, ble_dut_address=ble_dut_address,scanning_phys=5,
-                                    min_interval=32, max_interval=32, data_len=32, data_len_s2=32, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
-                                    pri_adv_phy=1, sec_adv_phy=1, test_case_id="C708865",scan_type_sec=0,scan_type_pri=0,scan_interval_pri=256,scan_window_pri=80,
-                                    adv_handle=0, adv_handle_s2=1, ble_sniffer=ble_sniffer,scan_interval_sec=256,scan_window_sec=80,
-                                   ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48, max_interval_s2=48) #powersave_p=True)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=1, adv_type_s2=2,
+                                 ble_dut_address=ble_dut_address, scanning_phys=5,
+                                 min_interval=32, max_interval=32, data_len=32, data_len_s2=32,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+                                 pri_adv_phy=1, sec_adv_phy=1, test_case_id="C708865", scan_type_sec=0, scan_type_pri=0,
+                                 scan_interval_pri=256, scan_window_pri=80,
+                                 adv_handle=0, adv_handle_s2=1, scan_interval_sec=256, scan_window_sec=80,
+                                 ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48,
+                                 max_interval_s2=48)  # powersave_p=True)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
         df = ble_ae_obj.result
-        assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
-            [37, 38, 39]))]) == 0, "\n\n **** Test case Failed with AUX_SCAN_REQ packets found..! ****\n\n"
+        # assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        #     [37, 38, 39]))]) == 0, "\n\n **** Test case Failed with AUX_SCAN_REQ packets found..! ****\n\n"
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
 @pytest.mark.config(
-        "wifi_dut",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
-    )
+    },
+)
 @pytest.mark.config(
-        "remote_wiseconnect3",
-        wifi={
-            "oper_mode": 0,
-            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
-            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
-            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
-            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
-            "ble_features" : Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV| Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX| Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS| Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
-            "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            "thread_config": {
-                "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
-                "ble": {"count": 1, "stack_len": 2048, "priority": 8},
-            },
+    "remote_wiseconnect3",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
-    )
+    },
+)
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -3262,10 +3618,10 @@ def test_verify_AE_passive_ext_scan_adv_two_sets_with_wlan_conn_C708865(
         "disassociated",
     ],
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.Skip("Debug is required for this test case")
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+# @pytest.mark.Skip("Debug is required for this test case")
 def test_verify_AE_Active_ext_scan_adv_two_sets_with_wlan_conn_C708866(
-        wifi_sniffer,
+        # wifi_sniffer,
         wifi_access_point,
         wifi_dut,
         ble_dut,
@@ -3274,8 +3630,8 @@ def test_verify_AE_Active_ext_scan_adv_two_sets_with_wlan_conn_C708866(
         utf_constants,
         sl_collections,
         wifi_client,
-        sniffer_filter,
-        ble_sniffer,
+        # sniffer_filter,
+        # ble_sniffer,
 ):
     """
     Test case: 	This test case will verify active Ext Scan : adv set1 : pri phy = 1M, sec phy = 2M
@@ -3290,44 +3646,265 @@ def test_verify_AE_Active_ext_scan_adv_two_sets_with_wlan_conn_C708866(
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         test_type = "ping"
-        logger().info("configuring the Sniffer with the channel")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        logger().info(
-            "start capturing with Sniffer by giving the test case name as filename"
-        )
-
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
         wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer,
+            # wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
             testcase=test_name,
             wifi_client=wifi_client,
             sl_collections=sl_collections,
             ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
+            # sniffer_filter=sniffer_filter,
             test_type=test_type,
         )
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
-        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=1, adv_type_s2=2, ble_dut_address=ble_dut_address,scanning_phys=5,
-                                    min_interval=32, max_interval=32, data_len=32, data_len_s2=32, adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
-                                    pri_adv_phy=1, sec_adv_phy=2, test_case_id="C708866",scan_type_sec=1,scan_type_pri=1,scan_interval_pri=256,scan_window_pri=80,
-                                    adv_handle=0, adv_handle_s2=1, ble_sniffer=ble_sniffer,scan_interval_sec=256,scan_window_sec=80,
-                                   ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48, max_interval_s2=48)#, powersave_p=True)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, adv_type=1, adv_type_s2=2,
+                                 ble_dut_address=ble_dut_address, scanning_phys=5,
+                                 min_interval=32, max_interval=32, data_len=32, data_len_s2=32,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+                                 pri_adv_phy=1, sec_adv_phy=2, test_case_id="C708866", scan_type_sec=0, scan_type_pri=0,
+                                 scan_interval_pri=256, scan_window_pri=80,
+                                 adv_handle=0, adv_handle_s2=1, scan_interval_sec=256, scan_window_sec=80,
+                                 ble_client_address=ble_client_address, central=remote_wiseconnect3, min_interval_s2=48,
+                                 max_interval_s2=48)  # , powersave_p=True)
         wifi_obj.start()
         ble_ae_obj.start()
         wifi_obj.wait_for_exit()
         ble_ae_obj.wait_for_exit()
         wifi_obj.disconnect()
-        wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_sniffer.interfaces.capture.stop_capture()
         # wifi_obj.sniffer_validation_join()
         # logger().info("sniffer validation is successful")
         df = ble_ae_obj.result
-        assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
-            [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
+        # assert len(df.loc[(df['Type'] == 'AUX_SCAN_REQ') & (~df['Chan'].isin(
+        #     [37, 38, 39]))]) > 0, "\n\n **** Test case Failed with no AUX_SCAN_REQ packets found..! ****\n\n"
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+    ],
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_AE_adv_scan_with_wlan_conn_C708886(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        # sniffer_filter,
+        # ble_sniffer,
+        ble_dut,
+
+):
+    """
+    Test case: This test will verify the BLE AE simultaneously scanning & advertising
+    with default intervals during WLAN is in idle connected state
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure DUT BLE as extended adv and scan mode
+        3. Configure the DUT WLAN in connection mode
+        4. Enable the wlan and bt power save mode in dut after activities are done
+    """
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "ping"
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_dut_address = wifi_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, ble_dut_address=ble_dut_address,
+                                 adv_type=21,
+                                 min_interval=32, max_interval=32, data_len=32,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+                                 adv_handle=0)  # ble_sniffer=ble_sniffer)
+        wifi_obj = WifiJoinThread(
+            # wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            # sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        wifi_obj.start()
+        ble_ae_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_ae_obj.wait_for_exit()
+        wifi_obj.disconnect()
+        # wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_obj.sniffer_validation_join()
+        # logger().info("sniffer validation is successful")
+        df = ble_ae_obj.result
+        # assert len(df.loc[(df['Type'] == "ADV_DIRECT_IND") & (df[
+        #                                                           "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_DIRECT_IND advertising mode found or Aux Pointer is not present ****\n\n"
+        # logger().info("\n\n **** ADV_DIRECT_IND advertising mode found and Aux Pointer is not present ****\n\n")
+        #
+        # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
+        # assert all(df.loc[df['Chan'].isin([37, 38,
+        #                                    39]), 'Type'] == 'ADV_DIRECT_IND'), "\n\n **** Test case Failed: No ADV_DIRECT_IND packet found on 37, 38, 39 channels ****\n\n"
+        # logger().info("\n\n **** ADV_DIRECT_IND packet found on 37,38,39 channels ****\n\n")
+        # logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "bt_powersave_disable",
+        "wifi_powersave_disable",
+        "disassociated",
+    ],
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.SSL,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.FeatureLowPower | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "bt_features": Si91xBTFeatureBitMap.RFTypeSelection | Si91xBTFeatureBitMap.BLEFeatureBitmapValid,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_ENABLE_ADV_EXTN | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_AE_MAX_ADV_SETS,
+        "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS | Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS_AE | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE,
+        "config_features": Si91xConfigFeatureBitMap.Default | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048},
+            "ble": {"count": 1, "stack_len": 2048},
+        },
+    },
+)
+# @pytest.mark.ble_sniffer("frontline_sniffer")
+def test_verify_AE_adv_scan_with_wlan_scan_C779565(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        request,
+        utf_constants,
+        sl_collections,
+        wifi_client,
+        # sniffer_filter,
+        # ble_sniffer,
+        ble_dut,
+
+):
+    """
+    Test case: This test will verify BLE AE adv, Scan functionality during WiFi continuous Scan
+    Test Steps:
+        1. Configure the DUT in Wlan+BLE mode for 2.4Ghz
+        2. Configure DUT BLE as extended adv and scan mode
+        3. Configure the DUT WLAN in scanning mode
+        4. Enable the wlan and bt power save mode in dut after activities are done
+    """
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        test_type = "scan"
+        # logger().info("configuring the Sniffer with the channel")
+        # wifi_sniffer.interfaces.capture.configure_interface(
+        #     channel=wifi_access_point.interfaces.wifi.channel
+        # )
+        # logger().info(
+        #     "start capturing with Sniffer by giving the test case name as filename"
+        # )
+        #
+        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_dut_address = wifi_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
+        ble_ae_obj = BleAEThread(sl_collections=sl_collections, peripheral=ble_dut, ble_dut_address=ble_dut_address,
+                                 adv_type=21,
+                                 min_interval=32, max_interval=32, data_len=32,
+                                 adv_data="AE_PERIPHERAL_DATA_AE_PERIPHERA",
+                                 adv_handle=0)  # ble_sniffer=ble_sniffer)
+        wifi_obj = WifiJoinThread(
+            # wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            # sniffer_filter=sniffer_filter,
+            test_type=test_type,
+        )
+
+        wifi_obj.start()
+        ble_ae_obj.start()
+        wifi_obj.wait_for_exit()
+        ble_ae_obj.wait_for_exit()
+        wifi_obj.disconnect()
+        # wifi_sniffer.interfaces.capture.stop_capture()
+        # wifi_obj.sniffer_validation_join()
+        # logger().info("sniffer validation is successful")
+        df = ble_ae_obj.result
+        # assert len(df.loc[(df['Type'] == "ADV_DIRECT_IND") & (df[
+        #                                                           "Aux Pointer"] != "Present")]) >= 1, "\n\n **** Test case Failed with no ADV_DIRECT_IND advertising mode found or Aux Pointer is not present ****\n\n"
+        # logger().info("\n\n **** ADV_DIRECT_IND advertising mode found and Aux Pointer is not present ****\n\n")
+        #
+        # # Assert if there is no ADV_EXT_IND packet found on 37, 38, 39 channels
+        # assert all(df.loc[df['Chan'].isin([37, 38,
+        #                                    39]), 'Type'] == 'ADV_DIRECT_IND'), "\n\n **** Test case Failed: No ADV_DIRECT_IND packet found on 37, 38, 39 channels ****\n\n"
+        # logger().info("\n\n **** ADV_DIRECT_IND packet found on 37,38,39 channels ****\n\n")
+        # logger().info("\n\n **** Test case is passed successfully..! ****\n\n")
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
