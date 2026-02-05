@@ -410,7 +410,7 @@ class BLEFunc(ThreadBase):
 
                     except Exception as e:
                         logger().error(f"Error during pairing attempt {retry + 1}: {e}")
-                        if retry == max_retries - 1:
+                        if retry == self.max_retries - 1:
                             raise  # Re-raise the exception if maximum retries are reached
                 ble_dut_address_hex = re.split(":", self.ble_dut_address)
                 ble_client_address_hex = re.split(":", self.ble_client_address)
@@ -426,120 +426,6 @@ class BLEFunc(ThreadBase):
                     self.ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address,
                                                                      slave_address)
                 logger().info(f"*********Iteration :{i + 1}")
-
-        # if self.pair_connect_from_dut:
-        #     link_key_list = []
-        #     self.wifi_dut.interfaces.wifi.ble_set_cap_data(remote_addr_type=0, smp_io_cap=self.smp_io_capability,
-        #                                                    smp_auth_req_bonding=self.smp_auth_bond,
-        #                                                    smp_auth_req_mitm=self.smp_mtim,
-        #                                                    smp_auth_req_sc=self.smp_sc, smp_max_enc_key_size=16,
-        #                                                    smp_local_oob_data_flag_not_present=0,
-        #                                                    smp_enc_key=1, smp_id_key=0,
-        #                                                    smp_sign_key=0)
-        #     self.ble_client_address = ""
-        #     self.wifi_dut.interfaces.wifi.bt_set_local_name("BLE_UNIFIED_DEMO")
-        #     for i in range(10):
-        #         # self.ble_sniffer.interfaces.sniffer.init_sniffer()
-        #         # self.ble_sniffer.interfaces.sniffer.start_capture(capture_file=self.capture_filename)
-        #         # Start ble client
-        #         self.ble_client.interfaces.bluetooth.close()
-        #         self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
-        #             pin_code=self.pin_code, capability=self.client_capability, bt_dut_address=self.ble_dut_address
-        #         )
-        #         assert self.ble_client_address is not None
-        #         time.sleep(1)
-        #         # Start scanning and connect to ble client
-        #         self.wifi_dut.interfaces.wifi.ble_start_scanning(
-        #             ble_client_address=self.ble_client_address, timeout=60
-        #         )
-        #         self.wifi_dut.interfaces.wifi.ble_stop_scanning()
-        #
-        #         def connect():
-        #             self.wifi_dut.interfaces.wifi.ble_connect(
-        #                 ble_remote_dev_address=self.ble_client_address, timeout=120
-        #             )
-        #
-        #         t = threading.Thread(target=connect)
-        #         t.start()
-        #         time.sleep(2)
-        #         tw = Stopwatch()
-        #         pass_key_found = False
-        #         while tw.elapsed_sec < 120:
-        #             events = self.wifi_dut.interfaces.wifi.get_async_events()
-        #             for event in events:
-        #                 # if event.event_type == AsyncEventIdentifiers.BLE_SC_PASSKEY:
-        #                 #     logger().info(f"**********************")
-        #                 if "passkey" in event.event_data:
-        #                     logger().info(f"*********************{event.event_data}*")
-        #                     passkey = re.findall(r"passkey: ([\d]*)", event.event_data)
-        #                     if passkey[0] is not None:
-        #                         pass_key_value = str(passkey[0])
-        #                         logger().info(f"passkey : {pass_key_value}")
-        #                         self.ble_client.interfaces.bluetooth.set_pin(pass_key_value)
-        #                         pass_key_found = True
-        #                         break
-        #             if pass_key_found:
-        #                 break
-        #             time.sleep(1)
-        #
-        #         time.sleep(60)
-        #
-        #         state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
-        #         state_int = int(state) if state.isdigit() else -1
-        #         assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
-        #         if t is not None:
-        #             t.join()
-        #         if state_int == 8:
-        #             self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=self.ble_client_address)
-        #         tw = Stopwatch()
-        #         link_key = ""
-        #         while tw.elapsed_sec < 120:
-        #             events = self.wifi_dut.interfaces.wifi.get_async_events()
-        #             for event in events:
-        #                 if "link_key" in event.event_data:
-        #                     event_data = event.event_data
-        #                     link_key_data = re.findall("link_key::.*", event_data)
-        #                     link_key_data_str = re.split(":<", link_key_data[0])
-        #                     link_key_data_hex = re.split(":", link_key_data_str[0])
-        #                     link_key = "0x"
-        #                     for hex_data_part in link_key_data_hex:
-        #                         hex_data_part = hex_data_part.replace(" ", "")
-        #                         if len(hex_data_part) == 1:
-        #                             hex_data_part = '0' + hex_data_part
-        #                         link_key = link_key + hex_data_part
-        #                 else:
-        #                     continue
-        #             if link_key:
-        #                 break
-        #         link_key = link_key.replace(" ", "")
-        #         link_key = link_key.replace("link_key", "")
-        #         if self.ble_connect_from_raspi or self.pair_connect_from_dut or len(link_key) > 34:
-        #             link_key_data = link_key
-        #             link_key_value = re.split("--", link_key_data)
-        #             link_key_re = re.split("$", link_key_value[0])
-        #             link_key = ""
-        #             for value in link_key_re[0]:
-        #                 if value.isalnum():
-        #                     link_key = link_key + value
-        #             logger().info(f"Link Key Extracted:{link_key}")
-        #             logger().info(f"Link Key Extracted:{len(link_key)}")
-        #             assert len(link_key) > 0, "Link key is not extracted"
-        #             # link_key_list = link_key_list.append(link_key)
-        #             # logger().info(f"Link Key list:{link_key_list}")
-        #         ble_dut_address_hex = re.split(":", self.ble_dut_address)
-        #         ble_client_address_hex = re.split(":", self.ble_client_address)
-        #         master_address = "0x"
-        #         for hex_data_part in ble_dut_address_hex:
-        #             master_address = master_address + hex_data_part
-        #         slave_address = "0x"
-        #         for hex_data_part in ble_client_address_hex:
-        #             slave_address = slave_address + hex_data_part
-        #         self.ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address])
-        #         time.sleep(30)
-        #         if link_key != "":
-        #             self.ble_sniffer.interfaces.sniffer.add_link_key(link_key.upper(), master_address,
-        #                                                              slave_address)
-        #         logger().info(f"*********Iteration :{i + 1}")
 
         if self.encrypted_file:
             state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -654,12 +540,6 @@ class BLEFunc(ThreadBase):
                     assert self.sniffer_data_df_2 is not None
             return self.sniffer_data_df_1, self.sniffer_data_df_2, self.ble_dut_address, self.ble_client_address
 
-
-
-
-
-
-
 pytestmark = [
     pytest.mark.config(
         "wifi_dut",
@@ -709,7 +589,6 @@ def test_ble_smp_pairing_reconnection_dut_as_master_C667600(wifi_dut, ble_sniffe
                 sign_keys.append(i)
         logger().info(f"************sign keys: {sign_keys}*************")
         logger().info(f"************Number of sign keys in the capture: {len(sign_keys)}*************")
-        # assert len(sign_keys) == 20, f"sign keys missed in the capture"
         unique_elements = set()
         for element in sign_keys:
             if element in unique_elements:
@@ -757,7 +636,6 @@ def test_ble_smp_pairing_reconnection_dut_as_master_C667601(wifi_dut, ble_sniffe
                 dh_packets.append(i)
         logger().info(f"************dh keys: {dh_packets} ********************")
         logger().info(f"************Number of dh keys in the capture : {len(dh_packets)} ********************")
-        # assert len(dh_packets) == 20, f"dh keys missed in the capture"
         unique_elements = set()
         for element in dh_packets:
             if element in unique_elements:
@@ -846,7 +724,6 @@ def test_ble_smp_pairing_reconnection_dut_as_master_C667603(wifi_dut,  ble_sniff
                 pairing_random_pkts.append(i)
         logger().info(f"************pairing_random_pkt keys: {pairing_random_pkts} ********************")
         logger().info(f"************Number of pairing random packets in the capture : {len(pairing_random_pkts)} ********************")
-        # assert len(pairing_random_pkts) == 400, f"pairing random packets keys missed in the capture"
         unique_elements = set()
         for element in pairing_random_pkts:
             if element in unique_elements:
@@ -899,8 +776,6 @@ def test_ble_smp_pairing_reconnection_dut_as_master_C667604(wifi_dut, ble_sniffe
         logger().info(f"************Initialization Vector in encryption response: {Initialization_vector} ********************")
         logger().info(f"************Number of session key identifer in encryption response packets in the capture : {len(session_key_identifier_data)} ********************")
         logger().info(f"************Number of Initialization Vector id in encryption response packets in the capture : {len(Initialization_vector)} ********************")
-        # assert len(session_key_identifier_data) == 10, f"session key identifer in encryption response packets keys missed in the capture"
-        # assert len(Initialization_vector) == 10, f"Initialization Vector id in encryption response packets keys missed in the capture"
         unique_elements = set()
         unique_elements1 = set()
         for element in session_key_identifier_data:
@@ -997,7 +872,6 @@ def test_ble_smp_pairing_reconnection_dut_as_slave_C667596(wifi_dut, ble_sniffer
                 dh_packets.append(i)
         logger().info(f"************dh keys: {dh_packets} ********************")
         logger().info(f"************Number of dh keys in the capture : {len(dh_packets)} ********************")
-        # assert len(dh_packets) == 20, f"dh keys missed in the capture"
         unique_elements = set()
         for element in dh_packets:
             if element in unique_elements:
@@ -1042,7 +916,6 @@ def test_ble_smp_pairing_reconnection_dut_as_slave_C667597(wifi_dut, ble_sniffer
                 pairing_confirm_pkts.append(i)
         logger().info(f"************pairing_confirm_pkt keys: {pairing_confirm_pkts} ********************")
         logger().info(f"************Number of pairing confirm packets in the capture : {len(pairing_confirm_pkts)} ********************")
-        # assert len(pairing_confirm_pkts) == 400, f"pairing confirm packets missed in the capture"
         unique_elements = set()
         for element in pairing_confirm_pkts:
             if element in unique_elements:
@@ -1087,7 +960,6 @@ def test_ble_smp_pairing_reconnection_dut_as_slave_C667598(wifi_dut, ble_sniffer
                 pairing_random_pkts.append(i)
         logger().info(f"************pairing_random_pkt keys: {pairing_random_pkts} ********************")
         logger().info(f"************Number of pairing random packets in the capture : {len(pairing_random_pkts)} ********************")
-        # assert len(pairing_random_pkts) == 400, f"pairing random packets keys missed in the capture"
         unique_elements = set()
         for element in pairing_random_pkts:
             if element in unique_elements:
@@ -1146,10 +1018,6 @@ def test_ble_smp_pairing_reconnection_dut_as_slave_C667599(wifi_dut,  ble_sniffe
             f"************Number of session key identifer in encryption response packets in the capture : {len(session_key_identifier_data)} ********************")
         logger().info(
             f"************Number of Initialization Vector id in encryption response packets in the capture : {len(Initialization_vector)} ********************")
-        # assert len(
-        #     session_key_identifier_data) == 10, f"session key identifer in encryption response packets keys missed in the capture"
-        # assert len(
-        #     Initialization_vector) == 10, f"Initialization Vector id in encryption response packets keys missed in the capture"
         unique_elements = set()
         unique_elements1 = set()
         for element in session_key_identifier_data:
