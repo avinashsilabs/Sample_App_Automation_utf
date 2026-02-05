@@ -1352,7 +1352,7 @@ def test_http_fw_upgrade_failure_with_non_rps_C19798(http_server, wifi_dut, wifi
     logger().info(f'device ip {device_ip}')
 
     logger().info("performing fw upgrade on dut by removing data in .xls file....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "RS9116.2.5.0.4_corrupted_remove_header.xls")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "text_file.txt")
 
     time.sleep(120)
     with pytest.raises(WlanError) as exc_info:
