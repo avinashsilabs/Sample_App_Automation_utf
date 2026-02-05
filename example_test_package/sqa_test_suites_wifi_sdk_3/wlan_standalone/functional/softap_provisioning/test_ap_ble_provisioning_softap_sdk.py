@@ -229,7 +229,7 @@ class ProvisioningFunctionality(ThreadBase):
                     # ProvisioningFunctionality.ip_dict[f'client{i + 1}_ip'] = self.wifi_clients[i].interfaces.wifi.get_ip_address()
                     # logger().info(f"Client{i + 1}_ip: {ProvisioningFunctionality.ip_dict[f'client{i + 1}_ip']}")
                     rc, stdout, stderr = self.wifi_clients[i].interfaces.wifi.shell.execute(
-                        f"sudo ping -c {ping_count} {'192.168.100.77'}")
+                        f"sudo ping -c {ping_count} -I wlan0 {'192.168.100.76'}")
                     assert rc == 0, f"RASPI-STA{i + 1} failed to ping DUT"
                     logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
                     connected = True
@@ -288,7 +288,7 @@ class ProvisioningFunctionality(ThreadBase):
             beacon_interval="100")
 
     def run_iperf(self):
-        host_ip = self.wifi_client.interfaces.wifi.get_ip_address(network_interface='eth1')
+        host_ip = self.wifi_clients[0].interfaces.wifi.get_ip_address(network_interface='eth1')
         logger().info(f"******** HOST IP {self.host_ip} *******")
 
         self.net_perf_client.interfaces.net_perf.init_server(
@@ -335,6 +335,8 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0, HiddenSSID=0):
     }
     return pytest.mark.config("wifi_dut", wifi=config)
 
+
+
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -352,8 +354,8 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0, HiddenSSID=0):
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_ap_provisioning_wpa2_security_c887642(
-        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, ble_client, ble_dut,
-        wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter):
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter, ble_client, ble_dut):
 
     """Verify Soft AP provisioning in WPA2 security and also check WLAN connection to the third party home AP with the
     received credentials on APUT."""
@@ -367,12 +369,13 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_c887642(
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
 
         ble_obj = ProvisioningFunctionality(
-            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0, ble_client=ble_client, ble_dut=ble_dut,
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
             ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
             wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
 
         ble_obj.ap_mode_start()
+        # ble_obj.ble_start_advertising()
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
@@ -396,7 +399,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_c887642(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.skip("OPEN security issue - 0x10019")
+#@pytest.mark.skip("OPEN security issue - 0x10019")
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -583,7 +586,6 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_psk_63bytes_c887645(
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
-
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -647,7 +649,6 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_ssid_32bytes_c887646(
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
-
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -708,7 +709,6 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_wrong_psk_c887647(
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
-@pytest.mark.skip(reason="need to check for second iteration in loop")
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -987,7 +987,6 @@ def test_wifi_sdk_ap_provisioning_and_iperf_run_in_sta_mode_c887653(
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
-
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -1048,7 +1047,6 @@ def test_wifi_sdk_ap_provisioning_dut_ap_ssid_20bytes_psk_40bytes_c887666(
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
-
 
 @pytest.mark.config(
     "wifi_clients",
@@ -1173,7 +1171,7 @@ def test_wifi_sdk_ap_provisioning_dut_ap_wrong_psk_c887664(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.skip("Skipping due to extended scan not supported in AP mode - SI91X-19675")
+@pytest.mark.skip("Skipping due to extended scan not supported in AP mode - WIFI_BT_UTFHELP-6027")
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -1226,7 +1224,7 @@ def test_wifi_sdk_ap_provisioning_extended_scan_c887660(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.skip("Skipping due to extended scan not supported in AP mode - SI91X-19675")
+# @pytest.mark.skip("Skipping due to extended scan not supported in AP mode - WIFI_BT_UTFHELP-6027")
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -1357,14 +1355,14 @@ def test_wifi_sdk_ap_provisioning_with_hidden_ssid_c887659(
             "security": "WPA2",
             "ssid": "sharma_test",
             "passphrase": "123456789",
-            "channel": "11",
+            "channel": "3",
         },
     }
 )
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
-@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.parametrize("ap_channel", [3])
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_ap_provisioning_client_conn_reconn_c887658(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
@@ -1493,7 +1491,7 @@ def test_wifi_sdk_ap_provisioning_multi_client_connection_c887657(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.parametrize("ap_channel", [11])
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": 'sharma_test', "security": 'WPAWPA2MixedMode', "passphrase": '123456789',
+                    wifi={"ssid": 'Anshul_test', "security": 'WPAWPA2MixedMode', "passphrase": '123456789',
                           "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_ap_provisioning_mixed_security_c887650(
