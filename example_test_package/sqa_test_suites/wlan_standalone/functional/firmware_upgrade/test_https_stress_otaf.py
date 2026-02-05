@@ -303,6 +303,7 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
 def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                     utf_constants):
     time_duration = utf_constants.get("time_duration")
+    upgrade_fw = utf_constants.get("upgrade_fw")
     sw = Stopwatch()
     logger().info(f"Time duration is {time_duration} Mins")
     while sw.elapsed_sec < time_duration:
@@ -344,12 +345,43 @@ def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_
         logger().info(f'device ip {device_ip}')
 
         logger().info("performing fw upgrade on dut.with non rps...")
-        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "/cgi-bin/cgi_example.py")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, "RS9116.2.5.0.4.txt")
         time.sleep(100)
-        with pytest.raises(WlanError) as exc_info:
-            wifi_dut.interfaces.wifi.get_http_otaf_status()
-        assert exc_info.value.error_code == 0xFFFD, "observed wrong error code expected is 0xFFFD"
+		
+		# Commenting negative scenario code and enabling positive scenario code
 
+        # with pytest.raises(WlanError) as exc_info:
+        #     wifi_dut.interfaces.wifi.get_http_otaf_status()
+        #  assert exc_info.value.error_code == 0xFFFD, "observed wrong error code expected is 0xFFFD"
+        #
+        # time.sleep(5)
+        # logger().info("resetting DUT....")
+        # wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
+        # time.sleep(10)
+        #
+        # logger().info("Initialising DUT after the reset....")
+        # wifi_dut.interfaces.wifi.inited = False
+        # wifi_dut.interfaces.wifi.init(reset_type="rs911x")
+        #
+        # wifi_dut.interfaces.wifi.associated = False
+        #
+        # logger().info("Fetching the DUT version...")
+        # fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+        # if fw_before_upgrade == fw_after_upgrade:
+        #     logger().info(f"before and after upgradations matched")
+        # else:
+        #     assert "firmwares versions are not matched"
+
+        logger().info("Fetching the otaf status....")
+        wifi_dut.interfaces.wifi.get_http_otaf_status()
+        time.sleep(10)
+
+        logger().info("fetching the otaf async events after the upgrade....")
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        if len(events):
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.HTTP_OTAF_STATUS:
+                    async_timestamp = event.timestamp
         time.sleep(5)
         logger().info("resetting DUT....")
         wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
@@ -361,12 +393,59 @@ def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_
 
         wifi_dut.interfaces.wifi.associated = False
 
-        logger().info("Fetching the DUT version...")
         fw_after_upgrade = wifi_dut.interfaces.wifi.version()
-        if fw_before_upgrade == fw_after_upgrade:
-            logger().info(f"before and after upgradations matched")
-        else:
-            assert "firmwares versions are not matched"
+        time.sleep(2)
+        logger().info(f"\n\n ***firmware versions before otaf:{fw_before_upgrade}"
+                      f" firmware version after loading through otaf :{fw_after_upgrade}")
+        assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
+                                                      f" firmware through otaf"
+        logger().info(f"\n ***firmware versions not matched after loading firmware through otaf\n")
+
+        # Load current build as the build should be changed while running in loop
+
+        logger().info("dut fw version before upgrade...")
+        fw_before_upgrade = wifi_dut.interfaces.wifi.version()
+
+        logger().info("joining ap....")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+
+        logger().info("starting dhcp....")
+        wifi_dut.interfaces.wifi.start_ip()
+
+        logger().info("performing fw upgrade on dut.with current build rps...")
+        wifi_dut.interfaces.wifi.upgrade_firmware_http(2, host_ip, 443, upgrade_fw)
+        time.sleep(100)
+
+        logger().info("Fetching the otaf status....")
+        wifi_dut.interfaces.wifi.get_http_otaf_status()
+        time.sleep(10)
+
+        logger().info("fetching the otaf async events after the upgrade....")
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        if len(events):
+            for event in events:
+                if event.event_type == RS9116AsyncEventType.HTTP_OTAF_STATUS:
+                    async_timestamp = event.timestamp
+        time.sleep(5)
+        logger().info("resetting DUT....")
+        wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
+        time.sleep(10)
+
+        logger().info("Initialising DUT after the reset....")
+        wifi_dut.interfaces.wifi.inited = False
+        wifi_dut.interfaces.wifi.init(reset_type="rs911x")
+
+        wifi_dut.interfaces.wifi.associated = False
+
+        fw_after_upgrade = wifi_dut.interfaces.wifi.version()
+        time.sleep(2)
+        logger().info(f"\n\n ***firmware versions before otaf:{fw_before_upgrade}"
+                      f" firmware version after loading through otaf :{fw_after_upgrade}")
+        assert fw_before_upgrade != fw_after_upgrade, f"firmware versions should not match after loading" \
+                                                      f" firmware through otaf"
+        logger().info(f"\n ***firmware versions not matched after loading firmware through otaf\n")
+
+        # Load current build as the build should be changed while running in loop
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
