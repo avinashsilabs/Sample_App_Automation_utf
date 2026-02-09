@@ -222,20 +222,22 @@ devices:
                 ssid: "Azeez123"
                 passphrase: '12345678'
                 channel: 11
-                web_ui_port: 8443
+#                web_ui_port: 8443
                 standard: 'bgnax'
                 protected_management_frame: 'Disable'
+                enable_ipv6: True
+#                use_ipv6_web: True
                 #ipv6 configuration
                 connection_type: 'STATIC_IPV6'
-                wan_ipv6_address: "2401:4900:1cb3:3444:3223:3324:1235:1234"
-                wan_ipv6_gateway: "2401:4900:1cb3:3444::1"
+                wan_ipv6_address: "2404:1343:1234:7785:1134:331:243:2221"
+                wan_ipv6_gateway: "2404:1343:1234:7785::1"
                 wan_prefix_length: "64"
-                ipv6_state: "1" #0= "stateless" 1="stateful"
-                lan_ipv6_address: "2401:3500:133c:1341:1134:ffed:13cd:1134"
+                ipv6_state: "0" #0= "stateless" 1="stateful"
+                lan_ipv6_address: "2401:2334:1234:1356:7785:1234:1134:3321"
                 lan_prefix_length: "64"
-                lan_ipv6_prefix: "2401:3500:133c:1341::"
-                lan_ip_pool_start: "2401:3500:133c:1341::1000"
-                lan_ip_pool_end: "2401:3500:133c:1341::2000"
+                lan_ipv6_prefix: "2401:2334:1234:1356::"
+                lan_ip_pool_start: "1000" #2401:2334:1234:1356::
+                lan_ip_pool_end: "2000" #2401:2334:1234:1356::
                 lan_lease_time: "86400"
                 ap_test_ip: '192.168.50.1' #AP LOGIN IP (TEST IP)
                 skip_assertion_failure: True
@@ -909,14 +911,14 @@ devices:
                 default:
                 type: 'wifi.sniffer.tshark'
                 shell: 'local_shell'
-#                interface: 'wlp0s20f3'
-                interface: 'wlx00c0cab57c2a'
+                interface: 'wlp0s20f3'
+#                interface: 'wlx00c0cab57c2a'
             live_capture:
                 host_address: 10.207.18.208
                 type: 'wifi.sniffer.pyshark_live_sniffer'
                 shell: 'local_shell'
-#                interface: 'wlp0s20f3'
-                interface: 'wlx00c0cab57c2a'
+                interface: 'wlp0s20f3'
+#                interface: 'wlx00c0cab57c2a'
 
     saleae_logic_analyzer:
         interfaces:
@@ -1506,7 +1508,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/secure_SiWG917-B.2.14.5.0.0.9.rps'
+        http_url: '/SiWG917-B.2.13.4.1.0.2.rps'
 
         pll_mode: 0
         rf_type: 1
@@ -1726,9 +1728,11 @@ constants:
     wreck_password:
         value: 'test123'
     rps_filename:
-        value:  'secure_SiWG917-B.2.14.5.0.0.9.rps'
+        value:  'SiWG917-B.2.15.5.0.0.12.rps'
     m4_rps_filename:
         value:  'secure_test_agent_soc-http-otaf-fix.rps'
+    upgrade_fw:
+        value: "/SiWG917-B.2.15.5.0.0.12.rps" # SiWG917-B.2.15.5.0.0.12.rps"
     m4_rps_plain:
         value: 'wifi_station_ping_soc.rps'
     combine_rps_filename:
