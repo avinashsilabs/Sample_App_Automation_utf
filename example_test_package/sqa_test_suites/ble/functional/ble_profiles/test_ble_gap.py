@@ -105,15 +105,28 @@ class DutBleScanning():
         ble_client.interfaces.bluetooth.close()
         time.sleep(2)
 
-    def connect_as_master(self, ble_dut, timeout=None, bt_client_address=None, retries: int = 0):
+    def connect_as_master(self, ble_dut, timeout=None, bt_client_address=None, retries: int = 0, expected_event=None):
         connect_time = None
         def connect():
             logger().info(f"Initiating connection this can take up to {timeout} seconds....")
-            connect_time = datetime.datetime.now(
-                ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address,
-                                                         ble_conn_interval_min=200, ble_conn_interval_max=200,
-                                                         ble_supervision_timeout=3000,
-                                                         timeout=timeout))
+            if expected_event:
+                ble_dut.interfaces.bluetooth.ble_connect(
+                    ble_remote_dev_address=bt_client_address,
+                    ble_conn_interval_min=200,
+                    ble_conn_interval_max=200,
+                    ble_supervision_timeout=3000,
+                    expected=expected_event,
+                    timeout=timeout,
+                )
+            else:
+                ble_dut.interfaces.bluetooth.ble_connect(
+                    ble_remote_dev_address=bt_client_address,
+                    ble_conn_interval_min=200,
+                    ble_conn_interval_max=200,
+                    ble_supervision_timeout=3000,
+                    timeout=timeout,
+                )
+            connect_time = datetime.datetime.now()
             logger().info(f"connect_time:  {connect_time}")
             time.sleep(30)
             logger().info(f"\n\n *****Successfully connected with Remote : {bt_client_address}*****\n\n")
@@ -128,7 +141,7 @@ class DutBleScanning():
                     raise Exception("Connection failed with Authentication Error")
                 if "0x4e3e" in str(err):
                     logger().info(f"Found 4e3e exception...! retrying connect command.. {retries}")
-                    connect()
+                    continue  # Changed from connect() to continue to avoid double connection
                 retries -= 1
                 if retries <= 0:
                     if err is None:
@@ -454,7 +467,7 @@ def test_ble_io_cap_displayonly_C19855(ble_dut, ble_client):
     ble_dut.interfaces.bluetooth.ble_stop_scanning()
     time.sleep(2)
     ble_obj = DutBleScanning()
-    connect_time = ble_obj.connect_as_master(ble_dut, timeout=120, bt_client_address=bt_client_address)
+    connect_time = ble_obj.connect_as_master(ble_dut, timeout=120, bt_client_address=bt_client_address, expected_event="RSI_BLE_ENCRYPT_STARTED_EVENT")
     state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"state_int==============>>,  {state_int}")
@@ -518,7 +531,7 @@ def test_ble_io_cap_display_yesno_C19856(ble_dut, ble_client):
     time.sleep(2)
 
     ble_obj = DutBleScanning()
-    connect_time = ble_obj.connect_as_master(ble_dut, timeout=120, bt_client_address=bt_client_address)
+    connect_time = ble_obj.connect_as_master(ble_dut, timeout=120, bt_client_address=bt_client_address, expected_event="RSI_BLE_ENCRYPT_STARTED_EVENT")
 
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
@@ -587,7 +600,7 @@ def test_ble_io_cap_keyboard_only_C19857(ble_dut, ble_client):
     time.sleep(1)
 
     ble_obj = DutBleScanning()
-    connect_time = ble_obj.connect_as_master(ble_dut, timeout=120, bt_client_address=bt_client_address)
+    connect_time = ble_obj.connect_as_master(ble_dut, timeout=120, bt_client_address=bt_client_address, expected_event="RSI_BLE_ENCRYPT_STARTED_EVENT")
 
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)
@@ -656,7 +669,7 @@ def test_ble_io_cap_no_input_output_C19858(ble_dut, ble_client):
         ble_dut.interfaces.bluetooth.ble_stop_scanning()
         time.sleep(2)
 
-        connect_time = ble_obj.connect_as_master(ble_dut, timeout=120, bt_client_address=bt_client_address)
+        connect_time = ble_obj.connect_as_master(ble_dut, timeout=120, bt_client_address=bt_client_address, expected_event="RSI_BLE_ENCRYPT_STARTED_EVENT")
 
         ble_client.interfaces.bluetooth.stop_advertising()
         time.sleep(5)
@@ -1828,7 +1841,7 @@ def test_c19835_c19836_ble_conn_discon_verification(wifi_dut, ble_client):
 
         timeout = 120
         logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-        wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+        wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, expected="RSI_BLE_ENCRYPT_STARTED_EVENT", timeout=timeout)
 
         logger().info("Check connection status of BLE")
         state = wifi_dut.interfaces.wifi.ble_get_device_state()
@@ -2137,8 +2150,9 @@ def test_ble_dut_master_rd_directed_connectable_c19834(ble_dut, ble_client, rs_h
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', "ble_stop_adv"])
 @pytest.mark.end_state("wifi_dut", wifi=[ "ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 def test_ble_dut_slave_128_bit_uuid_c19847(ble_dut, ble_client):
-    set_local_name = "BLE_GAP_TESTPLAN"
+    set_local_name = "DUT_SLAVE_CON"
     logger().info(f"Setting BLE local name {set_local_name}")
+    time.sleep(5)
     ble_dut.interfaces.wifi.bt_set_local_name(set_local_name)
     status = ble_dut.interfaces.wifi.bt_get_local_name()
     logger().info(f"getting the local name : {status}")
