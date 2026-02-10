@@ -355,14 +355,21 @@ class ProvisioningFunctionality(ThreadBase):
         status = self.sl_collections.ping(device_ip=self.device_ip, ping_count=10)
         assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
+        if self.test_case == 887635:
+            for count in range(3):
+                self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=30000)
+                status = self.sl_collections.ping(device_ip=self.device_ip, ping_count=10)
+                assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
+                time.sleep(3)
+
+
     def wifi_connect_powered_off_ap(self):
-        self.wifi_access_point.interfaces.wifi.stop_ap()
-        time.sleep(10)
         self.wifi_dut.interfaces.wifi.join(
-            ssid=self.credentials[0], passphrase=self.credentials[1], security=self.credentials[2],
-            expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
+            ssid=self.wifi_access_point.interfaces.wifi.ssid,
+            passphrase=self.wifi_access_point.interfaces.wifi.passphrase,
+            security='wpa2',
+            expected_status=[SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION, SLStatus.SL_STATUS_SI91X_NO_AP_FOUND])
         logger().info("....Connection Failed due to the third party AP off ....")
-        self.wifi_access_point.interfaces.wifi.start_ap()
 
 
     def transition_mode_connect(self):
@@ -441,7 +448,7 @@ class ProvisioningFunctionality(ThreadBase):
                 beacon_interval="100", beacon_stop=self.beacon_stop)
 
     def run_iperf(self):
-        host_ip = self.wifi_client.interfaces.wifi.get_ip_address(network_interface='eth1')
+        host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"******** HOST IP {host_ip} *******")
 
         self.net_perf_client.interfaces.net_perf.init_server(
@@ -523,7 +530,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0):
         Common method to generate wifi_dut marker for pytest.mark.config decorator
     """
     config = {
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3072}, "ble": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.AccessPoint,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
@@ -879,7 +886,6 @@ def test_wifi_sdk_ble_provision_path_transition_mode_c887629(
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.skip("BLE connection is failing while running in loop (connection-disconnection-reconnection) - WIFI_BT_UTFHELP-5662")
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -960,9 +966,14 @@ def test_wifi_sdk_ble_provision_path_conn_diconn_reconn_c887631(
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
+            coex_mode=Si91xCoexMode.WLANOnly,
             features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
-            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default,
+            bt_features=0,
+            ble_features=0,
+            ble_custom_ext_features=0,
+        )
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
         wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect()
@@ -982,7 +993,6 @@ def test_wifi_sdk_ble_provision_path_conn_diconn_reconn_c887631(
             logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
-@pytest.mark.skip("Skipping due to M4 power save not working currently - SI91X-17844")
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -1001,7 +1011,7 @@ def test_wifi_sdk_ble_provision_path_m4_enabled_c887635(
         ble_obj = ProvisioningFunctionality(
             wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-            sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200)
+            sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200, test_case=887635)
 
         ble_obj.ap_mode_start()
         time.sleep(10)
@@ -1033,6 +1043,7 @@ def test_wifi_sdk_ble_provision_path_m4_enabled_c887635(
             features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
             tcpip_features=Si91xTCPIPFeatureBitMap.Default)
         wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect()
 
@@ -1135,7 +1146,7 @@ def test_wifi_sdk_ble_provision_path_iperf_tcp_tx_c887636(
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_ble_provision_path_connect_access_point_with_abrupt_power_off_c887633(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
-        sniffer_filter):
+        sniffer_filter, switch):
     """Verify the DUT behavior when it is operating in client-only mode and attempts to connect to a third-party home
     Access Point (AP) that abruptly powered off by the user"""
 
@@ -1191,15 +1202,24 @@ def test_wifi_sdk_ble_provision_path_connect_access_point_with_abrupt_power_off_
                 oper_mode=Si91xOperatingMode.WiFiClient,
                 features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
                 tcpip_features=Si91xTCPIPFeatureBitMap.Default)
-            wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+            wifi_dut.interfaces.wifi.is_sl_net_enabled = False
             wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
             wifi_dut.interfaces.wifi.scan()
             if count == 0:
+                logger().info("Turning off the AP")
+                switch.interfaces.pdu_switch.turn_off(delay=20)
+                logger().info("Successfully powered off AP")
+                time.sleep(60)
                 ble_obj.wifi_connect_powered_off_ap()
+
+                logger().info("Again turning on the AP")
+                switch.interfaces.pdu_switch.turn_on(delay=100)
             else:
                 ble_obj.wifi_connect()
 
-            wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+            wifi_dut.interfaces.wifi.deinit()
+            wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info("Stop the Sniffer")
 
             if count == 0:
                 ble_client.interfaces.bluetooth.close()
@@ -1210,17 +1230,28 @@ def test_wifi_sdk_ble_provision_path_connect_access_point_with_abrupt_power_off_
                     tcpip_features=Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server |
                                    Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
                     ext_custom_features=Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
-                                        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid)
+                                        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+                    ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.Default,
+                    config_features=Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+                                    | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                    bt_features=Si91xBTFeatureBitMap.Default,
+                    ble_features=Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+                    ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                            Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                            Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                            Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                            Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST
+                )
+                wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+                wifi_dut.interfaces.wifi.init(mode="ap", config_required=False)
 
-                wifi_dut.interfaces.wifi.sl_net_init(mode="ap")
 
-            wifi_sniffer.interfaces.capture.stop_capture()
-            logger().info("Stop the Sniffer")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         ble_client.interfaces.bluetooth.close()
+        switch.interfaces.pdu_switch.turn_on(delay=100)
         try:
             if ap_started:
                 logger().warning("AP mode active during exception, stopping it...")
@@ -1280,7 +1311,7 @@ def test_wifi_sdk_alternate_provisioning_path_c887637(
         wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect()
-        wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+        ble_obj.sl_net_deinit()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
@@ -1294,12 +1325,14 @@ def test_wifi_sdk_alternate_provisioning_path_c887637(
             ext_custom_features=Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
                                 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid)
 
-        wifi_dut.interfaces.wifi.sl_net_init(mode="ap")
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+        wifi_dut.interfaces.wifi.init(mode="ap", config_required=False)
 
         logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
 
+        ble_obj.ble_init()
         ble_obj.ap_mode_start()
         time.sleep(10)
         ble_obj.check_beacon()
@@ -1332,6 +1365,7 @@ def test_wifi_sdk_alternate_provisioning_path_c887637(
         wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect()
+        ble_obj.sl_net_deinit()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
