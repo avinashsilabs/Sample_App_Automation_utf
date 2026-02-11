@@ -41,9 +41,10 @@ pipeline {
                                     set GIT_SSH_COMMAND=ssh -i "%MWLABUSER_JENKINS_SSH%" -o StrictHostKeyChecking=no
                                     git clone --depth 1 -b %PYTHON3_TAG% ssh://git@stash.silabs.com/toolchain_external/python_3_9_12_win64.git %PYTHON3_HOME%
                                 )
-                                if not EXIST venv\\pyvenv.cfg (
-                                   %PYTHON3%  -m venv venv
-                                )
+                                
+                                if EXIST venv rd /s /q venv
+                                %PYTHON3% -m venv venv
+                                
                                 call workspace_setup.bat skip_gui
                             """
                     }
