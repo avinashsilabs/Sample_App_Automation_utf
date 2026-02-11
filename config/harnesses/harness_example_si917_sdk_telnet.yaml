@@ -316,7 +316,11 @@ devices:
     raspi_wifi:
         interfaces:
             linux_shell:
-                type: 'shell.shell'
+                type: 'shell.ssh_shell'
+                remote: '192.168.150.3'
+                username: pi
+                password: raspberry
+                use_paramiko_expect: false
             mqtt:
                 type: 'mqtt.client.rpc_client'
                 forward_to: 'secondary_raspi:mqtt'
@@ -333,8 +337,8 @@ devices:
                 ssid: 'TESTTESTTEST'
                 passphrase: 'thisisatestnetwork'
                 supports: [ 'wifi_ap', 'wifi_client' ]
-                interface: 'eth1' #'eth3' #'wlan0' #'eth1'
-                v6_interface: 'eth1'
+                interface: 'eth0' #'eth3' #'wlan0' #'eth1'
+                #v6_interface: 'eth1'
                 standard: 'n'
                 ip_address: '192.168.0.1'
                 region: 'Japan'
@@ -352,7 +356,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -431,7 +435,7 @@ devices:
                 docker_host:
                     type: 'docker'
                     ip_address: '192.168.150.3'
-                    image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                    image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                     username: pi
                     password: 'raspberry'
                     skip_rabbitmq_check: True
@@ -466,7 +470,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -535,7 +539,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '10.207.18.146'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -596,7 +600,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '10.207.18.55'       #configure secondary Rpi rd_1 IP address
-                image: 'utfsilabs/rpi_ubuntu_secondary:2024_04_17'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -629,7 +633,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -699,7 +703,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -734,111 +738,205 @@ devices:
    
     raspi_mosquitto_ipv6:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             mqtt:
-                type: 'mqtt.server.mosquitto_linux'
-                shell: 'linux_shell'
-                server_listen_address: '0:0:0:0:0:0:0:0'
-                port: 1883
-                interface: 'eth1'
-                tls_enabled: false
-                ip_version: 6
+                type: 'mqtt.server.rpc_client'
+                forward_to: 'raspi_mosquitto_ipv6:mqtt'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                raspi_mosquitto_ipv6:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        mqtt:
+                            type: 'mqtt.server.mosquitto_linux'
+                            shell: 'linux_shell'
+                            server_listen_address: '0:0:0:0:0:0:0:0'
+                            port: 1883
+                            interface: 'eth0'
+                            tls_enabled: false
+                            ip_version: 6
+
+            defaults: { }
 
     # this represents an MQTT broker running on the raspberry pi on port 1883 with authentication enabled
     raspi_mosquitto_auth:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             mqtt:
-                type: 'mqtt.server.mosquitto_linux'
-                shell: 'linux_shell'
-                # (optional) listen address for broker (defaults to 0.0.0.0)
-                server_listen_address: '0.0.0.0'
-                # (optional) port on which the broker is listening (defaults to 1883)
-                port: 1883
-                # (required) network interface to which the broker is bound
-                interface: 'eth1'
-                # (optional) username and password credentials for authentication to the broker
-                #            Defaults to authentication disabled
-                username: 'testuser'
-                password: 'testpassword'
-                accounts:
-                    - username: 'testuser1'
-                      password: 'password1'
-                    - username: 'testuser2'
-                      password: 'password2'
-                    - username: 'testuser3'
-                      password: 'password3'
-                # (optional) controls whether tls is enabled. defaults to false
-                tls_enabled: false
+                type: 'mqtt.server.rpc_client'
+                forward_to: 'raspi_mosquitto_auth:mqtt'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                raspi_mosquitto_auth:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        mqtt:
+                            type: 'mqtt.server.mosquitto_linux'
+                            shell: 'linux_shell'
+                            # (optional) listen address for broker (defaults to 0.0.0.0)
+                            server_listen_address: '0.0.0.0'
+                            # (optional) port on which the broker is listening (defaults to 1883)
+                            port: 1883
+                            # (required) network interface to which the broker is bound
+                            interface: 'eth0'
+                            # (optional) username and password credentials for authentication to the broker
+                            #            Defaults to authentication disabled
+                            username: 'testuser'
+                            password: 'testpassword'
+                            accounts:
+                                - username: 'testuser1'
+                                  password: 'password1'
+                                - username: 'testuser2'
+                                  password: 'password2'
+                                - username: 'testuser3'
+                                  password: 'password3'
+                            # (optional) controls whether tls is enabled. defaults to false
+                            tls_enabled: false
+
+            defaults: { }
 
     # this represents an MQTT broker running on the raspberry pi on port 8883 with TLS and authentication enabled
     raspi_mosquitto_tls:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             mqtt:
-                type: 'mqtt.server.mosquitto_linux'
-                shell: 'linux_shell'
-                server_listen_address: '0.0.0.0'
-                # port must be set to 8883 for TLS to be enabled
-                port: 8883
-                interface: 'eth1'
-                username: 'testuser'
-                password: 'testpassword'
-                tls_enabled: true
-                # If TLS is enabled, the properties below must be specified and contain the names
-                # of files within the utils/tls_certificates directory containing the TLS private key,
-                # certificate, and CA certificate chain
-                tls_key: 'mosquitto-utf.silabs.com.key.pem'
-                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
-                tls_ca_chain: 'ca-chain.cert.pem'
+                type: 'mqtt.server.rpc_client'
+                forward_to: 'raspi_mosquitto_tls:mqtt'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                raspi_mosquitto_tls:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        mqtt:
+                            type: 'mqtt.server.mosquitto_linux'
+                            shell: 'linux_shell'
+                            server_listen_address: '0.0.0.0'
+                            # port must be set to 8883 for TLS to be enabled
+                            port: 8883
+                            interface: 'eth0'
+                            username: 'testuser'
+                            password: 'testpassword'
+                            tls_enabled: true
+                            # If TLS is enabled, the properties below must be specified and contain the names
+                            # of files within the utils/tls_certificates directory containing the TLS private key,
+                            # certificate, and CA certificate chain
+                            tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                            tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                            tls_ca_chain: 'ca-chain.cert.pem'
+
+            defaults: { }
 
 
     raspi_mosquitto_tls_ipv6:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             mqtt:
-                type: 'mqtt.server.mosquitto_linux'
-                shell: 'linux_shell'
-#                server_listen_address: '0.0.0.0'
-                server_listen_address: "::"
-                # port must be set to 8883 for TLS to be enabled
-                port: 8883
-                interface: 'eth1'
-                username: 'testuser'
-                password: 'testpassword'
-                tls_enabled: true
-                # If TLS is enabled, the properties below must be specified and contain the names
-                # of files within the utils/tls_certificates directory containing the TLS private key,
-                # certificate, and CA certificate chain
-                tls_key: 'mosquitto-utf.silabs.com.key.pem'
-                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
-                tls_ca_chain: 'ca-chain.cert.pem'
-                ip_version: 6
+                type: 'mqtt.server.rpc_client'
+                forward_to: 'raspi_mosquitto_tls_ipv6:mqtt'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                raspi_mosquitto_tls_ipv6:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        mqtt:
+                            type: 'mqtt.server.mosquitto_linux'
+                            shell: 'linux_shell'
+                            server_listen_address: "::"
+                            # port must be set to 8883 for TLS to be enabled
+                            port: 8883
+                            interface: 'eth0'
+                            username: 'testuser'
+                            password: 'testpassword'
+                            tls_enabled: true
+                            # If TLS is enabled, the properties below must be specified and contain the names
+                            # of files within the utils/tls_certificates directory containing the TLS private key,
+                            # certificate, and CA certificate chain
+                            tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                            tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                            tls_ca_chain: 'ca-chain.cert.pem'
+                            ip_version: 6
+
+            defaults: { }
 
     raspi_mosquitto_tls_ecdsa:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             mqtt:
-                type: 'mqtt.server.mosquitto_linux'
-                shell: 'linux_shell'
-                server_listen_address: '0.0.0.0'
-                # port must be set to 8883 for TLS to be enabled
-                port: 8883
-                interface: 'eth1'
-                username: 'testuser'
-                password: 'testpassword'
-                tls_enabled: true
-                # If TLS is enabled, the properties below must be specified and contain the names
-                # of files within the utils/tls_certificates directory containing the TLS private key,
-                # certificate, and CA certificate chain
-                tls_key: 'server_ecdsa.key'
-                tls_certificate: 'server_ecdsa.crt'
-                tls_ca_chain: 'ca_ecdsa.crt'
+                type: 'mqtt.server.rpc_client'
+                forward_to: 'raspi_mosquitto_tls_ecdsa:mqtt'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                raspi_mosquitto_tls_ecdsa:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        mqtt:
+                            type: 'mqtt.server.mosquitto_linux'
+                            shell: 'linux_shell'
+                            server_listen_address: '0.0.0.0'
+                            # port must be set to 8883 for TLS to be enabled
+                            port: 8883
+                            interface: 'eth0'
+                            username: 'testuser'
+                            password: 'testpassword'
+                            tls_enabled: true
+                            # If TLS is enabled, the properties below must be specified and contain the names
+                            # of files within the utils/tls_certificates directory containing the TLS private key,
+                            # certificate, and CA certificate chain
+                            tls_key: 'server_ecdsa.key'
+                            tls_certificate: 'server_ecdsa.crt'
+                            tls_ca_chain: 'ca_ecdsa.crt'
+
+            defaults: { }
     # this represents a statically-configured MQTT broker
     static_mqtt_broker:
         interfaces:
@@ -864,7 +962,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -893,31 +991,69 @@ devices:
 
     raspi_lighttpd_tls:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             http:
-                type: 'http.server.http_linux'
-                shell: 'linux_shell'
-                port: 443
-                interface: 'eth1'
-                tls_enabled: true
-                tls_key: 'mosquitto-utf.silabs.com.key.pem'
-                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
-                tls_ca_chain: 'ca-chain.cert.pem'
+                type: 'http.server.rpc_client'
+                forward_to: 'raspi_http_server_tls:http'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                raspi_http_server_tls:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        http:
+                            type: 'http.server.http_linux'
+                            shell: 'linux_shell'
+                            port: 443
+                            interface: 'eth0'
+                            tls_enabled: true
+                            tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                            tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+                            tls_ca_chain: 'ca-chain.cert.pem'
+
+            defaults: { }
 
     raspi_lighttpd_tls_dut:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             http:
-                type: 'http.server.http_linux'
-                shell: 'linux_shell'
-                port: 443
-                interface: 'eth1'
-                tls_enabled: true
-                tls_key: 'server-key.pem'
-                tls_certificate: 'server-cert.pem'
-                tls_ca_chain: 'ca-cert.pem'
+                type: 'http.server.rpc_client'
+                forward_to: 'raspi_http_server_tls_dut:http'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                raspi_http_server_tls_dut:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        http:
+                            type: 'http.server.http_linux'
+                            shell: 'linux_shell'
+                            port: 443
+                            interface: 'eth0'
+                            tls_enabled: true
+                            tls_key: 'server-key.pem'
+                            tls_certificate: 'server-cert.pem'
+                            tls_ca_chain: 'ca-cert.pem'
+
+            defaults: { }
 
     python_http_server:
         interfaces:
@@ -926,7 +1062,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -960,7 +1096,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -1073,7 +1209,7 @@ devices:
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005845::0::INSTR'
                 window_state: 'Show'
                 # Provide Raspi IP of test bed as host_ip in case of local test execution 
-                host_ip: '10.207.16.82'
+                raspi_ip: '192.168.150.3'
             
 
     python_aws_iot_thing:
@@ -1178,7 +1314,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -1233,7 +1369,7 @@ devices:
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -1282,24 +1418,6 @@ devices:
                 passphrase: 'thisisatestnetwork'
                 firmware_file_path: '/app/manifest/RS9116W.2.6.0.17.rps'
 
-    raspi_iperf:
-        interfaces:
-            net_perf:
-                type: 'iperf'
-                # to zip all the iperf output files
-                zip_results: 'Y'
-
-    raspi_iperf2:
-        interfaces:
-            net_perf:
-                type: 'iperf'
-                # to zip all the iperf output files
-                zip_results: 'Y'
-                host:
-                    TCP:
-                        port: 5201
-                    UDP:
-                        port: 5202
 
     sniffer_filter:
         interfaces:
@@ -1358,39 +1476,75 @@ devices:
 
     raspi_radius_server:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             radius_server:
-                type: 'radius_server.freeradius.freeradius_linux'
-                shell: 'linux_shell'
-                ap_ip_address: '192.168.50.1/24'
-                ap_secret: '12345678'
-                username: 'user1'
-                password: '12345678'
-                tls_min_version: '1.0'
-                tls_max_version: '1.2'
-                private_key_file: 'wifi-user.pem'
-                certificate_file: 'wifi-user.pem'
-                ca_file: 'wifi-user.pem'
-#                private_key_password: 12345678
+                type: 'radius_server.rpc_client'
+                forward_to: 'raspi_radius_server:radius_server'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                raspi_radius_server:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        radius_server:
+                            type: 'radius_server.freeradius.freeradius_linux'
+                            shell: 'linux_shell'
+                            ap_ip_address: '192.168.150.1/24'
+                            ap_secret: '12345678'
+                            username: 'user1'
+                            password: '12345678'
+                            tls_min_version: '1.0'
+                            tls_max_version: '1.2'
+                            private_key_file: 'wifi-user.pem'
+                            certificate_file: 'wifi-user.pem'
+                            ca_file: 'wifi-user.pem'
+            defaults: { }
+
 
     raspi_radius_server_v2:
         interfaces:
-            linux_shell:
-                type: 'shell.shell'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             radius_server:
-                type: 'radius_server.freeradius.freeradius_v3_2_linux'
-                shell: 'linux_shell'
-                ap_ip_address: '192.168.50.1/24'
-                ap_secret: '12345678'
-                username: 'user1'
-                password: '12345678'
-                tls_min_version: '1.0'
-                tls_max_version: '1.2'
-                private_key_file: 'wifi-user.pem'
-                certificate_file: 'wifi-user.pem'
-                ca_file: 'wifi-user.pem'
-                #private_key_password: 12345678
+                type: 'radius_server.rpc_client'
+                forward_to: 'raspi_radius_server_v2:radius_server'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                raspi_radius_server_v2:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        radius_server:
+                            type: 'radius_server.freeradius.freeradius_linux'
+                            shell: 'linux_shell'
+                            ap_ip_address: '192.168.50.1/24'
+                            ap_secret: '12345678'
+                            username: 'user1'
+                            password: '12345678'
+                            tls_min_version: '1.0'
+                            tls_max_version: '1.2'
+                            private_key_file: 'wifi-user.pem'
+                            certificate_file: 'wifi-user.pem'
+                            ca_file: 'wifi-user.pem'
+                            private_key_password: 12345678
+            defaults: { }
 
     static_radius_server:
         interfaces:
@@ -1433,10 +1587,39 @@ devices:
 
     openssl_socket:
         interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.3'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             server:
-                type: 'openssl.server'
+                type: 'openssl.rpc_client'
+                forward_to: 'openssl_socket:server'
+                host: 'docker_host'
             client:
-                type: 'openssl.client'
+                type: 'openssl.rpc_client'
+                forward_to: 'openssl_socket:client'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                openssl_socket:
+                    interfaces:
+                        server:
+                            type: 'openssl.server'
+                        client:
+                            type: 'openssl.client'
+            defaults: 
+                openssl_config:
+                    certfile: "mosquitto-utf.silabs.com.cert.pem"
+                    keyfile: "mosquitto-utf.silabs.com.key.pem"
+                    port: 5001
+                    host: "localhost"
+                    tls_version: "-tls1_2"
+                    http: false
 
     nrf_52840_sniffer:
         interfaces:
@@ -1567,14 +1750,14 @@ devices:
                 type: 'mqtt.client.paho_client'
                 disable_certificate_verification: True
 
-    secondary_raspi_net_perf:
+    raspi_iperf:
         interfaces:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
                 type: 'docker'
                 ip_address: '192.168.150.3'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2025_11_27'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
                 skip_rabbitmq_check: True
@@ -1680,6 +1863,24 @@ devices:
                             region: 'Japan'
             defaults: { }
 
+    # This represents the frontline sniffer configuration
+    frontline_sniffer:
+        interfaces:
+            wcf_file_transfer_service:
+                type: 'rem_mgmt.win_wcf'
+                wsdl: 'http://10.207.22.26:8734/Design_Time_Addresses/utf_wcf_service_library/FileTransferService/?wsdl'
+                timeout: 120000
+            sniffer:
+                type: 'bluetooth.sniffer.frontline.teledyne_lecroy_wireless_protocol_suite'
+                file_transfer_service: 'wcf_file_transfer_service'
+                host_ip: '10.207.22.26'
+                port: 22901
+                max_to_read: 1000
+                remote_capture_file_path: 'C:\\FTScapture'
+                personality_key: 'X500'
+                wps_server_path: 'C:\\Program Files (x86)\\Teledyne LeCroy Wireless\\Wireless Protocol Suite 3.10\\Executables\\Core'
+                raspi_ip: '192.168.150.3'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1747,7 +1948,7 @@ defaults:
     power_meters:
         - 'nrf_ppk2_device'
 
-    ble_client: 'raspi_ble_client'
+    ble_client: 'secondary_raspi_ble_client'
 
     ble_clients:
         - 'raspi_ble_client'
@@ -1821,7 +2022,7 @@ defaults:
 
     net_perf_server: 'secondary_raspi_iperf'
 
-    net_perf_client: 'secondary_raspi_net_perf'
+    net_perf_client: 'raspi_iperf'
 
     net_perf_clients:
         - 'raspi_iperf'
@@ -2001,6 +2202,10 @@ start_state:
 #        wifi: 'ap_disabled'
 
 constants:
+    ping_host_name:
+        value: '192.168.150.3'
+    ble_log_host_name:
+        value: '192.168.150.3'
     time_duration:
         value: 5
     long_duration:
