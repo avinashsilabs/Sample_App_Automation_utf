@@ -934,7 +934,7 @@ def test_wlan_ble_adv_128_with_ping_ul_dl_c401807(wifi_sniffer, wifi_access_poin
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     time.sleep(2)
     wlan_obj = WifiJoinThread(ble_clients=ble_clients, bt_dut=bt_dut, wifi_client=wifi_client)
-    wlan_obj.ble_advertise_128()
+    wlan_obj.ble_adv_128()
     dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                    wifi_access_point=wifi_access_point,
                                                    associated=wifi_dut.interfaces.wifi.associated,
@@ -986,7 +986,7 @@ def test_wlan_ble_conn_128_with_ping_ul_dl_c401808(wifi_sniffer, wifi_access_poi
     wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
     time.sleep(2)
     wlan_obj = WifiJoinThread(ble_client=ble_clients, bt_dut=bt_dut, wifi_client=wifi_client, utf_constants=utf_constants)
-    wlan_obj.ble_connection_128()
+    wlan_obj.ble_adv_128()
     dut_addr = sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
                                                    wifi_access_point=wifi_access_point,
                                                    associated=wifi_dut.interfaces.wifi.associated,
