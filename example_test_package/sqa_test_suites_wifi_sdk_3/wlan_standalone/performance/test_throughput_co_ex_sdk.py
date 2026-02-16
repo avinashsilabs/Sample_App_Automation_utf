@@ -240,7 +240,7 @@ class WifiJoinThread(ThreadBase):
                                                                  retry_count=3, ping_after_power_save=False,
                                                                  ping_count=self.ping_count, power_save=False)
 
-        if self.test_case_no == 207510 or self.test_case_no == 20751 or self.test_case_no == 20748 or \
+        if self.test_case_no == 20750 or self.test_case_no == 20751 or self.test_case_no == 20748 or \
                 self.test_case_no == 20749:
             logger().info(f"BLE Data Transfer is going to start")
             ble_data = ble_notify(self.wifi_dut, self.ble_client_address)
@@ -1494,7 +1494,7 @@ def test_wlan_ble_conn_data_tcp_tx_c401619(wifi_sniffer, wifi_access_point, wifi
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20740,
+                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20750,
                               ble_dut=ble_dut, setting_phy=304288)
     try:
         wlan_obj.start()
@@ -1536,7 +1536,7 @@ def test_wlan_ble_conn_data_tcp_rx_c401620(wifi_sniffer, wifi_access_point, wifi
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20741,
+                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20751,
                               ble_dut=ble_dut, setting_phy=304288)
     try:
         wlan_obj.start()
@@ -1578,7 +1578,7 @@ def test_wlan_ble_conn_data_udp_tx_c401621(wifi_sniffer, wifi_access_point, wifi
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20738,
+                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20748,
                               ble_dut=ble_dut, setting_phy=304288)
     try:
         wlan_obj.start()
@@ -1620,7 +1620,7 @@ def test_wlan_ble_conn_data_udp_rx_c401622(wifi_sniffer, wifi_access_point, wifi
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20739,
+                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20749,
                               ble_dut=ble_dut, setting_phy=304288)
     try:
         wlan_obj.start()
@@ -1660,7 +1660,7 @@ def test_wlan_ble_conn_data_with_ssl_tx_ax_c401623(wifi_sniffer, wifi_access_poi
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, sl_collections=sl_collections,
                               utf_constants=utf_constants, ping_count=ping_count, ble_client=ble_client,
-                              bt_dut=bt_dut, iteration_count=iter_count, traffic_type="TX", test_case_no=20740,
+                              bt_dut=bt_dut, iteration_count=iter_count, traffic_type="TX", test_case_no=20750,
                               ble_data_transfer=True, ssl_server=ssl_server, ssl_data_transfer=True, ble_dut=ble_dut,
                               setting_phy=304288)
     try:
@@ -1702,7 +1702,7 @@ def test_wlan_ble_conn_data_with_ssl_rx_ax_c401624(wifi_sniffer, wifi_access_poi
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, sl_collections=sl_collections,
                               utf_constants=utf_constants, ping_count=ping_count, ble_client=ble_client, bt_dut=bt_dut,
-                              iteration_count=iter_count, traffic_type="RX", test_case_no=20740, ssl_server=ssl_server,
+                              iteration_count=iter_count, traffic_type="RX", test_case_no=20750, ssl_server=ssl_server,
                               ssl_data_transfer=True, ble_data_transfer=True, ble_dut=ble_dut, setting_phy=304288
                               )
     try:
@@ -1745,7 +1745,7 @@ def test_wlan_ble_conn_data_phy2_tcp_tx_c401625(wifi_sniffer, wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20740,
+                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20750,
                               ble_dut=ble_dut, setting_phy=304289)
     try:
         wlan_obj.start()
@@ -1787,7 +1787,7 @@ def test_wlan_ble_conn_data_phy2_tcp_rx_c401626(wifi_sniffer, wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20741,
+                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20751,
                               ble_dut=ble_dut, setting_phy=304289)
     try:
         wlan_obj.start()
@@ -1829,7 +1829,7 @@ def test_wlan_ble_conn_data_phy2_udp_tx_c401627(wifi_sniffer, wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20738,
+                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="TX", test_case_no=20748,
                               ble_dut=ble_dut, setting_phy=304289)
     try:
         wlan_obj.start()
@@ -1871,7 +1871,7 @@ def test_wlan_ble_conn_data_phy2_udp_rx_c401628(wifi_sniffer, wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, net_perf_client=net_perf_client,
                               protocol=protocol, sl_collections=sl_collections, utf_constants=utf_constants,
                               ping_count=ping_count, data_transfer=True, ble_client=ble_client, bt_dut=bt_dut,
-                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20739,
+                              ble_data_transfer=True, iteration_count=iter_count, traffic_type="RX", test_case_no=20749,
                               ble_dut=ble_dut, setting_phy=304289)
     try:
         wlan_obj.start()
@@ -1911,7 +1911,7 @@ def test_wlan_ble_conn_data_phy2_ssl_tx_ax_c401629(wifi_sniffer, wifi_access_poi
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, sl_collections=sl_collections,
                               utf_constants=utf_constants, ping_count=ping_count, ble_client=ble_client,
-                              bt_dut=bt_dut, iteration_count=iter_count, traffic_type="TX", test_case_no=20740,
+                              bt_dut=bt_dut, iteration_count=iter_count, traffic_type="TX", test_case_no=20750,
                               ble_data_transfer=True, ssl_server=ssl_server, ssl_data_transfer=True, ble_dut=ble_dut,
                               setting_phy=304289)
     try:
@@ -1953,7 +1953,7 @@ def test_wlan_ble_conn_data_phy2_ssl_rx_ax_c401630(wifi_sniffer, wifi_access_poi
     wlan_obj = WifiJoinThread(wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               testcase=testcase, wifi_client=wifi_client, sl_collections=sl_collections,
                               utf_constants=utf_constants, ping_count=ping_count, ble_client=ble_client, bt_dut=bt_dut,
-                              iteration_count=iter_count, traffic_type="RX", test_case_no=20740, ssl_server=ssl_server,
+                              iteration_count=iter_count, traffic_type="RX", test_case_no=20750, ssl_server=ssl_server,
                               ssl_data_transfer=True, ble_data_transfer=True, ble_dut=ble_dut, setting_phy=304289
                               )
     try:
