@@ -359,7 +359,7 @@ def test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917(wifi_dut, b
         ble_client2 = ble_clients[1]
         iter_count = utf_constants.get('iter_count')
         logger().info("initiating ble in dut")
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
         assert bt_dut_address, "failed to initiate ble in dut"
         for i in range(0, iter_count):
             ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, bt_dut_address=bt_dut_address,
@@ -379,6 +379,8 @@ def test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917(wifi_dut, b
             time.sleep(3)
             wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
             time.sleep(5)
+            ble_client1.interfaces.bluetooth.remove_device(bt_dut_address)
+            ble_client2.interfaces.bluetooth.remove_device(bt_dut_address)
             ble_client1.interfaces.bluetooth.close()
             ble_client2.interfaces.bluetooth.close()
             time.sleep(10)
@@ -396,7 +398,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_c19918(
         assert len(ble_clients) >= 2
         ble_client1 = ble_clients[0]
         ble_client2 = ble_clients[1]
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
         assert bt_dut_address, "failed to initiate ble in dut"
         ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1,  bt_dut_address=bt_dut_address, ble_adv="ble_adv_powersave",
                                    ble_adv_connection=False, adv_and_scan=True)
@@ -419,6 +421,8 @@ def test_ble_sdk_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_c19918(
         ble_obj.check_device_state_on_dut()
         ble_client1.interfaces.bluetooth.disconnect(ble_obj.bt_dut_address)
         wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
+        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address)
+        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
 
@@ -434,7 +438,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_c19919(
         assert len(ble_clients) >= 2
         ble_client1 = ble_clients[0]
         ble_client2 = ble_clients[1]
-        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start()
         assert bt_dut_address, "failed to initiate ble in dut"
         ble_obj = BleFunctionality(wifi_dut=wifi_dut, ble_clients=ble_client1, bt_dut_address=bt_dut_address, ble_adv="ble_adv_powersave",
                                    ble_adv_connection=False, adv_and_scan=True)
@@ -456,6 +460,8 @@ def test_ble_sdk_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_c19919(
         ble_obj.check_device_state_on_dut()
         ble_client1.interfaces.bluetooth.disconnect(ble_obj.bt_dut_address)
         wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
+        ble_client1.interfaces.bluetooth.remove_device(bt_dut_address)
+        ble_client2.interfaces.bluetooth.remove_device(bt_dut_address)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
 
