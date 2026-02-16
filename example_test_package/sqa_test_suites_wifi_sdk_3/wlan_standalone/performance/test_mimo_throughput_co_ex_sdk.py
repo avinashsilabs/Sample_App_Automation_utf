@@ -814,8 +814,7 @@ def test_co_ex_mimo_with_ble_adv_rtt_tcp_rx_C401863(wifi_sniffer, wifi_access_po
 def test_co_ex_mimo_with_ble_adv_rtt_udp_rx_C401864(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
+    logger().info("Enabling the **** RTT 40 Command ****")
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
