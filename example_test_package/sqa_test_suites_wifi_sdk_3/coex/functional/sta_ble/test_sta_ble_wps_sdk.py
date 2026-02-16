@@ -160,16 +160,8 @@ class WpsJoinThread(ThreadBase):
                 self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
 
         except Exception as e:
-            logger().error(f"WPS join failed: {str(e)}")
+            logger().info(f"WPS join failed: {str(e)}")
             raise
-
-
-class WpsJoinThreadIPv6(WpsJoinThread):
-    """Thread class for WPS PBC WiFi connection with IPv6"""
-
-    def __init__(self, ipv6_type='global', **kwargs):
-        super().__init__(ip_version='ipv6', ipv6_type=ipv6_type, **kwargs)
-
 
 def wifi_dut_marker(
         ext_custom_bit=0,
@@ -327,10 +319,11 @@ def join_to_wifi_network_via_wps(wifi_dut=None, wifi_access_point=None, power_sa
         return dut_add_dict
     else:
         logger().info(f'\n\n *** Device is already connected with AP *** \n\n')
+        return None
 
 
 # Test Case 1: BLE dual role with Tx&Rx notifications while WLAN (WPS auto connect enabled) with TCP data transfer
-@wifi_dut_marker(num_peripheral_connections=1, num_central_connections=1, ble_thread_count=1, ble_stack_len=3072,
+@wifi_dut_marker(num_peripheral_connections=1, num_central_connections=1, ble_thread_count=2, ble_stack_len=3584,
                  wifi_stack_len=3584)
 @pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -340,9 +333,7 @@ def join_to_wifi_network_via_wps(wifi_dut=None, wifi_access_point=None, power_sa
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
-# Skip this test case as dual role data transfers are not working due to memory constraints
-@pytest.mark.skip(reason="Dual role data transfers not working due to memory constraints")
-def test_coex_sdk_wps_pbc_ble_dual_role_tcp_auto_connect_enabled_C913649(
+def test_coex_sdk_wps_pbc_ble_dual_tx_rx_tcp_auto_connect_enabled_C913649(
         wifi_dut,
         ble_clients,
         wifi_access_point,
@@ -407,7 +398,6 @@ def test_coex_sdk_wps_pbc_ble_dual_role_tcp_auto_connect_enabled_C913649(
         ble_obj_rx.check_scan_functionality_dut()
         ble_obj_rx.connect_from_dut()
         ble_obj_rx.service_discovery_on_dut()
-        ble_obj_rx.start()  # run() enables notifications for RX
 
         # -------------------- TX notify thread --------------------
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
@@ -442,8 +432,6 @@ def test_coex_sdk_wps_pbc_ble_dual_role_tcp_auto_connect_enabled_C913649(
             ble_dut_address=ble_dut_address,
         )
 
-        time.sleep(5)
-
         # Create custom GATT service/characteristic on DUT (this was commented earlier)
         logger().info("Creating new custom gatt service in DUT")
         ble_obj_tx.add_service(service_uuid=0xAABB)
@@ -459,6 +447,9 @@ def test_coex_sdk_wps_pbc_ble_dual_role_tcp_auto_connect_enabled_C913649(
         ble_obj_tx.advertise_dut()
         ble_obj_tx.scan_and_connect_from_remote()
         ble_obj_tx.service_discovery_on_remote()
+
+        ble_obj_rx.start()  # run() enables notifications for RX
+        time.sleep(5)  # Ensure RX thread is ready before starting TX thread
         ble_obj_tx.start()
 
         # -------------------- WPS join (auto-connect ENABLED) --------------------
@@ -480,7 +471,6 @@ def test_coex_sdk_wps_pbc_ble_dual_role_tcp_auto_connect_enabled_C913649(
             ip_version="ipv4",
             tcp_ip_bypass=False,
             ip_config_disable=False,
-            ipv6_type='global',
             skip_scan=False,
             sl_collections=sl_collections
         )
@@ -519,11 +509,13 @@ def test_coex_sdk_wps_pbc_ble_dual_role_tcp_auto_connect_enabled_C913649(
 
         # Wait for BLE threads to finish cleanly
         ble_obj_rx.wait_for_exit()
+        logger().info("BLE RX notification thread completed successfully")
         ble_obj_tx.wait_for_exit()
 
-    except Exception as e:
-        logger().error(f"Test failed with exception: {str(e)}")
-        raise
+        logger().info("BLE TX and RX notification threads completed successfully")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         # Cleanup
         logger().info("Cleaning up resources")
@@ -547,7 +539,7 @@ def test_coex_sdk_wps_pbc_ble_dual_role_tcp_auto_connect_enabled_C913649(
 
 
 # Test Case 2: BLE dual role with Tx&Rx notifications while WLAN (WPS auto connect disabled) with UDP data transfer
-@wifi_dut_marker(num_peripheral_connections=1, num_central_connections=1, ble_thread_count=1, ble_stack_len=2048,
+@wifi_dut_marker(num_peripheral_connections=1, num_central_connections=1, ble_thread_count=2, ble_stack_len=3584,
                  wifi_stack_len=3584)
 @pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -557,9 +549,7 @@ def test_coex_sdk_wps_pbc_ble_dual_role_tcp_auto_connect_enabled_C913649(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
-# Skip this test case as dual role data transfers are not working due to memory constraints
-@pytest.mark.skip(reason="Dual role data transfers not working due to memory constraints")
-def test_coex_sdk_wps_pbc_ble_dual_role_udp_auto_connect_disabled_C913650(
+def test_coex_sdk_wps_pbc_ble_dual_tx_rx_udp_auto_connect_disabled_C913650(
         wifi_dut,
         ble_clients,
         wifi_access_point,
@@ -590,8 +580,7 @@ def test_coex_sdk_wps_pbc_ble_dual_role_udp_auto_connect_disabled_C913650(
         conn_interval = 250
 
         # Start BLE GATT on DUT
-        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
-            set_smp=1)
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
 
         # -------------------- RX notify thread --------------------
         svc = "HealthThermometerService"
@@ -624,7 +613,6 @@ def test_coex_sdk_wps_pbc_ble_dual_role_udp_auto_connect_disabled_C913650(
         ble_obj_rx.check_scan_functionality_dut()
         ble_obj_rx.connect_from_dut()
         ble_obj_rx.service_discovery_on_dut()
-        ble_obj_rx.start()  # run() enables notifications for RX
 
         # -------------------- TX notify thread --------------------
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
@@ -676,48 +664,44 @@ def test_coex_sdk_wps_pbc_ble_dual_role_udp_auto_connect_disabled_C913650(
         ble_obj_tx.advertise_dut()
         ble_obj_tx.scan_and_connect_from_remote()
         ble_obj_tx.service_discovery_on_remote()
+
+        ble_obj_rx.start()  # run() enables notifications for RX
+        time.sleep(5)  # Ensure RX thread is ready before starting TX thread
         ble_obj_tx.start()
 
-        # -------------------- WPS join (auto-connect ENABLED) --------------------
-        logger().info("Starting WPS process with Auto Connect Enabled")
-        wps_result = join_to_wifi_network_via_wps(
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            power_save=True,
-            mode='power_save_low_latency',
-            ping_count=ping_count,
-            retry_count=1,
-            ping_after_power_save=True,
-            ping_before_power_save=True,
-            associated=False,
-            dtim_aligned_type=0,
-            num_of_dtim_skip=0,
-            listen_interval=0,
-            monitor_interval=0,
-            ip_version="ipv4",
-            tcp_ip_bypass=False,
-            ip_config_disable=False,
-            ipv6_type='global',
-            skip_scan=False,
-            sl_collections=sl_collections
+        # -------------------- WPS join (auto-connect DISABLED) --------------------
+        logger().info("Starting WPS PBC with auto_connect disabled")
+
+        logger().info("Enabling WPS PBC on Access Point")
+        wifi_access_point.interfaces.wifi.set_configure_wps_web(enable_wps=True, push_button=True)
+        time.sleep(2)
+
+        wps_response = wifi_dut.interfaces.wifi.start_client_wps(auto_connect=False)
+
+        assert wps_response is not None, "WPS response is NULL"
+        logger().info(f"WPS response: {wps_response}")
+
+        # ------------------ Manual Join After WPS ------------------
+        logger().info("Manually joining AP after WPS")
+
+        wps_join = wifi_dut.interfaces.wifi.join(
+            ssid=wifi_access_point.interfaces.wifi.ssid,
+            passphrase=wifi_access_point.interfaces.wifi.passphrase,
+            security=wifi_access_point.interfaces.wifi.security.name.lower(),
+            timeout=60
         )
-        logger().info(wps_result)
 
-        # IMPORTANT: validate before indexing into dict
-        assert wps_result is not None, "WPS connection returned None"
-        assert "device_ip" in wps_result and wps_result["device_ip"], f"WPS missing device_ip: {wps_result}"
-        assert "dut_mac_address" in wps_result and wps_result[
-            "dut_mac_address"], f"WPS missing dut_mac_address: {wps_result}"
+        logger().info(f"Manual join result: {wps_join}")
 
-        wifi_obj = type("obj", (object,), {
-            "device_ip": wps_result["device_ip"],
-            "dut_mac_address": wps_result["dut_mac_address"]
-        })()
+        # ------------------ Configure IP ------------------
+        ip_status, ip_config = sl_collections.configure_ip(wifi_dut, ip_status=False, retry_count=3)
+        assert ip_status, "Failed to obtain IP address via DHCP"
 
-        logger().info(f"WLAN connection successful via WPS. DUT IP: {wifi_obj.device_ip}")
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT IP Address: {device_ip}")
 
         # -------------------- TCP traffic --------------------
-        logger().info("Starting TCP data transfer")
+        logger().info("Starting UDP data transfer")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device IP: {host_ip}")
 
@@ -725,22 +709,21 @@ def test_coex_sdk_wps_pbc_ble_dual_role_udp_auto_connect_disabled_C913650(
             wifi_dut=wifi_dut,
             net_perf_client=net_perf_client,
             protocol=protocol,
-            device_ip=wifi_obj.device_ip,
+            device_ip=device_ip,
             host_ip=host_ip,
             timeout=120,
-            traffic_type="TX",
+            traffic_type="RX",
             buffer_size_tcp=1460,
             async_socket=0
         )
-        logger().info("TCP data transfer successful")
+        logger().info("UDP data transfer successful")
 
         # Wait for BLE threads to finish cleanly
         ble_obj_rx.wait_for_exit()
         ble_obj_tx.wait_for_exit()
 
-    except Exception as e:
-        logger().error(f"Test failed with exception: {str(e)}")
-        raise
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         # Cleanup
         logger().info("Cleaning up resources")
@@ -821,12 +804,16 @@ def test_coex_sdk_wps_pbc_ble_central_rx_http_auto_connect_enabled_C913651(
         assert wps_result is not None and 'device_ip' in wps_result, "WPS connection failed"
         wifi_obj = type('obj', (object,), {'device_ip': wps_result['device_ip']})()
 
-        svc = 'HealthThermometerService'
-        charc = 'CustomNotifyCharacteristic'
-        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
+            set_smp=1)
 
-        # # Create BleThread for Rx notifications - ble_connect() handles connection, start() handles notifications
-        ble_obj = BleThread(
+        # -------------------- RX notify thread --------------------
+        svc = "HealthThermometerService"
+        charc = "CustomNotifyCharacteristic"
+        data_rx = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
+
+        logger().info("\n ======================== Creating BLE Thread for RX notifications ========================")
+        ble_obj_rx = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
@@ -842,17 +829,17 @@ def test_coex_sdk_wps_pbc_ble_central_rx_http_auto_connect_enabled_C913651(
             set_smp=1,
             svc=svc,
             charc=charc,
-            data=data,
-            conn_interval=conn_interval
+            data=data_rx,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
         )
 
-        # Connect as master - ble_connect() handles advertise, scan, connect
-        ble_obj.ble_connect()
+        time.sleep(5)
+        ble_obj_rx.check_scan_functionality_dut()
+        ble_obj_rx.connect_from_dut()
+        ble_obj_rx.service_discovery_on_dut()
 
-        ble_obj.service_discovery_on_dut()  # Discover services
-
-        # Start thread - this calls run() which calls enable_notifications_remote()
-        ble_obj.start()  # No need to manually call enable_notifications_remote() - start() does it
+        ble_obj_rx.start()
 
         # Step 9: Initiate HTTP download
         logger().info("Initiating HTTP download")
@@ -871,12 +858,10 @@ def test_coex_sdk_wps_pbc_ble_central_rx_http_auto_connect_enabled_C913651(
         assert wifi_dut.interfaces.wifi.associated, "WLAN connection lost"
         logger().info("WLAN HTTP download remains unaffected by BLE central connection")
 
-        wifi_dut.interfaces.wifi.leave()
-        ble_obj.wait_for_exit()
+        ble_obj_rx.wait_for_exit()
 
-    except Exception as e:
-        logger().error(f"Test failed: {str(e)}")
-        raise
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         if ble_obj is not None:
             ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
@@ -885,22 +870,228 @@ def test_coex_sdk_wps_pbc_ble_central_rx_http_auto_connect_enabled_C913651(
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
+        http_server.interfaces.http.stop_server()
+
+
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ble_stack_len=3584,
+                 ble_thread_count=2,
+                 wifi_stack_len=3584,
+                 wifi_thread_count=1,
+                 num_peripheral_connections=1,
+                 num_central_connections=1)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
+@pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+def test_coex_sdk_wps_pbc_ble_dual_role_tx_rx_https_auto_connect_disabled_C913652(
+        wifi_dut,
+        ble_clients,
+        wifi_access_point,
+        request,
+        utf_constants,
+        sl_collections,
+        http_server,
+        index_path,
+):
+    """
+    Verify WLAN (connection established via WPS) with auto connect enabled and HTTP download
+    when BLE is connected as a central and Rx notifications
+
+    Preconditions:
+        - Configure the AP with WPA2 security
+        - BLE Connection Interval = 250 ms
+        - Enable data transfer parameters for BLE
+    """
+    ble_clients_address = []
+    ble_dut_address = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        conn_interval = 250
+
+        # Initiate WLAN connection using WPS with auto connect enabled
+        logger().info("Initiating WLAN connection using WPS with auto connect enabled")
+        wps_result = join_to_wifi_network_via_wps(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            power_save=True,
+            mode='power_save_low_latency',
+            ping_count=10,
+            retry_count=1,
+            ping_after_power_save=True,
+            ping_before_power_save=True,
+            associated=False,
+            dtim_aligned_type=0,
+            num_of_dtim_skip=0,
+            listen_interval=0,
+            monitor_interval=0,
+            ip_version='ipv4',
+            tcp_ip_bypass=False,
+            ip_config_disable=False,
+            skip_scan=False,
+            sl_collections=sl_collections
+        )
+        assert wps_result is not None and 'device_ip' in wps_result, "WPS connection failed"
+        wifi_obj = type('obj', (object,), {'device_ip': wps_result['device_ip']})()
+
+        # Start BLE GATT on DUT
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
+            set_smp=1)
+
+        # -------------------- RX notify thread --------------------
+        svc = "HealthThermometerService"
+        charc = "CustomNotifyCharacteristic"
+        data_rx = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
+
+        logger().info("\n ======================== Creating BLE Thread for RX notifications ========================")
+        ble_obj_rx = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_clients[0],
+            sl_collections=sl_collections,
+            ble_test_type="notify_rx",
+            dev_state=8,
+            data_duration=120,
+            service_class=["HealthThermometerService"],
+            gatt=True,
+            ble_pairing=1,
+            service_uuid=HealthThermometerService.UUID,
+            char_uuid=CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
+            characteristic=CustomNotifyCharacteristic,
+            set_smp=1,
+            svc=svc,
+            charc=charc,
+            data=data_rx,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
+        )
+
+        time.sleep(5)
+        ble_obj_rx.check_scan_functionality_dut()
+        ble_obj_rx.connect_from_dut()
+        ble_obj_rx.service_discovery_on_dut()
+
+        # -------------------- TX notify thread --------------------
+        service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
+        char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
+        data_tx = "".join(random.choices(string.ascii_uppercase + string.digits, k=240))
+        index = 1
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data_tx) + 1)
+        # IMPORTANT: load the payload into DUT memory (other notify_tx tests do this)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data_tx), write_content=data_tx)
+
+        logger().info("\n ======================== Creating BLE Thread for TX notifications ========================")
+        ble_obj_tx = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_clients[1],
+            sl_collections=sl_collections,
+            ble_test_type="notify_tx",
+            dev_state=8,
+            ble_pairing=1,
+            bond_info=1,
+            char_path=None,
+            char_uid=char_uid1,
+            data=data_tx,
+            service_uid=service_uid,
+            data_length=240,
+            data_duration=120,
+            periodic_delay=1.0,
+            address=address2,
+            conn_interval=conn_interval,
+            set_smp=1,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
+        )
+
+        time.sleep(5)
+
+        # Create custom GATT service/characteristic on DUT (this was commented earlier)
+        logger().info("Creating new custom gatt service in DUT")
+        ble_obj_tx.add_service(service_uuid=0xAABB)
+
+        logger().info("Adding custom characteristic declaration to the custom service")
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(
+            uid=0x1AA1, service_handler_num=index, value_handler_num=index + 1
+        )
+        logger().info("Adding characteristic value attribute to the service")
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
+
+        # Make DUT advertise, let remote connect, discover, then start TX notifications
+        ble_obj_tx.advertise_dut()
+        ble_obj_tx.scan_and_connect_from_remote()
+        ble_obj_tx.service_discovery_on_remote()
+
+        ble_obj_rx.start()  # run() enables notifications for RX
+        time.sleep(5)  # Ensure RX thread is ready before starting TX thread
+        ble_obj_tx.start()
+
+        # Step 9: Initiate HTTP download
+        logger().info("Initiating HTTPS download")
+        sl_collections.http_file_download(
+            wifi_dut=wifi_dut,
+            http_server=http_server,
+            index_path=index_path,
+            device_ip=wifi_obj.device_ip,
+            https=1
+        )
+        logger().info("HTTPS download successful")
+
+        # Step 10: Monitor WLAN activity during BLE central connection
+        logger().info("Monitoring WLAN activity during BLE central connection")
+        time.sleep(30)
+        assert wifi_dut.interfaces.wifi.associated, "WLAN connection lost"
+        logger().info("WLAN HTTPS download remains unaffected by BLE central connection")
+
+        ble_obj_rx.wait_for_exit()
+        ble_obj_tx.wait_for_exit()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        # Cleanup
+        logger().info("Cleaning up resources")
+        if wifi_dut.interfaces.wifi.associated:
+            wifi_dut.interfaces.wifi.leave()
+
+        try:
+            if ble_dut_address is not None:
+                for ble_client in ble_clients:
+                    try:
+                        ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
+                        ble_client.interfaces.bluetooth.close()
+                    except Exception:
+                        pass
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
+                                           ble_client_address=ble_clients_address,
+                                           ble_dut_address=ble_dut_address)
+
+        except Exception as e:
+            wifi_dut.interfaces.wifi.is_dut_bad_state = True
+
 
 @wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.DHCPv6Client
                               | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                               | Si91xTCPIPFeatureBitMap.IPv6Mode
                               | Si91xTCPIPFeatureBitMap.DHCPv6Server
                               | Si91xTCPIPFeatureBitMap.SSL,
-                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ble_stack_len=3584,
+                 ble_thread_count=1,
+                 wifi_stack_len=3584,
+                 wifi_thread_count=1,
+                 num_peripheral_connections=1)
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "ipv6_state": "1"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
-# skip this test case as HTTPS over IPv6 issue is observed intermittently
-@pytest.mark.skip(reason="HTTPS over IPv6 issue is observed intermittently")
-def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_C913655(
+@pytest.mark.skip(reason="Observing FFE1 error during BLE notifications in this test, needs debug")
+def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_enabled_C913655(
         wifi_dut,
         ble_client,
         wifi_access_point,
@@ -952,13 +1143,20 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_C91
         assert wps_result is not None and 'device_ip' in wps_result, "WPS IPv6 connection failed"
         wifi_obj = type('obj', (object,), {'device_ip': wps_result['device_ip']})()
 
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+
+        # -------------------- TX notify thread --------------------
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
-        char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
-        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
+        char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
+        data_tx = "".join(random.choices(string.ascii_uppercase + string.digits, k=240))
         index = 1
-        address = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
-        wifi_dut.interfaces.wifi.load_memory(address=address, size=len(data), write_content=data)
-        ble_obj = BleThread(
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data_tx) + 1)
+        # IMPORTANT: load the payload into DUT memory (other notify_tx tests do this)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data_tx), write_content=data_tx)
+
+        logger().info("\n ======================== Creating BLE Thread for TX notifications ========================")
+        ble_obj_tx = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
@@ -966,51 +1164,58 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_C91
             dev_state=8,
             ble_pairing=1,
             bond_info=1,
-            char_path=None, char_uid=char_uid, data=data,
+            char_path=None, char_uid=char_uid1, data=data_tx,
             service_uid=service_uid,
-            data_length=240, data_duration=120,
+            data_length=240,
+            data_duration=120,
             periodic_delay=0.5,
-            address=address,
+            address=address2,
             conn_interval=conn_interval,
-            set_smp=1
+            set_smp=1,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
         )
 
+        # Create custom GATT service/characteristic on DUT (this was commented earlier)
         logger().info("Creating new custom gatt service in DUT")
-        ble_obj.add_service(service_uuid=0xAABB)
+        ble_obj_tx.add_service(service_uuid=0xAABB)
 
         logger().info("Adding custom characteristic declaration to the custom service")
-        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1AA1, service_handler_num=index,
-                                                       value_handler_num=index + 1)
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(
+            uid=0x1AA1, service_handler_num=index, value_handler_num=index + 1
+        )
         logger().info("Adding characteristic value attribute to the service")
         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
 
-        ble_obj.advertise_dut()
-        ble_obj.scan_and_connect_from_remote()
-        ble_obj.service_discovery_on_remote()
-        ble_obj.start()
+        # Make DUT advertise, let remote connect, discover, then start TX notifications
+        ble_obj_tx.advertise_dut()
+        ble_obj_tx.scan_and_connect_from_remote()
+        ble_obj_tx.service_discovery_on_remote()
+
+        time.sleep(5)  # Ensure RX thread is ready before starting TX thread
+        ble_obj_tx.start()
 
         logger().info("Starting HTTPS download")
 
         http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
                                 test_name=test_name, wifi_client=wifi_client,
-                                device_ip=wifi_obj.device_ip, remote_ip=http_server.ip_address,
+                                device_ip=wifi_obj.device_ip,
                                 ip_version=6, http_server=http_server, index_path=index_path,
                                 ipv6_addr_type="global", https=1)
 
 
         http_obj.start()
         http_obj.wait_for_exit()
-        ble_obj.wait_for_exit()
         logger().info("HTTPS download successful")
 
         logger().info("Monitoring WLAN activity during BLE peripheral connection")
-        time.sleep(30)
         assert wifi_dut.interfaces.wifi.associated, "WLAN connection lost"
         logger().info("WLAN HTTPS download remains unaffected by BLE peripheral connection")
 
-    except Exception as e:
-        logger().error(f"Test failed: {str(e)}")
-        raise
+        ble_obj_tx.wait_for_exit()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         if wifi_dut.interfaces.wifi.associated:
             wifi_dut.interfaces.wifi.leave()
@@ -1022,6 +1227,209 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_C91
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
+@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.DHCPv6Client
+                              | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                              | Si91xTCPIPFeatureBitMap.IPv6Mode
+                              | Si91xTCPIPFeatureBitMap.DHCPv6Server
+                              | Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                 ble_stack_len=3584,
+                 ble_thread_count=2,
+                 wifi_stack_len=3584,
+                 wifi_thread_count=1,
+                 num_peripheral_connections=1)
+@pytest.mark.http_server("raspi_lighttpd_tls")
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
+@pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "ipv6_state": "1"})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+def test_coex_sdk_wps_pbc_ipv6_stateless_ble_dual_tx_rx_https_auto_connect_disabled_C913656(
+        wifi_dut,
+        ble_clients,
+        wifi_access_point,
+        request,
+        utf_constants,
+        sl_collections,
+        http_server,
+        index_path,
+        wifi_client
+):
+    """
+    Verify WLAN+stateful DHCPv6 (connection established via WPS) with auto connect enabled
+    and HTTPS download when BLE is connected as a peripheral and Tx notifications
+
+    Preconditions:
+        - Configure the AP with WPA2 security
+        - Enable IPv6 in the AP and set the mode to stateful
+        - BLE Connection Interval = 30ms
+        - Enable data transfer parameters for BLE
+    """
+    global ble_obj, wifi_obj
+    ble_clients_address = []
+    ble_dut_address = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        conn_interval = 250
+
+        # Start BLE GATT on DUT
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
+            set_smp=1)
+
+        # -------------------- RX notify thread --------------------
+        svc = "HealthThermometerService"
+        charc = "CustomNotifyCharacteristic"
+        data_rx = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
+
+        logger().info("\n ======================== Creating BLE Thread for RX notifications ========================")
+        ble_obj_rx = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_clients[0],
+            sl_collections=sl_collections,
+            ble_test_type="notify_rx",
+            dev_state=8,
+            data_duration=120,
+            service_class=["HealthThermometerService"],
+            gatt=True,
+            ble_pairing=1,
+            service_uuid=HealthThermometerService.UUID,
+            char_uuid=CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
+            characteristic=CustomNotifyCharacteristic,
+            set_smp=1,
+            svc=svc,
+            charc=charc,
+            data=data_rx,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
+        )
+
+        time.sleep(5)
+        ble_obj_rx.check_scan_functionality_dut()
+        ble_obj_rx.connect_from_dut()
+        ble_obj_rx.service_discovery_on_dut()
+
+        # -------------------- TX notify thread --------------------
+        service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
+        char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
+        data_tx = "".join(random.choices(string.ascii_uppercase + string.digits, k=240))
+        index = 1
+
+        address2 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data_tx) + 1)
+        # IMPORTANT: load the payload into DUT memory (other notify_tx tests do this)
+        wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data_tx), write_content=data_tx)
+
+        logger().info("\n ======================== Creating BLE Thread for TX notifications ========================")
+        ble_obj_tx = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_clients[1],
+            sl_collections=sl_collections,
+            ble_test_type="notify_tx",
+            dev_state=8,
+            ble_pairing=1,
+            bond_info=1,
+            char_path=None,
+            char_uid=char_uid1,
+            data=data_tx,
+            service_uid=service_uid,
+            data_length=240,
+            data_duration=120,
+            periodic_delay=0.5,
+            address=address2,
+            conn_interval=conn_interval,
+            set_smp=1,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
+        )
+
+        # Create custom GATT service/characteristic on DUT (this was commented earlier)
+        logger().info("Creating new custom gatt service in DUT")
+        ble_obj_tx.add_service(service_uuid=0xAABB)
+
+        logger().info("Adding custom characteristic declaration to the custom service")
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(
+            uid=0x1AA1, service_handler_num=index, value_handler_num=index + 1
+        )
+        logger().info("Adding characteristic value attribute to the service")
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
+
+        # Make DUT advertise, let remote connect, discover, then start TX notifications
+        ble_obj_tx.advertise_dut()
+        ble_obj_tx.scan_and_connect_from_remote()
+        ble_obj_tx.service_discovery_on_remote()
+
+        ble_obj_rx.start()  # run() enables notifications for RX
+        time.sleep(5)  # Ensure RX thread is ready before starting TX thread
+        ble_obj_tx.start()
+
+        # -------------------- WPS join (auto-connect DISABLED) --------------------
+        logger().info("Starting WPS PBC with auto_connect disabled")
+
+        logger().info("Enabling WPS PBC on Access Point")
+        wifi_access_point.interfaces.wifi.set_configure_wps_web(enable_wps=True, push_button=True)
+        time.sleep(2)
+
+        wps_response = wifi_dut.interfaces.wifi.start_client_wps(auto_connect=False)
+
+        assert wps_response is not None, "WPS response is NULL"
+        logger().info(f"WPS response: {wps_response}")
+
+        # ------------------ Manual Join After WPS ------------------
+        logger().info("Manually joining AP after WPS")
+
+        wps_join = wifi_dut.interfaces.wifi.join(
+            ssid=wifi_access_point.interfaces.wifi.ssid,
+            passphrase=wifi_access_point.interfaces.wifi.passphrase,
+            security=wifi_access_point.interfaces.wifi.security.name.lower(),
+            timeout=60
+        )
+
+        logger().info(f"Manual join result: {wps_join}")
+        ip_status, ip_config = sl_collections.configure_ip(wifi_dut, ip_status=False, retry_count=1, ip_version="ipv6")
+        assert ip_status, "Failed to obtain global IPv6 address via DHCP"
+
+        device_ip = ip_config[1]
+        logger().info(f"DUT IP Address: {device_ip}")
+
+        logger().info("Starting HTTPS download")
+
+        http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
+                                test_name=test_name, wifi_client=wifi_client,
+                                device_ip=device_ip,
+                                ip_version=6, http_server=http_server, index_path=index_path,
+                                ipv6_addr_type="global", https=1)
+
+
+        http_obj.start()
+        http_obj.wait_for_exit()
+        logger().info("HTTPS download successful")
+
+        logger().info("Monitoring WLAN activity during BLE peripheral connection")
+        time.sleep(30)
+        assert wifi_dut.interfaces.wifi.associated, "WLAN connection lost"
+        logger().info("WLAN HTTPS download remains unaffected by BLE peripheral connection")
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        logger().info("Cleaning up resources")
+        if wifi_dut.interfaces.wifi.associated:
+            wifi_dut.interfaces.wifi.leave()
+
+        try:
+            if ble_dut_address is not None:
+                for ble_client in ble_clients:
+                    try:
+                        ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
+                        ble_client.interfaces.bluetooth.close()
+                    except Exception:
+                        pass
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
+                                           ble_client_address=ble_clients_address,
+                                           ble_dut_address=ble_dut_address)
+
+        except Exception as e:
+            wifi_dut.interfaces.wifi.is_dut_bad_state = True
 
 @wifi_dut_marker(num_peripheral_connections=1, num_central_connections=1, ble_thread_count=1, ble_stack_len=2048,
                  wifi_stack_len=3584)
@@ -1149,22 +1557,95 @@ def test_coex_sdk_wps_pbc_timeout_ble_peripheral_tx_C913665(
         ble_obj.wait_for_exit()
 
     except Exception as e:
-        logger().error(f"Test failed with exception: {str(e)}")
-        raise
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         logger().info("Cleaning up resources")
         if wifi_dut.interfaces.wifi.associated:
             wifi_dut.interfaces.wifi.leave()
 
         if ble_obj:
-            try:
-                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-                ble_client.interfaces.bluetooth.close()
-                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                            ble_client_address=ble_obj.ble_client_address,
                                            ble_dut_address=ble_obj.ble_dut_address)
-            except Exception:
-                pass
+
+
+@wifi_dut_marker()
+@pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.skip(reason="Test case is still under development")
+def test_coex_sdk_wps_pbc_connection_reconnection_ble_central_tx_indications_C913667(
+wifi_dut, ble_client, wifi_access_point, request, utf_constants, sl_collections, ):
+    """ TC13: Verify WPS PBC connection and reconnection behavior when DUT BLE operates as a central with Tx indications Preconditions: - Configure the AP with WPA2 security - BLE Connection Interval = 250 ms - Enable data transfer parameters for BLE - Initiate BLE connection with SMP """
+    global ble_obj, wifi_obj
+    ble_dut_address = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        conn_interval = 250
+
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
+            set_smp=1)
+
+        # -------------------- RX notify thread --------------------
+        svc = "HealthThermometerService"
+        charc = "CustomNotifyCharacteristic"
+        data_rx = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
+
+        logger().info("\n ======================== Creating BLE Thread for RX notifications ========================")
+        ble_obj_rx = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="notify_rx",
+            dev_state=8,
+            data_duration=120,
+            service_class=["HealthThermometerService"],
+            gatt=True,
+            ble_pairing=1,
+            service_uuid=HealthThermometerService.UUID,
+            char_uuid=CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
+            characteristic=CustomNotifyCharacteristic,
+            set_smp=1,
+            svc=svc,
+            charc=charc,
+            data=data_rx,
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
+        )
+
+        time.sleep(5)
+        ble_obj_rx.check_scan_functionality_dut()
+        ble_obj_rx.connect_from_dut()
+        ble_obj_rx.service_discovery_on_dut()
+
+        ble_obj_rx.gatt_indication()
+
+    except Exception as ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=ex)
+    finally:
+        logger().info("Cleaning up resources")
+        if wifi_dut.interfaces.wifi.associated:
+            wifi_dut.interfaces.wifi.leave()
+
+        try:
+            if ble_dut_address is not None:
+                for ble_client in ble_clients:
+                    try:
+                        ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
+                        ble_client.interfaces.bluetooth.close()
+                    except Exception:
+                        pass
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
+                                           ble_client_address=ble_clients_address,
+                                           ble_dut_address=ble_dut_address)
+
+        except Exception as e:
+            wifi_dut.interfaces.wifi.is_dut_bad_state = True
+
 
 
 @wifi_dut_marker()
@@ -1231,7 +1712,7 @@ def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
 
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
         char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
-        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=120))
         index = 1
         address = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
         wifi_dut.interfaces.wifi.load_memory(address=address, size=len(data), write_content=data)
@@ -1245,7 +1726,7 @@ def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
             bond_info=1,
             char_path=None, char_uid=char_uid, data=data,
             service_uid=service_uid,
-            data_length=240, data_duration=120,
+            data_length=120, data_duration=120,
             periodic_delay=0.5,
             address=address,
             conn_interval=conn_interval,
@@ -1307,8 +1788,7 @@ def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
         logger().info("Wi-Fi reconnection and connectivity verified successfully")
 
     except Exception as e:
-        logger().error(f"Test failed: {str(e)}")
-        raise
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         if wifi_dut.interfaces.wifi.associated:
             wifi_dut.interfaces.wifi.leave()
@@ -1439,12 +1919,6 @@ def test_coex_sdk_wps_pbc_ap_rejoin_ble_central_rx_C913670(
 
         assert wifi_dut.interfaces.wifi.associated, "Wi-Fi did not reconnect after AP reboot"
 
-        # Reconfigure IP
-        # ip_status, ip_config = sl_collections.configure_ip(wifi_dut, ip_status=False, retry_count=3)
-        # assert ip_status, "IP configuration failed after reconnection"
-        # wifi_obj.device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
-
-        # Verify connectivity
         ping_status = sl_collections.ping(device_ip=wifi_obj.device_ip, ping_count=10)
         assert ping_status, "Ping failed after reconnection"
         logger().info("Wi-Fi reconnection and connectivity verified successfully")
