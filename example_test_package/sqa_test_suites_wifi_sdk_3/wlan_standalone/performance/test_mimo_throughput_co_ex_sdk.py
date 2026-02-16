@@ -999,8 +999,6 @@ def test_co_ex_mimo_with_ble_conn_rtt_tcp_rx_C401867(wifi_sniffer, wifi_access_p
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
     logger().info("Enabling the **** RTT 40 Command ****")
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
@@ -1065,8 +1063,6 @@ def test_co_ex_mimo_with_ble_conn_rtt_tcp_rx_C401867(wifi_sniffer, wifi_access_p
 def test_co_ex_mimo_with_ble_conn_rtt_udp_rx_C401868(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
@@ -1187,8 +1183,6 @@ def test_co_ex_mimo_with_ble_adv_rtt_ssl_rx_C401871(wifi_sniffer, wifi_access_po
                                                     ssl_server, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
     logger().info("Enabling the **** RTT 40 Command ****")
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(2)
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
@@ -1310,8 +1304,6 @@ def test_co_ex_mimo_with_ble_conn_rtt_ssl_rx_C401873(wifi_sniffer, wifi_access_p
                                                     ssl_server, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
     logger().info("Enabling the **** RTT 40 Command ****")
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
@@ -1495,8 +1487,6 @@ def test_co_ex_mimo_ble_data_phy1_rtt_tcp_rx_C401876(wifi_sniffer, wifi_access_p
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client, ble_dut):
     logger().info("Enabling the **** RTT 40 Command ****")
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
@@ -1561,8 +1551,7 @@ def test_co_ex_mimo_ble_data_phy1_rtt_tcp_rx_C401876(wifi_sniffer, wifi_access_p
 def test_co_ex_mimo_ble_data_phy1_rtt_udp_rx_C401877(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client, ble_dut):
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
+    logger().info("Enabling the **** RTT 40 Command ****")
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
@@ -1746,8 +1735,6 @@ def test_co_ex_mimo_ble_data_phy2_rtt_tcp_rx_C401880(wifi_sniffer, wifi_access_p
                                                      net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                      remote_wiseconnect3, bt_dut, ble_client, ble_dut):
     logger().info("Enabling the **** RTT 40 Command ****")
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
@@ -1812,8 +1799,7 @@ def test_co_ex_mimo_ble_data_phy2_rtt_tcp_rx_C401880(wifi_sniffer, wifi_access_p
 def test_co_ex_mimo_ble_data_phy2_rtt_udp_rx_C401881(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                      net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                      remote_wiseconnect3, bt_dut, ble_client, ble_dut):
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
+    logger().info("Enabling the **** RTT 40 Command ****")
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
@@ -1935,8 +1921,6 @@ def test_co_ex_mimo_ble_data_phy1_rtt_ssl_rx_C401883(wifi_sniffer, wifi_access_p
                                                     ssl_server, utf_constants, request, sl_collections, ble_dut,
                                                     remote_wiseconnect3, bt_dut, ble_client):
     logger().info("Enabling the **** RTT 40 Command ****")
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
@@ -2058,8 +2042,6 @@ def test_co_ex_mimo_ble_data_phy2_rtt_ssl_rx_C401885(wifi_sniffer, wifi_access_p
                                                     ssl_server, utf_constants, request, sl_collections, ble_dut,
                                                     remote_wiseconnect3, bt_dut, ble_client):
     logger().info("Enabling the **** RTT 40 Command ****")
-    wifi_client.interfaces.tc.add_delay(0)
-    time.sleep(5)
     wifi_client.interfaces.tc.add_delay(40)
     time.sleep(5)
     ping_count = utf_constants.get("ping_count")
