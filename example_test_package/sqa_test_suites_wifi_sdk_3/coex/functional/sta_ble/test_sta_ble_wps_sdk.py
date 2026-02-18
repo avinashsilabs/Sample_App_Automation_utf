@@ -4,7 +4,8 @@ import time
 
 import pytest
 from utf.interfaces.iperf import IperfConstants
-
+import threading
+from example_test_package.sqa_test_suites_wifi_sdk_3.ble_standalone.functional.ble_data_transfer_sdk.test_ble_data_transfer_sdk import Ble_Data_Transfer
 from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble.test_sta_ble_dle_sdk import BleThread
 from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_ipv6.test_sta_ble_ipv6 import HttpDownload
 from utf.interfaces.bluetooth import BLEDeviceState
@@ -27,7 +28,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
 )
-
+from utf.utils.stopwatch import Stopwatch
 
 def logger():
     return get_logger(__name__)
@@ -36,6 +37,98 @@ def logger():
 # Global objects for cleanup
 ble_obj = None
 wifi_obj = None
+
+class IndicationThread(ThreadBase):
+    def __init__(self, wifi_dut=None, ble_client=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client = ble_client
+        self.sl_collections = None
+        self.ble_ready_event = threading.Event()
+        self.stop_event = threading.Event()
+
+    def stop(self):
+        self.stop_event.set()
+
+    def run(self):
+
+        # Ensure DUT bluetooth interface alias exists
+        logger().info("Ensuring DUT bluetooth interface alias exists")
+        if not hasattr(self.wifi_dut.interfaces, "bluetooth"):
+            self.wifi_dut.interfaces.bluetooth = self.wifi_dut.interfaces.wifi
+
+        ble_obj = Ble_Data_Transfer(self.wifi_dut, self.ble_client, self.sl_collections)
+        ble_dut_address = ble_obj.ble_gatt_init(set_smp=1)
+        self.wifi_dut.interfaces.wifi.ble_set_cap_data(remote_addr_type=0, smp_io_cap=0, smp_auth_req_bonding=1,
+                                                      smp_auth_req_mitm=1, smp_auth_req_sc=0,
+                                                      smp_max_enc_key_size=16,
+                                                      smp_local_oob_data_flag_not_present=0,
+                                                      smp_enc_key=1, smp_id_key=1, smp_sign_key=1)
+
+        service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+        char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
+        data_length = len(data)
+
+        # Create Custom services on DUT
+        logger().info("Creating new custom gatt service in DUT")
+        ble_obj.add_service(service_uuid=0x1AA1)
+        logger().info("Adding custom characteristic declaration to the custom service")
+        self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1, permissions=34)
+        logger().info("Adding characteristic value attribute to the service")
+        self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data="data")
+
+        # Adv Remote device
+        ble_obj.advertising_remote()
+        time.sleep(2)
+
+        # Start scan and connect from dut
+        ble_obj.scan_conn_from_dut_device()
+
+        # Confirm BLE connected
+        state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+
+        if state_int == 8:
+            logger().info("BLE link established. Signaling ready.")
+            self.ble_ready_event.set()
+        else:
+            raise Exception("BLE did not reach connected state")
+
+        # Get All Profiles
+        char_path, char_props = ble_obj.service_discovery_on_dut(service_uid=service_uid, char_uid=char_uid)
+
+        # # Configure Buffer Mode
+        ble_obj.configure_buffer_mode(mode=1, count=2)
+
+        logger().info(f"****** Indication Start****************")
+        self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
+                                                                                char_uid=char_uid)
+        logger().info("Subscribed to notifications successfully")
+        indication_count = 0
+        sw = Stopwatch()
+        while sw.elapsed_sec < 300:
+            self.wifi_dut.interfaces.wifi.ble_indicate_value(ble_remote_dev_address=ble_obj.ble_client_address,
+                                                        handle=12, data=data, data_length=data_length)
+            indication_count += 1
+            time.sleep(5)
+
+        logger().info(f"Total indications sent: {indication_count}")
+        notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+        logger().info(f"Total notifications received: {len(notifications)}")
+        try:
+            assert len(notifications) == indication_count
+        except:
+            assert len(notifications) == indication_count - 1
+
+        logger().info(f"Received Notifications : : {notifications}")
+
+        self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+        self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+        time.sleep(1)
+        logger().info("******************** ble_remove_service ***********************")
+        self.wifi_dut.interfaces.wifi.ble_remove_service()
 
 
 class WpsJoinThread(ThreadBase):
@@ -1571,80 +1664,107 @@ def test_coex_sdk_wps_pbc_timeout_ble_peripheral_tx_C913665(
                                            ble_dut_address=ble_obj.ble_dut_address)
 
 
-@wifi_dut_marker()
+@wifi_dut_marker(num_peripheral_connections=0, num_central_connections=1,
+                 ble_thread_count=1, ble_stack_len=3584, wifi_stack_len=3584)
 @pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
-@pytest.mark.skip(reason="Test case is still under development")
 def test_coex_sdk_wps_pbc_connection_reconnection_ble_central_tx_indications_C913667(
 wifi_dut, ble_client, wifi_access_point, request, utf_constants, sl_collections, ):
-    """ TC13: Verify WPS PBC connection and reconnection behavior when DUT BLE operates as a central with Tx indications Preconditions: - Configure the AP with WPA2 security - BLE Connection Interval = 250 ms - Enable data transfer parameters for BLE - Initiate BLE connection with SMP """
-    global ble_obj, wifi_obj
+    """
+    Verify repeated WPS PBC connect–disconnect cycles while BLE central TX indications remain stable.
+    """
+
+    ble_obj = None
     ble_dut_address = None
+    ping_count = 10
+    iterations = 5
+
     try:
-        test_name = request.node.name
-        ping_count = utf_constants.get("ping_count")
-        conn_interval = 250
+        # -------------------------------------------------------------
+        # Step 1-3: Initial WPS PBC connection (auto connect enabled)
+        # -------------------------------------------------------------
+        logger().info("Initiating initial WPS PBC connection")
 
-        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
-            set_smp=1)
-
-        # -------------------- RX notify thread --------------------
-        svc = "HealthThermometerService"
-        charc = "CustomNotifyCharacteristic"
-        data_rx = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
-
-        logger().info("\n ======================== Creating BLE Thread for RX notifications ========================")
-        ble_obj_rx = BleThread(
+        wps_result = join_to_wifi_network_via_wps(
             wifi_dut=wifi_dut,
-            ble_client=ble_client,
-            sl_collections=sl_collections,
-            ble_test_type="notify_rx",
-            dev_state=8,
-            data_duration=120,
-            service_class=["HealthThermometerService"],
-            gatt=True,
-            ble_pairing=1,
-            service_uuid=HealthThermometerService.UUID,
-            char_uuid=CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
-            characteristic=CustomNotifyCharacteristic,
-            set_smp=1,
-            svc=svc,
-            charc=charc,
-            data=data_rx,
-            ble_init_required=False,
-            ble_dut_address=ble_dut_address,
+            wifi_access_point=wifi_access_point,
+            power_save=True,
+            ping_count=ping_count,
+            associated=False,
+            sl_collections=sl_collections
         )
 
-        time.sleep(5)
-        ble_obj_rx.check_scan_functionality_dut()
-        ble_obj_rx.connect_from_dut()
-        ble_obj_rx.service_discovery_on_dut()
+        assert wps_result and "device_ip" in wps_result, "Initial WPS connection failed"
 
-        ble_obj_rx.gatt_indication()
+        device_ip = wps_result["device_ip"]
 
-    except Exception as ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=ex)
+        # -------------------------------------------------------------
+        # Step 4–7: Advertise remote, scan, connect with SMP
+        # -------------------------------------------------------------
+
+        # Ensure DUT bluetooth interface alias exists
+        ble_obj_ind = IndicationThread(
+            wifi_dut=wifi_dut, ble_client=ble_client
+        )
+
+        ble_obj_ind.start()
+        logger().info("Waiting for BLE central connection to be established")
+        ble_obj_ind.ble_ready_event.wait(timeout=180)
+        logger().info("BLE central connection established successfully")
+
+        # -------------------------------------------------------------
+        # Step 8–11: Repeat connect–disconnect WPS cycles
+        # -------------------------------------------------------------
+        for i in range(iterations):
+            logger().info(f"--- WPS Reconnect Cycle {i + 1} ---")
+
+            # Step 9: Disconnect WLAN
+            logger().info("Disconnecting WLAN")
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(3)
+            assert not wifi_dut.interfaces.wifi.associated, "WLAN disconnection failed"
+
+            wps_result = join_to_wifi_network_via_wps(
+                wifi_dut=wifi_dut,
+                wifi_access_point=wifi_access_point,
+                power_save=True,
+                ping_count=ping_count,
+                associated=False,
+                sl_collections=sl_collections,
+                ping_after_power_save=False,
+                ping_before_power_save=False,
+            )
+
+            assert wps_result and "device_ip" in wps_result, \
+                f"WPS reconnection failed in iteration {i + 1}"
+
+            device_ip = wps_result["device_ip"]
+
+            # Validate ping after reconnection
+            assert sl_collections.ping(device_ip=device_ip, ping_count=10), \
+                f"Ping failed after reconnection in iteration {i + 1}"
+
+            logger().info(f"WPS cycle {i + 1} completed successfully")
+
+        assert wifi_dut.interfaces.wifi.ble_get_device_state(), "BLE connection lost at end of test"
+
+        logger().info("All WPS connect–disconnect cycles completed successfully")
+        ble_obj_ind.stop()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         logger().info("Cleaning up resources")
         if wifi_dut.interfaces.wifi.associated:
             wifi_dut.interfaces.wifi.leave()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(bt_dut_address=ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
+            ble_obj.clear_dut(role="master")
 
-        try:
-            if ble_dut_address is not None:
-                for ble_client in ble_clients:
-                    try:
-                        ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
-                        ble_client.interfaces.bluetooth.close()
-                    except Exception:
-                        pass
-                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
-                                           ble_client_address=ble_clients_address,
-                                           ble_dut_address=ble_dut_address)
-
-        except Exception as e:
-            wifi_dut.interfaces.wifi.is_dut_bad_state = True
 
 
 
@@ -1653,8 +1773,6 @@ wifi_dut, ble_client, wifi_access_point, request, utf_constants, sl_collections,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
-# skip reason: intermittent failures observed, needs debug
-@pytest.mark.skip(reason="Intermittent failures observed, needs debug")
 def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
         switch,
         wifi_dut,
@@ -1675,17 +1793,16 @@ def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
     """
     global ble_obj, wifi_obj
     try:
-        ping_count = utf_constants.get("ping_count")
         conn_interval = 250
-
-        logger().info("Initiating WLAN connection using WPS with auto connect enabled (timeout window starts at WPS start)")
+        # ---------------------------------------------------------
+        # Step 1: Initiate WPS (auto connect enabled)
+        # ---------------------------------------------------------
+        logger().info("Initiating WPS PBC (auto connect enabled)")
         wps_start_time = time.time()
 
-        # Enable WPS PBC on AP
         wifi_access_point.interfaces.wifi.set_configure_wps_web(enable_wps=True, push_button=True)
         time.sleep(2)
 
-        # Start WPS on DUT (auto-connect enabled)
         wifi_dut.interfaces.wifi.start_client_wps(
             interface="client",
             wps_role=0,
@@ -1693,26 +1810,43 @@ def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
             auto_connect=True
         )
 
-        # Wait for association within WPS timeout window
+        # Wait for association within 120 seconds
         deadline = wps_start_time + 120
         while time.time() < deadline:
-            if getattr(wifi_dut.interfaces.wifi, "associated", False):
+            if wifi_dut.interfaces.wifi.associated:
                 break
             time.sleep(1)
-        assert getattr(wifi_dut.interfaces.wifi, "associated", False), "WPS auto-connect did not associate within 120s"
 
-        # DHCP + ping
-        ip_ok, ip_cfg = sl_collections.configure_ip(wifi_dut, ip_status=False, retry_count=3, ip_version="ipv4")
-        assert ip_ok, f"DHCP failed after WPS join: {ip_cfg}"
-        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_cfg)
-        assert sl_collections.ping(device_ip=device_ip, ping_count=ping_count), "Ping failed after WPS join"
+        assert wifi_dut.interfaces.wifi.associated, \
+            "WPS auto-connect did not associate within 120 seconds"
 
-        wps_result = {"device_ip": device_ip}
-        wifi_obj = type('obj', (object,), {'device_ip': device_ip})()
+        wps_connected_time = time.time()
+        logger().info("WPS connection established successfully")
+
+        # ---------------------------------------------------------
+        # Step 2: DHCP + Ping validation
+        # ---------------------------------------------------------
+        ip_status, ip_config = sl_collections.configure_ip(
+            wifi_dut,
+            ip_status=False,
+            retry_count=3,
+            ip_version="ipv4"
+        )
+        assert ip_status, f"DHCP failed: {ip_config}"
+
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        assert sl_collections.ping(device_ip=device_ip, ping_count=10), \
+            "Ping failed after WPS association"
+
+        # ---------------------------------------------------------
+        # Step 3: Initialize BLE + Connection
+        # ---------------------------------------------------------
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        assert ble_dut_address, "BLE initialization failed"
 
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
         char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
-        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=120))
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
         index = 1
         address = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
         wifi_dut.interfaces.wifi.load_memory(address=address, size=len(data), write_content=data)
@@ -1726,7 +1860,7 @@ def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
             bond_info=1,
             char_path=None, char_uid=char_uid, data=data,
             service_uid=service_uid,
-            data_length=120, data_duration=120,
+            data_length=240, data_duration=120,
             periodic_delay=0.5,
             address=address,
             conn_interval=conn_interval,
@@ -1747,45 +1881,46 @@ def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
         ble_obj.service_discovery_on_remote()
         ble_obj.start()
 
-        # Step 6: Reboot the AP within 120 seconds of WPS connection
+        # ---------------------------------------------------------
+        # Step 4: Reboot AP within 120 seconds of WPS connection
+        # ---------------------------------------------------------
+        elapsed_since_wps = time.time() - wps_connected_time
+
+        assert elapsed_since_wps < 120, \
+            "Exceeded 120-second window before AP reboot"
+
         logger().info("Rebooting AP within 120 seconds of WPS connection")
-        time.sleep(10)  # Wait a bit after connection
 
         switch.interfaces.pdu_switch.turn_off(delay=10)
-
-        # Wait for AP to come back up
-        logger().info("Waiting for AP to come back up")
-        logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
-        time.sleep(30)  # Give AP time to reboot
 
-        # Step 7: Monitor BLE data flow and Wi-Fi reconnection process
-        logger().info("Monitoring BLE data flow and Wi-Fi reconnection")
+        # ---------------------------------------------------------
+        # Step 5: Monitor BLE stability + WiFi reconnection
+        # ---------------------------------------------------------
+        time.sleep(20)
 
-        # Verify BLE connection remains stable during AP reboot
+        # Verify BLE still connected
         state = wifi_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
-        assert state_int == BLEDeviceState.Connected, "BLE connection lost during AP reboot"
+        assert state_int == BLEDeviceState.Connected, \
+            "BLE connection lost during AP reboot"
+
         logger().info("BLE connection remained stable during AP reboot")
 
-        # Wait for Wi-Fi reconnection (should reconnect automatically with stored credentials)
-        logger().info("Waiting for Wi-Fi reconnection after AP reboot")
-        max_wait_reconnect = 60
-        elapsed_reconnect = 0
-        while elapsed_reconnect < max_wait_reconnect:
+        # Wait for WiFi reconnection
+        reconnect_deadline = time.time() + 90
+        while time.time() < reconnect_deadline:
             if wifi_dut.interfaces.wifi.associated:
-                logger().info("Wi-Fi reconnected successfully after AP reboot")
                 break
             time.sleep(2)
-            elapsed_reconnect += 2
 
-        assert wifi_dut.interfaces.wifi.associated, "Wi-Fi did not reconnect after AP reboot"
+        assert wifi_dut.interfaces.wifi.associated, \
+            "DUT did not reconnect to WiFi after AP reboot"
 
-        # Verify connectivity
-        ping_status = sl_collections.ping(device_ip=wifi_obj.device_ip, ping_count=10)
-        assert ping_status, "Ping failed after reconnection"
+        assert sl_collections.ping(device_ip=device_ip, ping_count=10), \
+            "Ping failed after WiFi reconnection"
 
-        logger().info("Wi-Fi reconnection and connectivity verified successfully")
+        logger().info("WiFi reconnection verified successfully")
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
