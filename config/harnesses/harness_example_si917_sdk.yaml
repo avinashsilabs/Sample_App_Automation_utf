@@ -1230,7 +1230,7 @@ devices:
             sd:
                 type: "mdns.avahi.avahi_discovery"
                 shell: 'linux_shell'
-    
+
     avahi_service_advertisement:
         interfaces:
             linux_shell:
