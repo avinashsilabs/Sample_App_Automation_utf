@@ -152,7 +152,7 @@ mgmt_action_frame_protection_bit_enable,(wlan.sa == {{ sa_addr }}), and !(wlan.f
 pmf_enabled_with_disassociation,(wlan.ta == {{ ta_addr }}), and (wlan.fc.type_subtype == 0x000c) and (wlan.fc.protected == 1),
 TCP &UDP,,,
 dhcp_discover,((wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff)), and (dhcp.option.dhcp == 1),
-dhcp_discover_from_ta,((wlan.sa == {{ sa_addr }}) and (wlan.ta == {{ ta_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff)), and (dhcp.option.dhcp == 1),
+dhcp_discover_from_ta,((wlan.sa == {{ sa_addr }}) and (wlan.ta == {{ ta_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff)), and (dhcp.option.dhcp == 1) and (wlan.fc.retry == 0),
 dhcp_request,((wlan.sa == {{ sa_addr }}) and (wlan.da == ff:ff:ff:ff:ff:ff)), and (dhcp.option.dhcp == 3),
 dhcp_offer,((wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }})), and (dhcp.option.dhcp == 2),
 dhcp_ack,((wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }})), and (dhcp.option.dhcp == 5),

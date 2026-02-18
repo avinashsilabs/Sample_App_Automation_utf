@@ -1640,23 +1640,33 @@ def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_p
             exponential_violations = []
             missed_packets = []
             tolerance = 0.5
+            expected_power = 1  # Track the actual expected power level
 
             for i in range(1, len(time_deltas)):
-                # Expected value is 2^i (2, 4, 8, 16, 32, ...)
-                expected_value = 2 ** i
+                # Expected value based on current power level
+                expected_value = 2 ** expected_power
                 expected_min = expected_value * (1 - tolerance)  # Allow tolerance
                 expected_max = expected_value * (1 + tolerance)
 
                 # Check primary expected value
                 matches_expected = (expected_min <= time_deltas[i] <= expected_max)
 
-                # Check next power level to handle potential missed packets
-                if not matches_expected:
-                    next_expected_value = 2 ** (i + 1)
+                if matches_expected:
+                    # Perfect match, increment power for next iteration
+                    expected_power += 1
+                else:
+                    # Check next power level to handle potential missed packets
+                    next_expected_value = 2 ** (expected_power + 1)
                     next_expected_min = next_expected_value * (1 - tolerance)
                     next_expected_max = next_expected_value * (1 + tolerance)
                     matches_next_expected = (next_expected_min <= time_deltas[i] <= next_expected_max)
-                    if not matches_next_expected:
+
+                    if matches_next_expected:
+                        # Matches next level - packet was missed
+                        missed_packets.append(expected_value)  # Log the missed packet for information
+                        expected_power += 2  # Skip the missed power level and increment for next
+                    else:
+                        # Doesn't match expected or next expected - violation
                         violation = {
                             'index': i,
                             'expected_value': expected_value,
@@ -1666,9 +1676,8 @@ def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_p
                             'next_range': f"{next_expected_min:.2f} - {next_expected_max:.2f}"
                         }
                         exponential_violations.append(violation)
-                    else:
-                        missed_packets.append(expected_value)  # Log the missed packet for information
-            logger().info(f"\n================ Missed Packets: {missed_packets} ======================\n")
+                        expected_power += 1  # Continue with next power level
+            logger().info(f"\n================ Missed Packets with expected Time-Interval: {missed_packets} ======================\n")
             logger().info(f"\n================ exponential violations Packets: {exponential_violations} ======================\n")
             assert len(exponential_violations) == 0, f"DHCP discover requests do not follow exponential backoff pattern: {exponential_violations}"
             assert len(missed_packets) <= 1, f"Need Manual Test case verification as Multiple missed DHCP discover packets detected: {missed_packets}"
