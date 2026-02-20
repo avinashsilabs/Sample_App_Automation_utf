@@ -165,7 +165,7 @@ def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3, sl
         ble_dut.interfaces.bluetooth.ble_read_phy(ble_client_address)
         time.sleep(0.5)
         ble_dut.interfaces.bluetooth.ble_set_phy(ble_client_address, tx_phy=1, rx_phy=1, coded_phy=2)
-        time.sleep(120)
+        time.sleep(20)
         state = ble_dut.interfaces.bluetooth.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
