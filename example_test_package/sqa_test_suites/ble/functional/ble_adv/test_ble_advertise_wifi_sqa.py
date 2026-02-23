@@ -281,73 +281,6 @@ def test_ble_undirected_non_connectable_adv_C19804(wifi_dut, ble_client):
         ),"Expected avd type not found bt mon logs"
         logger().info(f"Verified that DUT in {bt_logs.device_adv_type} mode")
 
-@pytest.mark.skip()
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
-        | RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-        "rejoin_max_retry": 10,
-        "scan_interval": 6,
-        "beacon_missed_count": 40,
-        "first_time_retry": 0,
-    },
-)
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_connect_T3275(wifi_dut, ble_client):
-
-    logger().info("Initializing BLE")
-    # Set up DUT for BLE advertising
-    bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
-
-    logger().info("Advertising DUT ")
-
-    wifi_dut.interfaces.wifi.ble_start_advertising()
-    logger().info("Enabling Wlan and BLE power save ")
-    enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                         RS9116PowerSaveProcedureTypes.FastPowerSave)
-    # # Enables the bt power save in DUT
-
-    enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
-                                                          RS9116PowerSaveProcedureTypes.FastPowerSave)
-    assert enable_wifi_ps, 'failed to enable wlan power save'
-    assert enable_bt_ps, 'failed to enable bt power save'
-
-    logger().info("Initiating scan from remote device")
-
-    # Begin Scanning for BLE devices
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(
-        bt_dut_address=bt_dut_address
-    )
-    assert bt_client_address is not None,"Unable to fetch BD address from remote BLE device"
-
-    device_found = _check_for_devices_in_scanned_results(ble_interface=ble_client.interfaces.bluetooth,
-                                                         bt_dut_address=bt_dut_address,
-                                                         adv_data=wifi_dut.interfaces.wifi.ble_advertising_data)
-    if device_found:
-        logger().info("Dut found in scan results")
-
-    logger().info("initiating stop scanning")
-    ble_client.interfaces.bluetooth.stop_scanning()
-    assert device_found,"DUT not found in scan results"
-
-    logger().info("Initiating connection from remote device")
-
-    ble_client.interfaces.bluetooth.connect(wifi_dut.interfaces.wifi.ble_address)
-
-    time.sleep(60)
-
-    logger().info("Initiating disconnection from remote device")
-
-    ble_client.interfaces.bluetooth.disconnect(wifi_dut.interfaces.wifi.ble_address)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -479,40 +412,6 @@ def test_ble_adv_with_configured_name_of_length_16bytes_C19850(wifi_dut, ble_cli
 
     logger().info("initiating stop advertising")
     wifi_dut.interfaces.wifi.ble_stop_advertising()
-
-@pytest.mark.skip()
-@pytest.mark.config(
-    "wifi_dut",
-    wifi={
-        "oper_mode": 0,
-        "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
-        "features": RS9116FeatureBitMap.ULPGPIOHandshake
-        | RS9116FeatureBitMap.Aggregation,
-        "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
-        "tcpip_features": RS9116TCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.Default,
-        "ext_custom_features": RS9116ExtCustomFeatureBitMap.Default
-        | RS9116ExtCustomFeatureBitMap.FeatureLowPower
-        | RS9116ExtCustomFeatureBitMap.Feature32KHzBypassClockOnUULP_GPIO_3,
-        "rejoin_max_retry": 10,
-        "scan_interval": 6,
-        "beacon_missed_count": 40,
-        "first_time_retry": 0,
-    },
-)
-@pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
-def test_ble_set_localname_testcase61(wifi_dut):
-
-    for count in range(0, 2):
-        if count == 0:
-            set_local_name = "ABCDE"
-        else:
-            set_local_name = "BLETEST123"
-        logger().info(f"Setting BLE local name {set_local_name}")
-        wifi_dut.interfaces.wifi.bt_set_local_name(set_local_name)
-        status = wifi_dut.interfaces.wifi.bt_get_local_name()
-        logger().info(f"getting the local name : {status}")
-        assert set_local_name == status,"Set local name and get local name not matched "
 
 
 @pytest.mark.config(
