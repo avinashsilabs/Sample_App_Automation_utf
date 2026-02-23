@@ -1496,38 +1496,44 @@ def test_ble_adv_report_C19848(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_continuous_scan_C19819(ble_dut, ble_client):
+def test_ble_continuous_scan_C19819(wifi_dut, ble_dut, ble_client):
     with TimeMeasurer() as t:
         ble_scan_window = 32  # 0x20 in hexadecimal
         ble_scan_interval = 32  # 0x20 in hexadecimal
+        # Step 1 & 2: Device and Wireless Initialization
         logger().info("start ble in dut")
-        bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
+        bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
         assert bt_dut_address, "ble initialization failed in dut"
-        t_end = time.time() + 60 * 30
-        while time.time() < t_end:
-            ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-            assert ble_client_address, f"ble initialization failed in remote device"
 
-            time.sleep(5)
-            ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address,
+        ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+        assert ble_client_address, "ble initialization failed in remote device"
+        time.sleep(5)
+
+        # Step 3: DUT starts BLE scanning
+        logger().info("Start BLE scanning")
+        ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address,
                                                             ble_scan_interval=int(ble_scan_interval / 0.625),
                                                             ble_scan_window=int(ble_scan_window / 0.625), timeout=300)
-            time.sleep(2)
 
-            logger().info(f" ============== Enable PSP in DUT")
-            enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(
-                power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
-                power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave)
-            assert enable_wifi_ps, "failed to enable wifi power save"
-            enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(
-                power_save_mode=RS9116PowerSaveModes.PowerSaveMode2,
-                power_save_type=RS9116PowerSaveProcedureTypes.FastPowerSave
-            )
-            assert enable_bt_ps, "failed to enable bt power save"
+        logger().info("Enabling Wlan and BLE power save ")
+        # Enables the wlan power save in DUT
+        enable_bt_ps = wifi_dut.interfaces.wifi.bt_power_save(
+                    RS9116PowerSaveModes.PowerSaveMode2,
+                    RS9116PowerSaveProcedureTypes.FastPowerSave, timeout=10)
+        assert enable_bt_ps, 'failed to enable bt power save'
+        # Enables the bt power save in DUT
+        enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(
+                    RS9116PowerSaveModes.PowerSaveMode2,
+                    RS9116PowerSaveProcedureTypes.FastPowerSave, timeout=10)
+        assert enable_wifi_ps, 'failed to enable wlan power save'
+        
+        # Step 6: Continue scanning with power save enabled for 30 minutes
+        logger().info("Scanning with power save enabled for 30 minutes")
+        time.sleep(60 * 30)
 
-            ble_dut.interfaces.bluetooth.ble_stop_scanning()
-            ble_client.interfaces.bluetooth.stop_advertising()
-            ble_client.interfaces.bluetooth.close()
+        ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        ble_client.interfaces.bluetooth.stop_advertising()
+        ble_client.interfaces.bluetooth.close()
     logger().info(f"time taken for test {t.duration}")
 
 
@@ -1591,28 +1597,17 @@ def test_ble_continuous_scan_C19820(ble_dut, ble_client):
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_disconnect"])
-def test_ble_power_save_connected_state_as_a_slave_C19831(wifi_dut, ble_client):
-    # Set up DUT for BLE advertising
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
+def test_ble_power_save_connected_state_as_a_slave_C19831(firmware_loader, wifi_dut, ble_client):
     logger().info("Initiate ble service in DUT")
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address, "unable to fetch dut bd address...."
 
-    logger().info("start ble scan in rd_1")
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
-    assert bt_client_address, "ble initialization failed in remote device_1"
+    logger().info("DUT starts advertising to act as slave/peripheral")
+    wifi_dut.interfaces.wifi.ble_start_advertising()
     time.sleep(2)
 
-    wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
-    time.sleep(10)
-
-    logger().info(f"found BT client address of {bt_client_address}")
-
-    logger().info("Connect to the dut with mac address..")
-    wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=30)
-    assert bt_client_address, "unable to connect to the given address"
-    time.sleep(30)
-
-    logger().info("enabling the power save modes ")
+    logger().info("enabling the power save modes after DUT starts advertising")
     enable_wifi_ps = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                          RS9116PowerSaveProcedureTypes.MaxPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
@@ -1621,14 +1616,27 @@ def test_ble_power_save_connected_state_as_a_slave_C19831(wifi_dut, ble_client):
     assert enable_bt_ps, "failed to enable bt power save"
     time.sleep(5)
 
-    logger().info(f"Connection interval in power meter or logic analyzer, Currently this provision is not available")
-    ble_client.interfaces.bluetooth.close()
-
+    logger().info("Client scans for DUT")
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
+    assert bt_client_address, "failed to get client address from scan"
     time.sleep(5)
-    logger().info("stop scanning ....")
+    
     ble_client.interfaces.bluetooth.stop_scanning()
     time.sleep(2)
 
+    logger().info(f"Client found DUT at {bt_dut_address}")
+
+    logger().info("Client connects to DUT (DUT is slave/peripheral with power save enabled)")
+    connect_state = ble_client.interfaces.bluetooth.connect(bt_dut_address)
+    logger().info(f"Connection state: {connect_state}")
+    assert connect_state, "unable to connect to DUT"
+    time.sleep(30)
+    logger().info("Disconnect from client")
+    ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+    time.sleep(2)
+    
+    ble_client.interfaces.bluetooth.close()
+    time.sleep(5)
 
 @pytest.mark.dut("rs9116")
 @pytest.mark.bt_client("raspi_ble_client")
