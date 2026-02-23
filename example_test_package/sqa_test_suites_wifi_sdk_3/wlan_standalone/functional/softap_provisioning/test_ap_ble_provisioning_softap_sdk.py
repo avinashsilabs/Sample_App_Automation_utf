@@ -2265,3 +2265,197 @@ def test_wifi_sdk_ap_only_provisioning_wpa2_security_for_multiple_iteration_loop
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_wpa2_security_Auto_JOIN_to_same_AP_C913405(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter, ble_client, ble_dut):
+
+    """Verify the behavior when the SiWx917 is acting as station mode, disconnect from third party
+    access point and reconnect to same third-party AP using auto join post-provisioning 	"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0, ble_client=ble_client, ble_dut=ble_dut,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        # ble_obj.ble_start_advertising()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        time.sleep(10)
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        # Verify connectivity to third-party AP via ping before disconnect
+        logger().info("....Pinging AP to verify connectivity before disconnect....")
+        status = sl_collections.ping(device_ip=ble_obj.device_ip, ping_count=10)
+        assert status, "DUT NOT RESPONDING FOR PING before disconnect"
+
+        # Disconnect from the third-party AP
+        logger().info("....Disconnecting from the third-party AP....")
+        ble_obj.wifi_disconnect()
+        time.sleep(5)
+
+        # Auto-join to the same AP
+        logger().info("....Initiating Auto Join to the same AP....")
+        wifi_dut.interfaces.wifi.join(
+            ssid=wifi_access_point.interfaces.wifi.ssid,
+            passphrase=ble_obj.result[2],
+            security=ble_obj.result[3].lower())
+        logger().info("....Auto Join successful, connected back to the same AP....")
+
+        # Re-configure IP after auto-join
+        ip_status, ip_config = sl_collections.configure_ip(wifi_dut=wifi_dut)
+        assert ip_status, f"....Unable to assign IP after auto join: {ip_config}...."
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT IP after auto join: {device_ip}")
+
+        # Verify connectivity via ping after auto-join
+        logger().info("....Pinging AP to verify connectivity after Auto Join....")
+        status = sl_collections.ping(device_ip=device_ip, ping_count=10)
+        assert status, "DUT NOT RESPONDING FOR PING after Auto Join"
+        logger().info("....Auto Join and Ping verification successful....")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_wpa2_security_Auto_JOIN_to_other_AP_C913406(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter, ble_client, ble_dut,
+        wifi_access_points):
+
+    """	Verify the behavior when the SiWx917 is acting as station mode, disconnect from third party
+    access point and reconnection to other available third-party AP post-provisioning"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        # Get the second third-party AP from harness (dlink_ap)
+        assert len(wifi_access_points) >= 2, "Minimum 2 access points needed in harness for this test"
+        other_ap = wifi_access_points[1]
+        other_ap_ssid = other_ap.interfaces.wifi.ssid
+        other_ap_security_raw = other_ap.interfaces.wifi.security if hasattr(other_ap.interfaces.wifi, 'security') else 'wpa2'
+        other_ap_security = other_ap_security_raw.name.lower() if hasattr(other_ap_security_raw, 'name') else str(other_ap_security_raw).lower()
+        other_ap_passphrase = other_ap.interfaces.wifi.passphrase
+        other_ap_channel = other_ap.interfaces.wifi.channel if hasattr(other_ap.interfaces.wifi, 'channel') else 0
+        logger().info(f"Second AP details - SSID: {other_ap_ssid}, Security: {other_ap_security}, Channel: {other_ap_channel}")
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0, ble_client=ble_client, ble_dut=ble_dut,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter)
+
+        ble_obj.ap_mode_start()
+        # ble_obj.ble_start_advertising()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        time.sleep(10)
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+        ble_obj.sl_net_deinit()
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+
+        # Verify connectivity to primary third-party AP via ping before disconnect
+        logger().info("....Pinging primary AP to verify connectivity before disconnect....")
+        status = sl_collections.ping(device_ip=ble_obj.device_ip, ping_count=10)
+        assert status, "DUT NOT RESPONDING FOR PING on primary AP before disconnect"
+
+        # Disconnect from the primary third-party AP
+        logger().info(f"....Disconnecting from primary AP ({wifi_access_point.interfaces.wifi.ssid})....")
+        ble_obj.wifi_disconnect()
+        time.sleep(5)
+
+        # Connect to the other (second) third-party AP from harness
+        logger().info(f"....Initiating connection to other third-party AP (SSID: {other_ap_ssid})....")
+        wifi_dut.interfaces.wifi.scan()
+        wifi_dut.interfaces.wifi.join(
+            ssid=other_ap_ssid,
+            passphrase=other_ap_passphrase,
+            security=other_ap_security,
+            channel=other_ap_channel)
+        logger().info(f"....Successfully connected to other third-party AP ({other_ap_ssid})....")
+
+        # Re-configure IP after connecting to other AP
+        ip_status, ip_config = sl_collections.configure_ip(wifi_dut=wifi_dut)
+        assert ip_status, f"....Unable to assign IP after connecting to other AP ({other_ap_ssid}): {ip_config}...."
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT IP after connecting to other AP ({other_ap_ssid}): {device_ip}")
+        logger().info(f"....Successfully connected and obtained IP on other third-party AP ({other_ap_ssid})....")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
