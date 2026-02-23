@@ -46,7 +46,7 @@ Step5 : Send data from dut to bt_client
 
 """
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_DUT_Slave_bt_spp_Tx_and_Rx_powersave_enabled_C20043 (bt_dut, bt_client):
+def test_DUT_Slave_bt_spp_Tx_and_Rx_powersave_enabled_C20043(bt_dut, bt_client):
         logger().info("Configuring DUT as SPP Slave")
         bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_slave_spp()
         assert bt_dut_address is not None, 'Could not start DUT as BT SLAVE'
@@ -108,54 +108,3 @@ def test_DUT_Slave_bt_spp_Tx_and_Rx_powersave_enabled_C20043 (bt_dut, bt_client)
 
         logger().info(f"Close Socket connection")
         bt_server_socket.close()
-@pytest.mark.skip
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_DUT_Master_bt_spp_Tx_and_Rx_powersave_enabled_(bt_dut, bt_client):
-        bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp()
-        assert bt_dut_address is not None
-        logger().info(f"DUT is BT-MASTER with MAC address {bt_dut_address} ")
-        bt_client_address = bt_client.interfaces.bluetooth.start_spp_slave(bt_dut_address, pin_code)
-        assert bt_client_address is not None
-        logger().info(f"RASPI is BT-SLAVE with MAC address {bt_client_address} ")
-        with bt_client.interfaces.bluetooth.bt_socket(
-            mode=BTSocketRole.Client
-            ) as bt_client_socket:
-            # SPP Connection
-            with bt_dut.interfaces.wifi.run_bt_task():
-                bt_client_socket.create_client()
-                bt_dut.interfaces.wifi.bt_connect(bt_client_address)
-                addr = bt_client_socket.accept(timeout=12)
-                assert addr == bt_dut_address
-
-            recv_text=text_generator()
-            # Send data from bt_client to dut
-            with bt_dut.interfaces.wifi.run_bt_task():
-                sent = bt_client_socket.send(
-                recv_text
-                )  # Dut is programmed to send back data
-                assert sent
-                data = bt_client_socket.recv()
-                assert data is not None
-                assert data.decode() == recv_text
-            sw = Stopwatch()
-            while sw.elapsed_sec < 60:
-                    send_text = text_generator()
-                    # Send data from dut to bt_client
-                    bt_dut.interfaces.wifi.bt_spp_transfer(send_text, bt_client_address)
-                    data = bt_client_socket.recv()
-                    assert data is not None
-                    assert data.decode() == send_text
-            # Ping dut
-            assert bt_client.interfaces.bluetooth.bt_adapter.l2ping(
-                dest_addr=bt_dut_address
-            )
-            time.sleep(1)
-        logger().info("disconnecting bt host....")
-        bt_dut.interfaces.bluetooth.bt_disconnect(bt_client_address)
-        bt_client_socket.close()
-
-
-
-
-
-
