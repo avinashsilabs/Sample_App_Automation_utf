@@ -234,10 +234,12 @@ def test_ble_dual_role_1slave_1master_conn_disconn_reconn_C19917(ble_dut, ble_cl
             assert bt_client_address, f"ble initialization failed in remote device{count}"
             logger().info(f"ble client address of remote device {count} is {bt_client_address}")
             ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
-            time.sleep(2)
-
+            time.sleep(10)
+            ble_dut.interfaces.bluetooth.ble_stop_scanning()
+            time.sleep(5)
             logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-            ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+            ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, 
+                                                expected="RSI_BLE_ENCRYPT_STARTED_EVENT", timeout=timeout)
             state = ble_dut.interfaces.wifi.ble_get_device_state()
             state_int = int(state) if state.isdigit() else -1
             assert state_int == BLEDeviceState.Connected
@@ -337,15 +339,20 @@ def test_ble_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_C19918(ble_
         assert bt_client_address, f"ble initialization failed in remote device{count}"
         logger().info(f"ble client address of remote device {count} is {bt_client_address}")
         ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
-        time.sleep(2)
+        time.sleep(10)
+        ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        time.sleep(5)
 
         logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-        ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+        ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address,
+                                            expected="RSI_BLE_ENCRYPT_STARTED_EVENT", timeout=timeout)
         state = ble_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
+        logger().info("Checking connection stability for 15 mins")
         time.sleep(900)
         status = ble_dut.interfaces.wifi.ble_get_device_state()
+        logger().info(f"connection state after 15 mins: {status}")
         state_int = int(status) if status.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
     ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
@@ -440,16 +447,21 @@ def test_ble_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_C19919(ble_
         assert bt_client_address, f"ble initialization failed in remote device{count}"
         logger().info(f"ble client address of remote device {count} is {bt_client_address}")
         ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=120)
-        time.sleep(2)
+        time.sleep(10)
+        ble_dut.interfaces.bluetooth.ble_stop_scanning()
+        time.sleep(5)
 
         logger().info(f"Initiating connection this can take upto {timeout} seconds....")
-        ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout)
+        ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address,
+                                            expected="RSI_BLE_ENCRYPT_STARTED_EVENT", timeout=timeout)
         state = ble_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
         assert state_int == BLEDeviceState.Connected
+        logger().info("Checking connection stability for 15 mins")
         time.sleep(900)
         status = ble_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(status) if status.isdigit() else -1
+        logger().info(f"connection state after 15 mins: {status}")
         assert state_int == BLEDeviceState.Connected
         ble_dut.interfaces.bluetooth.ble_disconnect(ble_remote_dev_address=bt_client_address)
 
