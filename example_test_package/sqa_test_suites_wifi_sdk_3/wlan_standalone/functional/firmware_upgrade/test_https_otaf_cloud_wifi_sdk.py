@@ -163,16 +163,16 @@ class WifiJoin(ThreadBase):
                 long_url_name.append(long_file + str(i))
         if self.test_case == '510789' or self.test_case == '501263':
             for i in range(1, 49):
-                long_url_name.append(long_file+str(i))
+                long_url_name.append(long_file + str(i))
         elif self.test_case == '510788' or self.test_case == '500497':
             for i in range(1, 25):
-                long_url_name.append(long_file+str(i))
+                long_url_name.append(long_file + str(i))
 
         logger().info(f"long url name {long_url_name}")
         final_long_url_name = "".join(long_url_name)
         logger().info(f"final url name {final_long_url_name}")
 
-        presigned_rps_path_aws = "PRESIGNED_URL/"+final_long_url_name+"/"+rps_path
+        presigned_rps_path_aws = "PRESIGNED_URL/" + final_long_url_name + "/" + rps_path
         logger().info(f"PRESIGNED_RPS_PATH PATH {presigned_rps_path_aws}")
 
         if self.test_case != '500499' and self.test_case != '500498':
@@ -191,13 +191,13 @@ class WifiJoin(ThreadBase):
 
         if self.test_case == '500499' or self.test_case == '500498':
             self.new_url = presigned_rps_path_aws
-            logger().info(f"Since 2048 legth not allowed to upload, simulated url of length more than 2048 to download {self.new_url}")
+            logger().info(
+                f"Since 2048 legth not allowed to upload, simulated url of length more than 2048 to download {self.new_url}")
 
         p_s_url = aws_s3.interfaces.s3.create_presigned_url("httpotaf", self.new_url, 6000)
         logger().info(f" PRESIGNED URL IS {p_s_url}")
         logger().info(f" length pre-signed url is {len(p_s_url)}")
         return p_s_url
-
 
     def fw_download_from_aws_server_for_longer_url_length(self, aws_s3, rps_path, url_len):
         logger().info(f"**** rps_path: ***{rps_path}")
@@ -229,7 +229,9 @@ class WifiJoin(ThreadBase):
                 logger().info(f"Firmware URL obtained: {self.url1}")
 
             elif self.test_case == '500496' or self.test_case == '500495':
-                self.url = self.fw_download_from_aws_server_for_longer_url_length(aws_s3=self.aws_s3, rps_path=self.rps_path, url_len=self.url_len)
+                self.url = self.fw_download_from_aws_server_for_longer_url_length(aws_s3=self.aws_s3,
+                                                                                  rps_path=self.rps_path,
+                                                                                  url_len=self.url_len)
 
             elif self.test_case == '500497' or self.test_case == '510788' or self.test_case == '510789' or self.test_case == '500499' or self.test_case == '500498' or self.test_case == '501263':
                 self.url = self.fw_download_presigned_url(aws_s3=self.aws_s3, rps_path=self.rps_path)
@@ -312,7 +314,8 @@ class WifiJoin(ThreadBase):
                     async_timeout=500)
             if self.test_case == '500496' or self.test_case == '500495':
                 logger().info(f"Test case 500496: URL received is {self.url}")
-                logger().info("Removing https://httpotaf.s3.us-east-2.amazonaws.com/ as it is not required for long url")
+                logger().info(
+                    "Removing https://httpotaf.s3.us-east-2.amazonaws.com/ as it is not required for long url")
                 self.new_url = self.url.replace("https://httpotaf.s3.us-east-2.amazonaws.com/", "")
                 logger().info(f"Final url to upload {self.new_url}")
                 self.wifi_dut.interfaces.wifi.firmware_upgrade(
@@ -415,12 +418,14 @@ class WifiJoin(ThreadBase):
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@wifi_dut_marker()
+@wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_c19769(aws_s3, wifi_sniffer, wifi_access_point,
                                                            wifi_dut, sl_collections, utf_constants):
-    """This Test case is validating Firmware upgrade using aws server"""
+    """This Test case is validating Firmware upgrade using aws server.
+    Uses combined_cert.pem so the DUT trusts the current AWS S3 TLS chain (avoids SL_STATUS_SI91X_SSL_TLS_HANDSHAKE_FAILED).
+    """
     rps_path = utf_constants.get("rps_filename")
     try:
         test_case = '19769'
@@ -440,7 +445,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c19769(aws_s3, wifi_sniffer,
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_ext_header_c652581(aws_s3, wifi_sniffer, wifi_access_point,
-                                                            wifi_dut, sl_collections, utf_constants):
+                                                                       wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server with extender header enable"""
     rps_path = utf_constants.get("rps_filename")
     try:
@@ -479,7 +484,7 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_c652416(azure_blob, wifi_s
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@wifi_dut_marker()
+@wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_c498662(aws_s3, wifi_sniffer, wifi_access_point,
@@ -522,33 +527,12 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_498663(azure_blob, wifi_sn
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@wifi_dut_marker_http_longer_url()
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-@pytest.mark.legacy_deployed
-def test_wifi_sdk_https_fw_url_length_1024_c500495(aws_s3, wifi_sniffer, wifi_access_point,
-                                                           wifi_dut, sl_collections, utf_constants):
-    """This Test case is validating Firmware upgrade using aws server"""
-    rps_path = utf_constants.get("rps_filename")
-    try:
-        test_case = '500495'
-
-        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
-                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
-                            rps_path=rps_path,url_len=1024)
-
-        wlan_obj.start()
-        wlan_obj.wait_for_exit()
-
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_fw_url_length_800_c500496(aws_s3, wifi_sniffer, wifi_access_point,
-                                                           wifi_dut, sl_collections, utf_constants):
+                                                  wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server"""
     rps_path = utf_constants.get("rps_filename")
     try:
@@ -569,7 +553,7 @@ def test_wifi_sdk_https_fw_url_length_800_c500496(aws_s3, wifi_sniffer, wifi_acc
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_fw_url_length_1080_c500497(aws_s3, wifi_sniffer, wifi_access_point,
-                                                           wifi_dut, sl_collections, utf_constants):
+                                                   wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server"""
     rps_path = utf_constants.get("rps_filename")
     try:
@@ -585,12 +569,13 @@ def test_wifi_sdk_https_fw_url_length_1080_c500497(aws_s3, wifi_sniffer, wifi_ac
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_https_M4_fw_url_length_1500_disable_http_url_c510789(aws_s3, wifi_sniffer, wifi_access_point,
-                                                           wifi_dut, sl_collections, utf_constants):
+                                                                       wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ M4 update functionality with URL length is more than 1024 (i-e ~1500) and disable long http bit"""
     rps_path = utf_constants.get("m4_rps_plain")
     try:
@@ -613,7 +598,7 @@ def test_wifi_sdk_https_M4_fw_url_length_1500_disable_http_url_c510789(aws_s3, w
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.deployed_25q4
 def test_wifi_sdk_https_fw_url_length_2048_enable_http_url_c500498(aws_s3, wifi_sniffer, wifi_access_point,
-                                                           wifi_dut, sl_collections, utf_constants):
+                                                                   wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ update functionality with URL length is more than 2048 (i-e ~2048) and enable long http bit"""
     rps_path = utf_constants.get("rps_filename")
     try:
@@ -630,13 +615,12 @@ def test_wifi_sdk_https_fw_url_length_2048_enable_http_url_c500498(aws_s3, wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.deployed_25q4
 def test_wifi_sdk_https_fw_url_length_2048_disable_http_url_c500499(aws_s3, wifi_sniffer, wifi_access_point,
-                                                           wifi_dut, sl_collections, utf_constants):
+                                                                    wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ update functionality with URL length is more than 2048 (i-e ~2048) and disable long http bit"""
     rps_path = utf_constants.get("rps_filename")
     try:
@@ -685,7 +669,7 @@ def test_wifi_sdk_https_fw_url_length_2048_disable_http_url_c500499(aws_s3, wifi
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw", "clear_certs"])
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_combined_root_ca_c687580(aws_s3, wifi_sniffer, wifi_access_point,
-                                                           wifi_dut, sl_collections, utf_constants):
+                                                                             wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server"""
     rps_path = utf_constants.get("rps_filename")
     try:
@@ -803,7 +787,7 @@ def test_wifi_sdk_https_fw_url_length_1500_c501263(aws_s3,
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_M4_fw_url_length_1080_enable_http_url_c510788(aws_s3, wifi_sniffer, wifi_access_point,
-                                                           wifi_dut, sl_collections, utf_constants):
+                                                                      wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ M4 update functionality with URL length is more than 1024 (i-e ~1500) and enable long http bit"""
     rps_path = utf_constants.get("m4_rps_plain")
     try:
@@ -818,8 +802,6 @@ def test_wifi_sdk_https_M4_fw_url_length_1080_enable_http_url_c510788(aws_s3, wi
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-
 
 
 @pytest.mark.config(
@@ -869,3 +851,34 @@ def test_wifi_sdk_https_fw_upgrade_using_CA1_CA3_cert_c696374(aws_s3, wifi_sniff
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker_http_longer_url(
+    ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1
+                    | Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.Aggregation
+                    | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.HTTPLongerURL,
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+def test_wifi_sdk_https_fw_url_length_1024_c500495(aws_s3, wifi_sniffer, wifi_access_point,
+                                                   wifi_dut, sl_collections, utf_constants):
+    """This Test case is validating Firmware upgrade using aws server"""
+    rps_path = utf_constants.get("rps_filename")
+    try:
+        test_case = '500495'
+
+        wlan_obj = WifiJoin(aws_s3=aws_s3, wifi_sniffer=wifi_sniffer, sl_collections=sl_collections,
+                            wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
+                            rps_path=rps_path, url_len=1024)
+
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
