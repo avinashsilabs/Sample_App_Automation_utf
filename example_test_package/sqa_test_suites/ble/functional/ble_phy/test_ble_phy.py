@@ -55,7 +55,7 @@ def ble_connection(ble_dut, ble_client):
         ble_dut.interfaces.bluetooth.ble_stop_scanning()
         timeout = 120
         logger().info(f"Initiating connection this can take up to {timeout} seconds....")
-        ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=ble_client_address, timeout=timeout)
+        ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=ble_client_address, expected="RSI_BLE_ENCRYPT_STARTED_EVENT", timeout=timeout)
     except Exception as e:
         ble_client.interfaces.bluetooth.stop_advertising()
         raise e
