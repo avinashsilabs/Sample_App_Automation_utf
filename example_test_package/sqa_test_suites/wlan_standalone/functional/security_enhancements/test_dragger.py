@@ -455,8 +455,8 @@ def test_WPA2_EAP_AES256_SHA256_TLSv12_C113825(rs_helper, utf_constants, radius_
 
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
-                    f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x003d ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x003d and tls.handshake.ciphersuite == 0x00ff ' \
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.2  and cipher suit AES256-SHA256 in sniffer"
     )
@@ -502,8 +502,8 @@ def test_WPA2_EAP_AES128_SHA256_TLSv12_C113826(rs_helper, utf_constants, radius_
 
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
-                    f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x003c ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x003c and tls.handshake.ciphersuite == 0x00ff ' \
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.2  and cipher suit AES128-SHA256 in sniffer"
     )
@@ -549,8 +549,8 @@ def test_WPA2_EAP_AES256_SHA_TLSv12_C113827(rs_helper, utf_constants, radius_ser
 
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
-                    f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0035 ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0035 and tls.handshake.ciphersuite == 0x00ff ' \
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.2  and cipher suit AES256_SHA in sniffer"
     )
@@ -596,8 +596,8 @@ def test_WPA2_EAP_AES128_SHA_TLSv12_C113828(rs_helper, utf_constants, radius_ser
 
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
-                    f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x002f ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x002f and tls.handshake.ciphersuite == 0x00ff ' \
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.2  and cipher suit AES128_SHA in sniffer"
     )
@@ -693,7 +693,7 @@ def test_WPA2_EAP_all_ciphers_TLSv12_C113833(rs_helper, utf_constants, radius_se
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
                     f'and eap and tls.record.version == 0x0303 ' \
-                    f'and tls.handshake.cipher_suites_length == 22'
+                    f'and tls.handshake.cipher_suites_length == 24'
     logger().info(
         f"Validating EAP frames TLS version 1.2 and all cipher suits in sniffer"
     )
@@ -875,8 +875,8 @@ def test_WPA2_EAP_AES256_SHA_TLSv10_C113837(rs_helper, utf_constants, radius_ser
 
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
-                    f'and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x0035 ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x0035 and tls.handshake.ciphersuite == 0x00ff ' \
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.0  and cipher suit AES256_SHA in sniffer"
     )
@@ -922,8 +922,8 @@ def test_WPA2_EAP_AES128_SHA_TLSv10_C113838(rs_helper, utf_constants, radius_ser
 
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
-                    f'and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x002f ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x002f and tls.handshake.ciphersuite == 0x00ff ' \
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.0  and cipher suit AES128_SHA in sniffer"
     )
@@ -970,7 +970,7 @@ def test_WPA2_EAP_all_ciphers_TLSv10_C113843(rs_helper, utf_constants, radius_se
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
                     f'and eap and tls.record.version == 0x0301 ' \
-                    f'and tls.handshake.cipher_suites_length == 22'
+                    f'and tls.handshake.cipher_suites_length == 24'
     logger().info(
         f"Validating EAP frames TLS version 1.0 and all cipher suits in sniffer"
     )
