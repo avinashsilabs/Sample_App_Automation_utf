@@ -210,7 +210,7 @@ def _strict_prefix():
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
-def test_wifi_sdk_mdns_ipv6_stateless_with_avahi_loop_c767019(
+def test_wifi_sdk_mdns_ipv6_stateless_with_avahi_loop_c767019(firmware_loader,
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
     """Connect once (IPv6 SLAAC), then run: mDNS init → advertise → deinit with Avahi cycles, for 3 iterations."""
@@ -281,7 +281,7 @@ def test_wifi_sdk_mdns_ipv6_stateless_with_avahi_loop_c767019(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
-def test_wifi_sdk_mdns_ipv6_stateful_with_avahi_loop_c767020(
+def test_wifi_sdk_mdns_ipv6_stateful_with_avahi_loop_c767020(firmware_loader,
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
     """Connect once (IPv6 DHCPv6), then run: mDNS init → advertise → deinit with Avahi cycles, for 3 iterations; disconnect at end."""
@@ -357,7 +357,7 @@ def test_wifi_sdk_mdns_ipv6_stateful_with_avahi_loop_c767020(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
-def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ipv6_c767022(
+def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ipv6_c767022(firmware_loader,
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
     """Connect once (IPv6 DHCPv6), start mDNS, run Avahi restart/browse 10+ times while mDNS is active, log metrics, then deinit & disconnect."""
@@ -471,7 +471,7 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ipv6_c767022(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
-def test_wifi_sdk_mdns_avahi_discover_1hr_loop_c767026(
+def test_wifi_sdk_mdns_avahi_discover_1hr_loop_c767026(firmware_loader,
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
     """Connect once (IPv6), start mDNS, run Avahi restart/browse for long_duration, log metrics, then deinit and disconnect."""
