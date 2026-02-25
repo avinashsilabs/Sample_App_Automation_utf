@@ -667,6 +667,9 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_ALL_BI
             f"The MultiCast Client Info is : {ip_version}, {ttl}, {multicast_mac}, {multicast_ip}, {device_port}, {server_port}, {buffer_length}, {no_of_pkts}"
         )
 
+        logger().info(f"DUT joining to the multicast group {multicast_ip}")
+        wifi_dut.interfaces.wifi.sl_net_join_multicast_address(server=multicast_ip)
+
         logger().info(
             f"\nSetting the multicast filter type : {MulticastParams.MULTICAST_MAC_CLEAR_ALL}\n"
         )
@@ -674,9 +677,6 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_ALL_BI
             filter_type=MulticastParams.MULTICAST_MAC_CLEAR_ALL,
             multicast_address=multicast_mac,
         )
-
-        logger().info(f"DUT joining to the multicast group {multicast_ip}")
-        wifi_dut.interfaces.wifi.sl_net_join_multicast_address(server=multicast_ip)
 
         net_perf_client.interfaces.net_perf.init_client(
             host_ip=host_ip,
@@ -812,6 +812,9 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_BIT_TC
             f"The MultiCast Client Info is : {ip_version}, {ttl}, {multicast_mac}, {multicast_ip}, {device_port}, {server_port}, {buffer_length}, {no_of_pkts}"
         )
 
+        logger().info(f"DUT joining to the multicast group {multicast_ip}")
+        wifi_dut.interfaces.wifi.sl_net_join_multicast_address(server=multicast_ip)
+
         for count in range(0, 2):
             if count == 1:
                 logger().info(
@@ -821,8 +824,6 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_BIT_TC
                     filter_type=MulticastParams.MULTICAST_MAC_CLEAR_BIT,
                     multicast_address=multicast_mac,
                 )
-            logger().info(f"DUT joining to the multicast group {multicast_ip}")
-            wifi_dut.interfaces.wifi.sl_net_join_multicast_address(server=multicast_ip)
 
             net_perf_client.interfaces.net_perf.init_client(
                 host_ip=host_ip,
@@ -960,6 +961,9 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
             f"The MultiCast Client Info is : {ip_version}, {ttl}, {multicast_mac}, {multicast_ip}, {device_port}, {server_port}, {buffer_length}, {no_of_pkts}"
         )
 
+        logger().info(f"DUT joining to the multicast group {multicast_ip}")
+        wifi_dut.interfaces.wifi.sl_net_join_multicast_address(server=multicast_ip)
+
         for count in range(0, 2):
             if count == 0:
                 logger().info(
@@ -977,9 +981,6 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19
                     filter_type=MulticastParams.MULTICAST_MAC_ADD_BIT,
                     multicast_address=multicast_mac,
                 )
-
-            logger().info(f"DUT joining to the multicast group {multicast_ip}")
-            wifi_dut.interfaces.wifi.sl_net_join_multicast_address(server=multicast_ip)
 
             net_perf_client.interfaces.net_perf.init_client(
                 host_ip=host_ip,
