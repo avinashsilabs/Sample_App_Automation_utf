@@ -10,6 +10,10 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xExtTCPIPFe
 from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEventIdentifiers
 from utf.interfaces.bluetooth.bluez.gatt_application.health_thermometer_service import \
     CustomNotifyCharacteristic, HealthThermometerService
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble.test_sta_ble_dle_sdk import BleThread
+import random
+import string
+
 
 """
     setup requirement:
@@ -503,3 +507,175 @@ def test_wifi_sdk_ble_conn_ap1_conn_disconn_ap2_conn_C20151(
 
     finally:
         ble_obj.ble_cleanup_disconn()
+
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        0: {
+             'ssid': 'AP1',
+             'security': 'WPA2',
+             'passphrase': '123456789',
+             'channel': 1
+        },
+        1: {
+             'ssid': 'AP1',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+             'channel': 1}
+    }
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | 0,
+        "custom_features": Si91xCustomFeatureBitMap.NWP120MHz
+                           | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
+                               | 0,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=0)
+                        | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
+                        | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
+                        | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
+                        | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
+                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
+                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
+                        | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
+                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
+                                   | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "thread_config": {
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 3584, "priority": 8},
+        },
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_wps_pbc_lockout_with_ble_coex_C913668(
+        wifi_dut,
+        ble_client,
+        wifi_access_points,
+        sl_collections,):
+
+    """
+    Verify DUT enters WPS lockout state when two APs run PBC simultaneously,
+    while BLE central connection and TX indications remain stable.
+    """
+    ble_obj = None
+    try:
+        conn_interval = 250
+
+        # -------------------------------------------------------------
+        # Step 1: Initialize BLE + connect
+        # -------------------------------------------------------------
+
+        service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
+        char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
+        index = 1
+        address = wifi_dut.interfaces.wifi.allocate_memory(size=len(data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(address=address, size=len(data), write_content=data)
+        ble_obj = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="notify_tx",
+            dev_state=8,
+            ble_pairing=1,
+            bond_info=1,
+            char_path=None, char_uid=char_uid, data=data,
+            service_uid=service_uid,
+            data_length=240, data_duration=120,
+            periodic_delay=0.5,
+            address=address,
+            conn_interval=conn_interval,
+            set_smp=1
+        )
+
+        logger().info("Creating new custom gatt service in DUT")
+        ble_obj.add_service(service_uuid=0xAABB)
+
+        logger().info("Adding custom characteristic declaration to the custom service")
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1AA1, service_handler_num=index,
+                                                       value_handler_num=index + 1)
+        logger().info("Adding characteristic value attribute to the service")
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
+
+        ble_obj.advertise_dut()
+        ble_obj.scan_and_connect_from_remote()
+        ble_obj.service_discovery_on_remote()
+        ble_obj.start()
+
+        # -------------------------------------------------------------
+        # Step 2: Enable WPS PBC on both APs simultaneously
+        # -------------------------------------------------------------
+        logger().info("Triggering WPS PBC on AP1 and AP2 simultaneously")
+
+        wifi_access_points[0].interfaces.wifi.set_configure_wps_web(enable_wps=True, push_button=True)
+        time.sleep(0.2)  # Slight delay to ensure both APs start WPS at nearly the same time
+        logger().info("Enabling WPS PBC on AP2")
+        wifi_access_points[1].interfaces.wifi.set_configure_wps_web(enable_wps=True, push_button=True)
+
+        time.sleep(30)  # Allow lockout behavior
+
+        # -------------------------------------------------------------
+        # Step 3: Trigger WPS on DUT
+        # -------------------------------------------------------------
+
+        logger().info("Triggering WPS PBC on DUT (expecting lockout)...")
+
+        try:
+            wifi_dut.interfaces.wifi.start_client_wps(
+                interface="client",
+                wps_role=0,
+                wps_mode=0,
+                auto_connect=True
+            )
+
+            # If it returns OK, that is wrong in this test
+            assert False, "DUT unexpectedly succeeded WPS when two APs were active"
+
+        except Exception as e:
+            err = str(e)
+
+            logger().info(f"WPS returned exception: {err}")
+
+            # Validate expected lockout error
+            assert "0x1002B" in err or "ASSOCIATION_TIMEOUT_IN_P2P_WPS_MODE" in err, \
+                f"Unexpected WPS error: {err}"
+
+        # -------------------------------------------------------------
+        # Step 4: Validate BLE still connected
+        # -------------------------------------------------------------
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        assert int(state) == 8, "BLE dropped during WPS lockout"
+
+        ble_obj.wait_for_exit()
+        logger().info("BLE remained stable during lockout")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        if wifi_dut.interfaces.wifi.associated:
+            wifi_dut.interfaces.wifi.leave()
+        if ble_obj is not None:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_obj.ble_client_address,
+                                       ble_dut_address=ble_obj.ble_dut_address)
+
