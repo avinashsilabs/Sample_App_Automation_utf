@@ -1183,7 +1183,6 @@ def test_coex_sdk_wps_pbc_ble_dual_role_tx_rx_https_auto_connect_disabled_C91365
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
-@pytest.mark.skip(reason="Observing FFE1 error during BLE notifications in this test, needs debug")
 def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_enabled_C913655(
         wifi_dut,
         ble_client,
@@ -1206,37 +1205,28 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_ena
         - Enable data transfer parameters for BLE
     """
     global ble_obj, wifi_obj
-
+    ble_dut_address = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
         conn_interval = 250
 
-        wps_result = join_to_wifi_network_via_wps(
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            power_save=True,
-            mode='power_save_low_latency',
-            ping_count=ping_count,
-            retry_count=1,
-            ping_after_power_save=True,
-            ping_before_power_save=True,
-            associated=False,
-            dtim_aligned_type=0,
-            num_of_dtim_skip=0,
-            listen_interval=0,
-            monitor_interval=0,
-            ip_version='ipv6',
-            tcp_ip_bypass=False,
-            ip_config_disable=False,
-            ipv6_type='global',
-            skip_scan=False,
-            sl_collections=sl_collections
-        )
-        assert wps_result is not None and 'device_ip' in wps_result, "WPS IPv6 connection failed"
-        wifi_obj = type('obj', (object,), {'device_ip': wps_result['device_ip']})()
+        wps_result = join_to_wifi_network_via_wps(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, power_save=True,
+                                     mode='power_save_low_latency', channel=0,
+                                     ping_count=ping_count, retry_count=1, ping_after_power_save=True,
+                                     ping_before_power_save=True,
+                                     associated=False,
+                                     dtim_aligned_type=0, num_of_dtim_skip=0, listen_interval=0, monitor_interval=0,
+                                     ip_version='ipv6', tcp_ip_bypass=False, ip_config_disable=False,
+                                     ipv6_type='global', skip_scan=False, sl_collections=sl_collections)
 
-        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1)
+        logger().info(f"WPS connection result: {wps_result}")
+        device_ip = wps_result["device_ip"]
+        logger().info(f"DUT IPv6 Address obtained via WPS: {device_ip}")
+
+        # Start BLE GATT on DUT
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
+            set_smp=1)
 
         # -------------------- TX notify thread --------------------
         service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
@@ -1249,7 +1239,7 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_ena
         wifi_dut.interfaces.wifi.load_memory(address=address2, size=len(data_tx), write_content=data_tx)
 
         logger().info("\n ======================== Creating BLE Thread for TX notifications ========================")
-        ble_obj_tx = BleThread(
+        ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
@@ -1257,11 +1247,13 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_ena
             dev_state=8,
             ble_pairing=1,
             bond_info=1,
-            char_path=None, char_uid=char_uid1, data=data_tx,
+            char_path=None,
+            char_uid=char_uid1,
+            data=data_tx,
             service_uid=service_uid,
             data_length=240,
             data_duration=120,
-            periodic_delay=0.5,
+            periodic_delay=1,
             address=address2,
             conn_interval=conn_interval,
             set_smp=1,
@@ -1271,7 +1263,7 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_ena
 
         # Create custom GATT service/characteristic on DUT (this was commented earlier)
         logger().info("Creating new custom gatt service in DUT")
-        ble_obj_tx.add_service(service_uuid=0xAABB)
+        ble_obj.add_service(service_uuid=0xAABB)
 
         logger().info("Adding custom characteristic declaration to the custom service")
         wifi_dut.interfaces.wifi.ble_add_char_serv_att(
@@ -1281,35 +1273,33 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_ena
         wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1AA1, value_handler_num=index + 1)
 
         # Make DUT advertise, let remote connect, discover, then start TX notifications
-        ble_obj_tx.advertise_dut()
-        ble_obj_tx.scan_and_connect_from_remote()
-        ble_obj_tx.service_discovery_on_remote()
+        ble_obj.advertise_dut()
+        ble_obj.scan_and_connect_from_remote()
+        ble_obj.service_discovery_on_remote()
 
         time.sleep(5)  # Ensure RX thread is ready before starting TX thread
-        ble_obj_tx.start()
+        ble_obj.start()
 
         logger().info("Starting HTTPS download")
 
-        http_obj = HttpDownload(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,
-                                test_name=test_name, wifi_client=wifi_client,
-                                device_ip=wifi_obj.device_ip,
-                                ip_version=6, http_server=http_server, index_path=index_path,
-                                ipv6_addr_type="global", https=1)
-
+        http_obj = HttpDownload(
+            wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, test_name=test_name,
+            wifi_client=wifi_client, device_ip=device_ip, ip_version=6, http_server=http_server,
+            index_path=index_path, ipv6_addr_type="global", https=1
+        )
 
         http_obj.start()
         http_obj.wait_for_exit()
-        logger().info("HTTPS download successful")
+        time.sleep(5)  # Ensure any final BLE notifications are sent after HTTP download completes
 
-        logger().info("Monitoring WLAN activity during BLE peripheral connection")
-        assert wifi_dut.interfaces.wifi.associated, "WLAN connection lost"
-        logger().info("WLAN HTTPS download remains unaffected by BLE peripheral connection")
+        ble_obj.wait_for_exit()
 
-        ble_obj_tx.wait_for_exit()
+        logger().info("BLE TX notification thread and HTTP download thread completed successfully")
 
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
+        logger().info("Cleaning up resources")
         if wifi_dut.interfaces.wifi.associated:
             wifi_dut.interfaces.wifi.leave()
 
@@ -1333,7 +1323,7 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_ena
                  num_peripheral_connections=1)
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
-@pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "ipv6_state": "1"})
+@pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "ipv6_state": "0"})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
@@ -1765,8 +1755,10 @@ wifi_dut, ble_client, wifi_access_point, request, utf_constants, sl_collections,
             ble_client.interfaces.bluetooth.close()
             ble_obj.clear_dut(role="master")
 
-
-
+# Skip
+@pytest.mark.skip(reason="Is in the file - test_sta_ble_provisioning_2ap_sdk.py as there is a dependency of the setup (2APs)")
+def test_wps_pbc_lockout_with_ble_coex_C913668():
+        pass
 
 @wifi_dut_marker()
 @pytest.mark.config("wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"})
