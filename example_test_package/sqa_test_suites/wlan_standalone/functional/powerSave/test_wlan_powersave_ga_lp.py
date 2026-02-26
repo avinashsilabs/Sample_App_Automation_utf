@@ -223,9 +223,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
                     wifi={"dtim": 3, "beacon_interval": 100})
 @pytest.mark.parametrize("number_of_pkts", [500])
 @pytest.mark.parametrize("test_run_time", [100])
-@pytest.mark.skip("Getting FFD5 error while sending data")
 @pytest.mark.test_wlan_powersave_lp
-def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_TC19490(firmware_loader, wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
+def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_C19490(firmware_loader, wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
                                                              number_of_pkts, test_run_time,
                                                              rs_helper, utf_constants):
 

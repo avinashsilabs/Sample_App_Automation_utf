@@ -82,7 +82,7 @@ def clean_up_method(wifi_dut, switch):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
-def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c19314(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
@@ -90,7 +90,7 @@ def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19314')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19314')
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
@@ -184,7 +184,7 @@ def test_device_as_sta_and_ap_c_19314(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["reset","disassociated"])
-def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c19315(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     ping_iterations = 10
@@ -192,7 +192,7 @@ def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19315')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19315')
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
@@ -293,7 +293,7 @@ def test_device_as_sta_and_ap_c_19315(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
-def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c19324(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     ping_iterations = 10
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -301,7 +301,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19324')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19324')
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
@@ -418,7 +418,7 @@ def test_device_as_sta_and_ap_c_19324(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
-def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_ap_and_sta_c19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     ping_iterations = 10
     validation = True
@@ -430,7 +430,7 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19313')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19313')
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
@@ -549,7 +549,7 @@ def test_device_as_ap_and_sta_c_19313(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
-def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c19322(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     ping_iterations = 10
     validation = True
@@ -561,7 +561,7 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19322')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19322')
     time.sleep(3)
 
     # preparing wifi_dut as STA - STA Mode
@@ -672,7 +672,7 @@ def test_device_as_sta_and_ap_c_19322(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
-def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c19312(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -681,7 +681,7 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19312')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19312')
     time.sleep(3)
 
     # preparing wifi_dut as STA - STA Mode
@@ -789,7 +789,7 @@ def test_device_as_sta_and_ap_c_19312(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
-def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
+def test_device_as_sta_and_ap_c19319(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
     wifi_dut.interfaces.wifi.associated = False
@@ -797,7 +797,7 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19319')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19319')
     time.sleep(3)
 
     # preparing wifi_dut as STA - STA Mode
@@ -897,7 +897,7 @@ def test_device_as_sta_and_ap_c_19319(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
-def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c19318(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -906,7 +906,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ======")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19318')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19318')
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
@@ -1017,7 +1017,7 @@ def test_device_as_sta_and_ap_c_19318(firmware_loader, wifi_access_point, wifi_d
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
-def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c19320(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -1029,7 +1029,7 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19320')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19320')
     time.sleep(3)
 
     # preparing wifi_dut as access point - AP Mode
@@ -1155,14 +1155,13 @@ def test_device_as_sta_and_ap_c_19320(firmware_loader, wifi_access_point, wifi_d
     wifi={"security": "WPA2", "ssid": "RASPI_AP", "channel": 8, "passphrase": "12345678"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.skip()
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.config('wifi_access_point',
                     wifi={"dhcp_start": "192.168.50.12", "dhcp_end": "192.168.50.20", "dhcp_lease": "180"})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
-def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+def test_device_as_sta_and_ap_c19316(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -1170,7 +1169,7 @@ def test_device_as_sta_and_ap_c_19316(firmware_loader, wifi_access_point, wifi_d
     logger().info(" ====== configuring the sniffer with access point channel ====== ")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     logger().info(" ====== start capturing with Sniffer by giving the test case name as filename ====== ")
-    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c_19316')
+    wifi_sniffer.interfaces.capture.start_capture(capture_file='test_device_as_sta_and_ap_c19316')
     dut_mac_address = wifi_dut.interfaces.wifi.get_dut_mac_address()
 
     # preparing wifi_dut as access point - AP Mode

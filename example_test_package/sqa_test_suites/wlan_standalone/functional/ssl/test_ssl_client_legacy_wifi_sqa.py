@@ -902,7 +902,7 @@ def test_ssl_client_version_1_2_testcase_TC19119(wifi_sniffer, wifi_access_point
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
-def test_ssl_max_sockets_testcaseTC19128(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2):
+def test_ssl_max_sockets_c19128(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2):
     try:
         capture_filename = "test_ssl_max_sockets_testcaseTC19128"
         ap_bssid = wifi_access_point.interfaces.wifi.bssid

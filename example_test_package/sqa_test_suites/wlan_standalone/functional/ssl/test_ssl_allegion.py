@@ -463,12 +463,12 @@ def test_wifi_wireless_statistics_AP_TC19176(wifi_sniffer, wifi_dut, channel, lo
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl2_1AWS_testcaseTC19150(
+def test_ssl2_1AWS_c19150(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cert1, cert2, logger
 ):
     try:
         listen_interval = 700
-        capture_filename = "test_ssl2_1AWS_testcaseTC19150"
+        capture_filename = "test_ssl2_1AWS_c19150"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=listen_interval)
@@ -616,12 +616,12 @@ def test_ssl2_1AWS_testcaseTC19150(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl_three_sockets_receive_data_testcaseTC19153(
+def test_ssl_three_sockets_receive_data_c19153(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cert1, cert2, cert3, logger
 ):
     try:
         listen_interval = 700
-        capture_filename = "test_ssl_three_sockets_receive_data_testcaseTC19153"
+        capture_filename = "test_ssl_three_sockets_receive_data_c19153"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=listen_interval)
@@ -948,11 +948,11 @@ def test_ssl_clear_cert2_TC19154(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155(
+def test_ssl_three_sockets_data_tx_while_rejoin_c19155(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, switch, logger, cert1, cert2, cert3
 ):
     try:
-        capture_filename = "test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155"
+        capture_filename = "test_ssl_three_sockets_data_tx_while_rejoin_c19155"
         listen_interval = 700
         rejoin_params = [40, 6, 40, 0]
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
@@ -1097,7 +1097,7 @@ def test_ssl_three_sockets_data_tx_while_rejoin_testcaseTC19155(
 def test_ssl_three_sockets_data_tx_after_rejoin_testcase_c19156(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server,
                                                                 logger, cert1, cert2, cert3, rs_helper, switch):
     try:
-        capture_filename = "test_ssl_three_sockets_data_tx_after_rejoin_testcaseTC19156"
+        capture_filename = "test_ssl_three_sockets_data_tx_after_rejoin_c19156"
         listen_interval = 700
         rejoin_params = [20, 6, 40, 0]
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
@@ -1245,12 +1245,12 @@ def test_ssl_three_sockets_data_tx_after_rejoin_testcase_c19156(wifi_sniffer, wi
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl_three_sockets_shut_down_testcaseTC19157(
+def test_ssl_three_sockets_shut_down_c19157(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cert1, cert2, cert3, logger
 ):
     try:
         listen_interval = 700
-        capture_filename = "test_ssl_three_sockets_shut_down_testcaseTC19157"
+        capture_filename = "test_ssl_three_sockets_shut_down_c19157"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=listen_interval)
@@ -1553,14 +1553,14 @@ def test_socket_check_TC19158(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl_three_sockets_close_reopen_socket2_testcaseTC19159(
+def test_ssl_three_sockets_close_reopen_socket2_c19159(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
 ):
     try:
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         bytes_sent = (pkt_count * buffer_length)
-        capture_filename = "test_ssl_three_sockets_close_reopen_socket2_testcaseTC19159"
+        capture_filename = "test_ssl_three_sockets_close_reopen_socket2_c19159"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=700)
@@ -1738,14 +1738,14 @@ def test_ssl_three_sockets_close_reopen_socket2_testcaseTC19159(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl_three_sockets_close_reopen_socket2_testcaseTC19160(
+def test_ssl_three_sockets_close_reopen_socket2_c19160(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
 ):
     try:
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         bytes_sent = (pkt_count * buffer_length)
-        capture_filename = "test_ssl_three_sockets_close_reopen_socket2_testcaseTC19160"
+        capture_filename = "test_ssl_three_sockets_close_reopen_socket2_c19160"
         listen_interval = 700
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
@@ -1922,12 +1922,12 @@ def test_ssl_three_sockets_close_reopen_socket2_testcaseTC19160(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_2SSL_TX_1TCP_RX_testcaseTC19161(
+def test_2SSL_TX_1TCP_RX_c19161(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert1, cert2, logger
 ):
     try:
         listen_interval = 700
-        capture_filename = "test_2SSL_TX_1TCP_RX_testcaseTC19161"
+        capture_filename = "test_2SSL_TX_1TCP_RX_c19161"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=listen_interval)
@@ -2226,10 +2226,10 @@ def test_ssl_three_sockets_socket_select_receive_data_testcase_TC19162(wifi_snif
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl_three_sockets_load_remove_certs_connection_check_testcaseTC19163(
+def test_ssl_three_sockets_load_remove_certs_connection_check_c19163(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
 ):
-    capture_filename = "test_ssl_three_sockets_load_remove_certs_connection_check_testcaseTC19163"
+    capture_filename = "test_ssl_three_sockets_load_remove_certs_connection_check_c19163"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -3209,13 +3209,13 @@ def test_rtc_get_multiple_times_TC19179(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_2SSL_1TCP_TX_testcaseTC19185(
+def test_2SSL_1TCP_TX_c19185(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert1, cert2, logger
 ):
     try:
         listen_interval = 700
         list_sock = []
-        capture_filename = "test_2SSL_1TCP_TX_testcaseTC19185"
+        capture_filename = "test_2SSL_1TCP_TX_c19185"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=listen_interval)
@@ -3331,13 +3331,13 @@ def test_2SSL_1TCP_TX_testcaseTC19185(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_2SSL_1TCP_RX_testcaseTC19187(
+def test_2SSL_1TCP_RX_c19187(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert1, cert2, logger
 ):
     try:
         listen_interval = 700
         list_sock = []
-        capture_filename = "test_2SSL_1TCP_TX_testcaseTC19187"
+        capture_filename = "test_2SSL_1TCP_TX_c19187"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=listen_interval)
@@ -3450,14 +3450,14 @@ def test_2SSL_1TCP_RX_testcaseTC19187(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_1ssl_2tcp_sockets_send_data_testcaseTC19188(
+def test_1ssl_2tcp_sockets_send_data_c19188(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert1, logger
 ):
     try:
         listen_interval = 700
         list_sock = []
         port1 = ssl_server.interfaces.ssl.config['device_port1']
-        capture_filename = "test_ssl_three_sockets_send_data_testcaseTC19188"
+        capture_filename = "test_ssl_three_sockets_send_data_c19188"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=listen_interval)
@@ -3560,14 +3560,14 @@ def test_1ssl_2tcp_sockets_send_data_testcaseTC19188(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_tcp_three_sockets_send_data_testcaseTC19189(
+def test_tcp_three_sockets_send_data_c19189(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, remote_socket, logger):
     try:
         ping_count = 5
         list_sock = []
 
         listen_interval = 700
-        capture_filename = "test_tcp_three_sockets_send_data_testcaseTC19189"
+        capture_filename = "test_tcp_three_sockets_send_data_c19189"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=listen_interval)
@@ -4050,11 +4050,11 @@ def test_ssl_synchronous_select_timeout_testcase_TC19200(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl_three_sockets_tx_rx_data_testcaseTC19201(
+def test_ssl_three_sockets_tx_rx_data_c19201(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2, cert3
 ):
     try:
-        capture_filename = "test_ssl_three_sockets_tx_rx_data_testcaseTC19201"
+        capture_filename = "test_ssl_three_sockets_tx_rx_data_c19201"
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=True,
                                       listen_interval=700)
@@ -4201,12 +4201,12 @@ def test_ssl_three_sockets_tx_rx_data_testcaseTC19201(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl_AWS_testcaseTC19202(
+def test_ssl_AWS_c19202(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, remote_socket_factory, cert2, logger
 ):
     topic_1 = "sdk/test/Python"
     listen_interval = 700
-    capture_filename = "test_ssl_AWS_testcaseTC19202"
+    capture_filename = "test_ssl_AWS_c19202"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                   listen_interval_feature=True,
                                   listen_interval=listen_interval)
@@ -4599,11 +4599,11 @@ def test_SSL_Connection_when_the_Date_RTCTimer_is_expired_TC19199(wifi_sniffer, 
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_ssl_synchronous_socket_send_data_testcaseTC19137(
+def test_ssl_synchronous_socket_send_data_c19137(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cert1, logger
 ):
     try:
-        capture_filename = "test_ssl_synchronous_socket_send_data_testcaseTC19137"
+        capture_filename = "test_ssl_synchronous_socket_send_data_c19137"
         listen_interval = 700
         bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {bssid}')
@@ -4690,12 +4690,12 @@ def test_ssl_synchronous_socket_send_data_testcaseTC19137(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_2SSL_tcp_ack_feature_testcaseTC19136(
+def test_2SSL_tcp_ack_feature_c19136(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cert1, cert2, logger
 ):
     try:
         listen_interval = 700
-        capture_filename = "test_2SSL_tcp_ack_feature_testcaseTC19136"
+        capture_filename = "test_2SSL_tcp_ack_feature_c19136"
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                       listen_interval_feature=False)

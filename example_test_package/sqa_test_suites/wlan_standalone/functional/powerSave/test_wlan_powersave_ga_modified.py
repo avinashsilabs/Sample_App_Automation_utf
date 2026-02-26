@@ -1647,7 +1647,7 @@ def test_Multicast_Broadcast_RX_Pwrmode_1_dtim_C19510(multicast_client, net_perf
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
 @pytest.mark.test_wlan_powersave_mode3_lp
-def test_Pwrmode_3LP_with_diff_dtim_C19506_case_1_and_2(firmware_loader, multicast_client, net_perf_client, protocol,
+def test_Pwrmode_3LP_with_diff_dtim_case_1_and_2_C19506(firmware_loader, multicast_client, net_perf_client, protocol,
                                                         wifi_sniffer, wifi_dut, wifi_client, wifi_access_point,
                                                         utf_constants, rs_helper):
     testcase = "test_Pwrmode_3LP_with_diff_dtim_C19506"
@@ -1800,7 +1800,7 @@ def test_Pwrmode_3LP_with_diff_dtim_C19506_case_1_and_2(firmware_loader, multica
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.test_wlan_powersave_mode3_ulp
-def test_Pwrmode_3ULP_with_diff_dtim_C19506_case_3_and_4(firmware_loader, multicast_client, net_perf_client, protocol,
+def test_Pwrmode_3ULP_with_diff_dtim__case_3_and_4_C19506(firmware_loader, multicast_client, net_perf_client, protocol,
                                                          wifi_sniffer, wifi_dut, wifi_client, wifi_access_point,
                                                          utf_constants, rs_helper):
     testcase = "test_Pwrmode_3ULP_with_diff_dtim_C19506_case_3_and_4"
