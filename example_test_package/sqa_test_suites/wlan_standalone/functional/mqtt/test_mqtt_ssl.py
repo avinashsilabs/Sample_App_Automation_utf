@@ -141,7 +141,7 @@ def ApWirelessOff(switch, wait_time, logger):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
-def test_mqtt_authentication_ssl_TC19258(
+def test_mqtt_authentication_ssl_c19258(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
     topic1 = "mytesttopic/1"
@@ -151,7 +151,7 @@ def test_mqtt_authentication_ssl_TC19258(
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
 
-    capture_filename = "test_mqtt_authentication_ssl_TC19258"
+    capture_filename = "test_mqtt_authentication_ssl_c19258"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     client_devices = [wifi_dut, mqtt_client]
@@ -243,7 +243,7 @@ def test_mqtt_authentication_ssl_TC19258(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_after_rejoin_ssl_TC19271(
+def test_mqtt_rx_after_rejoin_ssl_c19271(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes,
         pkt_delay, switch
 ):
@@ -251,7 +251,7 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_rx_after_rejoin_ssl_TC19271"
+    capture_filename = "test_mqtt_rx_after_rejoin_ssl_c19271"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -359,7 +359,7 @@ def test_mqtt_rx_after_rejoin_ssl_TC19271(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_while_rejoin_ssl_TC19274(
+def test_mqtt_publish_while_rejoin_ssl_c19274(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes,
         pkt_delay, switch
 ):
@@ -368,7 +368,7 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_publish_while_rejoin_ssl_TC19274"
+    capture_filename = "test_mqtt_publish_while_rejoin_ssl_c19274"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -488,14 +488,14 @@ def test_mqtt_publish_while_rejoin_ssl_TC19274(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_ssl_TC19285(
+def test_mqtt_rx_ssl_c19285(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_rx_ssl_TC19285"
+    capture_filename = "test_mqtt_rx_ssl_c19285"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -591,14 +591,14 @@ def test_mqtt_rx_ssl_TC19285(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_1mb_file_ssl_TC19286(
+def test_mqtt_publish_1mb_file_ssl_c19286(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_publish_1mb_file_ssl_TC19286"
+    capture_filename = "test_mqtt_publish_1mb_file_ssl_c19286"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -696,14 +696,14 @@ def test_mqtt_publish_1mb_file_ssl_TC19286(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_max_len_ssl_TC19287(
+def test_mqtt_publish_max_len_ssl_c19287(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
 
-    capture_filename = "test_mqtt_publish_max_len_ssl_TC19287"
+    capture_filename = "test_mqtt_publish_max_len_ssl_c19287"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -801,13 +801,13 @@ def test_mqtt_publish_max_len_ssl_TC19287(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
+def test_mqtt_publish_max_len_ssl_ecdsa_c19290(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_publish_max_len_ssl_ecdsa_TC19290"
+    capture_filename = "test_mqtt_publish_max_len_ssl_ecdsa_c19290"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -1002,13 +1002,13 @@ def test_mqtt_publish_max_len_ssl_ecdsa_TC19290(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_ssl_ecdsa_TC19291(
+def test_mqtt_rx_ssl_ecdsa_c19291(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_rx_ssl_ecdsa_TC19291"
+    capture_filename = "test_mqtt_rx_ssl_ecdsa_c19291"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))

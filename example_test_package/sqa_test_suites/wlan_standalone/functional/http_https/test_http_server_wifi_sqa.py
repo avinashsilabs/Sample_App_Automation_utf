@@ -154,7 +154,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat", [10])
-def test_wifi_http_server_TC19235(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, logger, repeat):
+def test_wifi_http_server_c19235(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, logger, repeat):
     current_time = time.time()
     capture_filename = "test_wifi_http_server_TC3595"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -210,7 +210,7 @@ def test_wifi_http_server_TC19235(wifi_sniffer, wifi_dut, wifi_access_point, htt
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat", [10])
-def test_wifi_https_server_TC19236(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, logger, repeat):
+def test_wifi_https_server_c19236(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, logger, repeat):
     current_time = time.time()
     capture_filename = "test_wifi_https_server_TC19236"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -265,7 +265,7 @@ def test_wifi_https_server_TC19236(wifi_sniffer, wifi_dut, wifi_access_point, ht
 @pytest.mark.http_server("raspi_lighttpd_tls_dut")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_enable1_http_https_server_TC19238(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
+def test_wifi_enable1_http_https_server_c19238(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
                                                 logger):
     current_time = time.time()
     capture_filename = "test_wifi_enable1_http_https_server_TC19238"
@@ -321,7 +321,7 @@ def test_wifi_enable1_http_https_server_TC19238(wifi_sniffer, wifi_dut, wifi_acc
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_enable2_http_https_server_TC19238(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
+def test_wifi_enable2_http_https_server_c19238(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
                                                 logger):
     capture_filename = "test_wifi_enable2_http_https_server_TC19238"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -370,7 +370,7 @@ def test_wifi_enable2_http_https_server_TC19238(wifi_sniffer, wifi_dut, wifi_acc
 @pytest.mark.http_server("raspi_lighttpd_tls_dut")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_https_server_erase_cert_TC19237(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
+def test_wifi_https_server_erase_cert_c19237(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
                                               logger):
     capture_filename = "test_wifi_https_server_erase_cert_TC19237"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -416,7 +416,7 @@ def test_wifi_https_server_erase_cert_TC19237(wifi_sniffer, wifi_dut, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("timeout", [100])
-def test_wifi_http_server_timeout_TC19239(remote_socket_factory, wifi_sniffer, wifi_dut, wifi_access_point, http_server,
+def test_wifi_http_server_timeout_c19239(remote_socket_factory, wifi_sniffer, wifi_dut, wifi_access_point, http_server,
                                           http_client, logger, timeout):
     bssid = wifi_access_point.interfaces.wifi.bssid
     bssid = bssid.strip()
@@ -487,7 +487,7 @@ def test_wifi_http_server_timeout_TC19239(remote_socket_factory, wifi_sniffer, w
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_wifi_http_server_handle_multiple_clients_TC19240(remote_socket_factory, wifi_sniffer, wifi_dut,
+def test_wifi_http_server_handle_multiple_clients_c19240(remote_socket_factory, wifi_sniffer, wifi_dut,
                                                           wifi_access_point, http_server,
                                                           http_client, logger):
     current_time = time.time()

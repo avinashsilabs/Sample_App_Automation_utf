@@ -304,11 +304,11 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_client_testcase_TC19109(
+def test_ssl_client_testcase_c19109(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
 ):
     try:
-        capture_filename = "test_ssl_client_testcase_TC19109"
+        capture_filename = "test_ssl_client_testcase_c19109"
         pkt_count = 20000
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -479,11 +479,11 @@ def test_ssl_client_connect_close_sequence_testcase_C19130(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
+def test_ssl_client_tx_rx_bidirectional_testcase_c19129(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
 ):
     try:
-        capture_filename = "test_ssl_client_tx_rx_bidirectional_testcase_TC19129"
+        capture_filename = "test_ssl_client_tx_rx_bidirectional_testcase_c19129"
         pkt_count = 10000
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -594,10 +594,10 @@ def test_ssl_client_tx_rx_bidirectional_testcase_TC19129(
 @pytest.mark.parametrize("cipher_list", [
     [Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA256,
      Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA]])
-def test_ssl_client_cipher_list_testcase_TC19132(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
+def test_ssl_client_cipher_list_testcase_c19132(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                                  cipher_list):
     try:
-        capture_filename = "test_ssl_client_cipher_list_testcase_TC19132"
+        capture_filename = "test_ssl_client_cipher_list_testcase_c19132"
         pkt_count = 20000
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -699,10 +699,10 @@ def test_ssl_client_cipher_list_testcase_TC19132(wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
-def test_ssl_client_cipher_suite_mismatch_testcase_TC19133(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+def test_ssl_client_cipher_suite_mismatch_testcase_c19133(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                            logger):
     try:
-        capture_filename = "test_ssl_client_cipher_suite_mismatch_testcase_TC19133"
+        capture_filename = "test_ssl_client_cipher_suite_mismatch_testcase_c19133"
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
@@ -756,9 +756,9 @@ def test_ssl_client_cipher_suite_mismatch_testcase_TC19133(wifi_sniffer, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_socket_limit_testcase_TC19121(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger):
+def test_ssl_socket_limit_testcase_c19121(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger):
     try:
-        capture_filename = "test_ssl_socket_limit_testcase_TC19121"
+        capture_filename = "test_ssl_socket_limit_testcase_c19121"
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -837,9 +837,9 @@ def test_ssl_socket_limit_testcase_TC19121(wifi_sniffer, wifi_access_point, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ssl_client_version_1_2_testcase_TC19119(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger):
+def test_ssl_client_version_1_2_testcase_c19119(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger):
     try:
-        capture_filename = "test_ssl_client_version_1_2_testcase_TC19119"
+        capture_filename = "test_ssl_client_version_1_2_testcase_c19119"
         port1 = ssl_server.interfaces.ssl.config['device_port1']
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger.info(f'AP BSSID = {ap_bssid}')
@@ -1229,10 +1229,10 @@ def test_ssl_client_rx_while_rejoining_C19135(switch, wifi_dut, wifi_access_poin
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "clear_certs"])
-def test_ssl_client_1_2version_server_1_0_testcase_TC19120(wifi_sniffer, wifi_dut, wifi_access_point, openssl,
+def test_ssl_client_1_2version_server_1_0_testcase_c19120(wifi_sniffer, wifi_dut, wifi_access_point, openssl,
                                                            wifi_client, logger):
     try:
-        capture_filename = "test_ssl_server_1_0version_client_1_2_testcase_TC19120"
+        capture_filename = "test_ssl_server_1_0version_client_1_2_testcase_c19120"
         port_connect = randint(5001, 5010)
         result = wifi_dut.interfaces.wifi.version()
         logger.info(f"DUT firmware version: {result}")
@@ -1374,10 +1374,10 @@ def test_ssl_client_1_2version_server_1_0_testcase_TC19120(wifi_sniffer, wifi_du
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "clear_certs"])
-def test_ssl_client_1_0version_server_1_0_testcase_TC19117(
+def test_ssl_client_1_0version_server_1_0_testcase_c19117(
         wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, logger):
     try:
-        capture_filename = "test_ssl_server_1_0version_client_1_0_testcase_TC19117"
+        capture_filename = "test_ssl_server_1_0version_client_1_0_testcase_c19117"
         ping_count = 10
         port_connect = 5001
         result = wifi_dut.interfaces.wifi.version()

@@ -18,7 +18,7 @@ from typing import Dict
         4. Add multicast address to the multicast group
         5. Open multicast UDP socket
         6. Receive data on the socket. Verify the data integrity checks
-      
+
     setup requirement:
         1. DUT(RS9116)
         2. EFR32
@@ -161,8 +161,8 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated"])
-def test_wifi_multicast_receive_TC19369(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
-    capture_filename = "test_wifi_multicast_receive_TC19369"
+def test_wifi_multicast_receive_c19369(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
+    capture_filename = "test_wifi_multicast_receive_c19369"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = multicast_client.interfaces.multicast.multicast_params()
@@ -209,8 +209,8 @@ def test_wifi_multicast_receive_TC19369(wifi_sniffer, wifi_access_point, wifi_du
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated"])
-def test_wifi_multicast_group_leave_TC19370(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
-    capture_filename = "test_wifi_multicast_group_leave_TC19370"
+def test_wifi_multicast_group_leave_c19370(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
+    capture_filename = "test_wifi_multicast_group_leave_c19370"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -269,8 +269,8 @@ def test_wifi_multicast_group_leave_TC19370(wifi_sniffer, wifi_access_point, wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated"])
-def test_wifi_multicast_filter_select_all_TC19372(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
-    capture_filename = "test_wifi_multicast_filter_select_all_TC19372"
+def test_wifi_multicast_filter_select_all_c19372(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
+    capture_filename = "test_wifi_multicast_filter_select_all_c19372"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = multicast_client.interfaces.multicast.multicast_params()
@@ -319,8 +319,8 @@ def test_wifi_multicast_filter_select_all_TC19372(wifi_sniffer, wifi_access_poin
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated"])
-def test_wifi_multicast_filter_clear_all_TC19373(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
-    capture_filename = "test_wifi_multicast_filter_clear_all_TC19373"
+def test_wifi_multicast_filter_clear_all_c19373(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
+    capture_filename = "test_wifi_multicast_filter_clear_all_c19373"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = multicast_client.interfaces.multicast.multicast_params()
@@ -368,9 +368,9 @@ def test_wifi_multicast_filter_clear_all_TC19373(wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated"])
-def test_wifi_multicast_filter_clear_specific_TC19374(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client,
-                                                      logger):
-    capture_filename = "test_wifi_multicast_filter_clear_specific_TC19374"
+def test_wifi_multicast_filter_clear_specific_c19374(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client,
+                                                     logger):
+    capture_filename = "test_wifi_multicast_filter_clear_specific_c19374"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = multicast_client.interfaces.multicast.multicast_params()
@@ -427,9 +427,9 @@ def test_wifi_multicast_filter_clear_specific_TC19374(wifi_sniffer, wifi_access_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated"])
-def test_wifi_multicast_filter_add_specific_TC19375(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client,
-                                                    logger):
-    capture_filename = "test_wifi_multicast_filter_add_specific_TC19375"
+def test_wifi_multicast_filter_add_specific_c19375(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client,
+                                                   logger):
+    capture_filename = "test_wifi_multicast_filter_add_specific_c19375"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
     device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
     ip_version, ttl, multicast_mac, multicast_ip, device_port, server_port, buffer_length, no_of_pkts = multicast_client.interfaces.multicast.multicast_params()

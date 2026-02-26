@@ -81,7 +81,7 @@ def ping_to_host(wifi_client, device_ip):
 
     }
 )
-def test_scan_c34503_04_05_07(wifi_sniffer, wifi_dut, wifi_access_point,utf_constants):
+def test_scan_c34503_c34504_c34505_c34507(wifi_sniffer, wifi_dut, wifi_access_point,utf_constants):
     logger().info(f"********this test_case to validate DNS_SERVER WITH DHCP********")
     validation = True
 

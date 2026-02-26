@@ -479,7 +479,7 @@ def test_https_get_functionality_invalid_ip(http_server, wifi_dut, http_client, 
 @pytest.mark.config("http_server", port=10)
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut, http_client, wifi_access_point, index_path,
+def test_https_get_functionality_port10_case1_c19207(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                                      utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19207_case1')
@@ -546,7 +546,7 @@ def test_https_get_functionality_port10_C19207_case1(http_server, wifi_dut, http
 @pytest.mark.config("http_server", port=200)
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut, http_client, wifi_access_point,
+def test_https_get_functionality_port200_case2_c19207(http_server, wifi_dut, http_client, wifi_access_point,
                                                       index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19207_case2')
@@ -612,7 +612,7 @@ def test_https_get_functionality_port200_C19207_case2(http_server, wifi_dut, htt
 @pytest.mark.config("http_server", port=2000)
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut, http_client, wifi_access_point,
+def test_https_get_functionality_port2000_case3_c19207(http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19207_case3')
@@ -679,7 +679,7 @@ def test_https_get_functionality_port2000_C19207_case3(http_server, wifi_dut, ht
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_https_get_functionality_port20000_C19207_case4(http_server, wifi_dut, http_client, wifi_access_point,
+def test_https_get_functionality_port20000_case4_c19207(http_server, wifi_dut, http_client, wifi_access_point,
                                                         index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     wifi_sniffer.interfaces.capture.start_capture(capture_file='test_C19207_case4')

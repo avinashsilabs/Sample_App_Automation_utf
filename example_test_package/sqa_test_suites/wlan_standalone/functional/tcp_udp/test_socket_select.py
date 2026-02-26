@@ -101,12 +101,12 @@ def send_data(remote_socket, tx_buffer, wait_time, logger):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
-def test_socket_select_tcp_TC19325(
+def test_socket_select_tcp_c19325(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, repeat_count,
         rs_helper, utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_tcp_TC19325"
+        capture_filename = "test_socket_select_tcp_c19325"
         remote_socket.interfaces.socket.time_limit = 3600
         since_time = 0
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
@@ -216,12 +216,12 @@ def test_socket_select_tcp_TC19325(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
-def test_socket_select_tcp_server_TC19326(
+def test_socket_select_tcp_server_c19326(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count,
 rs_helper, utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_tcp_server_TC19326"
+        capture_filename = "test_socket_select_tcp_server_c19326"
         since_time = 0
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
@@ -340,11 +340,11 @@ rs_helper, utf_constants
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
 # The test case checks data receive functionality over udp socket
-def test_socket_select_udp_TC19328(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, repeat_count,
+def test_socket_select_udp_c19328(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, repeat_count,
                                    rs_helper, utf_constants):
 
     try:
-        capture_filename = "test_socket_select_udp_TC19328"
+        capture_filename = "test_socket_select_udp_c19328"
         since_time = 0
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
@@ -448,12 +448,12 @@ def test_socket_select_udp_TC19328(wifi_sniffer, wifi_dut, wifi_access_point, re
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
-def test_socket_select_tcp_server_multiple_sockets_TC19327(
+def test_socket_select_tcp_server_multiple_sockets_c19327(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count,
         rs_helper, utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_tcp_server_multiple_sockets_TC19327"
+        capture_filename = "test_socket_select_tcp_server_multiple_sockets_c19327"
         since_time = 0
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
@@ -599,7 +599,7 @@ def test_socket_select_tcp_server_multiple_sockets_TC19327(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_socket_select_neg_TCC19332(
+def test_socket_select_neg_c19332(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, rs_helper, utf_constants
 ):
 
@@ -650,11 +650,11 @@ def test_socket_select_neg_TCC19332(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_socket_select_synchronous_timeout_NULL_tcp_TC19335(
+def test_socket_select_synchronous_timeout_NULL_tcp_c19335(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger,rs_helper,utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_synchronous_timeout_NULL_tcp_TC19335"
+        capture_filename = "test_socket_select_synchronous_timeout_NULL_tcp_c19335"
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
 
@@ -731,12 +731,12 @@ def test_socket_select_synchronous_timeout_NULL_tcp_TC19335(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336(
+def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_c19336(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, rs_helper, utf_constants
 ):
 
     try:
-        capture_filename = "test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336"
+        capture_filename = "test_socket_select_synchronous_timeout_diff_time_intervals_tcp_c19336"
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
         remote_socket.interfaces.socket.time_limit = 3600
@@ -853,12 +853,12 @@ def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_TC19336(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
-def test_socket_select_multiple_sockets_tcp_udp_TC19329(
+def test_socket_select_multiple_sockets_tcp_udp_c19329(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count,
         rs_helper, utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_multiple_sockets_TC19329"
+        capture_filename = "test_socket_select_multiple_sockets_c19329"
         since_time = 0
 
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
@@ -1001,12 +1001,12 @@ def test_socket_select_multiple_sockets_tcp_udp_TC19329(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
-def test_socket_select_tcp_server_multiple_sockets_rejoin_TC19330(
+def test_socket_select_tcp_server_multiple_sockets_rejoin_c19330(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count,
         rs_helper, utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_tcp_server_multiple_sockets_rejoin_TC19330"
+        capture_filename = "test_socket_select_tcp_server_multiple_sockets_rejoin_c19330"
         since_time = 0
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
@@ -1159,12 +1159,12 @@ def test_socket_select_tcp_server_multiple_sockets_rejoin_TC19330(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_socket_select_after_remote_terminate_TC19333(
+def test_socket_select_after_remote_terminate_c19333(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, rs_helper,
         utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_after_remote_terminate_TC19333"
+        capture_filename = "test_socket_select_after_remote_terminate_c19333"
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
         device_port = 5001
@@ -1307,12 +1307,12 @@ def test_socket_select_after_remote_terminate_TC19333(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [900])
-def test_socket_select_tcp_close_stress_TC19334(
+def test_socket_select_tcp_close_stress_c19334(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time,
         rs_helper, utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_multiple_sockets_TC19329"
+        capture_filename = "test_socket_select_multiple_sockets_c19329"
         since_time = 0
 
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
@@ -1441,12 +1441,12 @@ def test_socket_select_tcp_close_stress_TC19334(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [300])
-def test_socket_select_tcp_server_bidirectional_TC19337(
+def test_socket_select_tcp_server_bidirectional_c19337(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time,
         rs_helper, utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_tcp_server_bidirectional_TC19337"
+        capture_filename = "test_socket_select_tcp_server_bidirectional_c19337"
         since_time = 0
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
@@ -1611,12 +1611,12 @@ def test_socket_select_tcp_server_bidirectional_TC19337(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [300])
-def test_socket_select_udp_bidirectional_TC19338(
+def test_socket_select_udp_bidirectional_c19338(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time,
         rs_helper, utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_udp_bidirectional_TC19338"
+        capture_filename = "test_socket_select_udp_bidirectional_c19338"
         since_time = 0
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
@@ -1770,12 +1770,12 @@ def test_socket_select_udp_bidirectional_TC19338(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [900])
-def test_socket_select_tcp_socket_fd_disable_TC19339(
+def test_socket_select_tcp_socket_fd_disable_c19339(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time, rs_helper,
         utf_constants
 ):
     try:
-        capture_filename = "test_socket_select_disable_enable_tcp_server_multiple_sockets_TC19339"
+        capture_filename = "test_socket_select_disable_enable_tcp_server_multiple_sockets_c19339"
         since_time = 0
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
@@ -1971,11 +1971,11 @@ def test_socket_select_tcp_socket_fd_disable_TC19339(
 @pytest.mark.config("wifi_access_point",
                     wifi={"ssid": "Test_SSID", "security": 'WPA2', "passphrase": '12345678', "channel": 1})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-def test_socket_select_tcp_TC19331(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, switch,
+def test_socket_select_tcp_c19331(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, switch,
                                    rs_helper, utf_constants):
     try:
         exception_count = 0
-        capture_filename = "test_socket_select_tcp_TC19331"
+        capture_filename = "test_socket_select_tcp_c19331"
         wifi_sniffer.interfaces.capture.start_capture(
             capture_file=f"{capture_filename}.pcap"
         )

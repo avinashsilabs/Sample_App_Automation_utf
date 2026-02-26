@@ -650,10 +650,10 @@ pytestmark = [
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
-def test_advertise_all_ciphers_ssl_tx_TC19604(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
+def test_advertise_all_ciphers_ssl_tx_c19604(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                               logger):
     try:
-        capture_filename = "test_advertise_all_ciphers_ssl_tx_TC19604"
+        capture_filename = "test_advertise_all_ciphers_ssl_tx_c19604"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 0)
     except Exception as error:
@@ -667,10 +667,10 @@ def test_advertise_all_ciphers_ssl_tx_TC19604(wifi_sniffer, wifi_access_point, w
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
-def test_advertise_all_ciphers_ssl_rx_TC19605(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
+def test_advertise_all_ciphers_ssl_rx_c19605(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                               logger):
     try:
-        capture_filename = "test_advertise_all_ciphers_ssl_rx_TC19605"
+        capture_filename = "test_advertise_all_ciphers_ssl_rx_c19605"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 1)
     except Exception as error:
@@ -691,9 +691,9 @@ def test_advertise_all_ciphers_ssl_rx_TC19605(wifi_sniffer, wifi_access_point, w
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_tx_TC19606(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
+def test_advertise_ciphers_ssl_tx_c19606(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_tx_TC19606"
+        capture_filename = "test_advertise_ciphers_ssl_tx_c19606"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 0)
     except Exception as error:
@@ -714,9 +714,9 @@ def test_advertise_ciphers_ssl_tx_TC19606(wifi_sniffer, wifi_access_point, wifi_
                                           'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256',
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_rx_TC19607(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
+def test_advertise_ciphers_ssl_rx_c19607(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_rx_TC19607"
+        capture_filename = "test_advertise_ciphers_ssl_rx_c19607"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 1)
     except Exception as error:
@@ -731,9 +731,9 @@ def test_advertise_ciphers_ssl_rx_TC19607(wifi_sniffer, wifi_access_point, wifi_
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
-def test_advertise_ciphers_ssl_tx_TC19608(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
+def test_advertise_ciphers_ssl_tx_c19608(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_tx_TC19608"
+        capture_filename = "test_advertise_ciphers_ssl_tx_c19608"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 0)
     except Exception as error:
@@ -748,9 +748,9 @@ def test_advertise_ciphers_ssl_tx_TC19608(wifi_sniffer, wifi_access_point, wifi_
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
-def test_advertise_ciphers_ssl_rx_TC19609(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
+def test_advertise_ciphers_ssl_rx_c19609(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_rx_TC19609"
+        capture_filename = "test_advertise_ciphers_ssl_rx_c19609"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 1)
     except Exception as error:
@@ -765,9 +765,9 @@ def test_advertise_ciphers_ssl_rx_TC19609(wifi_sniffer, wifi_access_point, wifi_
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_tx_TC19610(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
+def test_advertise_ciphers_ssl_tx_c19610(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_tx_TC19610"
+        capture_filename = "test_advertise_ciphers_ssl_tx_c19610"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 0)
     except Exception as error:
@@ -782,9 +782,9 @@ def test_advertise_ciphers_ssl_tx_TC19610(wifi_sniffer, wifi_access_point, wifi_
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_rx_TC19611(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
+def test_advertise_ciphers_ssl_rx_c19611(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_tx_TC19611"
+        capture_filename = "test_advertise_ciphers_ssl_tx_c19611"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 1)
     except Exception as error:
@@ -818,10 +818,10 @@ def test_advertise_ciphers_ssl_rx_TC19611(wifi_sniffer, wifi_access_point, wifi_
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
-def test_advertise_ciphers_ssl_tx_TC19612(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, cipher_list,
+def test_advertise_ciphers_ssl_tx_c19612(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, cipher_list,
                                           logger):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_tx_TC19612"
+        capture_filename = "test_advertise_ciphers_ssl_tx_c19612"
         expected_cipher = cipher_list
         port_connect = 5001
         rejoin_set_values = [0, 4, 40, 0]
@@ -933,10 +933,10 @@ def test_advertise_ciphers_ssl_tx_TC19612(wifi_sniffer, wifi_dut, wifi_access_po
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
-def test_advertise_ciphers_ssl_rx_TC19613(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client, cipher_list,
+def test_advertise_ciphers_ssl_rx_c19613(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client, cipher_list,
                                           logger):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_rx_TC19613"
+        capture_filename = "test_advertise_ciphers_ssl_rx_c19613"
         expected_cipher = cipher_list
         port_connect = 5001
         rejoin_set_values = [0, 4, 40, 0]
@@ -1037,10 +1037,10 @@ def test_advertise_ciphers_ssl_rx_TC19613(wifi_sniffer, wifi_access_point, wifi_
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list",
                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
-def test_advertise_ciphers_ssl_tx_TC19614(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, cipher_list,
+def test_advertise_ciphers_ssl_tx_c19614(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, cipher_list,
                                           logger):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_tx_TC19614"
+        capture_filename = "test_advertise_ciphers_ssl_tx_c19614"
         expected_cipher = cipher_list
         port_connect = 5001
         rejoin_set_values = [0, 4, 40, 0]
@@ -1154,7 +1154,7 @@ def test_advertise_ciphers_ssl_tx_TC19614(wifi_sniffer, wifi_dut, wifi_access_po
 def test_advertise_ciphers_ssl_rx_c19615(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client, cipher_list,
                                           logger, ssl_server):
     try:
-        capture_filename = "test_advertise_ciphers_ssl_rx_TC19615"
+        capture_filename = "test_advertise_ciphers_ssl_rx_c19615"
         expected_cipher = cipher_list
         rejoin_set_values = [0, 4, 40, 0]
         device_ip = dut_join_ap(capture_filename, rejoin_set_values, wifi_dut, wifi_access_point, wifi_sniffer, logger)

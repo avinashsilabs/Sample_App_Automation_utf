@@ -122,7 +122,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_ftp_create_10mb_file_TC19005(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, ftp_server, ftp_client, logger):
+def test_ftp_create_10mb_file_c19005(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, ftp_server, ftp_client, logger):
     capture_filename = "test_ftp_create_10mb_file_TC19005"
     join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     host_ip = wifi_client.interfaces.wifi.get_ip_address()

@@ -27,10 +27,10 @@ from utf.utils.iperf.iperf_utils import ping
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
-def test_get_rtc_deep_sleep_TC19052(
+def test_get_rtc_deep_sleep_c19052(
         wifi_sniffer, wifi_access_point, wifi_dut, logger, tolerance_threshold
         ):
-    capture_filename = "test_get_rtc_deep_sleep_TC19052"
+    capture_filename = "test_get_rtc_deep_sleep_c19052"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -111,10 +111,10 @@ def test_get_rtc_deep_sleep_TC19052(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
-def test_set_get_rtc_twice_TC19049(
+def test_set_get_rtc_twice_c19049(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
-    capture_filename = "test_set_get_rtc_twice_TC19049"
+    capture_filename = "test_set_get_rtc_twice_c19049"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -245,10 +245,10 @@ def test_set_get_rtc_twice_TC19049(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
-def test_get_rtc_multiple_times_TC19053(
+def test_get_rtc_multiple_times_c19053(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
-    capture_filename = "test_get_rtc_multiple_times_TC19053"
+    capture_filename = "test_get_rtc_multiple_times_c19053"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -427,10 +427,10 @@ def test_get_rtc_multiple_times_TC19053(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
-def test_get_rtc_after_rejoin_TC19055(
+def test_get_rtc_after_rejoin_c19055(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
-    capture_filename = "test_get_rtc_after_rejoin_TC19055"
+    capture_filename = "test_get_rtc_after_rejoin_c19055"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel
@@ -651,7 +651,7 @@ def test_get_rtc_after_rejoin_TC19055(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # RTC timer functionality should not work when the set RTC api is executed in wrong state. Before
 # Wireless initialization
-def test_set_rtc_incorrect_state_TC19048(wifi_dut, logger):
+def test_set_rtc_incorrect_state_c19048(wifi_dut, logger):
     set_seconds = 30
     set_minutes = 6
     set_hour = 10
@@ -690,10 +690,10 @@ def test_set_rtc_incorrect_state_TC19048(wifi_dut, logger):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
-def test_get_rtc_without_enabling_feature_TC19054(
+def test_get_rtc_without_enabling_feature_c19054(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
-    capture_filename = "test_get_rtc_without_enabling_feature_TC19054"
+    capture_filename = "test_get_rtc_without_enabling_feature_c19054"
     # configure interface for the channel of the access point
     wifi_sniffer.interfaces.capture.configure_interface(
         channel=wifi_access_point.interfaces.wifi.channel

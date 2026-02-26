@@ -178,7 +178,7 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos0
-def test_mqtt_qos0_connect_sub_publish_TC19241_TC19243_TC19252(
+def test_mqtt_qos0_connect_sub_publish_c19241_c19243_c19252(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
     topic1 = "mytesttopic/1"
@@ -188,7 +188,7 @@ def test_mqtt_qos0_connect_sub_publish_TC19241_TC19243_TC19252(
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
 
-    capture_filename = "test_mqtt_qos0_connect_sub_publish_TC19252"
+    capture_filename = "test_mqtt_qos0_connect_sub_publish_c19252"
 
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
 
@@ -260,7 +260,7 @@ def test_mqtt_qos0_connect_sub_publish_TC19241_TC19243_TC19252(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos1
-def test_mqtt_qos1_connect_sub_publish_TC19254(
+def test_mqtt_qos1_connect_sub_publish_c19254(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
     topic1 = "mytesttopic/1"
@@ -270,7 +270,7 @@ def test_mqtt_qos1_connect_sub_publish_TC19254(
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
 
-    capture_filename = "test_mqtt_qos1_connect_sub_publish_TC19254"
+    capture_filename = "test_mqtt_qos1_connect_sub_publish_c19254"
 
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
@@ -341,10 +341,10 @@ def test_mqtt_qos1_connect_sub_publish_TC19254(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks DUT behavior when DUT is trying to connect to MQTT server, but server is not responding
-def test_mqtt_invalid_server_TC19242(
+def test_mqtt_invalid_server_c19242(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
 ):
-    capture_filename = "test_mqtt_invalid_server_TC19242"
+    capture_filename = "test_mqtt_invalid_server_c19242"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     logger.info(f"MQTT server is not running at 192.168.100.50")
@@ -370,10 +370,10 @@ def test_mqtt_invalid_server_TC19242(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks DUT behavior when DUT is tyring to connect to MQTT server with client id, but the same client
 # id is already being used by another mqtt client
-def test_mqtt_common_clientid_TC19245(
+def test_mqtt_common_clientid_c19245(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
-    capture_filename = "test_mqtt_common_clientid_TC19245"
+    capture_filename = "test_mqtt_common_clientid_c19245"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     mqtt_client_id = "mqtt_908765436789876589"
@@ -433,7 +433,7 @@ def test_mqtt_common_clientid_TC19245(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when password based authentication feature is
 # enabled on mqtt server
-def test_mqtt_authentication_TC19246(
+def test_mqtt_authentication_c19246(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
     topic1 = "mytesttopic/1"
@@ -443,7 +443,7 @@ def test_mqtt_authentication_TC19246(
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
 
-    capture_filename = "test_mqtt_authentication_TC19246"
+    capture_filename = "test_mqtt_authentication_c19246"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     client_devices = [wifi_dut, mqtt_client]
@@ -515,10 +515,10 @@ def test_mqtt_authentication_TC19246(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks DUT behavior when trying to connect to MQTT server with wrong credentials
-def test_mqtt_authentication_wrong_cred_TC19247(
+def test_mqtt_authentication_wrong_cred_c19247(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
 ):
-    capture_filename = "test_mqtt_authentication_wrong_cred_TC19247"
+    capture_filename = "test_mqtt_authentication_wrong_cred_c19247"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     with pytest.raises(RuntimeError) as exc_info:
@@ -547,10 +547,10 @@ def test_mqtt_authentication_wrong_cred_TC19247(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "wifi_powersave_disable", "mqtt_disconnect"])
 # The test case checks mqtt publish message with retain option
-def test_mqtt_retain_TC19256(
+def test_mqtt_retain_c19256(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
-    capture_filename = "test_mqtt_retain_TC19256"
+    capture_filename = "test_mqtt_retain_c19256"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     # DUT connects to MQTT server after execution of below api
@@ -599,10 +599,10 @@ def test_mqtt_retain_TC19256(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt publish message with retain option
-def test_mqtt_delete_retain_message_TC19262(
+def test_mqtt_delete_retain_message_c19262(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
-    capture_filename = "test_mqtt_delete_retain_message_TC19262"
+    capture_filename = "test_mqtt_delete_retain_message_c19262"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     # DUT connects to MQTT server after execution of below api
@@ -652,10 +652,10 @@ def test_mqtt_delete_retain_message_TC19262(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # the test case checks MQTT unsubscribe functionality
-def test_mqtt_unsubscribe_TC19260(
+def test_mqtt_unsubscribe_c19260(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
-    capture_filename = "test_mqtt_unsubscribe_TC19260"
+    capture_filename = "test_mqtt_unsubscribe_c19260"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     # DUT connects to MQTT server after execution of below api
@@ -720,10 +720,10 @@ def test_mqtt_unsubscribe_TC19260(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # the test case runs mqtt sequence multiple times
-def test_mqtt_sequence_TC19277(
+def test_mqtt_sequence_c19277(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
-    capture_filename = "test_mqtt_sequence_TC19277"
+    capture_filename = "test_mqtt_sequence_c19277"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     topic1 = "mytesttopic/1"
     topic2 = "mytesttopic/2"
@@ -826,7 +826,7 @@ def test_mqtt_reconnect_testcase_23(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # DUT functionality when trying to connect to MQTT server with client-id NULL
-def test_mqtt_common_clientid_null_TC19269(
+def test_mqtt_common_clientid_null_c19269(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
     topic_wild = "mytesttopic/#"
@@ -836,7 +836,7 @@ def test_mqtt_common_clientid_null_TC19269(
     message1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
     # The api returns 200 bytes of random data
     message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
-    capture_filename = "test_mqtt_common_clientid_null_TC19269"
+    capture_filename = "test_mqtt_common_clientid_null_c19269"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     client_devices = [wifi_dut, mqtt_client]
@@ -924,7 +924,7 @@ def ApWirelessOff(switch, wait_time, logger):
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_tx_after_rejoin_testcaseC19273(
+def test_mqtt_tx_after_rejoin_testcase_c19273(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes,
         pkt_delay, switch
 ):
@@ -1031,12 +1031,12 @@ def test_mqtt_tx_after_rejoin_testcaseC19273(
 @pytest.mark.parametrize("publish_len, total_bytes, pkt_delay", [(1000, 102400, 0.5)])
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_init_after_rejoin_fail_TC19265(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut,
+def test_mqtt_init_after_rejoin_fail_c19265(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut,
                                              logger, publish_len, total_bytes, pkt_delay, switch):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_init_after_rejoin_fail_TC19265"
+    capture_filename = "test_mqtt_init_after_rejoin_fail_c19265"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -1172,13 +1172,13 @@ def test_mqtt_init_after_rejoin_fail_TC19265(wifi_sniffer, mqtt_server, mqtt_cli
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_after_rejoin_TC19270(
+def test_mqtt_rx_after_rejoin_c19270(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_rx_after_rejoin_TC19270"
+    capture_filename = "test_mqtt_rx_after_rejoin_c19270"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -1264,13 +1264,13 @@ def test_mqtt_rx_after_rejoin_TC19270(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_publish_qos1_TC19272(
+def test_mqtt_publish_qos1_c19272(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_publish_qos1_TC19272"
+    capture_filename = "test_mqtt_publish_qos1_c19272"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -1348,13 +1348,13 @@ def test_mqtt_publish_qos1_TC19272(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
-def test_mqtt_rx_TC19283(
+def test_mqtt_rx_c19283(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
     current_time = time.time()
     topic_wild = "mytesttopic/#"
     topic1 = "mytesttopic/1"
-    capture_filename = "test_mqtt_rx_TC19283"
+    capture_filename = "test_mqtt_rx_c19283"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
     temp_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=total_bytes))
@@ -1436,10 +1436,10 @@ def test_mqtt_rx_TC19283(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 300)])
-def test_mqtt_keep_alive_60_TC19248(
+def test_mqtt_keep_alive_60_c19248(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
-    capture_filename = "test_mqtt_keep_alive_60_TC19248"
+    capture_filename = "test_mqtt_keep_alive_60_c19248"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
 
@@ -1487,10 +1487,10 @@ def test_mqtt_keep_alive_60_TC19248(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(120, 600)])
-def test_mqtt_keep_alive_120_TC19249(
+def test_mqtt_keep_alive_120_c19249(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
-    capture_filename = "test_mqtt_keep_alive_120_TC19249"
+    capture_filename = "test_mqtt_keep_alive_120_c19249"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
 
@@ -1538,10 +1538,10 @@ def test_mqtt_keep_alive_120_TC19249(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(300, 1200)])
-def test_mqtt_keep_alive_300_TC19250(
+def test_mqtt_keep_alive_300_c19250(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
-    capture_filename = "test_mqtt_keep_alive_300_TC19250"
+    capture_filename = "test_mqtt_keep_alive_300_c19250"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
 
@@ -1589,10 +1589,10 @@ def test_mqtt_keep_alive_300_TC19250(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
-def test_mqtt_keep_alive_disable_TC19251(
+def test_mqtt_keep_alive_disable_c19251(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
-    capture_filename = "test_mqtt_keep_alive_disable_TC19251"
+    capture_filename = "test_mqtt_keep_alive_disable_c19251"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
 
@@ -1620,10 +1620,10 @@ def test_mqtt_keep_alive_disable_TC19251(
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
-def test_mqtt_connect_clean_session_0_TC19289(
+def test_mqtt_connect_clean_session_0_c19289(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
 ):
-    capture_filename = "test_mqtt_connect_clean_session_0_TC19289"
+    capture_filename = "test_mqtt_connect_clean_session_0_c19289"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
     wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
 

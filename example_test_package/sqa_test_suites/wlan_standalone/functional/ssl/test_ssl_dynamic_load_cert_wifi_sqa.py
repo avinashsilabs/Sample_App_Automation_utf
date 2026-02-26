@@ -474,9 +474,9 @@ def dut_clean_up(wifi_dut):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_dynamic_load_cert_no_index_TC19638(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1):
+def test_dynamic_load_cert_no_index_c19638(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1):
     try:
-        capture_filename = "test_dynamic_load_cert_no_index_TC19638"
+        capture_filename = "test_dynamic_load_cert_no_index_c19638"
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -573,10 +573,10 @@ def test_dynamic_load_cert_no_index_TC19638(wifi_sniffer, wifi_access_point, wif
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_dynamic_load_cert_socket_connected_state_TC19639(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
+def test_dynamic_load_cert_socket_connected_state_c19639(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                                           cert1):
     try:
-        capture_filename = "test_dynamic_load_cert_no_index_TC19638"
+        capture_filename = "test_dynamic_load_cert_no_index_c19638"
         port1 = ssl_server.interfaces.ssl.config['device_port1']
 
         dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -652,9 +652,9 @@ def test_dynamic_load_cert_socket_connected_state_TC19639(wifi_sniffer, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_dynamic_load_new_cert_TC19640(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1):
+def test_dynamic_load_new_cert_c19640(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1):
     try:
-        capture_filename = "test_dynamic_load_cert_no_index_TC19638"
+        capture_filename = "test_dynamic_load_cert_no_index_c19638"
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -767,10 +767,10 @@ def test_dynamic_load_new_cert_TC19640(wifi_sniffer, wifi_access_point, wifi_dut
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_dynamic_load_three_ssl_sockets_TC19641(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1,
+def test_dynamic_load_three_ssl_sockets_c19641(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1,
                                                 cert2, cert3):
     try:
-        capture_filename = "test_dynamic_load_three_ssl_sockets_TC19641"
+        capture_filename = "test_dynamic_load_three_ssl_sockets_c19641"
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -933,11 +933,11 @@ def test_dynamic_load_three_ssl_sockets_TC19641(wifi_sniffer, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(wifi_sniffer, wifi_access_point, wifi_dut,
+def test_dynamic_load_three_ssl_sockets_multiple_iterations_c19643(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                     ssl_server,
                                                                     logger, cert1, cert2, cert3):
     try:
-        capture_filename = "test_dynamic_load_three_ssl_sockets_TC19643"
+        capture_filename = "test_dynamic_load_three_ssl_sockets_c19643"
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -1122,10 +1122,10 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_TC19643(wifi_sniffer
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_load_certs_without_erasing_multiple_times_TC19644(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+def test_load_certs_without_erasing_multiple_times_c19644(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                            logger, cert1, cert2, cert3):
     try:
-        capture_filename = "test_load_certs_without_erasing_multiple_times_TC19644"
+        capture_filename = "test_load_certs_without_erasing_multiple_times_c19644"
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -1295,7 +1295,7 @@ def test_load_certs_without_erasing_multiple_times_TC19644(wifi_sniffer, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_dynamic_load_powersave_not_enabled_TC19646(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
+def test_dynamic_load_powersave_not_enabled_c19646(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                                     cert1, cert2, cert3):
     try:
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
@@ -1576,11 +1576,11 @@ def test_dynamic_load_powersave_not_enabled_TC19646(wifi_sniffer, wifi_access_po
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_store_config"])
 @pytest.mark.store_config
-def test_dynamic_load_auto_join_TC19645(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2,
+def test_dynamic_load_auto_join_c19645(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2,
                                         cert3):
     try:
         ping_count = 10
-        capture_filename = "test_dynamic_load_auto_join_TC19645"
+        capture_filename = "test_dynamic_load_auto_join_c19645"
         pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
         buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
         port1 = ssl_server.interfaces.ssl.config['device_port1']
@@ -1827,7 +1827,7 @@ def test_dynamic_load_auto_join_TC19645(wifi_sniffer, wifi_access_point, wifi_du
                          )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC19642(wifi_access_point,
+def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_c19642(wifi_access_point,
                                                                                       wifi_dut, ssl_server, logger,
                                                                                       cert1, cert2, cert3):
     try:
@@ -1890,7 +1890,7 @@ def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_TC
                          )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_TC19648(wifi_access_point,
+def test_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_c19648(wifi_access_point,
                                                                                       wifi_dut, ssl_server, logger,
                                                                                       cert1, cert2, cert3):
     try:
@@ -1956,7 +1956,7 @@ def test_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_TC
                          )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
-def test_connection_and_transfer_of_index1_index2_when_trying_loadcert_index0_TC19649(wifi_sniffer, wifi_access_point,
+def test_connection_and_transfer_of_index1_index2_when_trying_loadcert_index0_c19649(wifi_sniffer, wifi_access_point,
                                                                                       wifi_dut, ssl_server, logger,
                                                                                       cert1, cert2, cert3):
     try:

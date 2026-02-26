@@ -88,10 +88,10 @@ pytestmark = [
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.parametrize("test_run_time", [100])
-def test_advertise_all_ciphers_ssl_regression_TC19618(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+def test_advertise_all_ciphers_ssl_regression_c19618(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                       cipher_list, logger, test_run_time):
     try:
-        capture_filename = "test_advertise_all_ciphers_ssl_regression_TC19618"
+        capture_filename = "test_advertise_all_ciphers_ssl_regression_c19618"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 3, test_run_time=test_run_time)
     except Exception as error:
@@ -106,10 +106,10 @@ def test_advertise_all_ciphers_ssl_regression_TC19618(wifi_sniffer, wifi_access_
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.parametrize("test_run_time", [100])
-def test_advertise_all_ciphers_wlan_regression_TC19619(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+def test_advertise_all_ciphers_wlan_regression_c19619(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                        cipher_list, logger, test_run_time):
     try:
-        capture_filename = "test_advertise_all_ciphers_wlan_regression_TC19619"
+        capture_filename = "test_advertise_all_ciphers_wlan_regression_c19619"
 
         wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename,
                                     cipher_list, logger, server_cert=None, server_key=None, test_run_time=test_run_time)
@@ -132,10 +132,10 @@ def test_advertise_all_ciphers_wlan_regression_TC19619(wifi_sniffer, wifi_access
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.parametrize("test_run_time", [100])
-def test_advertise_specific_ciphers_ssl_regression_TC19620(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+def test_advertise_specific_ciphers_ssl_regression_c19620(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                            cipher_list, logger, test_run_time):
     try:
-        capture_filename = "test_advertise_specific_ciphers_ssl_regression_TC19620"
+        capture_filename = "test_advertise_specific_ciphers_ssl_regression_c19620"
         ssl_connection_tx_rx(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename, cipher_list,
                              logger, 3, test_run_time=test_run_time)
     except Exception as error:
@@ -157,10 +157,10 @@ def test_advertise_specific_ciphers_ssl_regression_TC19620(wifi_sniffer, wifi_ac
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.parametrize("test_run_time", [100])
-def test_advertise_specific_ciphers_wlan_ssl_regression_TC19621(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
+def test_advertise_specific_ciphers_wlan_ssl_regression_c19621(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                                 cipher_list, logger, test_run_time):
     try:
-        capture_filename = "test_advertise_specific_ciphers_ssl_regression_TC19621"
+        capture_filename = "test_advertise_specific_ciphers_ssl_regression_c19621"
         wlan_ssl_connect_disconnect(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, capture_filename,
                                     cipher_list, logger, server_cert=None, server_key=None, test_run_time=test_run_time)
     except Exception as error:
