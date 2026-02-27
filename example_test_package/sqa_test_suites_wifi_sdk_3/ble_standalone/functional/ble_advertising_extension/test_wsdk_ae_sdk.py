@@ -109,7 +109,7 @@ def calculate_sync_offset(df):
     logger().info(f"\nTime difference between AUX_ADV_IND and AUX_SYNC_IND: {time_difference_in_microseconds}")
     logger().info(f"\nOffset value: {offset_value}")
     # Compare the time difference with offset value (+ or - 60 microseconds)
-    return abs(time_difference_in_microseconds - offset_value) <= 60
+    return (offset_value - time_difference_in_microseconds) <= 30
 
 
 """
