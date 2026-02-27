@@ -36,6 +36,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
     recv_text = text_generator()
     if mode == "bt_slave":
         bt_client.interfaces.bluetooth.close()
+        time.sleep(5)  # Allow adapter to fully reset before re-setup (critical for repeat iterations)
         logger().info("Setting DUT as bt_slave....")
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
         assert bt_dut_address is not None, f"Unable to get bt_dut_address"
@@ -43,9 +44,9 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
         bt_client_address = bt_client.interfaces.bluetooth.start_spp_master(bt_dut_address, pin_code)
         assert bt_client_address is not None, f"Unable to get bt_client_address"
         logger().info("Started BT in MASTER device....bt_client")
+        time.sleep(3)  # Allow SPP master to initialize before scanning
         found = bt_client.interfaces.bluetooth.bt_adapter.scan_for_device(bt_dut_address, duration=20, retry_counts=6)
-        if not found:
-            logger().error(f"Dut was not found during the scan by bt client. The test case may fail.")
+        assert found, f"DUT '{bt_dut_address}' was not found during BT scan by bt_client"
         bt_server_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Server)
         # SPP Connection
         with wifi_dut.interfaces.wifi.run_bt_task():
@@ -96,6 +97,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
     if mode == "bt_master":
         # Initiating power save
         bt_client.interfaces.bluetooth.close()
+        time.sleep(5)  # Allow adapter to fully reset before re-setup (critical for repeat iterations)
         logger().info("Initiating power save on DUT")
         if isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
             wifi_dut.interfaces.wifi.set_sleep_gpio(True)
@@ -115,8 +117,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
 
         found = wifi_dut.interfaces.wifi.bt_inquiry_for_device(bt_client_address=bt_client_address, inquiry_type=2,
                                                                inquiry_duration_ms=20000, timeout=22, retry_counts=6)
-        if not found:
-            logger().warning(f"Dut unable to find the bt client device. The test case may fail.")
+        assert found, f"DUT unable to find bt_client device '{bt_client_address}' during inquiry"
 
         bt_client_socket = bt_client.interfaces.bluetooth.bt_socket(mode=BTSocketRole.Client)
         # SPP Connection
@@ -178,19 +179,47 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         time.sleep(5)
         try:
             logger().info(f"****** ADDING WHITELIST BEFORE SCANNING")
-            wifi_dut.interfaces.wifi.ble_add_white_list(ble_client_address)
+            # Wake up DUT UART from power save before sending whitelist command.
+            # After BT power save Mode 2, the UART sleeps during idle gaps and can truncate the next command. A lightweight read wakes it reliably.
+            try:
+                wifi_dut.interfaces.wifi.ble_get_device_state()
+            except Exception:
+                pass
+            time.sleep(1)
+            # Retry whitelist add - UART may still truncate on first wake-up attempt
+            whitelist_added = False
+            for retry_count in range(1, 4):
+                try:
+                    wifi_dut.interfaces.wifi.ble_add_white_list(ble_client_address, timeout=15)
+                    whitelist_added = True
+                    break
+                except Exception as wl_err:
+                    logger().warning(f"ble_add_white_list attempt {retry_count} failed: {wl_err}")
+                    time.sleep(3)
+            assert whitelist_added, f"Failed to add BLE whitelist for '{ble_client_address}' after 3 attempts"
             logger().info(f"Start scanning and connect to ble client")
             wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, ble_scan_filter_type=1,
                                                         timeout=120)
             # wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
             timeout = 200
             logger().info(f"DUT initiating BLE connection with ble_client device")
-            wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address, timeout=timeout)
+            wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address,
+                                                 expected="RSI_BLE_ENCRYPT_STARTED_EVENT",
+                                                 timeout=timeout)
             logger().info("******** BLE master connection successful ********")
         except Exception as e:
             logger().info("*************** Exception block for stop advertising and stop scanning")
             ble_client.interfaces.bluetooth.stop_advertising()
-            wifi_dut.interfaces.wifi.ble_stop_scanning()
+            # State check before stopping scanning
+            try:
+                state = wifi_dut.interfaces.wifi.ble_get_device_state()
+                state_int = int(state) if state.isdigit() else -1
+                if state_int == BLEDeviceState.Scanning:
+                    wifi_dut.interfaces.wifi.ble_stop_scanning()
+                else:
+                    logger().info("Scanning not active, skipping ble_stop_scanning()")
+            except Exception as scan_err:
+                logger().info(f"Exception during state check or stop scanning: {scan_err}")
             raise e
 
     if mode == "ble_slave":
@@ -397,9 +426,15 @@ def dut_clean_up(wifi_dut, bt_socket=None):
             pass
     except Exception as err:
         logger().info(
-            f"******* Exception occurred while cleaning up the DUT\nException is:{err}\nRecovering the DUT using reset **********")
+            f"******* Exception occurred while cleaning up the DUT\nException is:{err} **********")
+
+    #  reset the DUT to ensure BT/BLE/WiFi stack is fully cleared for the next iteration.
+    try:
+        logger().info("Resetting DUT to clear all BT/BLE state")
         wifi_dut.interfaces.wifi.reset()
-        time.sleep(20)
+        time.sleep(10)
+    except Exception as reset_err:
+        logger().info(f"DUT reset failed during cleanup: {reset_err}")
     logger().info("\n ---------------------------- Cleaning UP of DUT is Completed ----------------------------")
 
 
