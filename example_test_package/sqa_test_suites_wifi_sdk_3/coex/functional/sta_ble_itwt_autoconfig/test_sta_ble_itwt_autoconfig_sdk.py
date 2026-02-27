@@ -781,8 +781,8 @@ pytestmark = [
             "enable_timeout_config": True,
             "keep_alive_timeout_value": 10,
             "thread_config": {
-            "wifi": {"count": 1, "stack_len": 4096, "priority": 8},
-            "ble": {"count": 1, "stack_len": 4096, "priority": 8},
+            "wifi": {"count": 1, "stack_len": 2048, "priority": 8},
+            "ble": {"count": 1, "stack_len": 2048, "priority": 8},
         },
     },
 )
