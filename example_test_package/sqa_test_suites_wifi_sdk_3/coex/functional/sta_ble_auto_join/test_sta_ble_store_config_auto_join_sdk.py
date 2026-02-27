@@ -8,6 +8,7 @@ from utf.utils.stopwatch import Stopwatch
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.thread_base import ThreadBase
 from utf.interfaces.iperf.iperf_constants import IperfConstants
+from threading import Thread
 from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xOperatingMode,
     Si91xCoexMode,
@@ -568,8 +569,8 @@ class WifiAutoJoinThread(ThreadBase):
 
 
 def wifi_dut_marker(ext_custom_bit=0, tcp_feat_bit=0, ext_tcp_feat_bit=0,
-                    ca_cert=None, eap_cert=None, wifi_stack_len=3072,
-                    ble_stack_len=2048, oper_mode=0, config_feature=0, num_peripheral_connections=1,
+                    ca_cert=None, eap_cert=None, wifi_stack_len=3584,
+                    ble_stack_len=3584, oper_mode=0, config_feature=0, num_peripheral_connections=1,
                     num_central_connections=1):
     config = {
         "oper_mode": oper_mode,
@@ -632,7 +633,7 @@ Map_security = {
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client","cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -742,13 +743,16 @@ def test_sta_ble_store_config_1_profile_ble_adv_20ms_C769724(wifi_dut, wifi_acce
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
 
 
 @wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -869,6 +873,10 @@ def test_sta_ble_store_config_2_profiles_ble_adv_10240ms_C769725(wifi_dut, wifi_
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
+
 
 
 
@@ -877,7 +885,7 @@ def test_sta_ble_store_config_2_profiles_ble_adv_10240ms_C769725(wifi_dut, wifi_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -996,14 +1004,16 @@ def test_sta_ble_store_config_2_profiles_ble_scan_si_10240ms_sw_3413_C769726(wif
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
-        # wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
 
 
-@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W, wifi_stack_len=3072, ble_stack_len=3072)
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W, wifi_stack_len=3584, ble_stack_len=3584)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -1118,6 +1128,9 @@ def test_sta_ble_store_config_2_profiles_ble_master_250ms_C769727(wifi_dut, wifi
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
 
 
 
@@ -1125,7 +1138,7 @@ def test_sta_ble_store_config_2_profiles_ble_master_250ms_C769727(wifi_dut, wifi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -1243,6 +1256,10 @@ def test_sta_ble_store_config_2_profiles_ble_slave_30ms_C769728(wifi_dut, wifi_a
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
+
 
 
 
@@ -1250,7 +1267,7 @@ def test_sta_ble_store_config_2_profiles_ble_slave_30ms_C769728(wifi_dut, wifi_a
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -1392,14 +1409,16 @@ def test_sta_ble_store_config_2_profiles_ble_slave_100ms_notify_C769730(wifi_dut
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
-        # wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
 
 
 @wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -1533,7 +1552,7 @@ def test_sta_ble_store_config_2_profiles_TCP_TX_ble_slave_45ms_C769731(wifi_dut,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -1661,12 +1680,16 @@ def test_sta_ble_store_config_2_profiles_UDP_RX_ble_slave_45ms_C769732(wifi_dut,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
+
 
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["sl_net_deinit_client", "clear_certs"]
+    "wifi_dut", wifi=["sl_net_deinit_client", "clear_certs", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -1821,6 +1844,10 @@ def test_sta_ble_store_config_2_profiles_eap_ble_slave_200ms_C769737(wifi_dut, w
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
 
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
+
 
 
 
@@ -1828,7 +1855,7 @@ def test_sta_ble_store_config_2_profiles_eap_ble_slave_200ms_C769737(wifi_dut, w
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -1953,6 +1980,9 @@ def test_sta_ble_store_config_2_profiles_no_AP_configured_ble_peripheral_C769746
                                           ble_dut_address=ble_obj.ble_dut_address)
             except:
                 pass
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
 
 
 
@@ -1962,7 +1992,7 @@ def test_sta_ble_store_config_2_profiles_no_AP_configured_ble_peripheral_C769746
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -2070,524 +2100,17 @@ def test_sta_ble_store_config_more_than_max_profiles_ble_adv_20ms_C769745(wifi_d
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
+        for _ in range(2):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
 
 
-@pytest.mark.http_server("raspi_lighttpd")
-@pytest.mark.parametrize("index_path", {"1MB.htm"})
-@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
+
+@wifi_dut_marker(num_peripheral_connections=1, num_central_connections=1, wifi_stack_len=2048, ble_stack_len=3584)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
-)
-@pytest.mark.parametrize(
-    "profiles",
-    [
-        (
-            {"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "12345678",
-             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
-            {"ssid": "store_profile2", "channel": 1, "security": "WPA3", "passphrase": "1234567890",
-             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
-        ),
-    ],
-)
-@pytest.mark.config(
-    "wifi_access_point", wifi={"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "12345678",
-                               "protected_management_frame": "Required"
-                               }
-)
-def test_sta_ble_store_config_2_profiles_HTTP_download_ble_central_500ms_C769734(wifi_dut, wifi_access_point,
-                                                                                 wifi_sniffer, sl_collections,
-                                                                                 sniffer_filter, utf_constants,
-                                                                                 ble_client, request,
-                                                                                 wifi_client, profiles,
-                                                                                 http_server, index_path):
-    """
-    Test Case: test_sta_ble_store_config_2_profiles_HTTP_download_ble_central_500ms_C769734
-
-    Description:
-        This test validates auto join functionality of DUT with 2 saved profiles while performing
-        HTTP file download with BLE central connection (500ms connection interval).
-
-    Test Steps:
-        1. Initialize wifi client interface using sl_net_init.
-        2. Store 2 profiles and credentials.
-        3. Start auto join using sl_net_start_auto_join.
-        4. Connect to AP using sl_net_up.
-        5. Enable WLAN & BLE power save mode.
-        6. Perform ping traffic.
-        7. Connect DUT as central with connection interval 500ms.
-        8. While data transfer is happening, turn off AP (disconnect event from AP1).
-        9. DUT should try connecting to AP2 using saved profile and credentials.
-        10. After connection, do ping.
-        11. Start downloading 5MB file through HTTP.
-        12. Check BLE connection state and disconnect.
-        13. Do sl_net_deinit.
-
-    """
-    ble_obj = None
-    try:
-        test_name = "test_sta_ble_store_config_2_profiles_HTTP_download_ble_central_500ms_C769734"
-        logger().info("Starting test: " + test_name)
-        ping_count = utf_constants.get("ping_count")
-
-        wifi_obj = WifiAutoJoinThread(
-            wifi_sniffer=wifi_sniffer,
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            testcase=test_name,
-            wifi_client=wifi_client,
-            sl_collections=sl_collections,
-            ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
-            test_type="http",
-            profiles=profiles,
-            http_server=http_server,
-            index_path=index_path,
-        )
-        # Step 7: Connect DUT as central with 500ms connection interval
-        logger().info("Step 7: Connecting DUT as central with 500ms connection interval")
-        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1, bond_info=0)
-        assert ble_dut_address is not None, "BLE initialization failed"
-
-        data_rx = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-        service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
-        char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
-        svc = 'HealthThermometerService'
-        charc = 'CustomNotifyCharacteristic'
-
-        ble_obj = BleThread(
-            wifi_dut=wifi_dut,
-            ble_client=ble_client,
-            sl_collections=sl_collections,
-            ble_test_type="notify_rx",
-            dev_state=BLEDeviceState.Connected,
-            data_duration=120,
-            service_class=["HealthThermometerService"],
-            gatt=True,
-            ble_pairing=1,
-            service_uuid=HealthThermometerService.UUID,
-            char_uuid=CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
-            characteristic=CustomNotifyCharacteristic,
-            data=data_rx,
-            svc=svc,
-            charc=charc,
-            conn_interval=500,  # 500ms in BLE units (500/1.25)
-            ble_init_required=False,
-            ble_dut_address=ble_dut_address,
-        )
-
-        # Step 1-2: Store profiles and credentials
-        logger().info("Step 1-2: Storing 2 profiles and credentials")
-        wifi_obj.set_profiles_and_credentials(profiles=profiles)
-        wifi_obj.get_profiles_and_credentials(num_profiles=len(profiles))
-
-        wifi_obj.set_rejoin_params()
-        wifi_obj.join_to_ap()
-        wifi_obj.set_power_save()
-        wifi_obj.ping()
-
-        ble_obj.ble_connect(role="master")
-        ble_obj.service_discovery_on_dut()
-        ble_obj.start()
-
-        # Step 8: While HTTP download is happening, turn off AP
-        logger().info("Step 8: Starting HTTP download and turning off AP")
-        # Start HTTP download in a thread
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-
-        # Step 9-10: Verify auto join to AP2 and ping
-        logger().info("Step 9-10: Verifying auto join to AP2 and ping")
-        wifi_obj.verfiy_auto_join_functionality()
-        wifi_obj.set_power_save()
-        wifi_obj.ping()
-
-        # Step 11: Start downloading 5MB file through HTTP
-        logger().info("Step 11: Starting HTTP download of 5MB file")
-        wifi_obj.run_http_download()
-
-        ble_obj.wait_for_exit()
-
-        # Step 12: Check BLE connection state and disconnect
-        logger().info("Step 12: Checking BLE connection state and disconnecting")
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == BLEDeviceState.Connected, "BLE connection lost"
-        ble_obj.ble_disconnect()
-
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-    finally:
-        if ble_obj:
-            try:
-                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-                ble_client.interfaces.bluetooth.close()
-                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                          ble_client_address=ble_obj.ble_client_address,
-                                          ble_dut_address=ble_obj.ble_dut_address)
-            except:
-                pass
-
-
-@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W, wifi_stack_len=3072, ble_stack_len=3072)
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
-)
-@pytest.mark.parametrize(
-    "profiles",
-    [
-        (
-            {"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "1234567890",
-             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
-            {"ssid": "store_profile2", "channel": 1, "security": "WPA3", "passphrase": "12345678",
-             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
-        ),
-    ],
-)
-@pytest.mark.config(
-    "wifi_access_point", wifi={"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "1234567890",
-                               "protected_management_frame": "Required"}
-)
-def test_sta_ble_store_config_2_profiles_WPA2_WPA3_ble_peripheral_connect_disconnect_C769736(wifi_dut, wifi_access_point,
-                                                                                             wifi_sniffer, sl_collections,
-                                                                                             sniffer_filter, utf_constants,
-                                                                                             ble_client, request,
-                                                                                             wifi_client, profiles):
-    """
-    Test Case: test_sta_ble_store_config_2_profiles_WPA2_WPA3_ble_peripheral_connect_disconnect_C769736
-
-    Description:
-        This test validates auto join functionality of DUT with 2 saved profiles (WPA2, WPA3)
-        while connecting and disconnecting BLE peripheral in a loop.
-
-    Test Steps:
-        1. Initialize wifi client interface using sl_net_init.
-        2. Store 2 profiles and credentials (WPA2, WPA3).
-        3. Connect DUT as peripheral.
-        4. Start auto join using sl_net_start_auto_join.
-        5. Connect to AP using sl_net_up.
-        6. Enable WLAN & BLE power save mode.
-        7. Advertise DUT and scan from remote device.
-        8. Initiate connection from Remote with connection interval 30ms.
-        9. Perform ping traffic.
-        10. Do disconnect and connect BLE device in a loop.
-        11. Turn off connected AP (disconnect event).
-        12. DUT should try connecting to other saved profiles.
-        13. After connection, check DUT goes to power save mode and do ping.
-        14. Do sl_net_deinit.
-
-    """
-    ble_obj = None
-    try:
-        test_name = "test_sta_ble_store_config_2_profiles_WPA2_WPA3_ble_peripheral_connect_disconnect_C769736"
-        logger().info("Starting test: " + test_name)
-        ping_count = utf_constants.get("ping_count")
-
-
-        wifi_obj = WifiAutoJoinThread(
-            wifi_sniffer=wifi_sniffer,
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            testcase=test_name,
-            wifi_client=wifi_client,
-            sl_collections=sl_collections,
-            ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
-            test_type="ping",
-            profiles=profiles,
-        )
-
-        # Step 1-2: Store profiles and credentials
-        logger().info("Step 1-2: Storing 2 profiles and credentials (WPA2, WPA3)")
-        wifi_obj.set_profiles_and_credentials(profiles=profiles)
-        wifi_obj.get_profiles_and_credentials(num_profiles=len(profiles))
-
-        wifi_obj.set_rejoin_params()
-        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
-            | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
-        )
-        wifi_obj.join_to_ap()
-        wifi_obj.set_power_save()
-
-        # Step 3: Connect DUT as peripheral
-        ble_obj = BleThread(
-            wifi_dut=wifi_dut,
-            ble_client=ble_client,
-            sl_collections=sl_collections,
-            ble_test_type="slave",
-            conn_interval=30,
-            set_smp=0,
-            ble_pairing=1,
-        )
-
-        ble_obj.ble_connect(role="slave")
-
-        # Step 9: Perform ping traffic
-        logger().info("Step 9: Performing ping traffic")
-        wifi_obj.ping()
-
-        # Step 10: Do disconnect and connect BLE device in a loop
-        logger().info("Step 10: Disconnecting and connecting BLE device in a loop")
-        for i in range(3):
-            logger().info(f"BLE disconnect/connect iteration {i+1}")
-            ble_obj.ble_disconnect()
-            time.sleep(2)
-            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            time.sleep(10)
-
-            ble_obj.ble_connect(role="slave")
-            time.sleep(2)
-            # Verify BLE connection is stable
-            state = wifi_dut.interfaces.wifi.ble_get_device_state()
-            state_int = int(state) if state.isdigit() else -1
-            assert state_int == BLEDeviceState.Connected, f"BLE connection lost during iteration {i+1}"
-
-        wifi_obj.verfiy_auto_join_functionality()
-        wifi_obj.set_power_save()
-        wifi_obj.ping()
-
-        ble_obj.ble_disconnect()
-
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-    finally:
-        if ble_obj:
-            try:
-                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-                ble_client.interfaces.bluetooth.close()
-                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                          ble_client_address=ble_obj.ble_client_address,
-                                          ble_dut_address=ble_obj.ble_dut_address)
-            except:
-                pass
-
-
-@pytest.mark.mqtt_server("raspi_mosquitto")
-@wifi_dut_marker(ext_tcp_feat_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature)
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
-)
-@pytest.mark.parametrize(
-    "profiles",
-    [
-        (
-            {"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "1234567890",
-             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
-            {"ssid": "store_profile2", "channel": 1, "security": "WPA2", "passphrase": "12345678",
-             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
-        ),
-    ],
-)
-@pytest.mark.config(
-    "wifi_access_point", wifi={"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "1234567890"}
-)
-def test_sta_ble_store_config_2_profiles_MQTT_ble_central_C769738(wifi_dut, wifi_access_point,
-                                                                  wifi_sniffer, sl_collections,
-                                                                  sniffer_filter, utf_constants,
-                                                                  ble_client, request,
-                                                                  wifi_client, profiles,
-                                                                  mqtt_server, mqtt_client):
-    """
-    Test Case: test_sta_ble_store_config_2_profiles_MQTT_ble_central_C769738
-
-    Description:
-        This test validates auto join functionality of DUT with 2 saved profiles while performing
-        MQTT data transfer with BLE central connection.
-
-    Test Steps:
-        1. Initialize wifi client interface using sl_net_init.
-        2. Connect DUT as central.
-        3. Store 2 profiles and credentials.
-        4. Get profiles and credentials.
-        5. Start auto join using sl_net_start_auto_join.
-        6. Connect to AP using sl_net_up.
-        7. Enable WLAN & BLE power save mode.
-        8. Perform ping traffic.
-        9. Do MQTT publish in while loop.
-        10. While data transfer is happening, turn off AP (disconnect event).
-        11. DUT should try connecting back to AP using saved profile and credentials.
-        12. After connection, do ping.
-        13. Do MQTT publish for 3 iterations.
-        14. Check BLE connection state and disconnect.
-        15. Do sl_net_deinit.
-
-    """
-    ble_obj = None
-    try:
-        test_name = "test_sta_ble_store_config_2_profiles_MQTT_ble_central_C769738"
-        logger().info("Starting test: " + test_name)
-        ping_count = utf_constants.get("ping_count")
-        topic = "mytesttopic"
-        message = "".join(random.choices(string.ascii_uppercase + string.digits, k=100))
-
-        wifi_obj = WifiAutoJoinThread(
-            wifi_sniffer=wifi_sniffer,
-            wifi_dut=wifi_dut,
-            wifi_access_point=wifi_access_point,
-            testcase=test_name,
-            wifi_client=wifi_client,
-            sl_collections=sl_collections,
-            ping_count=ping_count,
-            sniffer_filter=sniffer_filter,
-            test_type="ping",
-            profiles=profiles,
-        )
-
-        ble_obj = BleThread(
-            wifi_dut=wifi_dut,
-            ble_client=ble_client,
-            sl_collections=sl_collections,
-            ble_test_type="master",
-            set_smp=1,
-            ble_pairing=1,
-        )
-
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-
-        # Step 3-8: Store profiles, start auto join, connect to AP, enable power save, ping
-        logger().info("Step 3-8: Storing profiles, starting auto join, connecting to AP, enabling power save, ping")
-        wifi_obj.set_profiles_and_credentials(profiles=profiles)
-        wifi_obj.get_profiles_and_credentials(num_profiles=len(profiles))
-        wifi_obj.set_rejoin_params()
-        wifi_obj.join_to_ap()
-        wifi_obj.set_power_save()
-        wifi_obj.ping()
-
-        topic = "mytesttopic"
-        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-
-        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
-        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=1)
-        logger().info(".....DUT connects to MQTT server.....")
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        logger().info(".....MQTT Client connects to MQTT server.....")
-        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        time.sleep(5)
-
-        logger().info("MQTT Client subscribes to the topic")
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
-
-        logger().info("DUT subscribes to the topic")
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
-
-        time.sleep(5)
-
-        sw = Stopwatch()
-        while sw.elapsed_sec <= 60:
-
-            logger().info("DUT publishes message over the topic")
-            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1,
-                                                         timeout=20)
-            # time.sleep(10)
-            msgs = []
-            mq = Stopwatch()
-            while mq.elapsed_sec < 20:
-                time.sleep(0.1)
-                msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-                if len(msgs) >= 1:
-                    break
-            assert len(msgs) >= 1, "No message is received by mqtt-client"
-            assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
-            assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
-            assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
-                                                        "message received is wrong"
-
-        logger().info("....Unsubscribing from the topic....")
-        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
-
-        wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
-
-        # Step 11-12: Verify auto join, ping
-        logger().info("Step 11-12: Verifying auto join and ping")
-        wifi_obj.verfiy_auto_join_functionality()
-        wifi_obj.set_power_save()
-        wifi_obj.ping()
-
-        topic = "mytesttopic"
-        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
-
-        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
-        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=1)
-        logger().info(".....DUT connects to MQTT server.....")
-        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        logger().info(".....MQTT Client connects to MQTT server.....")
-        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
-        time.sleep(5)
-
-        logger().info("MQTT Client subscribes to the topic")
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
-
-        logger().info("DUT subscribes to the topic")
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
-
-        time.sleep(5)
-
-        sw = Stopwatch()
-        while sw.elapsed_sec <= 60:
-
-            logger().info("DUT publishes message over the topic")
-            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1,
-                                                         timeout=20)
-            # time.sleep(10)
-            msgs = []
-            mq = Stopwatch()
-            while mq.elapsed_sec < 20:
-                time.sleep(0.1)
-                msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-
-                logger().info(f"msgs:{msgs}")
-                if len(msgs) >= 1:
-                    break
-            assert len(msgs) >= 1, "No message is received by mqtt-client"
-            assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
-            assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
-            assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
-                                                        "message received is wrong"
-
-        logger().info("....Unsubscribing from the topic....")
-        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
-
-        wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
-
-        # Step 14: Check BLE connection state and disconnect
-        logger().info("Step 14: Checking BLE connection state and disconnecting")
-        state = wifi_dut.interfaces.wifi.ble_get_device_state()
-        state_int = int(state) if state.isdigit() else -1
-        assert state_int == BLEDeviceState.Connected, "BLE connection lost"
-        ble_obj.ble_disconnect()
-
-    except Exception as e:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
-    finally:
-        if ble_obj:
-            try:
-                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-                ble_client.interfaces.bluetooth.close()
-                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                          ble_client_address=ble_obj.ble_client_address,
-                                          ble_dut_address=ble_obj.ble_dut_address)
-            except:
-                pass
-
-
-
-
-@wifi_dut_marker(num_peripheral_connections=1, num_central_connections=1, wifi_stack_len=3072, ble_stack_len=3072)
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -2757,18 +2280,548 @@ def test_sta_ble_store_config_2_profiles_ble_dual_role_80ms_160ms_C769729(wifi_d
                                           ble_dut_address=ble_obj.ble_dut_address)
             except:
                 pass
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
+
+
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"1MB.htm"})
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
+)
+@pytest.mark.parametrize(
+    "profiles",
+    [
+        (
+            {"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "12345678",
+             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
+            {"ssid": "store_profile2", "channel": 1, "security": "WPA3", "passphrase": "1234567890",
+             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
+        ),
+    ],
+)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "12345678",
+                               "protected_management_frame": "Required"
+                               }
+)
+def test_sta_ble_store_config_2_profiles_HTTP_download_ble_central_500ms_C769734(wifi_dut, wifi_access_point,
+                                                                                 wifi_sniffer, sl_collections,
+                                                                                 sniffer_filter, utf_constants,
+                                                                                 ble_client, request,
+                                                                                 wifi_client, profiles,
+                                                                                 http_server, index_path):
+    """
+    Test Case: test_sta_ble_store_config_2_profiles_HTTP_download_ble_central_500ms_C769734
+
+    Description:
+        This test validates auto join functionality of DUT with 2 saved profiles while performing
+        HTTP file download with BLE central connection (500ms connection interval).
+
+    Test Steps:
+        1. Initialize wifi client interface using sl_net_init.
+        2. Store 2 profiles and credentials.
+        3. Start auto join using sl_net_start_auto_join.
+        4. Connect to AP using sl_net_up.
+        5. Enable WLAN & BLE power save mode.
+        6. Perform ping traffic.
+        7. Connect DUT as central with connection interval 500ms.
+        8. While data transfer is happening, turn off AP (disconnect event from AP1).
+        9. DUT should try connecting to AP2 using saved profile and credentials.
+        10. After connection, do ping.
+        11. Start downloading 5MB file through HTTP.
+        12. Check BLE connection state and disconnect.
+        13. Do sl_net_deinit.
+
+    """
+    ble_obj = None
+    try:
+        test_name = "test_sta_ble_store_config_2_profiles_HTTP_download_ble_central_500ms_C769734"
+        logger().info("Starting test: " + test_name)
+        ping_count = utf_constants.get("ping_count")
+
+        wifi_obj = WifiAutoJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type="http",
+            profiles=profiles,
+            http_server=http_server,
+            index_path=index_path,
+        )
+        # Step 7: Connect DUT as central with 500ms connection interval
+        logger().info("Step 7: Connecting DUT as central with 500ms connection interval")
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1, bond_info=0)
+        assert ble_dut_address is not None, "BLE initialization failed"
+
+        data_rx = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+        char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
+        svc = 'HealthThermometerService'
+        charc = 'CustomNotifyCharacteristic'
+
+        ble_obj = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="notify_rx",
+            dev_state=BLEDeviceState.Connected,
+            data_duration=120,
+            service_class=["HealthThermometerService"],
+            gatt=True,
+            ble_pairing=1,
+            service_uuid=HealthThermometerService.UUID,
+            char_uuid=CustomNotifyCharacteristic.CUSTOM_NOTIFY_UUID,
+            characteristic=CustomNotifyCharacteristic,
+            data=data_rx,
+            svc=svc,
+            charc=charc,
+            conn_interval=500,  # 500ms in BLE units (500/1.25)
+            ble_init_required=False,
+            ble_dut_address=ble_dut_address,
+        )
+
+        # Step 1-2: Store profiles and credentials
+        logger().info("Step 1-2: Storing 2 profiles and credentials")
+        wifi_obj.set_profiles_and_credentials(profiles=profiles)
+        wifi_obj.get_profiles_and_credentials(num_profiles=len(profiles))
+
+        wifi_obj.set_rejoin_params()
+        wifi_obj.join_to_ap()
+        wifi_obj.set_power_save()
+        wifi_obj.ping()
+
+        ble_obj.ble_connect(role="master")
+        ble_obj.service_discovery_on_dut()
+        ble_obj.start()
+
+        # Step 8: While HTTP download is happening, turn off AP
+        logger().info("Step 8: Starting HTTP download and turning off AP")
+        # Start HTTP download in a thread
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        # Step 9-10: Verify auto join to AP2 and ping
+        logger().info("Step 9-10: Verifying auto join to AP2 and ping")
+        wifi_obj.verfiy_auto_join_functionality()
+        wifi_obj.set_power_save()
+        wifi_obj.ping()
+
+        # Step 11: Start downloading 5MB file through HTTP
+        logger().info("Step 11: Starting HTTP download of 5MB file")
+        wifi_obj.run_http_download()
+
+        ble_obj.wait_for_exit()
+
+        # Step 12: Check BLE connection state and disconnect
+        logger().info("Step 12: Checking BLE connection state and disconnecting")
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "BLE connection lost"
+        ble_obj.ble_disconnect()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if ble_obj:
+            try:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                          ble_client_address=ble_obj.ble_client_address,
+                                          ble_dut_address=ble_obj.ble_dut_address)
+            except:
+                pass
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
+
+
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W, wifi_stack_len=3584, ble_stack_len=3584)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
+)
+@pytest.mark.parametrize(
+    "profiles",
+    [
+        (
+            {"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "12345678",
+             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
+            {"ssid": "store_profile2", "channel": 1, "security": "WPA3", "passphrase": "1234567890",
+             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
+        ),
+    ],
+)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "12345678",
+                               "protected_management_frame": "Required"
+                               }
+)
+def test_sta_ble_store_config_2_profiles_WPA2_WPA3_ble_peripheral_connect_disconnect_C769736(wifi_dut, wifi_access_point,
+                                                                                             wifi_sniffer, sl_collections,
+                                                                                             sniffer_filter, utf_constants,
+                                                                                             ble_client, request,
+                                                                                             wifi_client, profiles):
+    """
+    Test Case: test_sta_ble_store_config_2_profiles_WPA2_WPA3_ble_peripheral_connect_disconnect_C769736
+
+    Description:
+        This test validates auto join functionality of DUT with 2 saved profiles (WPA2, WPA3)
+        while connecting and disconnecting BLE peripheral in a loop.
+
+    Test Steps:
+        1. Initialize wifi client interface using sl_net_init.
+        2. Store 2 profiles and credentials (WPA2, WPA3).
+        3. Connect DUT as peripheral.
+        4. Start auto join using sl_net_start_auto_join.
+        5. Connect to AP using sl_net_up.
+        6. Enable WLAN & BLE power save mode.
+        7. Advertise DUT and scan from remote device.
+        8. Initiate connection from Remote with connection interval 30ms.
+        9. Perform ping traffic.
+        10. Do disconnect and connect BLE device in a loop.
+        11. Turn off connected AP (disconnect event).
+        12. DUT should try connecting to other saved profiles.
+        13. After connection, check DUT goes to power save mode and do ping.
+        14. Do sl_net_deinit.
+
+    """
+    ble_obj = None
+    try:
+        test_name = "test_sta_ble_store_config_2_profiles_WPA2_WPA3_ble_peripheral_connect_disconnect_C769736"
+        logger().info("Starting test: " + test_name)
+        ping_count = utf_constants.get("ping_count")
+
+
+        wifi_obj = WifiAutoJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type="ping",
+            profiles=profiles,
+        )
+
+        wifi_obj.set_profiles_and_credentials(profiles=profiles)
+        wifi_obj.get_profiles_and_credentials(num_profiles=len(profiles))
+        wifi_obj.set_rejoin_params()
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
+                                | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+        )
+        wifi_obj.join_to_ap()
+
+        wifi_obj.set_power_save()
+        wifi_obj.ping()
+
+        # Step 3: Connect DUT as peripheral
+        ble_obj = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="slave",
+            conn_interval=30,
+            set_smp=0,
+            ble_pairing=1,
+        )
+
+        ble_obj.ble_connect(role="slave")
+
+        # Step 9: Perform ping traffic
+        logger().info("Step 9: Performing ping traffic")
+        wifi_obj.ping()
+
+        auto_join = Thread(target=wifi_obj.verfiy_auto_join_functionality, args=(), )
+
+        auto_join.start()
+
+        # Step 10: Do disconnect and connect BLE device in a loop
+        logger().info("Step 10: Disconnecting and connecting BLE device in a loop")
+        for i in range(3):
+            logger().info(f"BLE disconnect/connect iteration {i+1}")
+            ble_obj.ble_disconnect()
+            time.sleep(2)
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+            ble_client.interfaces.bluetooth.close()
+            time.sleep(10)
+
+            ble_obj.ble_connect(role="slave")
+            time.sleep(2)
+            # Verify BLE connection is stable
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            assert state_int == BLEDeviceState.Connected, f"BLE connection lost during iteration {i+1}"
+
+        auto_join.join()
+        wifi_obj.set_power_save()
+        wifi_obj.ping()
+
+        ble_obj.ble_disconnect()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if ble_obj:
+            try:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                          ble_client_address=ble_obj.ble_client_address,
+                                          ble_dut_address=ble_obj.ble_dut_address)
+            except:
+                pass
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
+
+
+@pytest.mark.mqtt_server("raspi_mosquitto")
+@wifi_dut_marker(ext_tcp_feat_bit=Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.end_state(
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
+)
+@pytest.mark.parametrize(
+    "profiles",
+    [
+        (
+            {"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "1234567890",
+             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
+            {"ssid": "store_profile2", "channel": 1, "security": "WPA2", "passphrase": "12345678",
+             "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION"},
+        ),
+    ],
+)
+@pytest.mark.config(
+    "wifi_access_point", wifi={"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "1234567890"}
+)
+def test_sta_ble_store_config_2_profiles_MQTT_ble_central_C769738(wifi_dut, wifi_access_point,
+                                                                  wifi_sniffer, sl_collections,
+                                                                  sniffer_filter, utf_constants,
+                                                                  ble_client, request,
+                                                                  wifi_client, profiles,
+                                                                  mqtt_server, mqtt_client):
+    """
+    Test Case: test_sta_ble_store_config_2_profiles_MQTT_ble_central_C769738
+
+    Description:
+        This test validates auto join functionality of DUT with 2 saved profiles while performing
+        MQTT data transfer with BLE central connection.
+
+    Test Steps:
+        1. Initialize wifi client interface using sl_net_init.
+        2. Connect DUT as central.
+        3. Store 2 profiles and credentials.
+        4. Get profiles and credentials.
+        5. Start auto join using sl_net_start_auto_join.
+        6. Connect to AP using sl_net_up.
+        7. Enable WLAN & BLE power save mode.
+        8. Perform ping traffic.
+        9. Do MQTT publish in while loop.
+        10. While data transfer is happening, turn off AP (disconnect event).
+        11. DUT should try connecting back to AP using saved profile and credentials.
+        12. After connection, do ping.
+        13. Do MQTT publish for 3 iterations.
+        14. Check BLE connection state and disconnect.
+        15. Do sl_net_deinit.
+
+    """
+    ble_obj = None
+    try:
+        test_name = "test_sta_ble_store_config_2_profiles_MQTT_ble_central_C769738"
+        logger().info("Starting test: " + test_name)
+        ping_count = utf_constants.get("ping_count")
+        topic = "mytesttopic"
+        message = "".join(random.choices(string.ascii_uppercase + string.digits, k=100))
+
+        wifi_obj = WifiAutoJoinThread(
+            wifi_sniffer=wifi_sniffer,
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            testcase=test_name,
+            wifi_client=wifi_client,
+            sl_collections=sl_collections,
+            ping_count=ping_count,
+            sniffer_filter=sniffer_filter,
+            test_type="ping",
+            profiles=profiles,
+        )
+
+        ble_obj = BleThread(
+            wifi_dut=wifi_dut,
+            ble_client=ble_client,
+            sl_collections=sl_collections,
+            ble_test_type="master",
+            set_smp=1,
+            ble_pairing=1,
+        )
+
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+
+        # Step 3-8: Store profiles, start auto join, connect to AP, enable power save, ping
+        logger().info("Step 3-8: Storing profiles, starting auto join, connecting to AP, enabling power save, ping")
+        wifi_obj.set_profiles_and_credentials(profiles=profiles)
+        wifi_obj.get_profiles_and_credentials(num_profiles=len(profiles))
+        wifi_obj.set_rejoin_params()
+        wifi_obj.join_to_ap()
+        wifi_obj.set_power_save()
+        wifi_obj.ping()
+
+        topic = "mytesttopic"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=1)
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        logger().info("MQTT Client subscribes to the topic")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+
+        logger().info("DUT subscribes to the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+
+        time.sleep(5)
+
+        sw = Stopwatch()
+        while sw.elapsed_sec <= 60:
+
+            logger().info("DUT publishes message over the topic")
+            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1,
+                                                         timeout=20)
+            # time.sleep(10)
+            msgs = []
+            mq = Stopwatch()
+            while mq.elapsed_sec < 20:
+                time.sleep(0.1)
+                msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+                if len(msgs) >= 1:
+                    break
+            assert len(msgs) >= 1, "No message is received by mqtt-client"
+            assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+            assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+            assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                        "message received is wrong"
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
+
+        # Step 11-12: Verify auto join, ping
+        logger().info("Step 11-12: Verifying auto join and ping")
+        wifi_obj.verfiy_auto_join_functionality()
+        wifi_obj.set_power_save()
+        wifi_obj.ping()
+
+
+        topic = "mytesttopic"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=1)
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        logger().info("MQTT Client subscribes to the topic")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+
+        logger().info("DUT subscribes to the topic")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+
+        time.sleep(5)
+
+        tw = Stopwatch()
+        while tw.elapsed_sec <= 60:
+
+            logger().info("DUT publishes message over the topic")
+            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1,
+                                                         timeout=20)
+            # time.sleep(10)
+            msgs = []
+            mq = Stopwatch()
+            while mq.elapsed_sec < 20:
+                time.sleep(0.1)
+                msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+
+                logger().info(f"msgs:{msgs}")
+                if len(msgs) >= 1:
+                    break
+            assert len(msgs) >= 1, "No message is received by mqtt-client"
+            assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+            assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+            assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                        "message received is wrong"
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
+
+        # Step 14: Check BLE connection state and disconnect
+        logger().info("Step 14: Checking BLE connection state and disconnecting")
+        state = wifi_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        assert state_int == BLEDeviceState.Connected, "BLE connection lost"
+        ble_obj.ble_disconnect()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if ble_obj:
+            try:
+                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                          ble_client_address=ble_obj.ble_client_address,
+                                          ble_dut_address=ble_obj.ble_dut_address)
+            except:
+                pass
+
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
+
+
+
 
 
 @wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
                  tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
-                 wifi_stack_len=3072,
-                 ble_stack_len=2048,
+                 wifi_stack_len=3584,
+                 ble_stack_len=3584,
                  ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
                  )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -2862,7 +2915,6 @@ def test_sta_ble_store_config_2_profiles_SSL_RX_ble_central_4s_C769733(wifi_dut,
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
                                 | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
         )
-
 
         ble_obj.ble_connect(role="master")
         ble_obj.service_discovery_on_dut()
@@ -2971,6 +3023,9 @@ def test_sta_ble_store_config_2_profiles_SSL_RX_ble_central_4s_C769733(wifi_dut,
                                           ble_dut_address=ble_obj.ble_dut_address)
             except:
                 pass
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
 
 
 
@@ -2979,7 +3034,7 @@ def test_sta_ble_store_config_2_profiles_SSL_RX_ble_central_4s_C769733(wifi_dut,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -3088,9 +3143,9 @@ def test_sta_ble_store_config_2_profiles_BLE_provisioning_peripheral_C769744(wif
         wifi_obj.set_power_save()
         wifi_obj.ping()
 
-        # Step 8-9: Turn off AP1, turn on AP2, verify auto join
-        logger().info("Step 8-9: Turning off AP1, turning on AP2, verifying auto join")
-        wifi_access_point.interfaces.wifi.disconnect_devices(mac_address=wifi_obj.dut_mac_address)
+        # # Step 8-9: Turn off AP1, turn on AP2, verify auto join
+        # logger().info("Step 8-9: Turning off AP1, turning on AP2, verifying auto join")
+        # wifi_access_point.interfaces.wifi.disconnect_devices(mac_address=wifi_obj.dut_mac_address)
         wifi_access_point.interfaces.wifi.start_ap(
             ssid=profiles[1]["ssid"],
             security=profiles[1]["security"],
@@ -3155,6 +3210,9 @@ def test_sta_ble_store_config_2_profiles_BLE_provisioning_peripheral_C769744(wif
                 ble_client.interfaces.bluetooth.close()
             except:
                 pass
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
 
 
 
@@ -3165,7 +3223,7 @@ def test_sta_ble_store_config_2_profiles_BLE_provisioning_peripheral_C769744(wif
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
-    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client"]
+    "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "sl_net_deinit_client", "cleanup_ble"]
 )
 @pytest.mark.parametrize(
     "profiles",
@@ -3274,8 +3332,8 @@ def test_sta_ble_store_config_otaf_2_profiles_ble_slave_45ms_C769735(wifi_dut, w
         )
 
         ble_obj.ble_connect(role="slave")
-        ble_obj.service_discovery_on_remote()
-        ble_obj.start()  # Start BLE notifications
+        # ble_obj.service_discovery_on_remote()
+        # ble_obj.start()  # Start BLE notifications
 
         # Step 4-7: Start auto join, connect to AP, enable power save, ping
         logger().info("Step 4-7: Starting auto join, connecting to AP, enabling power save, ping")
@@ -3350,4 +3408,8 @@ def test_sta_ble_store_config_otaf_2_profiles_ble_slave_45ms_C769735(wifi_dut, w
                                           ble_dut_address=ble_obj.ble_dut_address)
             except:
                 pass
+
+        for _ in range(len(profiles)):
+            logger().info(f"\n Removing Profile: {profiles[_]} \n")
+            wifi_dut.interfaces.wifi.delete_profile(interface=8, id=_)
 

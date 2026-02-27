@@ -816,8 +816,8 @@ class BleThreadFunctionality(ThreadBase):
             ble_client=self.ble_client,
             ble_address=self.ble_dut_address,
             ble_scan_type=self.ble_scan_type,
-            ble_scan_interval=int(self.ble_scan_interval / 0.625),
-            ble_scan_window=int(self.ble_scan_window / 0.625),
+            ble_scan_interval=int(self.scan_interval / 0.625),
+            ble_scan_window=int(self.scan_window / 0.625),
             timeout=60,
             client_capability=self.client_capability,
             pin_code=self.pin_code
