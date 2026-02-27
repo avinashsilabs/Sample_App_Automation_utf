@@ -26,14 +26,17 @@ from utf_wiseconnect_3.tests.devices.si91x import (
 import string
 import random
 from utf.utf_config import UtfConfig
-
+from retry import retry
 from random import randint
+import time
+from datetime import datetime
 from utf.utils.thread_base import ThreadBase
 from threading import Thread
 from utf.utils import get_tls_certificate_dir
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils.stopwatch import Stopwatch
+from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
 
 """The testcases added in this file run below test steps for DUT-Si91x
         1. Configuration of DUT in 2G/5G : BGN
@@ -56,7 +59,12 @@ def logger():
     return get_logger(__name__)
 
 
-def wifi_dut_marker(oper_mode=0,coex_mode=0,ca_cert=None, client_cert=None, client_key=None, eap_cert=None, tcpip_feat=0, ext_custom_feat=0, ext_tcpip_feat=0):
+def text_generator(size=2000):
+    return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
+
+
+def wifi_dut_marker(oper_mode=0, coex_mode=0, ca_cert=None, client_cert=None, client_key=None, eap_cert=None,
+                    tcpip_feat=0, ext_custom_feat=0, ext_tcpip_feat=0):
     """
     Common method to generate wifi_dut marker for pytest.mark.config decorator.
     """
@@ -84,6 +92,383 @@ def wifi_dut_marker(oper_mode=0,coex_mode=0,ca_cert=None, client_cert=None, clie
     if eap_cert:
         config["eap_cert"] = eap_cert
     return pytest.mark.config("wifi_dut", wifi=config)
+
+
+class aws_publish_message_Thread(ThreadBase):
+    """
+    Thread to publish data from DUT to aws server on subscribed topic and QOS value
+    """
+
+    def __init__(self, wifi_dut, topic, message, qos):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.topic = topic
+        self.message = message
+        self.qos = qos
+
+    def run(self):
+        logger().info("Publishing aws message from DUT")
+        msg_count = len(self.message)
+        send_count = 0
+        while 1:
+            msg = self.message[send_count]
+            logger().info(f"\nDUT publishing message{send_count + 1} on topic:'{self.topic}' \nQOS:'{self.qos}'"
+                          f"\nMessage{send_count + 1} with length:'{len(msg)} bytes'\nMessage{send_count + 1} is:'{msg}'")
+            AwsConnection().publish_from_dut(self.wifi_dut, self.topic, msg, qos=self.qos)
+            send_count += 1
+            time.sleep(2)
+            if send_count == msg_count:
+                break
+        logger().info("aws_publish_message_thread completed")
+
+
+class aws_receive_message_Thread(ThreadBase):
+    """
+    Thread to receive data from aws server on subscribed topic and QOS value.
+    """
+
+    def __init__(self, aws_iot_client, topic, message, qos):
+        super().__init__()
+        self.aws_iot_client = aws_iot_client
+        self.topic = topic
+        self.message = message
+        self.qos = qos
+
+    def run(self):
+        msg_count = 0
+        recv_count = 0
+        while 1:
+            logger().info("Receiving published aws message on aws_iot_client")
+            time.sleep(10)
+            recv_messages = self.aws_iot_client.interfaces.aws_iot.get_received_messages()
+            logger().info(f"Received message{recv_count + 1} is: '{recv_messages[recv_count].payload.decode()}'")
+            logger().info(f"Received message{recv_count + 1} topic is: '{recv_messages[recv_count].topic}'")
+            logger().info(f"Received message{recv_count + 1} qos is: '{recv_messages[recv_count].qos}'")
+            assert recv_messages[recv_count].payload.decode() == self.message[
+                msg_count], "Received wrong message in aws_iot_client"
+            assert recv_messages[recv_count].topic == self.topic, "Received wrong topic in aws_iot_client"
+            assert recv_messages[recv_count].qos == self.qos, "Received wrong qos in aws_iot_client"
+            msg_count += 1
+            recv_count += 1
+            if recv_count == len(self.message):
+                break
+        logger().info("aws_receive_message_thread completed")
+
+
+class AwsConnection(ThreadBase):
+    """
+    Class to connect, subscribe, publish data from DUT/Raspi to AWS server.
+    """
+
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, sl_collections=None, test_name=None,
+                 aws_iot_client=None, messages=None, topic=None, qos=Si91xAwsQos.QOS1, port=8883, negative_case=False,
+                 test_case=None, sleep=None):
+        super().__init__()
+        self.client_id = None
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.wifi_sniffer = wifi_sniffer
+        self.sl_collections = sl_collections
+        self.test_name = test_name
+        self.test_case = test_case
+        self.timeout = 120
+        self.aws_iot_client = aws_iot_client
+        self.messages = messages
+        self.topic = topic
+        self.qos = qos
+        self.port = port
+        self.sleep = sleep
+        self.negative_case = negative_case
+
+    @retry(Exception, delay=25, tries=3)
+    def connect_to_aws_server_from_dut(self, wifi_dut=None, client_id=None, iscleansession=True, keep_alive=1200,
+                                       timeout=120, isWillMsgPresent=None, expected_status=SLStatus.SL_STATUS_OK,
+                                       port=8883, aws_iot_mqtt_rx_buf_len=1024):
+        """
+        @param wifi_dut: Fixture parameter to issue command in DUT.
+        @param client_id: mqtt client id for aws connection.
+        @param iscleansession: Boolean Value(True/False).
+        @param keep_alive: Keep alive period
+        @param timeout: Timeout value to wait until command to be executed successfully.
+        @return: Boolean Value(True/False).
+        :param port:
+        :param isWillMsgPresent:
+        :param expected_status:
+        """
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_init(client_id=client_id, iscleansession=iscleansession,
+                                                   keep_alive_interval=keep_alive, timeout=timeout,
+                                                   port=port, isWillMsgPresent=isWillMsgPresent,
+                                                   )
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_connect(timeout=timeout, expected_status=expected_status)
+        return True
+
+    def run(self):
+        self.client_id = self.test_name + '_client'
+        self.topic = 'topic_' + self.test_name
+        try:
+            if self.messages is None:
+                self.messages = []
+                for i in range(10):
+                    self.messages.append(text_generator(size=10))
+                logger().info(f"Messages are:{self.messages}")
+
+            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+            self.wifi_dut.interfaces.wifi.aws_iot_mqtt_init(client_id=self.client_id)
+            time.sleep(2)
+            self.wifi_dut.interfaces.wifi.aws_iot_mqtt_connect(timeout=self.timeout)
+
+            time.sleep(20)
+            logger().info("Connecting to AWS server from DUT is successful")
+            self.subscribe_from_dut(self.wifi_dut, self.topic, qos=self.qos)
+            self.connect_to_aws_server_from_raspi(self.aws_iot_client)
+            self.subscribe_from_raspi(self.aws_iot_client, self.topic, qos=self.qos)
+
+            if self.test_name == 'test_wifi_sdk_c537911':
+                logger().info(f"\nDUT is publishing message on topic:'{self.topic}' \nQOS:'{self.qos}'")
+                self.wifi_dut.interfaces.wifi.aws_iot_mqtt_publish_more(topic_name=self.topic, qos=self.qos,
+                                                                        payload=self.messages[0],
+                                                                        timeout=120,
+                                                                        expected_status=SLStatus.SL_STATUS_MQTT_TX_BUFFER_TOO_SHORT_ERROR
+                                                                        )
+                logger().info("\n\n *** Publishing status from DUT on topic is failed error -33 observed as per "
+                              "expectation *** \n\n\n\n")
+
+            else:
+                for count, msg in enumerate(self.messages):
+                    logger().info(
+                        f"\nDUT is publishing message{count + 1} on topic:'{self.topic}' \nQOS:'{self.qos}'"
+                        f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+                    self.publish_from_dut(self.wifi_dut, self.topic, msg, qos=self.qos,
+                                          negative_case=self.negative_case)
+
+                    if self.test_case == 687529:
+                        time.sleep(self.sleep)
+                    else:
+                        time.sleep(3)
+                self.validate_aws_messages_from_raspi(self.aws_iot_client, self.topic, self.qos, self.messages)
+
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in test case {self.test_name} thread: {str(e)} ****\n\n")
+            raise e
+
+    @retry(Exception, delay=15, tries=5)
+    def subscribe_from_dut(self, wifi_dut, topic, qos=Si91xAwsQos.QOS0, timeout=120):
+        """
+        @param wifi_dut: Fixture parameter to issue command in DUT.
+        @param topic: Topic name to subscribe from DUT on AWS Server
+        @param qos: QOS value to subscribe on aws topic(0/1)
+        @param timeout: Timeout value to wait until command to be executed successfully.
+        """
+        logger().info(f"DUT is Subscribing on topic '{topic}' and QOS:'{qos}'")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_subscribe(topic_name=topic, qos=qos, timeout=timeout)
+
+    @retry(Exception, delay=15, tries=1)
+    def publish_from_dut(self, wifi_dut, topic, message, qos, timeout=120, negative_case=False):
+        """
+        @param wifi_dut: Fixture parameter to issue command in DUT.
+        @param topic: Topic name to subscribe from DUT on AWS Server.
+        @param message: Data to publish from DUT on subscribed topic.
+        @param qos: QOS value to publish data on aws topic(0/1).
+        @param timeout: Timeout value to wait until command to be executed successfully.
+        @param negative_case: Boolean Value(True/False).
+        """
+        logger().info(f"\nDUT is publishing message on topic:'{topic}' \nQOS:'{qos}'")
+        result = wifi_dut.interfaces.wifi.aws_iot_mqtt_publish(topic_name=topic, qos=qos, payload=message,
+                                                               timeout=timeout,
+                                                               negative_case=negative_case)
+        if negative_case:
+            return result
+
+    @retry(Exception, delay=10, tries=3)
+    def connect_to_aws_server_from_raspi(self, aws_iot_client):
+        """
+        @param aws_iot_client: Fixture parameter to issue command in Raspi.
+        """
+        logger().info("Connecting to aws server from aws_iot_client")
+        aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+        time.sleep(5)
+        status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        assert status == ClientStatus.STABLE, "Connecting to AWS server from aws_iot_client is failed"
+
+    @retry(Exception, delay=10, tries=3)
+    def subscribe_from_raspi(self, aws_iot_client, topic, qos=Si91xAwsQos.QOS0):
+        """
+        @param aws_iot_client: Fixture parameter to issue command in Raspi.
+        @param topic: Topic name to subscribe from Raspi on AWS Server.
+        @param qos: QOS value to subscribe on aws topic(0/1).
+        """
+        logger().info(f"\n\n *** aws_iot_client is Subscribing on topic '{topic}' and QOS:'{qos}'*** \n\n")
+        aws_iot_client.interfaces.aws_iot.received_messages.clear()
+        aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(topic, qos=qos)
+        status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        assert status == ClientStatus.STABLE, f"Subscribe on topic:'{topic}' is failed from aws_iot_client"
+
+    @retry(Exception, delay=5, tries=5)
+    def publish_from_raspi(self, aws_iot_client, topic, message, qos=Si91xAwsQos.QOS0):
+        """
+        @param aws_iot_client: Fixture parameter to issue command in Raspi.
+        @param topic: Topic name to subscribe from Raspi on AWS Server.
+        @param message: Data to publish from Raspi on subscribed topic.
+        @param qos: QOS value to subscribe on aws topic(0/1).
+        """
+        try:
+            status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+            assert status == ClientStatus.STABLE, f"Publish on topic:'{topic}' is failed from aws_iot_client"
+        except AssertionError:
+            self.connect_to_aws_server_from_raspi(aws_iot_client)
+        if isinstance(message, list):
+            for i, msg in enumerate(message):
+                logger().info(
+                    f"\naws_iot_client publishing message{i + 1} on topic:'{topic}' \nQOS:'{qos}'"
+                    f"\nMessage{i + 1} with length:'{len(msg)} bytes'\nMessage{i + 1} is:'{msg}'")
+                aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic, msg, qos=qos)
+                time.sleep(5)
+        else:
+            aws_iot_client.interfaces.aws_iot.aws_iot_publish(topic, message, qos=qos)
+
+    @staticmethod
+    def receive_aws_messages_from_dut(wifi_dut, retries=3, wait_time=3, expected_status=SLStatus.SL_STATUS_OK):
+        """
+        @param expected_status:
+        @param wifi_dut: Fixture parameter to issue command in DUT.
+        @param retries: retry attempts to receive published message in DUT.
+        @param wait_time: Wait time to receive published message in DUT.
+        :param expected_msg:
+        """
+        for retry_count in range(retries):
+            try:
+                time.sleep(wait_time)
+                recv_msg = wifi_dut.interfaces.wifi.aws_select_socket(expected_status=expected_status)
+                logger().info(f"Received message from DUT is: '{recv_msg}'")
+                assert len(recv_msg), "Failed to receive published message in DUT"
+                return recv_msg[-1]
+            except Exception as err:
+                logger().warning(f"Failed to receive published message in DUT\n{err}")
+                if "0x1" in str(err):
+                    wifi_dut.interfaces.wifi.is_dut_bad_state = True
+                    raise
+                time.sleep(5)
+
+    @staticmethod
+    def validate_aws_messages_from_raspi(aws_iot_client, topic, qos, messages, topic_1=None, topic_2=None,
+                                         wait_time=10):
+        """
+        Validates messages received on AWS IoT client from a Raspberry Pi.
+
+        @param aws_iot_client: Fixture parameter to issue command in Raspi.
+        @param topic: Topic name which is subscribed on AWS Server (used if topic_1 and topic_2 are not provided).
+        @param qos: QOS value which is subscribed on AWS Server (0 or 1).
+        @param messages: List of messages published on AWS topics.
+        @param topic_1: Optional first topic name for alternating messages.
+        @param topic_2: Optional second topic name for alternating messages.
+        @param wait_time: Wait time value until data is received from AWS server.
+        """
+        logger().info("\n *** Validating received AWS messages ***")
+        time.sleep(wait_time)
+
+        # Retrieve received messages from AWS IoT client
+        recv_messages = aws_iot_client.interfaces.aws_iot.get_received_messages()
+
+        # Check if we received enough messages
+        if len(recv_messages) < len(messages):
+            logger().error(f"Expected {len(messages)} messages but only received {len(recv_messages)}")
+            raise AssertionError(
+                f"Message count mismatch: Expected {len(messages)} messages, "
+                f"but only received {len(recv_messages)} messages"
+            )
+
+        # Validate each received message
+        for count, msg in enumerate(messages):
+            # Determine the expected topic based on the presence of topic_1 and topic_2
+            if topic_1 is not None and topic_2 is not None:
+                expected_topic = topic_1 if count % 2 == 0 else topic_2
+            else:
+                expected_topic = topic
+
+            # Log details of the received message
+            logger().info(f"Received message {count + 1} is: '{recv_messages[count].payload.decode()}'")
+            logger().info(f"Received message {count + 1} topic is: '{recv_messages[count].topic}'")
+            logger().info(f"Received message {count + 1} qos is: '{recv_messages[count].qos}'")
+
+            # Validate the payload, topic, and QoS
+            assert recv_messages[count].payload.decode() == messages[count], "Received wrong message in aws_iot_client"
+            assert recv_messages[count].topic == expected_topic, "Received wrong topic in aws_iot_client"
+            assert recv_messages[count].qos == qos, "Received wrong qos in aws_iot_client"
+
+        logger().info("AWS messages validated successfully")
+
+    def connect_disconnect_aws(self, wifi_dut, aws_iot_client, client_id, topic, messages, qos=Si91xAwsQos.QOS1):
+        try:
+            logger().info("Initiating aws connect from DUT")
+            assert self.connect_to_aws_server_from_dut(wifi_dut, client_id), "Failed to connect aws server from DUT"
+            logger().info("Connecting to AWS server is successful")
+            self.subscribe_from_dut(wifi_dut, topic, qos)
+            self.connect_to_aws_server_from_raspi(aws_iot_client)
+            self.subscribe_from_raspi(aws_iot_client, topic, qos)
+
+            for i, msg in enumerate(messages):
+                logger().info(f"\nDUT is publishing message{i + 1} on topic:'{topic}' \nQOS:'{qos}'"
+                              f"\nMessage{i + 1} with length:'{len(msg)} bytes'\nMessage{i + 1} is:'{msg}'")
+                self.publish_from_dut(wifi_dut, topic, msg, qos)
+                time.sleep(3)
+            self.validate_aws_messages_from_raspi(aws_iot_client, topic, qos, messages)
+
+            logger().info("DUT Unsubscribing from aws topic")
+            wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic)
+            return 1
+        finally:
+            logger().info("Initiating aws_iot_disconnect from DUT")
+            wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+            time.sleep(20)
+            logger().info("\n")
+
+    def to_signed_32_bit(self, num):
+        if num >= 2 ** 31:
+            return num - 2 ** 32
+        return num
+
+
+class mqtt_sniffer_validation:
+    @staticmethod
+    def get_mqtt_list(wifi_sniffer, capture_filename, dut_mac_address, decryption_key, print_layers):
+        mqtt_capture_list = []
+        current_time = time.time()
+        updated_capture_file = 'filter_' + capture_filename + '_' + str(
+            datetime.fromtimestamp(current_time).strftime('%H_%M_%S'))
+        file_name = f'./reports/{updated_capture_file}.pcap'
+        local_capture_file = file_name
+        wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+        packet_filter1 = f'(wlan.addr == {dut_mac_address})'
+        wifi_sniffer.interfaces.capture.shell(
+            f"tshark -nr {wifi_sniffer.interfaces.capture.remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+            f"frame.number -w "
+            f"{wlan_filter_file}")
+        with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+            sftp.get(wlan_filter_file, local_capture_file)
+        for packet in wifi_sniffer.interfaces.capture.iter_packets(
+                decrypt_packets=True,
+                encryption_type="WPA-PWD",
+                decryption_key=decryption_key,
+                capture_file_filter=local_capture_file
+        ):
+            for layer in packet.layers:
+                layer_name = layer.layer_name.lower()
+                if layer_name == "wlan":
+                    mac_layer = str(layer)
+                    for count in mac_layer.split("\n"):
+                        if "Transmitter address" in count:
+                            ta_address = count.split(": ")[1].strip()
+                if layer_name in print_layers:
+                    if ta_address == dut_mac_address:
+                        mqtt_layer = str(layer)
+                        if re.search(".*Application Data Protocol: mqtt", mqtt_layer):
+                            logger().info(
+                                f"As per sniffer capture MQTT packets sent by DUT..{ta_address}  ->  {mqtt_layer}")
+                            mqtt_capture_list.append(tuple([mqtt_layer, packet.sniff_timestamp]))
+        logger().info(f"***** Inside mqtt_sniffer_validation mqtt_capture_list {mqtt_capture_list}")
+        return mqtt_capture_list
 
 
 class WLanJoinThread(ThreadBase):
@@ -125,8 +510,9 @@ class WLanJoinThread(ThreadBase):
                             cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START, cert_index=index)
                         logger().info(f"loading client key at index {index}")
                         self.sl_collections.load_tls_client_private_key(self.wifi_dut, cert_file=cert, cert_index=index)
-                        index = index+1
-                elif self.test_case == '1163607' or self.test_case == '1163615' or self.test_case == '1163621':
+                        index = index + 1
+                elif self.test_case == '1163607' or self.test_case == '1163615' or self.test_case == '1163621' \
+                        or self.test_case == 719565:
                     index = 0
                     for cert in self.client_key:
                         logger().info(f"Clearing client key at index {index}")
@@ -217,7 +603,9 @@ class WLanJoinThread(ThreadBase):
                                                                         cert_length=length)
                     self.wifi_dut.interfaces.wifi.memory_free(address)
 
-                elif self.test_case == '1163603' or self.test_case == '1163605' or self.test_case == '1163613' or self.test_case == '1163612':
+                elif self.test_case == '1163603' or self.test_case == '1163605' or self.test_case == '1163613' \
+                        or self.test_case == '1163612' \
+                        or self.test_case == '719581' or self.test_case == '719582':
                     self.wifi_dut.interfaces.wifi.clear_certificate(
                         cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_ECB_WRAP,
                         cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
@@ -234,11 +622,12 @@ class WLanJoinThread(ThreadBase):
                                                                         retry_count=3,
                                                                         ping_after_power_save=True)
             else:
-                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                         wifi_access_point=self.wifi_access_point,
-                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                         channel=self.wifi_access_point.interfaces.wifi.channel,
-                                                                         retry_count=3)
+                self.dut_addr = self.sl_collections. \
+                    join_to_wifi_network_with_rejoin(wifi_dut=self.wifi_dut,
+                                                     wifi_access_point=self.wifi_access_point,
+                                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                                     retry_count=3,
+                                                     rejoin_params=[0, 4, 40, 0])
 
             if self.test_case == '769669':
                 self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
@@ -249,7 +638,9 @@ class WLanJoinThread(ThreadBase):
                     cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
                 self.sl_collections.load_tls_client_private_key(self.wifi_dut, cert_file=self.client_key)
 
-            if self.test_case == '1163608' or self.test_case == '1163607' or self.test_case == '1163614' or self.test_case == '1163615' or self.test_case == '1163624' or self.test_case == '1163621':
+            if self.test_case == '1163608' or self.test_case == '1163607' or self.test_case == '1163614' or \
+                    self.test_case == '1163615' or self.test_case == '1163624' or self.test_case == '1163621' \
+                    or self.test_case == 719565:
                 port1 = self.ssl_server.interfaces.ssl.config['device_port1']
                 port2 = self.ssl_server.interfaces.ssl.config['device_port2']
                 port3 = self.ssl_server.interfaces.ssl.config['device_port3']
@@ -272,17 +663,17 @@ class WLanJoinThread(ThreadBase):
                                                                 tls_client_enable=True,
                                                                 client_cert='ca_ecdsa_test3.pem')
                 else:
-                    self.ssl_server.interfaces.ssl.start_server(port= port1,
+                    self.ssl_server.interfaces.ssl.start_server(port=port1,
                                                                 server_cert='server_test1.crt',
                                                                 server_key='server_test1.key',
                                                                 tls_client_enable=True,
                                                                 client_cert='ca_test1.crt')
-                    self.ssl_server.interfaces.ssl.start_server(port = port2,
+                    self.ssl_server.interfaces.ssl.start_server(port=port2,
                                                                 server_cert='server_test2.crt',
                                                                 server_key='server_test2.key',
                                                                 tls_client_enable=True,
                                                                 client_cert='ca_test2.crt')
-                    self.ssl_server.interfaces.ssl.start_server(port = port3,
+                    self.ssl_server.interfaces.ssl.start_server(port=port3,
                                                                 server_cert='server_test3.crt',
                                                                 server_key='server_test3.key',
                                                                 tls_client_enable=True,
@@ -319,7 +710,7 @@ class WLanJoinThread(ThreadBase):
                     try:
                         # ssl socket opened in DUT connects to the server
                         self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
-                                                                       server_port=port1+count)
+                                                                       server_port=port1 + count)
                     except:
                         logger().info(f"Failed to connect to server socket")
                         self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
@@ -328,10 +719,12 @@ class WLanJoinThread(ThreadBase):
                         raise
                 for socket in range(1, 4):
                     server_sock = socket
-                    self.ssl_server.interfaces.ssl.data_receive(server_sock, pkt_count, buffer_length, pkt_rcv_timeout=10)
+                    self.ssl_server.interfaces.ssl.data_receive(server_sock, pkt_count, buffer_length,
+                                                                pkt_rcv_timeout=10)
 
-                socket_list = self.wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
-                                                                                  number_of_pkts=pkt_count)
+                socket_list = self.wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7,
+                                                                                       data_len=buffer_length,
+                                                                                       number_of_pkts=pkt_count)
                 sock_count = 0
                 bytes_sent_list = []
                 for socket_stats in socket_list:
@@ -416,8 +809,100 @@ class WLanJoinThread(ThreadBase):
                 logger().info("Successfully closed opened socket in the DUT")
                 self.ssl_server.interfaces.ssl.stop_server()
 
+            elif self.test_case == '719582':
+                buffer_length = 1370
+                # After association, start SSL server and measure RX throughput
+                self.ssl_server.interfaces.ssl.start_server(
+                    server_cert='server_test1.crt',
+                    server_key='server_test1.key',
+                    tls_client_enable=True,
+                    client_cert='ca_test1.crt'
+                )
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
+                device_ip = self.dut_addr['device_ip']
+                port1 = self.ssl_server.interfaces.ssl.config['device_port1']
 
+                # Open SSL client socket in the DUT
+                sock = self.wifi_dut.interfaces.wifi.async_sdk_socket(domain="AF_INET", stream_type="SOCK_STREAM",
+                                                                      protocol="IPPROTO_TCP")
+                assert sock == 0, "Socket id received is wrong. expected is 0"
+                logger().info(
+                    f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+                logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+                # Enable ssl option for socket opened
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOptAsync(sock,
+                                                                   option_name="SL_SI91X_SO_HIGH_PERFORMANCE_SOCKET",
+                                                                   cert_index=128)
+                local_port = randint(5001, 60000)
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port,
+                                                   timeout=15)
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=port1,
+                                                               timeout=15)
 
+                # RX throughput test: server sends, DUT receives
+                socket_no = 1
+                pkt_count = 50000
+                duration = 60
+                self.ssl_server.interfaces.ssl.send_data(socket_no, pkt_count, msg_length=buffer_length,
+                                                         duration=duration)
+                time.sleep(80)
+                bytes_sent = self.ssl_server.interfaces.ssl.data_send_stats(socket_no)
+                result = self.wifi_dut.interfaces.wifi.get_socket_rx_stats(sock, no_of_pkts="pkt_count", ttl=30)
+                logger().info(f"*** result of rx_stats in wifidut {result}")
+                bytes_received = int(result)
+                logger().info(f"bytes sent by remote peer -> {bytes_sent}")
+                logger().info(f"bytes received on socket {sock} -> {bytes_received}")
+                logger().info(f"SSL rx throughput ->  {((bytes_received * 8) / (1000 * 1000 * duration))} Mbps")
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                logger().info("Successfully closed opened socket in the DUT")
+                self.ssl_server.interfaces.ssl.stop_server()
+                time.sleep(5)
+            elif self.test_case == '719581':
+                self.ssl_server.interfaces.ssl.start_server(
+                    server_cert='server_test1.crt',
+                    server_key='server_test1.key',
+                    tls_client_enable=True,
+                    client_cert='ca_test1.crt'
+                )
+
+                buffer_length = 1370
+                port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+                device_ip = self.dut_addr['device_ip']
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
+                # Open ssl client socket in the DUT
+                sock = self.wifi_dut.interfaces.wifi.socket()
+                assert sock == 0, "Socket id received is wrong. expected is 0"
+                logger().info(
+                    f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+                logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+                # Enable ssl option for socket opened
+                self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                local_port = randint(5001, 60000)
+                self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip,
+                                                   server_port=local_port,
+                                                   timeout=15)
+                time.sleep(3)
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                               server_port=port1)
+                pkt_count = 50000
+                time.sleep(1)
+                server_socket_no = 1
+                if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+                    self.ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
+                result = self.wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
+                logger().info(f"Number of bytes sent by dut {result}")
+                bytes_sent = result
+                bytes_received = self.ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
+                logger().info(
+                    f"bytes sent by DUT on the ssl socket opened-> {bytes_sent}, received by remote peer-> {bytes_received}")
+                self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                logger().info("Successfully closed opened socket in the DUT")
+                self.ssl_server.interfaces.ssl.stop_server()
+                time.sleep(5)
             elif self.test_case == '1163619' or self.test_case == '719579' or self.test_case == '719588' or self.test_case == '769668':
 
                 self.ssl_server.interfaces.ssl.start_server(server_cert='server_test1.crt',
@@ -472,7 +957,7 @@ class WLanJoinThread(ThreadBase):
 
 @wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
                  client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
-                 coex_mode = Si91xCoexMode.WLAN |Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -508,7 +993,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_c1163604(wifi_access_poi
 
 @wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
                  client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
-                 coex_mode = Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -544,16 +1029,17 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_c1163603(wifi_access_poi
 
 @wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
                  client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
-                 coex_mode = Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.LoadSSLCertificatesToRAM,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
-def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_in_ram_c1163606(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_in_ram_c1163606(wifi_access_point, sniffer_filter,
+                                                                        sl_collections,
+                                                                        wifi_dut, ssl_server, utf_constants,
+                                                                        wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -580,7 +1066,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_in_ram_c1163606(wifi_acc
 
 @wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
                  client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
-                 coex_mode = Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.LoadSSLCertificatesToRAM,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -588,8 +1074,8 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_in_ram_c1163606(wifi_acc
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_in_ram_c1163605(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+                                                                   wifi_dut, ssl_server, utf_constants,
+                                                                   wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -613,9 +1099,10 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_in_ram_c1163605(wifi_access_p
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
+
 @wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
                  client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
-                 coex_mode = Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode | Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -625,8 +1112,8 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_in_ram_c1163605(wifi_access_p
                                                "protected_management_frame": "Capable", })
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_wpa3_c1163613(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+                                                                      wifi_dut, ssl_server, utf_constants,
+                                                                      wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -651,13 +1138,11 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_wpa3_c1163613(wifi_acces
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
-
-
 @wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
                  client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
                  eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
                  oper_mode=Si91xOperatingMode.EAPWiFiClient,
-                 coex_mode = Si91xCoexMode.WLAN|Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -666,8 +1151,8 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_wpa3_c1163613(wifi_acces
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_eap_c1163612(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, radius_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+                                                                     wifi_dut, ssl_server, radius_server, utf_constants,
+                                                                     wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -683,7 +1168,8 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_eap_c1163612(wifi_access
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='1163612',
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
-                                  capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server, eap_type="tls")
+                                  capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server,
+                                  eap_type="tls")
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -691,13 +1177,14 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_eap_c1163612(wifi_access
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
+
 @wifi_dut_marker(ca_cert=[("ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
                           ("ca_test2.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
                           ("ca_test3.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START")],
                  client_cert=[("client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
                               ("client_test2.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
                               ("client_test3.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START")],
-                 coex_mode = Si91xCoexMode.WLAN |Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
                  ext_tcpip_feat=Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
@@ -705,9 +1192,10 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_eap_c1163612(wifi_access
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
-def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_c1163608(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_c1163608(wifi_access_point, sniffer_filter,
+                                                                             sl_collections,
+                                                                             wifi_dut, ssl_server, utf_constants,
+                                                                             wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -738,7 +1226,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_c1163608(wif
                  client_cert=[("client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
                               ("client_test2.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
                               ("client_test3.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START")],
-                 coex_mode = Si91xCoexMode.WLAN|Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
                  ext_tcpip_feat=Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
@@ -746,9 +1234,10 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_c1163608(wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
-def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_c1163607(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_c1163607(wifi_access_point, sniffer_filter,
+                                                                             sl_collections,
+                                                                             wifi_dut, ssl_server, utf_constants,
+                                                                             wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -779,7 +1268,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_c1163607(wif
                  client_cert=[("client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
                               ("client_test2.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
                               ("client_test3.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START")],
-                 coex_mode = Si91xCoexMode.WLAN|Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.LoadSSLCertificatesToRAM,
                  ext_tcpip_feat=Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
@@ -787,9 +1276,10 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_c1163607(wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
-def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_in_ram_c1163614(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_in_ram_c1163614(wifi_access_point, sniffer_filter,
+                                                                                    sl_collections,
+                                                                                    wifi_dut, ssl_server, utf_constants,
+                                                                                    wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -822,7 +1312,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_in_ram_c1163
                               ("client_test3.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START")],
                  eap_cert=["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"],
                  oper_mode=Si91xOperatingMode.EAPWiFiClient,
-                 coex_mode = Si91xCoexMode.WLAN|Si91xCoexMode.BLE,
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
                  ext_tcpip_feat=Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
@@ -830,9 +1320,11 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_in_ram_c1163
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
-def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_eap_sec_c1163615(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_eap_sec_c1163615(wifi_access_point, sniffer_filter,
+                                                                                     sl_collections,
+                                                                                     wifi_dut, ssl_server,
+                                                                                     utf_constants,
+                                                                                     wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -848,7 +1340,8 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_eap_sec_c116
         wlan_obj = WLanJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                                   sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='1163615',
                                   ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
-                                  capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server, eap_type="tls")
+                                  capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server,
+                                  eap_type="tls")
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -863,16 +1356,17 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_eap_sec_c116
                  client_cert=[("client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
                               ("client_test2.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
                               ("client_test3.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START")],
-                 coex_mode = Si91xCoexMode.WLANOnly,
+                 coex_mode=Si91xCoexMode.WLANOnly,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
                  ext_tcpip_feat=Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
-def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_SL_SI91X_EXT_FEAT_352K_M4SS_320K_sta_alone_c1163624(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_SL_SI91X_EXT_FEAT_352K_M4SS_320K_sta_alone_c1163624(
+        wifi_access_point, sniffer_filter, sl_collections,
+        wifi_dut, ssl_server, utf_constants,
+        wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -900,20 +1394,23 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_SL_SI91X_EXT
 @wifi_dut_marker(ca_cert=[("ca_ecdsa_test1.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
                           ("ca_ecdsa_test2.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
                           ("ca_ecdsa_test3.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START")],
-                 client_cert=[("client_ecdsa_cert_test1.pem", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
-                              ("client_ecdsa_cert_test2.pem", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
-                              ("client_ecdsa_cert_test3.pem", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START")],
-                 coex_mode = Si91xCoexMode.WLAN|Si91xCoexMode.BLE,
+                 client_cert=[
+                     ("client_ecdsa_cert_test1.pem", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
+                     ("client_ecdsa_cert_test2.pem", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"),
+                     ("client_ecdsa_cert_test3.pem", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START")],
+                 coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
                  tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
                  ext_tcpip_feat=Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD,
                  ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
-@pytest.mark.parametrize("client_key", [['client_ecdsa_key_test1.pem', 'client_ecdsa_key_test2.pem', 'client_ecdsa_key_test3.pem']])
-def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_ecdsa_c1163621(wifi_access_point, sniffer_filter, sl_collections,
-                                                                 wifi_dut, ssl_server, utf_constants,
-                                                                 wifi_sniffer, client_key, request):
+@pytest.mark.parametrize("client_key",
+                         [['client_ecdsa_key_test1.pem', 'client_ecdsa_key_test2.pem', 'client_ecdsa_key_test3.pem']])
+def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_ecdsa_c1163621(wifi_access_point, sniffer_filter,
+                                                                                   sl_collections,
+                                                                                   wifi_dut, ssl_server, utf_constants,
+                                                                                   wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -1059,8 +1556,8 @@ def test_wifi_sdk_ssl_neg_wrap_method_wrong_private_key_c719588(wifi_access_poin
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
 @pytest.mark.deployed_25q2
 def test_wifi_sdk_ssl_neg_without_loading_wrapped_private_key_c769668(wifi_access_point, sniffer_filter, sl_collections,
-                                                                  wifi_dut, ssl_server, utf_constants,
-                                                                  wifi_sniffer, client_key, request):
+                                                                      wifi_dut, ssl_server, utf_constants,
+                                                                      wifi_sniffer, client_key, request):
     """
     ssl client connection and data transfer
     """
@@ -1121,7 +1618,181 @@ def test_wifi_sdk_ssl_load_wrapped_private_key_after_powersave_c769669(wifi_acce
 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
-        
-        
+
+
+@wifi_dut_marker(
+    ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+    client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+    tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+    ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+def test_wifi_sdk_ssl_rx_throughput_private_wrap_key_iv_ecb_mode_c719582(wifi_access_point,
+                                                                         sniffer_filter, sl_collections, wifi_dut,
+                                                                         ssl_server, utf_constants, wifi_sniffer,
+                                                                         client_key, request
+                                                                         ):
+    """
+    Measure SSL RX throughput when private key is wrapped using SL_SI91X_WRAP_IV_ECB_MODE.
+    """
+    import time
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(
+            wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='719582',
+            ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+            capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server
+        )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@wifi_dut_marker(
+    ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+    client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+    tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+    ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+def test_wifi_sdk_ssl_tx_throughput_private_wrap_key_iv_ecb_mode_c719581(wifi_access_point, sniffer_filter,
+                                                                         sl_collections, wifi_dut, ssl_server,
+                                                                         utf_constants, wifi_sniffer,
+                                                                         client_key, request
+                                                                         ):
+    """
+    Measure SSL TX throughput when private key is wrapped using SL_SI91X_WRAP_IV_ECB_MODE.
+    """
+    import time
+    capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        ping_count = utf_constants.get("ping_count")
+        wlan_obj = WLanJoinThread(
+            wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            sl_collections=sl_collections, sniffer_filter=sniffer_filter, test_case='719581',
+            ping_count=ping_count, power_save=power_save, ap_mac_address=ap_mac_address,
+            capture_filename=capture_filename, client_key=client_key, ssl_server=ssl_server
+        )
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as EX:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "disassociated"])
+@pytest.mark.parametrize("client_key", ['private-key.key'])
+def test_wifi_sdk_aws_mqtt_connection_private_wrap_key_iv_ecb_mode_c719570(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                                           sniffer_filter, client_key, sl_collections,
+                                                                           aws_iot_client, utf_constants,
+                                                                           ssl_server, request
+                                                                           ):
+    """
+    Connect to AWS MQTT server when private key is wrapped using SL_SI91X_WRAP_IV_ECB_MODE.
+    """
+    client_id = 'client_c719570'
+    topic = "topic_c719570"
+    iterations = utf_constants.get('iter_count')
+    import time
+    capture_filename = request.node.name
+    channel = wifi_access_point.interfaces.wifi.channel
+    wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_ECB_WRAP,
+                                               cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
+
+    sl_collections.load_tls_client_private_key(wifi_dut, cert_file=client_key,
+                                               cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_ECB_WRAP,
+                                               wrap_iv_mode=Si91xCryptoWrapMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                                               iv=None)
+    wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+
+    try:
+        for iter_count in range(iterations):
+            logger().info(f"Initiating aws test for iteration:{iter_count + 1}")
+            messages = []
+            for i in range(10):
+                messages.append(text_generator(size=10))
+            logger().info(f"Messages are:{messages}")
+            ping_count = utf_constants.get("ping_count")
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+            result = sl_collections.join_to_wifi_network_with_rejoin(wifi_dut, wifi_access_point, [0, 4, 40, 0])
+            dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+            logger().info(f'AP BSSID = {ap_mac_address}')
+            logger().info(f"Device mac address: {dut_mac_address}")
+            aws_obj = AwsConnection()
+            logger().info("Initiating aws connect from DUT")
+            assert aws_obj.connect_to_aws_server_from_dut(wifi_dut, client_id), "Failed to connect aws server from DUT"
+            logger().info("Connecting to AWS server from DUT is successful")
+            aws_obj.subscribe_from_dut(wifi_dut, topic, qos=Si91xAwsQos.QOS1)
+            aws_obj.connect_to_aws_server_from_raspi(aws_iot_client)
+            aws_obj.subscribe_from_raspi(aws_iot_client, topic, qos=Si91xAwsQos.QOS1)
+
+            for count, msg in enumerate(messages):
+                logger().info(f"\nDUT is publishing message{count + 1} on topic:'{topic}' \nQOS:'{Si91xAwsQos.QOS1}'"
+                              f"\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+                aws_obj.publish_from_dut(wifi_dut, topic, msg, qos=Si91xAwsQos.QOS1)
+                time.sleep(3)
+            aws_obj.validate_aws_messages_from_raspi(aws_iot_client, topic, Si91xAwsQos.QOS1, messages)
+
+            logger().info("Stop Sniffer finally")
+            wifi_sniffer.interfaces.capture.stop_capture()
+            sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_mac_address,
+                                                   sniffer_filter)
+            logger().info(f"Iteration '{iter_count + 1}' completed")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
 
 
