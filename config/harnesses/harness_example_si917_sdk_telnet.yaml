@@ -1767,19 +1767,19 @@ devices:
 
             # RPC interface for iperf/net_perf server
             net_perf_server:
-                type: 'rpc.rpc_client'
+                type: 'iperf.rpc_client'
                 forward_to: 'raspi_iperf_server:net_perf'
                 host: 'docker_host'
                 
             # RPC interface for iperf/net_perf client
             net_perf:
-                type: 'rpc.rpc_client'
+                type: 'iperf.rpc_client'
                 forward_to: 'raspi_iperf_client:net_perf'
                 host: 'docker_host'
                 
             # RPC interface for wifi client operations
             wifi:
-                type: 'rpc.rpc_client'
+                type: 'iperf.rpc_client'
                 forward_to: 'raspi_wifi_client:wifi'
                 host: 'docker_host'
 
