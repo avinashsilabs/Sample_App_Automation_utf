@@ -857,7 +857,7 @@ def test_connectivity_in_WPA2_EAP_TLS_PMF_C19026(rs_helper, utf_constants, wifi_
 )
 # EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPAEnterprise', "passphrase": '12345678', "gtk_int": 30})
+                    wifi={"security": 'WPAWPA2EnterpriseMixedMode', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
@@ -987,7 +987,7 @@ def test_GTK_Renewal_WPA2_EAP_TTLS_C19030(rs_helper, utf_constants, radius_serve
 )
 # EAP Connection in TLS mode
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPAEnterprise', "passphrase": '12345678', "gtk_int": 30})
+                    wifi={"security": 'WPAWPA2EnterpriseMixedMode', "passphrase": '12345678', "gtk_int": 30})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
