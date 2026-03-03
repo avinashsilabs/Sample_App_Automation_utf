@@ -40,6 +40,8 @@ def logger():
 )
 # This test case verifies All Channels Scan in 2.4 Ghz by giving channel number as Zero
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_scan_c19056(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_scan_c19056"
     # Enables the wifi power save in DUT
@@ -94,6 +96,8 @@ def test_scan_c19056(wifi_sniffer, wifi_dut, wifi_access_point):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan Response Based on RSSI
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -127,6 +131,8 @@ def test_scan_check_rssi_c19060(wifi_dut, wifi_access_point):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_scan_ssid_32bytes_c19064"
     validation = True
@@ -179,6 +185,8 @@ def test_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_scan_selective_channel_c19058"
     validation = True
@@ -272,6 +280,8 @@ def test_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality with the channel 1,3,6,11
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_scan_selective_channel_c19059"
     validation = True
@@ -366,6 +376,8 @@ def test_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality for channles 1-11
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_scan_selective_channel_c19057(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_scan_selective_channel_c19057"
     validation = True
@@ -460,6 +472,8 @@ def test_scan_selective_channel_c19057(wifi_sniffer, wifi_dut, wifi_access_point
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality in us region
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info("Configured DUT in US region")
 
@@ -507,6 +521,8 @@ def test_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_point):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality with max scan of dut
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_scan_max_aps_c19061(wifi_dut, wifi_access_point):
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -551,6 +567,8 @@ def test_scan_max_aps_c19061(wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_ssid', "broadcast_ssid": False})
 # This case verifies the scan in hidden mode of AP for all channels
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_hidden_scan_all_channels_c19062"
 
@@ -607,6 +625,8 @@ def test_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_access_poi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "hidden_ssid", "broadcast_ssid": False})
 # Verifies the scan in selected channels with the ap set in hidden mode
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_access_point):
     testcase = "test_hidden_scan_sel_chan_c19063"
 
@@ -686,6 +706,7 @@ def test_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_access_point):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan in us region with cahnnels 12,13,14
+@pytest.mark.NCP_9116_DEPLOYED
 def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
     logger().info(" ***** Configuring the dut in US region *****")
 
@@ -731,6 +752,7 @@ def test_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut):
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.NCP_9116_DEPLOYED
 def test_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, wifi_client):
     testcase = "test_scan_all_channels_in_EU_region_c19070"
 
@@ -784,6 +806,8 @@ def test_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, wifi_clie
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_client):
     testcase = "test_scan_all_channels_in_japan_region_c19071"
     logger().info("DUT region is set to Japan")

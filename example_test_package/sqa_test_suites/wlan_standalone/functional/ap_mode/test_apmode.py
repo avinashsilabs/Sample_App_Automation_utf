@@ -171,6 +171,8 @@ pytestmark = [pytest.mark.firmware_app("test_ap_ht_caps")]
 )
 @pytest.mark.parametrize("channel", [13])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dut_ap_mode_tx_rules_EUregion_C19455(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                               utf_constants):
     assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
@@ -297,6 +299,8 @@ def test_dut_ap_mode_tx_rules_EUregion_C19455(firmware_loader, wifi_sniffer, wif
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [13])
 # channel 14 is not supported by raspberrypi
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dut_ap_mode_tx_rules_JPregion_C19456(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                               utf_constants):
     assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
@@ -421,6 +425,8 @@ def test_dut_ap_mode_tx_rules_JPregion_C19456(firmware_loader, wifi_sniffer, wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dut_ap_mode_tx_rules_USregion_C19454(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                               utf_constants):
     assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
@@ -519,6 +525,7 @@ def test_dut_ap_mode_tx_rules_USregion_C19454(firmware_loader, wifi_sniffer, wif
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("channel", [36, 40, 48, 149, 165])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
+@pytest.mark.NCP_9116_DEPLOYED
 def test_dut_ap_in_5GHz_various_channels_C19434(firmware_loader, wifi_sniffer, net_perf_client, wifi_dut, wifi_client,
                                                 channel, protocol, utf_constants):
     dut_ip = wifi_dut.interfaces.wifi.ip
@@ -625,6 +632,8 @@ def test_dut_ap_in_5GHz_various_channels_C19434(firmware_loader, wifi_sniffer, n
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("dtim_period", [1, 2, 3, 6, 10])
 @pytest.mark.parametrize("channel", [11])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_various_DTIM_C19444(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, dtim_period, channel,
                                    utf_constants):
     ping_count = utf_constants.get("ping_count")
@@ -719,6 +728,8 @@ def test_DUTAP_various_DTIM_C19444(firmware_loader, wifi_sniffer, wifi_dut, wifi
 @pytest.mark.parametrize("beacon", [100, 200, 600, 1000])
 @pytest.mark.parametrize("channel", [11])
 # beacon interval 600, 1000 not working
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_diff_beacon_intervals_C19443(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, beacon, channel,
                                             utf_constants):
     if beacon in [600, 1000]:
@@ -817,6 +828,7 @@ def test_DUTAP_diff_beacon_intervals_C19443(firmware_loader, wifi_sniffer, wifi_
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.NCP_9116_DEPLOYED
 def test_DUTAP_errorneous_band_config_C19435(firmware_loader, wifi_sniffer, wifi_dut, wifi_client):
     dut_ip = wifi_dut.interfaces.wifi.ip
     logger().info(f"********* Dut IP **********: {dut_ip}")
@@ -882,6 +894,8 @@ def test_DUTAP_errorneous_band_config_C19435(firmware_loader, wifi_sniffer, wifi
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUPAP_multiclient_connect_disconnect_C19432(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                                      utf_constants):
     assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
@@ -1007,6 +1021,8 @@ def test_DUPAP_multiclient_connect_disconnect_C19432(firmware_loader, wifi_sniff
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_Max_STAs_Connect_and_Ping_C19430_C19442(firmware_loader, wifi_sniffer, wifi_dut, wifi_clients, channel,
                                                        utf_constants):
     assert len(wifi_clients) >= 4, f"Minimum 4 raspi devices needed for this test"
@@ -1128,6 +1144,8 @@ def test_DUTAP_Max_STAs_Connect_and_Ping_C19430_C19442(firmware_loader, wifi_sni
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.parametrize("channel", [10])
 # @pytest.mark.firmware_app("test_ap_ht_caps")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_verify_beacon_format_C19436(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel,
                                            utf_constants):
     ping_count = utf_constants.get("ping_count")
@@ -1213,6 +1231,8 @@ def test_DUTAP_verify_beacon_format_C19436(firmware_loader, wifi_sniffer, wifi_d
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [10])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_apmode_connectivity_with_wrong_psk_Cli_C19437(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel):
     validation = True
     dut_ip = wifi_dut.interfaces.wifi.ip
@@ -1283,6 +1303,8 @@ def test_apmode_connectivity_with_wrong_psk_Cli_C19437(firmware_loader, wifi_sni
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [10])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUT_APMode_fixed_data_rate_C19441(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, protocol,
                                            net_perf_client, utf_constants):
     dut_ip = wifi_dut.interfaces.wifi.ip
@@ -1379,6 +1401,8 @@ def test_DUT_APMode_fixed_data_rate_C19441(firmware_loader, wifi_sniffer, wifi_d
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 # @pytest.mark.firmware_app("test_ap_ht_caps")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUT_APMode_11n_htcaps_support_C19446(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, protocol,
                                               net_perf_client, utf_constants):
     dut_ip = wifi_dut.interfaces.wifi.ip
@@ -1488,6 +1512,8 @@ def test_DUT_APMode_11n_htcaps_support_C19446(firmware_loader, wifi_sniffer, wif
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("beacon", [100, 200, 300])
 # @pytest.mark.firmware_app("test_ap_ht_caps")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_TCP_Tx_Rx_C19447(firmware_loader, wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol,
                                 channel, beacon, utf_constants):
     dut_ip = wifi_dut.interfaces.wifi.ip
@@ -1623,6 +1649,7 @@ def test_DUTAP_TCP_Tx_Rx_C19447(firmware_loader, wifi_sniffer, net_perf_client, 
 @pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 # @pytest.mark.firmware_app("test_ap_ht_caps")
+@pytest.mark.NCP_9116_DEPLOYED
 def test_DUT_APMode_11d_support_C19448(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, utf_constants):
     ping_count = utf_constants.get("ping_count")
     bands = [RS9116Band.TwoPointFourGHz, RS9116Band.FiveGHz]
@@ -1710,6 +1737,7 @@ def test_DUT_APMode_11d_support_C19448(firmware_loader, wifi_sniffer, wifi_dut, 
 )
 @pytest.mark.wifi_dualband
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.NCP_9116_DEPLOYED
 def test_DUTAP_JPregion_unsupported_channel_C19457(firmware_loader, wifi_dut):
     dut_ip = wifi_dut.interfaces.wifi.ip
     logger().info(f"********* Dut IP **********: {dut_ip}")
@@ -1743,6 +1771,8 @@ def test_DUTAP_JPregion_unsupported_channel_C19457(firmware_loader, wifi_dut):
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_USregion_unsupported_channel_C19458(wifi_dut):
     dut_ip = wifi_dut.interfaces.wifi.ip
     logger().info(f"********* Dut IP **********: {dut_ip}")
@@ -1795,6 +1825,8 @@ def test_DUTAP_USregion_unsupported_channel_C19458(wifi_dut):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUT_soft_reset_sta_to_ap_C19449(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel,
                                          wifi_access_point,
                                          utf_constants):
@@ -1940,6 +1972,8 @@ def test_DUT_soft_reset_sta_to_ap_C19449(firmware_loader, wifi_sniffer, wifi_dut
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel,
                                                  wifi_access_point, utf_constants):
     dut_ip = wifi_dut.interfaces.wifi.ip
@@ -2089,6 +2123,8 @@ def test_DUT_AP_Mode_soft_reset_ap_to_sta_C19450(firmware_loader, wifi_sniffer, 
 @pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants):
     ping_count = utf_constants.get("ping_count")
     cfg_enable = False
@@ -2233,6 +2269,8 @@ def test_DUT_AP_Mode_store_config_C19451(firmware_loader, wifi_sniffer, wifi_dut
 @pytest.mark.store_config
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.parametrize("channel", [11])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUT_AP_Mode_store_config_wpa2_C19452(firmware_loader, wifi_sniffer, wifi_dut, wifi_client, channel,
                                               utf_constants):
     ping_count = utf_constants.get("ping_count")

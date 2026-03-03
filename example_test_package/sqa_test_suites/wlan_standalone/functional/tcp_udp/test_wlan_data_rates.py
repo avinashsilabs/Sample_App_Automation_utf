@@ -108,6 +108,8 @@ class IopTcpIpSockets:
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -183,6 +185,8 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -271,6 +275,8 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -343,6 +349,8 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -432,6 +440,8 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -519,6 +529,8 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -602,6 +614,8 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -678,6 +692,8 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, wifi_dut):
     """Verification of Block ack req/res, RTS/CTS mgmt packets data rates for 12 Mbps"""
     tcp_socket_obj = IopTcpIpSockets()
@@ -757,6 +773,8 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -825,6 +843,8 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_basic_data_rates_C19634(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000

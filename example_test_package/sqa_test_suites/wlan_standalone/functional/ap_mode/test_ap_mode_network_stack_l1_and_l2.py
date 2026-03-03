@@ -529,6 +529,8 @@ def teardown(wifi_dut):
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_Validate_UDP_Rx_data_C19465(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel,
                                            utf_constants, teardown):
     validation = True
@@ -720,6 +722,8 @@ def test_DUTAP_Validate_TCP_Rx_data_C19464(wifi_sniffer, net_perf_client, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_Validate_TCP_Tx_data_C19462(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel,
                                            utf_constants, teardown):
     validation = True
@@ -816,6 +820,8 @@ def test_DUTAP_Validate_TCP_Tx_data_C19462(wifi_sniffer, net_perf_client, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel,
                                            utf_constants, teardown):
     validation = True
@@ -911,6 +917,8 @@ def test_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_client, wifi_d
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, remote_socket, wifi_dut, wifi_client,
                                                                  channel, utf_constants, teardown):
     validation = True
@@ -1017,6 +1025,8 @@ def test_DUTAP_TCP_Socket_Create_Transfer_Terminate_30min_C19480(wifi_sniffer, r
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481(wifi_sniffer, remote_socket, wifi_dut, wifi_client,
                                                                  channel, utf_constants, teardown):
     validation = True
@@ -1163,6 +1173,8 @@ def test_DUTAP_UDP_Socket_Create_Transfer_Terminate_30min_C19481(wifi_sniffer, r
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_tcp_remote_termiate_C19466(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, channel, utf_constants, protocol):
     validation = True
     iter_count = utf_constants.get('iter_count')
@@ -1250,6 +1262,8 @@ def test_DUTAP_tcp_remote_termiate_C19466(wifi_sniffer, net_perf_client, wifi_du
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482(wifi_access_point, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants, remote_socket_factory):
     iter_count = utf_constants.get('iter_count')
     try:
@@ -1300,6 +1314,8 @@ def test_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482(wifi_a
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_open_10_client_sockets_send_tx_C19473(wifi_access_point, wifi_sniffer, wifi_dut, wifi_client, channel, utf_constants, remote_socket_factory):
     iter_count = utf_constants.get('iter_count')
 
@@ -1353,6 +1369,8 @@ def test_DUTAP_open_10_client_sockets_send_tx_C19473(wifi_access_point, wifi_sni
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                           wifi_client, channel, utf_constants,
                                                                           remote_socket_factory):

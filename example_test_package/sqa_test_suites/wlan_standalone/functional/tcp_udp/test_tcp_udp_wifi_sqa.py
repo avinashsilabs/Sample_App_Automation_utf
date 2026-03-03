@@ -315,6 +315,8 @@ def dut_clean_up(wifi_dut):
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("number_of_pkts", [10000])
 # The test case checks tcp close functionality
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_wifi_tcp_close_c19347(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, number_of_pkts):
     try:
         capture_filename = "test_wifi_tcp_close_TC19347"
@@ -382,6 +384,8 @@ def test_wifi_tcp_close_c19347(wifi_sniffer, remote_socket, wifi_dut, wifi_acces
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("number_of_pkts", [10000])
 # The test case checks udp socket close functionality
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_wifi_udp_close_c19348(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, number_of_pkts):
     try:
         capture_filename = "test_wifi_udp_close_TC19348"
@@ -972,6 +976,8 @@ def test_5tcp_5udp_dut_server_socket_c19353(wifi_access_point, wifi_dut, remote_
         "tx_wait_time": 16000,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     validation = True
     rejoin_value = 0
@@ -1374,6 +1380,8 @@ def test_https_socket_tcp_c71652(wifi_sniffer, wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_wifi_socket_limit_c19359(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket):
     try:
         capture_filename = "test_socket_limit_c19359"
@@ -1632,6 +1640,8 @@ pytest.mark.config(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_wifi_tcp_remote_terminate_c19362(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point):
     try:
         capture_filename = "test_wifi_tcp_remote_terminate_TC19362"

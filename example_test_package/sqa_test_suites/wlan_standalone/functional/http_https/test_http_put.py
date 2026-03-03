@@ -91,6 +91,8 @@ def join_ip_ps_ping(http_server, wifi_sniffer, wifi_dut, http_client, wifi_acces
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_put_functionality_c19231(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                         index_path):
     validation = True
@@ -130,6 +132,8 @@ def test_https_put_functionality_c19231(http_server, wifi_sniffer, wifi_dut, htt
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_put_func_with_post_cmd_c19233(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                              index_path):
     validation = True
@@ -176,6 +180,8 @@ def test_https_put_func_with_post_cmd_c19233(http_server, wifi_sniffer, wifi_dut
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_put_func_with_get_cmd_c19232(http_server, wifi_sniffer, wifi_dut, http_client, wifi_access_point,
                                              index_path):
     validation = True

@@ -474,6 +474,8 @@ def dut_clean_up(wifi_dut):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dynamic_load_cert_no_index_c19638(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1):
     try:
         capture_filename = "test_dynamic_load_cert_no_index_c19638"
@@ -573,6 +575,8 @@ def test_dynamic_load_cert_no_index_c19638(wifi_sniffer, wifi_access_point, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dynamic_load_cert_socket_connected_state_c19639(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                                           cert1):
     try:
@@ -652,6 +656,8 @@ def test_dynamic_load_cert_socket_connected_state_c19639(wifi_sniffer, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dynamic_load_new_cert_c19640(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1):
     try:
         capture_filename = "test_dynamic_load_cert_no_index_c19638"
@@ -767,6 +773,8 @@ def test_dynamic_load_new_cert_c19640(wifi_sniffer, wifi_access_point, wifi_dut,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dynamic_load_three_ssl_sockets_c19641(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1,
                                                 cert2, cert3):
     try:
@@ -933,6 +941,8 @@ def test_dynamic_load_three_ssl_sockets_c19641(wifi_sniffer, wifi_access_point, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dynamic_load_three_ssl_sockets_multiple_iterations_c19643(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                     ssl_server,
                                                                     logger, cert1, cert2, cert3):
@@ -1122,6 +1132,8 @@ def test_dynamic_load_three_ssl_sockets_multiple_iterations_c19643(wifi_sniffer,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_load_certs_without_erasing_multiple_times_c19644(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                            logger, cert1, cert2, cert3):
     try:
@@ -1295,6 +1307,8 @@ def test_load_certs_without_erasing_multiple_times_c19644(wifi_sniffer, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dynamic_load_powersave_not_enabled_c19646(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                                     cert1, cert2, cert3):
     try:
@@ -1576,6 +1590,8 @@ def test_dynamic_load_powersave_not_enabled_c19646(wifi_sniffer, wifi_access_poi
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_store_config"])
 @pytest.mark.store_config
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dynamic_load_auto_join_c19645(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, cert1, cert2,
                                         cert3):
     try:
@@ -1827,6 +1843,8 @@ def test_dynamic_load_auto_join_c19645(wifi_sniffer, wifi_access_point, wifi_dut
                          )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_c19642(wifi_access_point,
                                                                                       wifi_dut, ssl_server, logger,
                                                                                       cert1, cert2, cert3):
@@ -1890,6 +1908,8 @@ def test_connection_and_transfer_of_index0_index1_when_trying_loadcert_index2_c1
                          )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_connection_and_transfer_of_index0_index2_when_trying_loadcert_index1_c19648(wifi_access_point,
                                                                                       wifi_dut, ssl_server, logger,
                                                                                       cert1, cert2, cert3):
@@ -2560,6 +2580,8 @@ def test_BLE_connectivity_data_tx_after_loadcert0_C19655(wifi_sniffer, wifi_dut,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "close_socket"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_socket_connection_dataTX_enable_deep_sleep_base_powersave_C19650(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                               ssl_server, logger, cert1, cert2, cert3):
     try:

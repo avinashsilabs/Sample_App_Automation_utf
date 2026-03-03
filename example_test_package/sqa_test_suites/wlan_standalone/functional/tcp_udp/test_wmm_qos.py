@@ -66,6 +66,8 @@ def logger():
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcpdata_tx_with_best_effort_19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                            protocol):
     traffic_category = ['0x00']
@@ -157,6 +159,8 @@ def test_tcpdata_tx_with_best_effort_19752(wifi_sniffer, net_perf_client, wifi_a
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcpdata_tx_with_background_c19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                            wifi_client, protocol):
     traffic_category = ['0x20']
@@ -247,6 +251,8 @@ def test_tcpdata_tx_with_background_c19752(wifi_sniffer, net_perf_client, wifi_a
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcpdata_tx_with_video_c19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     traffic_category = ['0x80']
@@ -337,6 +343,8 @@ def test_tcpdata_tx_with_video_c19752(wifi_sniffer, net_perf_client, wifi_access
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcpdata_tx_with_voice_c19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     traffic_category = ['0xc8']
@@ -427,6 +435,8 @@ def test_tcpdata_tx_with_voice_c19752(wifi_sniffer, net_perf_client, wifi_access
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_udpdata_tx_with_best_effort_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                             protocol):
     traffic_category = ['0x00']
@@ -519,6 +529,8 @@ def test_udpdata_tx_with_best_effort_c19753(wifi_sniffer, net_perf_client, wifi_
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_udpdata_tx_with_voice_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     traffic_category = ['0xC8']
@@ -610,6 +622,8 @@ def test_udpdata_tx_with_voice_c19753(wifi_sniffer, net_perf_client, wifi_access
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_udpdata_tx_with_video_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     traffic_category = ['0x80']
@@ -702,6 +716,8 @@ def test_udpdata_tx_with_video_c19753(wifi_sniffer, net_perf_client, wifi_access
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_udpdata_tx_with_background_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                            protocol):
     traffic_category = ['0x20']
@@ -794,6 +810,8 @@ def test_udpdata_tx_with_background_c19753(wifi_sniffer, net_perf_client, wifi_a
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcpdata_rx_with_best_effort_c22115(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                             protocol):
     traffic_category = ['0x00']
@@ -891,6 +909,8 @@ def test_tcpdata_rx_with_best_effort_c22115(net_perf_client, wifi_sniffer, wifi_
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcpdata_rx_with_voice_c22115(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     traffic_category = ['0xC8']
@@ -990,6 +1010,8 @@ def test_tcpdata_rx_with_voice_c22115(net_perf_client, wifi_sniffer, wifi_access
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcpdata_rx_with_video_c22115(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     traffic_category = ['0x80']
@@ -1088,6 +1110,8 @@ def test_tcpdata_rx_with_video_c22115(net_perf_client, wifi_sniffer, wifi_access
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcpdata_rx_with_background_c22115(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                            protocol):
     traffic_category = ['0x20']
@@ -1186,6 +1210,8 @@ def test_tcpdata_rx_with_background_c22115(net_perf_client, wifi_sniffer, wifi_a
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_udpdata_rx_with_best_effort_c22116(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                             protocol):
     traffic_category = ['0x00']
@@ -1284,6 +1310,8 @@ def test_udpdata_rx_with_best_effort_c22116(net_perf_client, wifi_sniffer, wifi_
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_udpdata_rx_with_voice_c22116(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     traffic_category = ['0xC8']
@@ -1383,6 +1411,8 @@ def test_udpdata_rx_with_voice_c22116(net_perf_client, wifi_sniffer, wifi_access
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_udpdata_rx_with_video_c22116(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     traffic_category = ['0x80']
@@ -1481,6 +1511,8 @@ def test_udpdata_rx_with_video_c22116(net_perf_client, wifi_sniffer, wifi_access
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_udpdata_rx_with_background_c22116(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                            protocol):
     traffic_category = ['0x20']
@@ -1577,6 +1609,8 @@ def test_udpdata_rx_with_background_c22116(net_perf_client, wifi_sniffer, wifi_a
 
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_dut, wifi_access_point):
     traffic_category_list = ['0x00', '0xC8', '0x80', '0x20']
     validation = True

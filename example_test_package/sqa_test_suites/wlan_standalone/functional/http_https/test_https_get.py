@@ -147,6 +147,8 @@ def test_https_get_functionality_C19209(http_server, wifi_dut, http_client, wifi
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_get_functionality_feature_not_enabled_dut_C19204(http_server, wifi_dut, http_client, wifi_access_point,
                                                                 index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -212,6 +214,8 @@ def test_https_get_functionality_feature_not_enabled_dut_C19204(http_server, wif
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut, http_client, wifi_access_point,
                                                          index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -276,6 +280,8 @@ def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut, 
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html", "index_long_crlf.html", "6KB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_get_functionality_different_urls_C19205(http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -479,6 +485,8 @@ def test_https_get_functionality_invalid_ip(http_server, wifi_dut, http_client, 
 @pytest.mark.config("http_server", port=10)
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_get_functionality_port10_case1_c19207(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                                      utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -546,6 +554,8 @@ def test_https_get_functionality_port10_case1_c19207(http_server, wifi_dut, http
 @pytest.mark.config("http_server", port=200)
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_get_functionality_port200_case2_c19207(http_server, wifi_dut, http_client, wifi_access_point,
                                                       index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -612,6 +622,8 @@ def test_https_get_functionality_port200_case2_c19207(http_server, wifi_dut, htt
 @pytest.mark.config("http_server", port=2000)
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_get_functionality_port2000_case3_c19207(http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -679,6 +691,8 @@ def test_https_get_functionality_port2000_case3_c19207(http_server, wifi_dut, ht
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_https_get_functionality_port20000_case4_c19207(http_server, wifi_dut, http_client, wifi_access_point,
                                                         index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -747,6 +761,8 @@ def test_https_get_functionality_port20000_case4_c19207(http_server, wifi_dut, h
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, wifi_dut, wifi_access_point,
                                         index_path):
     validation = True
@@ -829,6 +845,8 @@ def test_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, 
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_http_get_when_httpserver_does_not_ssl_handshake_C19210(wifi_sniffer, http_server, http_client, wifi_dut,
                                                                 wifi_access_point, index_path):
     validation = True

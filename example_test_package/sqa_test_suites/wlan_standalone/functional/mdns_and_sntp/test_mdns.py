@@ -127,6 +127,8 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mdns_neg_without_sel_feature_C19006(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
 ):
@@ -157,6 +159,8 @@ def test_mdns_neg_without_sel_feature_C19006(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mdns_neg_port_already_in_use_C19007(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
 ):
@@ -196,6 +200,8 @@ def test_mdns_neg_port_already_in_use_C19007(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mdns_neg_multicast_socket_in_open_state_C19008(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
 ):

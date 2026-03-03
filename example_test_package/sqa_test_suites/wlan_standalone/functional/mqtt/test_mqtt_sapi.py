@@ -317,6 +317,8 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos1
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_qos1_connect_publish_check_dut_behaviour_c127757(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -394,6 +396,8 @@ def test_mqtt_qos1_connect_publish_check_dut_behaviour_c127757(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos0
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_qos0_connect_publish_max_data_1441bytes_check_dut_behaviour_c127827(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -471,6 +475,8 @@ def test_mqtt_qos0_connect_publish_max_data_1441bytes_check_dut_behaviour_c12782
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_keep_alive_disable_with_qos1_c127794(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
@@ -555,6 +561,8 @@ def test_mqtt_keep_alive_disable_with_qos1_c127794(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_keep_alive_disable_ssl_connection_with_qos0_c127795(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
@@ -650,6 +658,8 @@ def test_mqtt_keep_alive_disable_ssl_connection_with_qos0_c127795(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["disassociated", "wifi_powersave_disable", "bt_powersave_disable", "mqtt_disconnect"])
 # The test case checks mqtt publish message with retain option
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_retain_with_qos1_c127826(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -733,6 +743,8 @@ def test_mqtt_retain_with_qos1_c127826(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_check_error_0xFFFFFFD3_C127802(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger):
     """
     If password is given more than 60 bytes 0xFFFFFFD3 error code should be seen
@@ -783,6 +795,8 @@ def test_mqtt_check_error_0xFFFFFFD3_C127802(wifi_sniffer, mqtt_server, wifi_acc
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks DUT behavior when DUT is trying to connect to MQTT server, but server is not responding
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_invalid_server_c127801(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
 ):
@@ -967,6 +981,8 @@ def test_mqtt_server_publish_data_and_check_rejoin_C127758(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_server_with_ssl_conn_enable_retain_bit_publish_data_C127759(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1071,6 +1087,8 @@ def test_mqtt_server_with_ssl_conn_enable_retain_bit_publish_data_C127759(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_subscribe_mqtt_with_ssl_close_and_subscribe_again_for_5_iter_C127803(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1177,6 +1195,8 @@ def test_subscribe_mqtt_with_ssl_close_and_subscribe_again_for_5_iter_C127803(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_qos1_mqtt_with_ssl_publish_diff_length_1_10_100_512_1000_1340_bytes_data_C127789(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1285,6 +1305,8 @@ def test_qos1_mqtt_with_ssl_publish_diff_length_1_10_100_512_1000_1340_bytes_dat
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_qos0_mqtt_with_ssl_publish_diff_length_1_10_100_512_1000_1340_bytes_data_C127790(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1393,6 +1415,8 @@ def test_qos0_mqtt_with_ssl_publish_diff_length_1_10_100_512_1000_1340_bytes_dat
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # TCP data validation since ssl supports maximum of 1351 bytes of data transfer
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_qos0_mqtt_with_tcp_publish_diff_length_1_10_100_512_1000_1390_bytes_data_C127791(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1482,6 +1506,8 @@ def test_qos0_mqtt_with_tcp_publish_diff_length_1_10_100_512_1000_1390_bytes_dat
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # TCP data validation since ssl supports maximum of 1351 bytes of data transfer
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_qos1_mqtt_with_tcp_publish_diff_length_1_10_100_512_1000_1390_bytes_data_C127792(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1575,6 +1601,8 @@ def test_qos1_mqtt_with_tcp_publish_diff_length_1_10_100_512_1000_1390_bytes_dat
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_subscribe_mqtt_with_ssl_close_and_subscribe_again_for_30_min_C127798(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1682,6 +1710,8 @@ def test_subscribe_mqtt_with_ssl_close_and_subscribe_again_for_30_min_C127798(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over TCP when authentication feature is enabled
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_subscribe_mqtt_qos0_with_ssl_subscribe_unscribe_for_30_min_C127788(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1780,6 +1810,8 @@ def test_subscribe_mqtt_qos0_with_ssl_subscribe_unscribe_for_30_min_C127788(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_subscribe_mqtt_with_tcp_connnection_close_and_subscribe_again_for_30_min_C127796(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1881,6 +1913,8 @@ def test_subscribe_mqtt_with_tcp_connnection_close_and_subscribe_again_for_30_mi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over TCP when authentication feature is enabled
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_subscribe_mqtt_qos0_with_tcp_close_and_subscribe_again_for_30_min_C127793(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1978,6 +2012,8 @@ def test_subscribe_mqtt_qos0_with_tcp_close_and_subscribe_again_for_30_min_C1277
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 120)])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_keep_alive_60_with_qos0_c127761(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
@@ -2068,6 +2104,8 @@ def test_mqtt_keep_alive_60_with_qos0_c127761(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(120, 240)])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_keep_alive_120_with_qos1_c127784(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
@@ -2341,6 +2379,8 @@ def test_mqtt_keep_alive_180_ssl_connection_with_qos0_c127786(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_feature_not_enabled_check_error_0xFF74_c127800(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut,
                                                               logger):
     capture_filename = "test_mqtt_feature_not_enabled_check_error_0xFF74_c127800"

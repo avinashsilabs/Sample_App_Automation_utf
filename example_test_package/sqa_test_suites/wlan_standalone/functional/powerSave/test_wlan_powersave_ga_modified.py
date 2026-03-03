@@ -120,6 +120,8 @@ class tx_rx:
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [1800])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                          test_run_time, rs_helper, utf_constants):
     logger().info(f"The test case will be executed for {test_run_time} seconds")
@@ -177,6 +179,8 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"dtim": 3, "beacon_interval": 100})
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
                                                             wifi_client,
                                                             rs_helper, utf_constants):
@@ -243,6 +247,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode1_C19486(net_perf_client, wif
 @pytest.mark.config('wifi_access_point',
                     wifi={"dtim": 3, "beacon_interval": 100})
 @pytest.mark.test_wlan_powersave_mode3_lp
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, net_perf_client, wifi_sniffer,
                                                                wifi_access_point, wifi_dut,
                                                                wifi_client,
@@ -304,6 +310,8 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_lp_C19491(firmware_loader, 
 @pytest.mark.config('wifi_access_point',
                     wifi={"dtim": 3, "beacon_interval": 100})
 @pytest.mark.test_wlan_powersave_mode3_lp
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492(firmware_loader, net_perf_client, wifi_sniffer,
                                                                wifi_access_point, wifi_dut,
                                                                wifi_client,
@@ -364,6 +372,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_lp_C19492(firmware_loader, 
 @pytest.mark.config('wifi_access_point',
                     wifi={"dtim": 3, "beacon_interval": 100})
 @pytest.mark.test_wlan_powersave_mode3_ulp
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net_perf_client, wifi_sniffer,
                                                             wifi_access_point, wifi_dut,
                                                             wifi_client,
@@ -422,6 +432,8 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode3_C19495(firmware_loader, net
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.test_wlan_powersave_mode3_ulp
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net_perf_client, wifi_sniffer,
                                                             wifi_access_point, wifi_dut,
                                                             wifi_client,
@@ -476,6 +488,8 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode3_C19496(firmware_loader, net
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wifi_dut, wifi_sniffer, rs_helper,
                                                            utf_constants):
     validation = True
@@ -549,6 +563,8 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_powersave_disable_functionality_powersave2_C19501(wifi_access_point, wifi_dut, wifi_sniffer, rs_helper,
                                                            utf_constants):
     validation = True
@@ -621,6 +637,8 @@ def test_powersave_disable_functionality_powersave2_C19501(wifi_access_point, wi
 )
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_powersave_disable_functionality_powersave3_C19501(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer,
                                                            rs_helper, utf_constants):
     validation = True
@@ -698,6 +716,8 @@ def test_powersave_disable_functionality_powersave3_C19501(firmware_loader, wifi
                     wifi={"dtim": 3, "beacon_interval": 100})
 @pytest.mark.parametrize("number_of_pkts", [1000])
 @pytest.mark.parametrize("test_run_time", [200])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
                                                           number_of_pkts, test_run_time,
                                                           rs_helper, utf_constants):
@@ -832,6 +852,8 @@ def test_TCP_UDP_bidirectional_in_powersave_mode1_TC19487(wifi_sniffer, remote_s
 @pytest.mark.parametrize("number_of_pkts", [1000])
 @pytest.mark.parametrize("test_run_time", [200])
 @pytest.mark.test_wlan_powersave_mode3_lp
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493(firmware_loader, wifi_sniffer, remote_socket, wifi_dut,
                                                              wifi_access_point,
                                                              number_of_pkts, test_run_time,
@@ -960,6 +982,8 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_lp_TC19493(firmware_loader, wi
                     wifi={"dtim": 3, "beacon_interval": 100})
 @pytest.mark.parametrize("number_of_pkts", [1000])
 @pytest.mark.parametrize("test_run_time", [200])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
                                                               number_of_pkts, test_run_time,
                                                               rs_helper, utf_constants):
@@ -1089,6 +1113,8 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_ulp_TC19494(wifi_sniffer, remo
 @pytest.mark.parametrize("number_of_pkts", [1000])
 @pytest.mark.parametrize("test_run_time", [200])
 @pytest.mark.test_wlan_powersave_mode3_ulp
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497(firmware_loader, wifi_sniffer, remote_socket, wifi_dut,
                                                               wifi_access_point,
                                                               number_of_pkts, test_run_time,
@@ -1221,6 +1247,8 @@ def test_TCP_UDP_bidirectional_in_powersave_mode3_ulp_TC19497(firmware_loader, w
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_powersave_mode_2_Enterprise_C19509(radius_server, net_perf_client, protocol,
                                             wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, rs_helper,
                                             utf_constants):
@@ -1292,6 +1320,8 @@ def test_powersave_mode_2_Enterprise_C19509(radius_server, net_perf_client, prot
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Send_Multicast_Broadcast_data_C19507(multicast_client, net_perf_client, protocol,
                                               wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, utf_constants,
                                               rs_helper):
@@ -1355,6 +1385,8 @@ def test_Send_Multicast_Broadcast_data_C19507(multicast_client, net_perf_client,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_powersave_functionality_after_rejoin_C19508(wifi_sniffer, wifi_dut, wifi_access_point, utf_constants, switch,
                                                      rs_helper):
     validation = True
@@ -1647,6 +1679,8 @@ def test_Multicast_Broadcast_RX_Pwrmode_1_dtim_C19510(multicast_client, net_perf
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
 @pytest.mark.test_wlan_powersave_mode3_lp
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Pwrmode_3LP_with_diff_dtim_case_1_and_2_C19506(firmware_loader, multicast_client, net_perf_client, protocol,
                                                         wifi_sniffer, wifi_dut, wifi_client, wifi_access_point,
                                                         utf_constants, rs_helper):
@@ -1800,6 +1834,8 @@ def test_Pwrmode_3LP_with_diff_dtim_case_1_and_2_C19506(firmware_loader, multica
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated", "clear_certs"])
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_ulp")
 @pytest.mark.test_wlan_powersave_mode3_ulp
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Pwrmode_3ULP_with_diff_dtim__case_3_and_4_C19506(firmware_loader, multicast_client, net_perf_client, protocol,
                                                          wifi_sniffer, wifi_dut, wifi_client, wifi_access_point,
                                                          utf_constants, rs_helper):
@@ -1937,6 +1973,8 @@ def test_Pwrmode_3ULP_with_diff_dtim__case_3_and_4_C19506(firmware_loader, multi
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Pwrmode_8_with_ULP_C19504(wifi_sniffer, wifi_dut, wifi_access_point,
                                    utf_constants, rs_helper):
     testcase = "test_Pwrmode_8_with_ULP_C19504"
@@ -2003,6 +2041,8 @@ def test_Pwrmode_8_with_ULP_C19504(wifi_sniffer, wifi_dut, wifi_access_point,
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Pwrmode_9_with_LP_C19503(wifi_sniffer, wifi_dut, wifi_access_point, utf_constants):
     testcase = "test_Pwrmode_9_with_LP_C19503"
     logger().info("configuring the Sniffer with the channel")
@@ -2091,6 +2131,8 @@ def test_Pwrmode_9_with_LP_C19503(wifi_sniffer, wifi_dut, wifi_access_point, utf
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Pwrmode_9_with_ULP_C19505(wifi_sniffer, wifi_dut, wifi_access_point, utf_constants):
     testcase = "test_Pwrmode_9_with_ULP_C19505"
     logger().info("configuring the Sniffer with the channel")
@@ -2181,6 +2223,8 @@ def test_Pwrmode_9_with_ULP_C19505(wifi_sniffer, wifi_dut, wifi_access_point, ut
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_power_mode3_slp_ack_TCP_UDP_TX_C19498(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client,
                                                wifi_client, utf_constants, rs_helper):
     testcase = "test_power_mode3_slp_ack_TCP_UDP_TX_C19498"
@@ -2270,6 +2314,8 @@ def test_power_mode3_slp_ack_TCP_UDP_TX_C19498(wifi_sniffer, wifi_access_point, 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_power_mode_switching_before_assoc_C19500(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
     testcase = "test_power_mode_switching_before_assoc_C19500"
     capture_filename = testcase
@@ -2340,6 +2386,8 @@ def test_power_mode_switching_before_assoc_C19500(wifi_sniffer, wifi_access_poin
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_power_mode_switching_after_assoc_ulp_C113724(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper,
                                                       utf_constants):
     testcase = "test_power_mode_switching_after_assoc_ulp_C113724"

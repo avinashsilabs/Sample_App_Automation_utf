@@ -204,6 +204,8 @@ def dut_clean_up(wifi_dut):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_Config_AT_C101942(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut):
     try:
         testcase = "test_Store_Config_AT_101942"
@@ -267,6 +269,8 @@ def test_Store_Config_AT_C101942(rs_helper, utf_constants, wifi_sniffer, wifi_ac
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_Config_powersave_C101943(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut):
     try:
         testcase = "test_Store_Config_powersave_C101943"
@@ -336,6 +340,8 @@ def test_Store_Config_powersave_C101943(rs_helper, utf_constants, wifi_sniffer, 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_TCP_AT_C101944(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                       remote_socket):
     try:
@@ -402,6 +408,8 @@ def test_Store_IP_PORT_TCP_AT_C101944(rs_helper, utf_constants, wifi_sniffer, wi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_Transp_AT_C101945(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                          wifi_client, remote_socket):
     try:
@@ -469,6 +477,8 @@ def test_Store_IP_PORT_Transp_AT_C101945(rs_helper, utf_constants, wifi_sniffer,
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_TCP_diff_indeces_AT_C101946(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                                    wifi_client, remote_socket):
     try:
@@ -538,6 +548,8 @@ def test_Store_IP_PORT_TCP_diff_indeces_AT_C101946(rs_helper, utf_constants, wif
                                                "beacon_interval": 200})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_Transp_diff_indeces_AT_C101947(rs_helper, utf_constants, wifi_sniffer, wifi_access_point,
                                                       wifi_dut, wifi_client, remote_socket):
     try:
@@ -608,6 +620,8 @@ def test_Store_IP_PORT_Transp_diff_indeces_AT_C101947(rs_helper, utf_constants, 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_TCP_worng_index_AT_C101948(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                                   wifi_client,
                                                   remote_socket):
@@ -662,6 +676,8 @@ def test_Store_IP_PORT_TCP_worng_index_AT_C101948(rs_helper, utf_constants, wifi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_TCP_data_AT_C101949(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                            wifi_client, remote_socket):
     try:
@@ -733,6 +749,8 @@ def test_Store_IP_PORT_TCP_data_AT_C101949(rs_helper, utf_constants, wifi_sniffe
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_TCP_CFG_AT_C101950(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                           wifi_client, remote_socket):
     try:
@@ -809,6 +827,8 @@ def test_Store_IP_PORT_TCP_CFG_AT_C101950(rs_helper, utf_constants, wifi_sniffer
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_Transp_CFG_AT_C101958(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                              wifi_client,
                                              remote_socket):
@@ -887,6 +907,8 @@ def test_Store_IP_PORT_Transp_CFG_AT_C101958(rs_helper, utf_constants, wifi_snif
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_Transp_CFG_PING_AT_C101952(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                                   wifi_client,
                                                   remote_socket):
@@ -968,6 +990,8 @@ def test_Store_IP_PORT_Transp_CFG_PING_AT_C101952(rs_helper, utf_constants, wifi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_TCP_SSL_AT_C101951(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                           wifi_client,
                                           remote_socket):
@@ -1040,6 +1064,8 @@ def test_Store_IP_PORT_TCP_SSL_AT_C101951(rs_helper, utf_constants, wifi_sniffer
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_TCP_4_sock_CFG_AT_C101960(rs_helper, utf_constants, wifi_sniffer, wifi_access_point,
                                                  wifi_dut, wifi_client, remote_socket_factory):
     try:
@@ -1132,6 +1158,8 @@ def test_Store_IP_PORT_TCP_4_sock_CFG_AT_C101960(rs_helper, utf_constants, wifi_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_TCP_2_sock_AT_C101956(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                              wifi_client,
                                              remote_socket_factory):
@@ -1233,6 +1261,8 @@ def test_Store_IP_PORT_TCP_2_sock_AT_C101956(rs_helper, utf_constants, wifi_snif
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678"})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_TCP_4_sock_AT_C101957(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                              wifi_client, remote_socket_factory):
     testcase = "test_Store_IP_PORT_TCP_4_sock_AT_C101957"
@@ -1326,6 +1356,8 @@ def test_Store_IP_PORT_TCP_4_sock_AT_C101957(rs_helper, utf_constants, wifi_snif
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_AP_TCP_C101953(wifi_sniffer, net_perf_client, wifi_dut, wifi_client,
                                       channel, utf_constants, remote_socket):
     ping_count = utf_constants.get("ping_count")
@@ -1398,6 +1430,8 @@ def test_Store_IP_PORT_AP_TCP_C101953(wifi_sniffer, net_perf_client, wifi_dut, w
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_AP_3_TCP_SOCK_C101954(wifi_sniffer, net_perf_client, wifi_dut,
                                              wifi_client, channel, utf_constants,
                                              remote_socket_factory):
@@ -1494,6 +1528,8 @@ def test_Store_IP_PORT_AP_3_TCP_SOCK_C101954(wifi_sniffer, net_perf_client, wifi
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_AP_CFG_TCP_C101959(wifi_sniffer, net_perf_client, wifi_dut, wifi_client,
                                           channel, utf_constants, remote_socket):
     try:
@@ -1592,6 +1628,8 @@ def test_Store_IP_PORT_AP_CFG_TCP_C101959(wifi_sniffer, net_perf_client, wifi_du
 @pytest.mark.wiseconnect_duts(["rs9116"])
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Store_IP_PORT_AP_3_TCP_SOCK_CFG_C101961(wifi_sniffer, net_perf_client, wifi_dut,
                                                  wifi_client, channel, utf_constants,
                                                  remote_socket_factory):
@@ -1724,6 +1762,7 @@ def test_Store_IP_PORT_AP_3_TCP_SOCK_CFG_C101961(wifi_sniffer, net_perf_client, 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": "12345678", "channel": 36})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
 def test_Store_IP_PORT_TCP_A7_5G_AT_C101955(rs_helper, utf_constants, wifi_sniffer, wifi_access_point, wifi_dut,
                                             wifi_client,
                                             remote_socket):

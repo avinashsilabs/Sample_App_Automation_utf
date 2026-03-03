@@ -129,6 +129,8 @@ class validation_sniffer:
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_verify_static_ip_allocation_to_dut_c19292(
         wifi_sniffer, wifi_dut, wifi_access_point, utf_constants
 ):
@@ -199,6 +201,8 @@ def test_verify_static_ip_allocation_to_dut_c19292(
                            | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
         wifi_sniffer, wifi_dut, wifi_access_point, dhcp_lease, rs_helper, utf_constants
 ):
@@ -313,6 +317,8 @@ def test_dhcp_ip_change_notification_c19294(wifi_sniffer, wifi_dut, wifi_access_
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol,
         dhcp_lease, rs_helper, utf_constants
@@ -375,6 +381,8 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_tcp_rx_functionality_while_dhcp_renewal_c19296(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, dhcp_lease,
         rs_helper, utf_constants

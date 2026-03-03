@@ -101,6 +101,8 @@ def send_data(remote_socket, tx_buffer, wait_time, logger):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_tcp_c19325(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, repeat_count,
         rs_helper, utf_constants
@@ -216,6 +218,8 @@ def test_socket_select_tcp_c19325(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_tcp_server_c19326(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count,
 rs_helper, utf_constants
@@ -340,6 +344,8 @@ rs_helper, utf_constants
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
 # The test case checks data receive functionality over udp socket
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_udp_c19328(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, repeat_count,
                                    rs_helper, utf_constants):
 
@@ -448,6 +454,8 @@ def test_socket_select_udp_c19328(wifi_sniffer, wifi_dut, wifi_access_point, rem
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_tcp_server_multiple_sockets_c19327(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count,
         rs_helper, utf_constants
@@ -599,6 +607,8 @@ def test_socket_select_tcp_server_multiple_sockets_c19327(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_neg_c19332(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, rs_helper, utf_constants
 ):
@@ -650,6 +660,8 @@ def test_socket_select_neg_c19332(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_synchronous_timeout_NULL_tcp_c19335(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger,rs_helper,utf_constants
 ):
@@ -731,6 +743,8 @@ def test_socket_select_synchronous_timeout_NULL_tcp_c19335(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_c19336(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger, rs_helper, utf_constants
 ):
@@ -853,6 +867,8 @@ def test_socket_select_synchronous_timeout_diff_time_intervals_tcp_c19336(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_multiple_sockets_tcp_udp_c19329(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count,
         rs_helper, utf_constants
@@ -1001,6 +1017,8 @@ def test_socket_select_multiple_sockets_tcp_udp_c19329(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_tcp_server_multiple_sockets_rejoin_c19330(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, repeat_count,
         rs_helper, utf_constants
@@ -1159,6 +1177,8 @@ def test_socket_select_tcp_server_multiple_sockets_rejoin_c19330(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_after_remote_terminate_c19333(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, rs_helper,
         utf_constants
@@ -1307,6 +1327,8 @@ def test_socket_select_after_remote_terminate_c19333(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [900])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_tcp_close_stress_c19334(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time,
         rs_helper, utf_constants
@@ -1441,6 +1463,8 @@ def test_socket_select_tcp_close_stress_c19334(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [300])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_tcp_server_bidirectional_c19337(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time,
         rs_helper, utf_constants
@@ -1611,6 +1635,8 @@ def test_socket_select_tcp_server_bidirectional_c19337(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [300])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_udp_bidirectional_c19338(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time,
         rs_helper, utf_constants
@@ -1770,6 +1796,8 @@ def test_socket_select_udp_bidirectional_c19338(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [900])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_socket_select_tcp_socket_fd_disable_c19339(
         wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory, logger, test_run_time, rs_helper,
         utf_constants

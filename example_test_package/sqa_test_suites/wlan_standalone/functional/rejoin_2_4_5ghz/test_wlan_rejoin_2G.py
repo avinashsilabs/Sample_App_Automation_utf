@@ -280,6 +280,8 @@ def clean_up_method(wifi_dut, switch):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
     """Stop rejoin process by issuing Disconnect command and then do scan and join to the network If Module stops rejoin
          process and gives success message to host AND If Module join to network after disconnect then PASS else FAIL"""
@@ -387,6 +389,8 @@ def test_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_co
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_max_retry_failure_c19722(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     """Do scan, Join after rejoin failure and validate Rejoin max retry"""
     try:
@@ -528,6 +532,8 @@ def test_rejoin_max_retry_failure_c19722(wifi_sniffer, wifi_access_point, wifi_d
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, switch, utf_constants):
     """Check rejoin is happening in All channels(1-11) or not and Verify whether module is sending probe requests in all
        channels or not"""
@@ -656,6 +662,8 @@ def test_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_d
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, switch, utf_constants):
     """select particular channels(ex: select 1,6,11) and Check rejoin is happening only in selected channels or not and
            Verify whether module is sending probe request only in selected channel"""
@@ -790,6 +798,8 @@ def test_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_du
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer, wifi_access_point, wifi_dut, switch,
                                                                    utf_constants):
     """Verify rejoin functionality by changing connected AP security settings in 2.4Ghz"""
@@ -904,6 +914,8 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     """Verify default number of retries in rejoin procedure, expecting 19 broadcast packet after Turn off
            Access point"""
@@ -1013,6 +1025,8 @@ def test_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut, switch
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
     """Verify rejoin procedure when connected AP, PSK got changed"""
     try:
@@ -1090,6 +1104,8 @@ def test_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_point, wifi_
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     """Issue Disconnect command when module does not find AP in rejoin procedure when first time retry enable bit and
            number of retries to infinite"""
@@ -1180,6 +1196,8 @@ def test_rejoin_with_disconnect_c19735(wifi_sniffer, wifi_access_point, wifi_dut
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     """ Verify beacon miss counter is resetting or not after AP finding in rejoin process """
     try:
@@ -1286,6 +1304,8 @@ def test_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_scan_interval_1sec_c19737(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
     """Set scan interval to 1 sec in rejoin params command Verify scan interval time in rejoin process"""
     try:
@@ -1420,6 +1440,8 @@ def test_rejoin_scan_interval_1sec_c19737(switch, wifi_sniffer, wifi_access_poin
         "tx_wait_time": 16000,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     """Verify rejoin functionality by setting number of retries to infinite"""
     try:
@@ -1544,6 +1566,8 @@ def test_rejoin_infinite_retry_c19738(wifi_sniffer, wifi_access_point, wifi_dut,
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     """ Re-join with infinite retry when bgscan enable"""
     try:
@@ -1620,6 +1644,8 @@ def test_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, sw
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     }
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     """Verify first time retry functionality when AP sends de-auth frame while connecting"""
     try:
@@ -1682,6 +1708,8 @@ def test_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point, wifi_du
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'Hidden_SSID_C19741', "broadcast_ssid": False})
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, switch, rs_helper, utf_constants):
     """Rejoin functionality with hidden mode AP"""
     try:
@@ -1762,6 +1790,8 @@ def test_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, sw
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "US", "channel": 11})
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     """ Verify Rejoin Functionality with US region enabled in 2.4GHZ band"""
     try:
@@ -1835,6 +1865,8 @@ def test_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, s
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 12})
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     """Verify Rejoin Functionality with EU region enabled in 2.4GHZ band"""
     try:
@@ -1909,6 +1941,8 @@ def test_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, s
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "US", "channel": 11})
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_in_japan_region_C19744(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     """ Verify Rejoin Functionality with JP region enabled in 2.4GHZ band,
         # Please Note - ASUS AP doesn't have Japan region, So changed to US region"""
@@ -1982,6 +2016,8 @@ def test_rejoin_in_japan_region_C19744(wifi_sniffer, wifi_access_point, wifi_dut
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Asia", "channel": 11})
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     """ Verify Rejoin Functionality with world mode region enabled in 2.4GHZ band"""
     try:
@@ -2066,6 +2102,8 @@ def test_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server, utf_constants):
     """Verify rejoin functionality in EAP-TLS mode"""
     try:
@@ -2200,6 +2238,8 @@ def test_rejoin_eap_tls_c19730(switch, wifi_sniffer, wifi_access_point, wifi_dut
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server, utf_constants):
     """Verify rejoin functionality in EAP-TTLS mode"""
     try:
@@ -2331,6 +2371,8 @@ def test_rejoin_eap_ttls_c19731(switch, wifi_sniffer, wifi_access_point, wifi_du
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_eap_peap_c19732(switch, wifi_sniffer, wifi_access_point, wifi_dut, radius_server, utf_constants):
     """Verify rejoin functionality in EAP-, PEAP mode"""
     try:

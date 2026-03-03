@@ -165,6 +165,8 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ftp_c19004(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, ftp_server, ftp_client, logger):
     capture_filename = "test_ftp_TC19004"
     current_time = time.time()

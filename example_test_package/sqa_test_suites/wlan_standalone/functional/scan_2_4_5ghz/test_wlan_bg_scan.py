@@ -94,6 +94,8 @@ class IopTcpIpSockets:
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -179,6 +181,7 @@ def test_bgscan_C19035(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf
     },
 )
 @pytest.mark.wifi_dualband
+@pytest.mark.NCP_9116_DEPLOYED
 def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -266,6 +269,8 @@ def test_bgscan_dual_mode_C19036(wifi_sniffer, wifi_access_point, wifi_dut, rs_h
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -353,6 +358,8 @@ def test_instant_bgscan_C19037(wifi_sniffer, wifi_access_point, wifi_dut, rs_hel
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -436,6 +443,8 @@ def test_bgscan_rejoin_infinite_retry_C19038(wifi_sniffer, wifi_access_point, wi
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -587,6 +596,7 @@ def test_bgscan_primary_channel_2G_C19039(wifi_sniffer, wifi_access_point, wifi_
     },
 )
 @pytest.mark.wifi_5g
+@pytest.mark.NCP_9116_DEPLOYED
 def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -685,6 +695,7 @@ def test_bgscan_5G_C19383(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, 
     },
 )
 @pytest.mark.wifi_dualband
+@pytest.mark.NCP_9116_DEPLOYED
 def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -780,6 +791,7 @@ def test_bgscan_5G_dual_band_C19384(wifi_sniffer, wifi_access_point, wifi_dut, r
     },
 )
 @pytest.mark.wifi_5g
+@pytest.mark.NCP_9116_DEPLOYED
 def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -877,6 +889,7 @@ def test_bgscan_5G_rejoin_infinite_C19386(wifi_sniffer, wifi_access_point, wifi_
     },
 )
 @pytest.mark.wifi_5g
+@pytest.mark.NCP_9116_DEPLOYED
 def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, channel_list, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -970,6 +983,7 @@ def test_bgscan_5G_DFS_ch_C19385(wifi_sniffer, wifi_access_point, wifi_dut, chan
     },
 )
 @pytest.mark.wifi_dualband
+@pytest.mark.NCP_9116_DEPLOYED
 def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -1044,6 +1058,8 @@ def test_bgscan_primary_channel_5G_C19387(wifi_sniffer, wifi_access_point, wifi_
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut, rs_helper, utf_constants):
     # Verify BG Scan response before Connection ,it should return 0x0021 error(This we can test in
     # AT mode only
@@ -1079,6 +1095,8 @@ def test_bgscan_response_before_connection_c19040(wifi_access_point, wifi_dut, r
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_bgscan_rejoin_failure_c19041(wifi_access_point, wifi_dut, rs_helper, utf_constants):
     # Verify BG Scan response During the rejoin process, it should return 0x0025 error.(This we can test only in AT
     # mode'''

@@ -27,6 +27,8 @@ from utf.utils.iperf.iperf_utils import ping
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_get_rtc_deep_sleep_c19052(
         wifi_sniffer, wifi_access_point, wifi_dut, logger, tolerance_threshold
         ):
@@ -111,6 +113,8 @@ def test_get_rtc_deep_sleep_c19052(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_set_get_rtc_twice_c19049(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
@@ -245,6 +249,8 @@ def test_set_get_rtc_twice_c19049(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_get_rtc_multiple_times_c19053(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
@@ -427,6 +433,8 @@ def test_get_rtc_multiple_times_c19053(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_get_rtc_after_rejoin_c19055(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
@@ -651,6 +659,8 @@ def test_get_rtc_after_rejoin_c19055(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # RTC timer functionality should not work when the set RTC api is executed in wrong state. Before
 # Wireless initialization
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_set_rtc_incorrect_state_c19048(wifi_dut, logger):
     set_seconds = 30
     set_minutes = 6
@@ -690,6 +700,8 @@ def test_set_rtc_incorrect_state_c19048(wifi_dut, logger):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_get_rtc_without_enabling_feature_c19054(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):

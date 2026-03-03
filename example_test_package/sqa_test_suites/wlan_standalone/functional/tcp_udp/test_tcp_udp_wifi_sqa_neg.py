@@ -210,6 +210,8 @@ def test_wifi_tcp_443_https_coexist_C19358(wifi_sniffer, wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_wifi_socket_limit_C19359(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
     capture_filename = "test_wifi_socket_limit_TC3757"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)

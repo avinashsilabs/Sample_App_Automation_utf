@@ -59,6 +59,8 @@ pytestmark = [
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_mqtt_feature_not_enabled_c19244(wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, mqtt_dut, logger):
     capture_filename = "test_mqtt_feature_not_enabled_TC19244_TC127800"
     ping_count = 10

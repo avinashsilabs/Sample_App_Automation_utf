@@ -248,6 +248,8 @@ class EAP_Connectivity_with_ciphers:
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES256_SHA256_TLSv12_C113821(rs_helper, utf_constants, radius_server, net_perf_client,
                                                        protocol,
                                                        wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
@@ -296,6 +298,8 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA256_TLSv12_C113821(rs_helper, utf_constants,
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES128_SHA256_TLSv12_C113822(rs_helper, utf_constants, radius_server, net_perf_client,
                                                        protocol,
                                                        wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
@@ -349,6 +353,8 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA256_TLSv12_C113822(rs_helper, utf_constants,
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv12_C113823(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                                     wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -397,6 +403,8 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv12_C113823(rs_helper, utf_constants, ra
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv12_C113824(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                                     wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -444,6 +452,8 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv12_C113824(rs_helper, utf_constants, ra
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_AES256_SHA256_TLSv12_C113825(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                                wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -491,6 +501,8 @@ def test_WPA2_EAP_AES256_SHA256_TLSv12_C113825(rs_helper, utf_constants, radius_
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_AES128_SHA256_TLSv12_C113826(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                                wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -538,6 +550,8 @@ def test_WPA2_EAP_AES128_SHA256_TLSv12_C113826(rs_helper, utf_constants, radius_
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_AES256_SHA_TLSv12_C113827(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                             wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -585,6 +599,8 @@ def test_WPA2_EAP_AES256_SHA_TLSv12_C113827(rs_helper, utf_constants, radius_ser
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_AES128_SHA_TLSv12_C113828(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                             wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -681,6 +697,8 @@ def test_WPA2_EAP_RSA_AES256_SHA256_and_RSA_AES256_SHA_TLSv12_C113832(rs_helper,
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_all_ciphers_TLSv12_C113833(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                              wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -729,6 +747,8 @@ def test_WPA2_EAP_all_ciphers_TLSv12_C113833(rs_helper, utf_constants, radius_se
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_non_supported_ciphers_TLSv12_C113834(rs_helper, utf_constants, radius_server, net_perf_client,
                                                        protocol,
                                                        wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
@@ -770,6 +790,8 @@ def test_WPA2_EAP_non_supported_ciphers_TLSv12_C113834(rs_helper, utf_constants,
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv10_C113835(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                                     wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -817,6 +839,8 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv10_C113835(rs_helper, utf_constants, ra
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv10_C113836(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                                     wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -864,6 +888,8 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv10_C113836(rs_helper, utf_constants, ra
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_AES256_SHA_TLSv10_C113837(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                             wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -911,6 +937,8 @@ def test_WPA2_EAP_AES256_SHA_TLSv10_C113837(rs_helper, utf_constants, radius_ser
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_AES128_SHA_TLSv10_C113838(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                             wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -958,6 +986,8 @@ def test_WPA2_EAP_AES128_SHA_TLSv10_C113838(rs_helper, utf_constants, radius_ser
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_all_ciphers_TLSv10_C113843(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
                                              wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
     testcase = request.node.name
@@ -1006,6 +1036,8 @@ def test_WPA2_EAP_all_ciphers_TLSv10_C113843(rs_helper, utf_constants, radius_se
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_non_supported_ciphers_TLSv10_C113844(rs_helper, utf_constants, radius_server, net_perf_client,
                                                        protocol,
                                                        wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request):
@@ -1097,6 +1129,8 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA256_ca_cert_1_C113845(rs_helper, utf_constan
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EapConn_with_invalid_date_C113851(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                                 radius_server, request):
     testcase = request.node.name
@@ -1138,6 +1172,8 @@ def test_WPA2_EapConn_with_invalid_date_C113851(utf_constants, wifi_sniffer, wif
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_Conn_TLS_when_no_cert_C113852(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                                 radius_server, request):
     testcase = request.node.name
@@ -1183,6 +1219,8 @@ def test_WPA2_EAP_Conn_TLS_when_no_cert_C113852(utf_constants, wifi_sniffer, wif
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_TLS_conn_with_wrong_cert_C113850(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                                    radius_server, request):
     testcase = request.node.name
@@ -1219,8 +1257,9 @@ def test_WPA2_EAP_TLS_conn_with_wrong_cert_C113850(utf_constants, wifi_sniffer, 
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
-def \
-        test_WPA2_EAP_conn_with_wrong_pwd_C113848(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
+def test_WPA2_EAP_conn_with_wrong_pwd_C113848(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                               radius_server, request):
     testcase = request.node.name
     eap_obj = EAP_Connectivity_negative(utf_constants, wifi_dut, wifi_sniffer, wifi_access_point, testcase,
@@ -1256,6 +1295,8 @@ def \
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_conn_with_wrong_useridentity_C113849(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                                        radius_server, request):
     testcase = request.node.name
@@ -1294,6 +1335,8 @@ def test_WPA2_EAP_conn_with_wrong_useridentity_C113849(utf_constants, wifi_sniff
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_conn_with_wrong_eapmethod_C113853(utf_constants, wifi_sniffer, wifi_dut, wifi_access_point,
                                                     radius_server, request):
     testcase = request.node.name
@@ -1331,6 +1374,8 @@ def test_WPA2_EAP_conn_with_wrong_eapmethod_C113853(utf_constants, wifi_sniffer,
                                          "clear_certs"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_conn_with_fast_psp_C113864(utf_constants, rs_helper, wifi_sniffer, wifi_dut,
                                              wifi_access_point, radius_server, wifi_client, net_perf_client, protocol,
                                              request):

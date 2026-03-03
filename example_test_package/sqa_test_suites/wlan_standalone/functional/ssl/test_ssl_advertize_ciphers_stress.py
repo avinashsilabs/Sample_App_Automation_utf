@@ -88,6 +88,8 @@ pytestmark = [
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.parametrize("test_run_time", [100])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_advertise_all_ciphers_ssl_regression_c19618(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                       cipher_list, logger, test_run_time):
     try:
@@ -106,6 +108,8 @@ def test_advertise_all_ciphers_ssl_regression_c19618(wifi_sniffer, wifi_access_p
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.parametrize("test_run_time", [100])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_advertise_all_ciphers_wlan_regression_c19619(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                        cipher_list, logger, test_run_time):
     try:
@@ -132,6 +136,8 @@ def test_advertise_all_ciphers_wlan_regression_c19619(wifi_sniffer, wifi_access_
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.parametrize("test_run_time", [100])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_advertise_specific_ciphers_ssl_regression_c19620(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                            cipher_list, logger, test_run_time):
     try:
@@ -157,6 +163,8 @@ def test_advertise_specific_ciphers_ssl_regression_c19620(wifi_sniffer, wifi_acc
                                           'TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384',
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.parametrize("test_run_time", [100])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_advertise_specific_ciphers_wlan_ssl_regression_c19621(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                                 cipher_list, logger, test_run_time):
     try:

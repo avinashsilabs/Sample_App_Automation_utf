@@ -304,6 +304,8 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_client_testcase_c19109(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
 ):
@@ -390,6 +392,8 @@ def test_ssl_client_testcase_c19109(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_client_connect_close_sequence_testcase_C19130(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger, repeat
 ):
@@ -479,6 +483,8 @@ def test_ssl_client_connect_close_sequence_testcase_C19130(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_client_tx_rx_bidirectional_testcase_c19129(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
 ):
@@ -594,6 +600,8 @@ def test_ssl_client_tx_rx_bidirectional_testcase_c19129(
 @pytest.mark.parametrize("cipher_list", [
     [Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA256,
      Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA, Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA]])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_client_cipher_list_testcase_c19132(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger,
                                                  cipher_list):
     try:
@@ -699,6 +707,8 @@ def test_ssl_client_cipher_list_testcase_c19132(wifi_sniffer, wifi_access_point,
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_client_cipher_suite_mismatch_testcase_c19133(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                            logger):
     try:
@@ -756,6 +766,8 @@ def test_ssl_client_cipher_suite_mismatch_testcase_c19133(wifi_sniffer, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_socket_limit_testcase_c19121(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger):
     try:
         capture_filename = "test_ssl_socket_limit_testcase_c19121"
@@ -837,6 +849,8 @@ def test_ssl_socket_limit_testcase_c19121(wifi_sniffer, wifi_access_point, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_client_version_1_2_testcase_c19119(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger):
     try:
         capture_filename = "test_ssl_client_version_1_2_testcase_c19119"
@@ -902,6 +916,8 @@ def test_ssl_client_version_1_2_testcase_c19119(wifi_sniffer, wifi_access_point,
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "close_sockets"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_max_sockets_c19128(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger, cert1, cert2):
     try:
         capture_filename = "test_ssl_max_sockets_testcaseTC19128"
@@ -1229,6 +1245,8 @@ def test_ssl_client_rx_while_rejoining_C19135(switch, wifi_dut, wifi_access_poin
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_client_1_2version_server_1_0_testcase_c19120(wifi_sniffer, wifi_dut, wifi_access_point, openssl,
                                                            wifi_client, logger):
     try:
@@ -1374,6 +1392,8 @@ def test_ssl_client_1_2version_server_1_0_testcase_c19120(wifi_sniffer, wifi_dut
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "clear_certs"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_client_1_0version_server_1_0_testcase_c19117(
         wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, logger):
     try:

@@ -158,6 +158,8 @@ def test_dns_resolution_c19300_301_311(wifi_sniffer, wifi_dut, wifi_access_point
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_when_both_pri_sec_ips_are_statically_c19302(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):
@@ -258,6 +260,8 @@ def test_when_both_pri_sec_ips_are_statically_c19302(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_when_only_primary_ip_statically_c19303(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):
@@ -356,6 +360,8 @@ def test_when_only_primary_ip_statically_c19303(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_when_only_secondary_ip_statically_c19304(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):
@@ -453,6 +459,8 @@ def test_when_only_secondary_ip_statically_c19304(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_when_both_pri_sec_set_to_0_statically_c19305(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):
@@ -553,6 +561,8 @@ def test_when_both_pri_sec_set_to_0_statically_c19305(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):
@@ -656,6 +666,8 @@ def test_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):
@@ -760,6 +772,8 @@ def test_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_when_pri_sec_with_same_dns_server_ips_c19308(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):
@@ -839,6 +853,8 @@ def test_when_pri_sec_with_same_dns_server_ips_c19308(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_when_pri_sec_set_twice_with_same_dns_server_ips_c19309(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):
@@ -931,6 +947,8 @@ def test_when_pri_sec_set_twice_with_same_dns_server_ips_c19309(
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_when_both_pri_sec_twice_diff_dns_server_ips_c19310(
     wifi_sniffer, wifi_dut, wifi_access_point
 ):

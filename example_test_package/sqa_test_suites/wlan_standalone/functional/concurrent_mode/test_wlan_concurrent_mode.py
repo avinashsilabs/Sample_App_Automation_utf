@@ -82,6 +82,8 @@ def clean_up_method(wifi_dut, switch):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_device_as_sta_and_ap_c19314(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -184,6 +186,8 @@ def test_device_as_sta_and_ap_c19314(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["reset","disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_device_as_sta_and_ap_c19315(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -293,6 +297,8 @@ def test_device_as_sta_and_ap_c19315(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_device_as_sta_and_ap_c19324(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     ping_iterations = 10
     validation = True
@@ -418,6 +424,8 @@ def test_device_as_sta_and_ap_c19324(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_device_as_ap_and_sta_c19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     ping_iterations = 10
@@ -549,6 +557,7 @@ def test_device_as_ap_and_sta_c19313(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
 def test_device_as_sta_and_ap_c19322(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     ping_iterations = 10
@@ -672,6 +681,8 @@ def test_device_as_sta_and_ap_c19322(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_device_as_sta_and_ap_c19312(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -789,6 +800,8 @@ def test_device_as_sta_and_ap_c19312(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_device_as_sta_and_ap_c19319(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -897,6 +910,8 @@ def test_device_as_sta_and_ap_c19319(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_device_as_sta_and_ap_c19318(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -1017,6 +1032,8 @@ def test_device_as_sta_and_ap_c19318(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_device_as_sta_and_ap_c19320(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -1161,6 +1178,8 @@ def test_device_as_sta_and_ap_c19320(firmware_loader, wifi_access_point, wifi_du
                     wifi={"dhcp_start": "192.168.50.12", "dhcp_end": "192.168.50.20", "dhcp_lease": "180"})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_device_as_sta_and_ap_c19316(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -1449,6 +1468,8 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_rejoin_failure_indication_to_host_c19317(firmware_loader, wifi_sniffer, wifi_access_point, utf_constants,
                                                   wifi_client, wifi_dut, switch):
     try:

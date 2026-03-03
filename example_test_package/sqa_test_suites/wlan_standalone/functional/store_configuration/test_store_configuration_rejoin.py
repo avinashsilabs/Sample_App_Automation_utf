@@ -85,6 +85,7 @@ class FilterPacket:
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": "STORE_CONFIG_TEST", "passphrase": '12214040487', "security": 'WPA2'})
+@pytest.mark.NCP_9116_DEPLOYED
 def test_store_config_by_turning_off_AP_C19082(wifi_sniffer, wifi_dut, wifi_access_point, switch):
 
     try:
@@ -186,6 +187,8 @@ def test_store_config_by_turning_off_AP_C19082(wifi_sniffer, wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_store_config_rejoin_specific_channel_C19100(wifi_sniffer,wifi_dut,wifi_access_point,switch):
 
     try:
@@ -311,6 +314,8 @@ def test_store_config_rejoin_specific_channel_C19100(wifi_sniffer,wifi_dut,wifi_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disable_store_config", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_access_point, wifi_dut,switch):
 
     try:
@@ -490,6 +495,8 @@ def test_verify_rejoin_func_with_max_retry_count_C19102(wifi_sniffer, wifi_acces
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disable_store_config", "disassociated"])
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_verify_rejoin_func_with_max_retry_50_C19087(wifi_sniffer, wifi_access_point, wifi_dut, switch):
 
     try:

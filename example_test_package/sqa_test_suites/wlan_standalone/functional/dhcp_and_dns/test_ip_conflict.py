@@ -266,6 +266,8 @@ def test_static_ip_assignment_with_existing_ip_C101962(wifi_sniffer, wifi_dut, w
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_static_ip_assignment_to_DUT_C101963(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, utf_constants):
     try:
         validation = True
@@ -354,6 +356,8 @@ def test_static_ip_assignment_to_DUT_C101963(wifi_sniffer, wifi_dut, wifi_access
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Dynamic_ip_assignment_to_DUT_C101964(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, utf_constants):
     try:
         validation = True
@@ -727,6 +731,8 @@ def test_Dynamic_IP_Assignment_when_DHCP_Pool_Exhausted_C101969(wifi_sniffer,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101974(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     wifi_client, net_perf_client, protocol,
                                                                     utf_constants,
@@ -847,6 +853,8 @@ def test_TCP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101974(wifi_sniffer
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_TCP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101975(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     wifi_client, net_perf_client, protocol,
                                                                     utf_constants, rs_helper):
@@ -946,6 +954,8 @@ def test_TCP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101975(wifi_sniffer
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_UDP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101976(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     wifi_client, net_perf_client, protocol, rs_helper,
                                                                     utf_constants):
@@ -1057,6 +1067,8 @@ def test_UDP_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101976(wifi_sniffer
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_UDP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101977(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     wifi_client, net_perf_client, protocol, rs_helper,
                                                                     utf_constants):
@@ -1169,6 +1181,8 @@ def test_UDP_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101977(wifi_sniffer
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_SSL_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101978(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     wifi_client, ssl_server, utf_constants):
     try:
@@ -1316,6 +1330,8 @@ def test_SSL_Tx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101978(wifi_sniffer
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_SSL_Rx_Once_IP_Conflict_resolved_in_Static_IP_Mode_C101979(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                     wifi_client, ssl_server, utf_constants):
     try:
@@ -1633,6 +1649,8 @@ def test_IP_Conflict_Detection_When_DHCP_Fails_C101985(wifi_sniffer,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_static_ip_assignment_when_dut_in_concurrent_Mode_C101967(firmware_loader, wifi_sniffer,
                                                                   wifi_dut,
                                                                   wifi_access_point, wifi_client, utf_constants):
@@ -1729,6 +1747,8 @@ def test_static_ip_assignment_when_dut_in_concurrent_Mode_C101967(firmware_loade
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_Dynamic_IP_Assignment_when_dut_in_concurrent_Mode_C101973(firmware_loader, wifi_sniffer, wifi_dut,
                                                                    wifi_access_point, utf_constants):
     try:
@@ -2044,6 +2064,8 @@ def test_Dynamic_IP_assignment_with_and_without_ip_Conflict_in_concurrent_Mode_C
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.end_state("wifi_client", wifi="disassociated")
+@pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_static_ip_with_and_without_ipconflict_when_dut_in_concurrent_Mode_C101970(firmware_loader, wifi_sniffer,
                                                                                    wifi_dut,
                                                                                    wifi_access_point, wifi_client,
