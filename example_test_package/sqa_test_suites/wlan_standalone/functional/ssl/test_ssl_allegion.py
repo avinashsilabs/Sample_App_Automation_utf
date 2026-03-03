@@ -2851,7 +2851,7 @@ def test_query_wireless_stats_c19175(wifi_sniffer, wifi_dut, wifi_access_point, 
                                       listen_interval=listen_interval)
         operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, beacon_interval = wifi_dut.interfaces.wifi.wlan_get_stats()
         logger.info("****************Beacon Filter******************")
-        packet_filter = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008)'
+        packet_filter = f'(wlan.ssid == "{wifi_access_point.interfaces.wifi.ssid}") and (wlan.fc.type_subtype == 0x008)'
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter, packet_filter3)[
             'packet_count']
@@ -2863,7 +2863,7 @@ def test_query_wireless_stats_c19175(wifi_sniffer, wifi_dut, wifi_access_point, 
         else:
             logger.info(f'\n\n *** Beacon Interval ={beacon_interval_ap} *** \n')
 
-        packet_filter4 = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008) and (wlan.fixed.beacon == {beacon_interval_ap})'
+        packet_filter4 = f'(wlan.ssid == "{wifi_access_point.interfaces.wifi.ssid}") and (wlan.fc.type_subtype == 0x008) and (wlan.fixed.beacon == {beacon_interval_ap})'
 
         dtim_period_ap = dtim_period_obj.get_dtim_period()
         if dtim_period_ap is None:
@@ -2872,7 +2872,7 @@ def test_query_wireless_stats_c19175(wifi_sniffer, wifi_dut, wifi_access_point, 
         else:
             logger.info(f'\n\n *** DTIM Period ={dtim_period_ap} *** \n')
 
-        packet_filter5 = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008) and (wlan.dtim.period == {dtim_period_ap})'
+        packet_filter5 = f'(wlan.ssid == "{wifi_access_point.interfaces.wifi.ssid}") and (wlan.fc.type_subtype == 0x008) and (wlan.dtim.period == {dtim_period_ap})'
 
         logger.info(f"Access point Beacon interval -> {beacon_interval_ap},  DTIM period-> {dtim_period_ap}")
 
@@ -2938,7 +2938,7 @@ def test_query_wireless_stats_after_rejoin_c19177(wifi_sniffer, wifi_dut, wifi_a
 
         operating_mode, dtim_period, ideal_beacon_info, busy_beacon_info, beacon_interval = wifi_dut.interfaces.wifi.wlan_get_stats()
         logger.info("****************Beacon Filter******************")
-        packet_filter = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008)'
+        packet_filter = f'(wlan.ssid == "{wifi_access_point.interfaces.wifi.ssid}") and (wlan.fc.type_subtype == 0x008)'
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(validation, packet_filter, packet_filter3)[
             'packet_count']
@@ -2950,7 +2950,7 @@ def test_query_wireless_stats_after_rejoin_c19177(wifi_sniffer, wifi_dut, wifi_a
         else:
             logger.info(f'\n\n *** Beacon Interval ={beacon_interval_ap} *** \n')
 
-        packet_filter4 = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008) and (wlan.fixed.beacon == {beacon_interval_ap})'
+        packet_filter4 = f'(wlan.ssid == "{wifi_access_point.interfaces.wifi.ssid}") and (wlan.fc.type_subtype == 0x008) and (wlan.fixed.beacon == {beacon_interval_ap})'
 
         dtim_period_ap = dtim_period_obj.get_dtim_period()
         if dtim_period_ap is None:
@@ -2959,7 +2959,7 @@ def test_query_wireless_stats_after_rejoin_c19177(wifi_sniffer, wifi_dut, wifi_a
         else:
             logger.info(f'\n\n *** DTIM Period ={dtim_period_ap} *** \n')
 
-        packet_filter5 = f'(wlan.ssid == {wifi_access_point.interfaces.wifi.ssid}) and (wlan.fc.type_subtype == 0x008) and (wlan.dtim.period == {dtim_period_ap})'
+        packet_filter5 = f'(wlan.ssid == "{wifi_access_point.interfaces.wifi.ssid}") and (wlan.fc.type_subtype == 0x008) and (wlan.dtim.period == {dtim_period_ap})'
 
         logger.info(f"Access point Beacon interval -> {beacon_interval_ap},  DTIM period-> {dtim_period_ap}")
 
