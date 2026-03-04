@@ -1271,7 +1271,6 @@ def test_s3_upload_url_delete(aws_s3):
     upload_status = aws_s3.interfaces.s3.upload_file(local_file, bucket, key)
     assert upload_status is True
 
-
     url = aws_s3.interfaces.s3.get_file_url(bucket, region, key)
     assert url == f"https://{bucket}.s3.{region}.amazonaws.com/{key}"
     delete_status = aws_s3.interfaces.s3.delete_file(bucket, key)
@@ -1299,7 +1298,7 @@ def test_aws_iot_client(aws_iot_client):
     aws_iot_client.interfaces.aws_iot.aws_iot_unsubscribe(topic_1)
     time.sleep(2)
     aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
-   
+
 
 def test_openssl(openssl):
     openssl.interfaces.server.start()
@@ -1332,10 +1331,11 @@ def test_radius_server_with_mark_config(radius_server):
 def test_radius_server(radius_server):
     logger().info("Starting RADIUS server...")
 
+
 def test_ble_client_for_ble_logs(ble_client):
     logger().info("Starting BLE client to collect BLE logs...")
     with BleLogs(
-            start_collecting_logs=True,
+        start_collecting_logs=True,
             bt_log_path=f"reports/test_ble_logs_{int(time.time())}.txt"
     ) as bt_logs:
         bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(None)
@@ -1368,3 +1368,106 @@ def test_dtls_client_server(dtls_server, dtls_client, logger):
             logger.info("Server has stopped successfully.")
         else:
             logger.error("Server did not stop within the expected time frame.")
+
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.Default,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
+            | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "set_send_feature_frame": True,
+        },
+    )
+
+
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unsassociated"])
+@pytest.mark.config("wifi_access_point", wifi={"security": "OPEN"})
+@pytest.mark.legacy_deployed
+def test_wifi_sdk_multicast_interface_rpc(
+    wifi_access_point,
+    wifi_dut,
+    multicast_client,
+    wifi_client,
+    sl_collections,
+):
+    try:
+        logger().info(f"\n***** Connect DUT to Wi-Fi network ******\n")
+        dut_addr = sl_collections.join_to_wifi_network(
+            wifi_dut,
+            wifi_access_point,
+            associated=False,
+            power_save=False,
+        )
+
+        logger().info(f"\n***** Retrieve IP Address of Remote Device ******\n")
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+
+        (
+            ip_version,
+            ttl,
+            multicast_mac,
+            multicast_ip,
+            device_port,
+            server_port,
+            buffer_length,
+            no_of_pkts,
+        ) = multicast_client.interfaces.multicast.multicast_params()
+        logger().info(
+            f"MultiCast Client Info: {ip_version}, {ttl}, {multicast_mac}, {multicast_ip}, {device_port}, {server_port}, {buffer_length}, {no_of_pkts}"
+        )
+
+        logger().info(f"DUT joining to the multicast group {multicast_ip}")
+        wifi_dut.interfaces.wifi.sl_net_join_multicast_address(server=multicast_ip)
+
+        multicast_server_ip = multicast_client.interfaces.multicast.hostname_or_ip_address()
+        logger().info(f"Multicast server IP: {multicast_server_ip}")
+
+        logger().info(
+            f"Starting multicast server remotely at {multicast_ip}:{server_port}"
+        )
+        multicast_client.interfaces.multicast.start_server()
+
+        logger().info(f"DUT start listening on {multicast_ip}:{device_port}")
+        status, data = wifi_dut.interfaces.wifi.iperf(
+            family=2,
+            transfer_type=2,
+            protocol=17,
+            local_port=device_port,
+            local_ip=multicast_ip,
+            remote_ip=host_ip,
+            remote_port=device_port,
+            size=1470,
+            ttl=30,
+            throughput_type=4,
+            qos=0,
+            async_socket=1,
+        )
+
+        logger().info(
+            f"Sending {no_of_pkts} packets with buffer length {buffer_length} to {multicast_ip}:{device_port}"
+        )
+        multicast_client.interfaces.multicast.send_multicast_data(
+            multicast_ip, device_port
+        )
+
+        logger().info("Closing multicast socket")
+        multicast_client.interfaces.multicast.socket_close()
+
+        time.sleep(2)
+
+        logger().info(f"DUT leaving multicast group {multicast_ip}")
+        wifi_dut.interfaces.wifi.sl_net_leave_multicast_address(server=multicast_ip)
+
+        logger().info("Multicast test completed successfully")
+        assert data is not None and len(data) > 0, "No multicast data received on DUT"
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

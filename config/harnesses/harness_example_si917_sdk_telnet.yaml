@@ -197,7 +197,7 @@ devices:
                 type: 'wifi.access_points.asus_rt_ax3000'
                 ip_address: '192.168.150.1' # # #
                 admin_password: 'aaaabcdefgh_utf' #'www.ni.com'
-                ssh_port: 22 #1022
+                ssh_port: 2222 #1022
                 web_ui_port: 8443
                 ssid: "9117_sw"
                 standard: 'bgnax'
@@ -317,7 +317,7 @@ devices:
         interfaces:
             linux_shell:
                 type: 'shell.ssh_shell'
-                remote: '192.168.150.3'
+                remote: '192.168.150.180'
                 username: pi
                 password: raspberry
                 use_paramiko_expect: false
@@ -355,7 +355,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -413,20 +413,40 @@ devices:
 
     raspi_multicast:
         interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.180'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             multicast:
-                type: 'multicast.multicast_socket'
-                ip_version: 4
-                multicast_ip: '239.255.255.250'
-                multicast_ip2: '239.255.255.250'
-                dut_local_socket: 5001
-                destination_socket: 5002
-                ttl: 32
-                time: 30
-                buffer_length: 1470
-                no_of_pkts: 500
-                multicast_ip_mac_map: '01:00:5e:7f:ff:fa'
-                multicast_ip2_mac_map1: '01:00:5e:7f:ff:fa'
-                interface: 'eth1'
+                type: 'multicast.rpc_client'
+                forward_to: 'raspi_multicast:multicast'
+                host: 'docker_host'
+        harness:
+            devices:
+                raspi_multicast:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        multicast:
+                            type: 'multicast.multicast_socket'
+                            ip_version: 4
+                            multicast_ip: '239.255.255.250'
+                            multicast_ip2: '239.255.255.250'
+                            dut_local_socket: 5001
+                            destination_socket: 5002
+                            ttl: 32
+                            time: 30
+                            buffer_length: 1470
+                            no_of_pkts: 500
+                            multicast_ip_mac_map: '01:00:5e:7f:ff:fa'
+                            multicast_ip2_mac_map1: '01:00:5e:7f:ff:fa'
+                            interface: 'eth0'
+
+            defaults: { }
 
     raspi_ip_socket:
             interfaces:
@@ -434,7 +454,7 @@ devices:
                 # the docker image to run
                 docker_host:
                     type: 'docker'
-                    ip_address: '192.168.150.3'
+                    ip_address: '192.168.150.180'
                     image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                     username: pi
                     password: 'raspberry'
@@ -456,7 +476,7 @@ devices:
                                 ip_version: 4
                                 dut_local_socket: 5001
                                 destination_socket: 5001
-                                server_ip: '192.168.150.3'
+                                server_ip: '192.168.150.180'
                                 time: 30
                                 buffer_length: 1470
                                 no_of_pkts: 500
@@ -469,7 +489,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -632,7 +652,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -702,7 +722,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -740,7 +760,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -773,7 +793,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -820,7 +840,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -861,7 +881,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -902,7 +922,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -961,7 +981,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -993,7 +1013,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1026,7 +1046,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1061,7 +1081,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1095,7 +1115,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1209,7 +1229,7 @@ devices:
                 power_meter_visa_address: 'USB0::0x2A8D::0x0F02::MY56005845::0::INSTR'
                 window_state: 'Show'
                 # Provide Raspi IP of test bed as host_ip in case of local test execution 
-                raspi_ip: '192.168.150.3'
+                raspi_ip: '192.168.150.180'
             
 
     python_aws_iot_thing:
@@ -1313,7 +1333,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1368,7 +1388,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1478,7 +1498,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1514,7 +1534,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1589,7 +1609,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1756,7 +1776,7 @@ devices:
             # the docker image to run
             docker_host:
                 type: 'docker'
-                ip_address: '192.168.150.3'
+                ip_address: '192.168.150.180'
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1879,7 +1899,7 @@ devices:
                 remote_capture_file_path: 'C:\\FTScapture'
                 personality_key: 'X500'
                 wps_server_path: 'C:\\Program Files (x86)\\Teledyne LeCroy Wireless\\Wireless Protocol Suite 3.10\\Executables\\Core'
-                raspi_ip: '192.168.150.3'
+                raspi_ip: '192.168.150.180'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
@@ -2203,9 +2223,9 @@ start_state:
 
 constants:
     ping_host_name:
-        value: '192.168.150.3'
+        value: '192.168.150.180'
     ble_log_host_name:
-        value: '192.168.150.3'
+        value: '192.168.150.180'
     time_duration:
         value: 5
     long_duration:
