@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timedelta
 import pytest
 from utf.interfaces.bluetooth.hid_recorder import HidRecorder
+from utf.interfaces.bluetooth.bluetooth_interface import BTProfile
 from utf.utils.logger import get_logger
 from utf.utils.stopwatch import Stopwatch
 from utf.utils.time_measurer import TimeMeasurer
@@ -590,11 +591,42 @@ def test_hid_connectivity_ssp_with_io_capa_no_input_output_c20028(bt_dut, bt_cli
     }
 )
 def test_hid_conn_send_interrupt_data_in_ps_3_ulp_mode_c20031(bt_dut, bt_client):
-    logger().info("configuring dut for hid slave role with sdp config data with capability....")
-    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(enable_ssp=True)
-    assert bt_dut_address, "failed to initiate bt in dut"
-    logger().info(f'bt dut address {bt_dut_address}')
+    # Set the device's local name
+    logger().info("setting local name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name("rs911x_bt_hid")
 
+    # Set the local COD (Class of Device)
+    logger().info("setting local COD....")
+    bt_dut.interfaces.bluetooth.bt_set_class(cod="002560")
+
+    # Set the device in HID profile mode
+    logger().info("setting HID profile mode....")
+    bt_dut.interfaces.bluetooth.bt_set_profile(profile="40")
+    bt_dut.interfaces.bluetooth.bt_set_profile_mode(BTProfile.HID)
+
+    # Set the SDP config to Keyboard service
+    logger().info("sending HID SDP config (Keyboard service)....")
+    bt_dut.interfaces.bluetooth.bt_hid_send_sdp_config()
+
+    # Set SSP mode (pair_mode=1, capability=3 i.e. NoInputNoOutput)
+    logger().info("setting SSP mode....")
+    bt_dut.interfaces.bluetooth.bt_set_ssp_mode(pair_mode=1, capability=3)
+
+    # Set the device in discoverable mode
+    logger().info("setting discoverable mode....")
+    bt_dut.interfaces.bluetooth.bt_start_discoverable()
+
+    # Set the device in connectable mode
+    logger().info("setting connectable mode....")
+    bt_dut.interfaces.bluetooth.bt_set_connectable()
+
+    # Get DUT address
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+    assert bt_dut_address, "failed to get bt dut address"
+    logger().info(f'bt dut address {bt_dut_address}')
+    pin_code = "4321"
+
+    # Scan for DUT from remote device
     logger().info("initiating scan form remote bt device...")
     bt_client_address = bt_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address,
                                                                       pin_code=pin_code)
@@ -667,10 +699,40 @@ def test_hid_conn_send_interrupt_data_in_ps_3_ulp_mode_c20031(bt_dut, bt_client)
     }
 )
 def test_hid_conn_and_disconn_c20019(bt_dut, bt_client):
-    logger().info("configuring dut for hid slave role with sdp config data....")
-    bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(enable_ssp=True)
-    assert bt_dut_address, "failed to initiate bt on dut"
+    # Set the device's local name
+    logger().info("setting local name....")
+    bt_dut.interfaces.bluetooth.bt_set_local_name("rs911x_bt_hid")
+
+    # Set the local COD (Class of Device)
+    logger().info("setting local COD....")
+    bt_dut.interfaces.bluetooth.bt_set_class(cod="002560")
+
+    # Set the device in HID profile mode
+    logger().info("setting HID profile mode....")
+    bt_dut.interfaces.bluetooth.bt_set_profile(profile="40")
+    bt_dut.interfaces.bluetooth.bt_set_profile_mode(BTProfile.HID)
+
+    # Set the SDP config to Keyboard service
+    logger().info("sending HID SDP config (Keyboard service)....")
+    bt_dut.interfaces.bluetooth.bt_hid_send_sdp_config()
+
+    # Set PIN code for legacy pairing
+    logger().info("setting pin code....")
+    bt_dut.interfaces.bluetooth.bt_set_pin_code(pin_code="4321")
+
+    # Set the device in discoverable mode
+    logger().info("setting discoverable mode....")
+    bt_dut.interfaces.bluetooth.bt_start_discoverable()
+
+    # Set the device in connectable mode
+    logger().info("setting connectable mode....")
+    bt_dut.interfaces.bluetooth.bt_set_connectable()
+
+    # Get DUT address
+    bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()
+    assert bt_dut_address, "failed to get bt dut address"
     logger().info(f'bt dut address {bt_dut_address}')
+    pin_code = "4321"
 
     for count in range(0, iter_count):
         logger().info(f"******************* iteration {count}  ********************* ")
@@ -693,8 +755,27 @@ def test_hid_conn_and_disconn_c20019(bt_dut, bt_client):
 
         with bt_dut.interfaces.bluetooth.run_bt_task():
             logger().info("connecting to remote bt device....")
+            connected = False
+            sw = Stopwatch()
+            while sw.elapsed_sec < 30:
+                try:
+                    status = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+                    if status == 1:
+                        connected = True
+                        break
+                except Exception:
+                    pass
+                time.sleep(2)
 
-            connected = bt_client.interfaces.bluetooth.pair_and_connect(bt_dut_address)
+            if not connected:
+                try:
+                    connected = bt_client.interfaces.bluetooth.connect(bt_dut_address)
+                except Exception as e:
+                    logger().info(f"connect() raised: {e}, checking connection status...")
+                    time.sleep(5)
+                    status = bt_client.interfaces.bluetooth.get_connection_status(dev_addr=bt_dut_address)
+                    connected = (status == 1)
+
             assert connected, "unable to connect bt device"
             logger().info(f'device connection state is {connected}')
 
