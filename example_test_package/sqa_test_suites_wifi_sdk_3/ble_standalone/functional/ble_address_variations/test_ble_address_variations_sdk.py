@@ -172,10 +172,11 @@ class BLEThread(ThreadBase):
             self.ble_dut.interfaces.wifi.ble_start_advertising(ble_advertising_data=BLEThread.ble_adv_data,
                                                                own_addr_type=2, ble_adv_int_min=32,
                                                                    ble_adv_int_max=160)
+            time.sleep(5)
             self.power_save()
             logger().info("\n....Remote device starts Scanning....\n")
             self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=BLEThread.ble_public_address)
-            time.sleep(15)
+            time.sleep(20)
             logger().info("....Stopping BLE Scan....")
             self.ble_client.interfaces.bluetooth.stop_scanning()
             found_devices = self.ble_client.interfaces.bluetooth.get_devices()
@@ -203,6 +204,7 @@ class BLEThread(ThreadBase):
         logger().info(f"Setting BLE address to random LE address: {BLEThread.ble_private_address}...")
         self.ble_dut.interfaces.wifi.set_ble_address(ble_address=BLEThread.ble_private_address)
         records = self.advertise_dut_using_address(BLEThread.ble_private_address, "Random", 1, ["UNDIR_CONN", 128])
+        time.sleep(5)
         found_desired_record = self.validate_address(records, BLEThread.ble_private_address, "Random")
         assert found_desired_record[
                    1] == "Connectable undirected - ADV_IND (0x00)", f"Advertisement type doesn't match for : {BLEThread.ble_private_address}"
@@ -217,6 +219,7 @@ class BLEThread(ThreadBase):
         logger().info(f"Setting BLE address to random LE address: {BLEThread.ble_private_address}...")
         self.ble_dut.interfaces.wifi.set_ble_address(ble_address=BLEThread.ble_private_address)
         records = self.advertise_dut_using_address(BLEThread.ble_private_address, "Random", 1, ["UNDIR_SCAN", 130])
+        time.sleep(5)
         found_desired_record = self.validate_address(records, BLEThread.ble_private_address, "Random")
         assert found_desired_record[
                    1] == "Scannable undirected - ADV_SCAN_IND (0x02)", f"Advertisement type doesn't match for : {BLEThread.ble_private_address}"
