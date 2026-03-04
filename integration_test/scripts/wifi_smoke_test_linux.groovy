@@ -32,7 +32,8 @@ pipeline {
                 stage('Setup Environment') {
                     steps {
                         sh '''
-                        . $PYTHON3_VENV_DIR/bin/activate
+                        unset PYTHON3_VENV_DIR
+                        
                         python3 -m pip install --upgrade pip
 
                         ./workspace_setup.sh
