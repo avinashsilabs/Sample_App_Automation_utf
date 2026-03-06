@@ -183,10 +183,10 @@ class ProvisioningFunctionality(ThreadBase):
             'packet_count']
         assert snif_pkt_count, "No beacon found in sniffer"
 
-    def scan_on_ap_interface(self):
+    def scan_on_ap_interface(self, scan_type=None):
         scan_result_ssid_security = []
         logger().info("******* scanning on AP interface ********")
-        scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, interface="ap")
+        scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=None, interface='ap', channel=0, scan_type=scan_type)
 
         for scan in scan_results:
             ssid = re.findall(r"((?<=ssid:\s)[\w\W]+?(?=\sbssid))", str(scan))
@@ -240,7 +240,7 @@ class ProvisioningFunctionality(ThreadBase):
             assert connected, f"RASPI-STA{i + 1} is disconnected from DUT-AP"
         # return ProvisioningFunctionality.ip_dict
 
-    def http_server_provisioning(self):
+    def http_server_provisioning(self, scan_type=None):
         self.wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
         self.wifi_dut.interfaces.wifi.http_server_start()
         time.sleep(30)
@@ -256,14 +256,14 @@ class ProvisioningFunctionality(ThreadBase):
             self.connect_clients_to_dut_as_ap()
             self.ble_stop_advertising()
 
-        self.scan_on_ap_interface()
+        self.scan_on_ap_interface(scan_type=scan_type)
         self.wiseconnect_web.interfaces.wiseconnect_ui.connect(
             ip_address="192.168.100.76", web_ui_port=80,
             ssid=self.wifi_access_point.interfaces.wifi.ssid,
             security=self.wifi_access_point.interfaces.wifi.security,
             passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
 
-        # time.sleep(300)
+
 
         data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
         if self.test_case == 887649:
@@ -1171,7 +1171,7 @@ def test_wifi_sdk_ap_provisioning_dut_ap_wrong_psk_c887664(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.skip("Skipping due to extended scan not supported in AP mode - SI91X-19675")
+
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -1214,7 +1214,7 @@ def test_wifi_sdk_ap_provisioning_extended_scan_c887660(
         ble_obj.firmware_version()
         time.sleep(10)
         ble_obj.check_beacon()
-        ble_obj.http_server_provisioning()
+        ble_obj.http_server_provisioning(scan_type=2)
         ble_obj.sl_net_deinit()
 
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1224,7 +1224,7 @@ def test_wifi_sdk_ap_provisioning_extended_scan_c887660(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-# @pytest.mark.skip("Skipping due to extended scan not supported in AP mode - SI91X-19675")
+
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -1268,7 +1268,7 @@ def test_wifi_sdk_ap_provisioning_extended_scan_and_connect_third_party_ap_c8876
         ble_obj.firmware_version()
         time.sleep(10)
         ble_obj.check_beacon()
-        ble_obj.http_server_provisioning()
+        ble_obj.http_server_provisioning(scan_type=2)
         ble_obj.sl_net_deinit()
 
         wifi_dut.interfaces.wifi.set_wifi_config(
