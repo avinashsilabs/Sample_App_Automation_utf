@@ -253,7 +253,8 @@ class StandBy_Associated(ThreadBase):
     def __init__(self, dtim=None, wifi_dut=None, wifi_access_point=None, sl_collections=None, power_meter=None,
                  deep_sleep=False, dtim_aligned_type=1, remote_socket=None, send_data=False, capture_time=60,
                  m4_sleep_time=120000, bcast_filter=True, tcp_ka_time=240, send_ka=False, listen_case=False,
-                 ble_client=None, ble_advertisement=None, ble_with_connection=None, utf_constants=None, long_run=None):
+                 ble_client=None, ble_advertisement=None, ble_with_connection=None, utf_constants=None, long_run=None,
+                 long_duration=None):
         self.dtim = dtim
         self.wifi_dut = wifi_dut
         self.sl_collections = sl_collections
@@ -274,6 +275,7 @@ class StandBy_Associated(ThreadBase):
         self.ble_with_connection = ble_with_connection
         self.utf_constants = utf_constants
         self.long_run = long_run
+        self.long_duration = long_duration
 
     def run(self):
         dut = UtfConfig.instance().defaults.get("dut", {})
@@ -684,9 +686,10 @@ def test_wlan_conn_with_DTIM_10_ble_conn_rc_clock_C537358(firmware_loader, power
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_conn_DTIM_10_with_ble_conn_long_run_C206501(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+def test_wlan_conn_DTIM_10_with_ble_conn_long_run_C129953(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                 sl_collections, dtim, ble_client, request, performance_data,
                                                 custom_performance_fixture, utf_constants):
+    long_duration = utf_constants.get("long_duration")
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[
@@ -696,7 +699,8 @@ def test_wlan_conn_DTIM_10_with_ble_conn_long_run_C206501(firmware_loader, power
     build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                    ble_client=ble_client, sl_collections=sl_collections, power_meter=power_meter,
-                                   ble_with_connection=True, utf_constants=utf_constants, long_run=True)
+                                   ble_with_connection=True, utf_constants=utf_constants, long_run=True,
+                                   long_duration=long_duration)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
 

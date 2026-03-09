@@ -228,6 +228,47 @@ class WifiSockthread(ThreadBase):
         self.remote_socket.interfaces.socket.socket_close_indication(1)
 
 
+class IperfThread(ThreadBase):
+
+    def __init__(self, wifi_dut=None, wifi_access_point=None, sl_collections=None, test_name=None, wifi_client=None,
+                 test_id=None, traffic_type=None, protocol=None, net_perf_client=None, timeout=65, device_ip=None,
+                 remote_ip=None, ip_version=4, async_socket=0):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.sl_collections = sl_collections
+        self.test_name = test_name
+        self.wifi_client = wifi_client
+        self.test_id = test_id
+        self.traffic_type = traffic_type
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
+        self.timeout = timeout
+        self.ip_version = ip_version
+        self.device_ip = device_ip
+        self.remote_ip = remote_ip
+        self.async_socket = async_socket
+        self.dut_add_dict = None
+
+    def run_traffic(self):
+        self.sl_collections.run_traffic(
+            wifi_dut=self.wifi_dut,
+            net_perf_client=self.net_perf_client,
+            protocol=self.protocol,
+            device_ip=self.device_ip,
+            host_ip=self.remote_ip,
+            timeout=self.timeout,
+            traffic_type=self.traffic_type,
+            ip_version=self.ip_version,
+            buffer_size_tcp=1380,
+            buffer_size_udp=1470,
+            async_socket=self.async_socket
+        )
+
+    def run(self):
+        self.run_traffic()
+
+
 class WlanThread(ThreadBase):
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, sl_collections=None, aws_conn=None,
@@ -1847,5 +1888,238 @@ def test_standby_power_aws_pub_sub_with_twt_C129922(firmware_loader, power_meter
             time.sleep(10)
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode | Si91xExtCustomFeatureBitMap.DisableDebugPrints,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+def test_standby_power_twt_long_run_3_hours_C129950(firmware_loader, power_meter, wifi_dut, wifi_access_point,
+                                                  wifi_sniffer, sl_collections, request, performance_data,
+                                                  custom_performance_fixture, utf_constants):
+    time_duration = utf_constants.get("time_duration")
+    long_duration = utf_constants.get("long_duration")
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[
+        0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    wifi_sniffer.interfaces.capture.configure_interface(channel=1)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+    logger().info(f"M4-TA secure handshake")
+    wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+
+    time.sleep(2)
+
+    wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                          sl_collections=sl_collections)
+    m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, m4_sleep_time=time_duration)
+    pm_obj = Power_Measurement_Thread(power_meter=power_meter, capture_time=long_duration)
+
+    wlan_obj.start()
+    wlan_obj.wait_for_exit()
+
+    time.sleep(2)
+
+    wifi_dut.interfaces.wifi.set_twt(
+        wake_duration=0x60,
+        wake_duration_tol=0x60,
+        wake_int_exp=13,
+        wake_int_exp_tol=13,
+        wake_int_mantissa=0x1D4C,
+        wake_int_mantissa_tol=0x1D4C,
+        implicit_twt=1,
+        un_announced_twt=1,
+        triggered_twt=0,
+        negotiation_type=0,
+        twt_channel=0,
+        twt_protection=0,
+        twt_flow_id=1,
+        restrict_tx_outside_tsp=1,
+        twt_retry_limit=6,
+        twt_retry_interval=10,
+        req_type=1,
+        twt_enable=1,
+        wake_duration_unit=0
+    )
+
+    logger().info(f"Setting filter broadcast command")
+    wifi_dut.interfaces.wifi.set_filter_broadcast()
+
+    logger().info(f"Enabling TA power save")
+    wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save")
+    time.sleep(2)
+
+    m4_obj.start()
+    time.sleep(80)
+    pm_obj.start()
+    pm_obj.wait_for_exit()
+    m4_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name,
+                                                             opn=opn,
+                                                             build_number=build_number,
+                                                             memory_configuration="test_352K_M4SS_320K",
+                                                             parsed_result=parsed_result["Output"],
+                                                             file_path=performance_file_root_dir,
+                                                             file_name=perf_file_name
+                                                             )
+
+    time.sleep(10)
+
+
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode, # | Si91xExtCustomFeatureBitMap.DisableDebugPrints,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+def test_standby_power_twt_long_run_with_udp_tx_C129951(firmware_loader, power_meter, wifi_dut, wifi_access_point,
+                                                  sl_collections, request, performance_data, wifi_sniffer,
+                                                  custom_performance_fixture, utf_constants, wifi_client,
+                                                  net_perf_client, protocol):
+    iter_count = utf_constants.get("iter_count")
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[
+        0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    wifi_sniffer.interfaces.capture.configure_interface(channel=1)
+    wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+    logger().info(f"M4-TA secure handshake")
+    wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+    time.sleep(2)
+    wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                          sl_collections=sl_collections)
+    m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, m4_sleep_time=220000)
+    pm_obj = Power_Measurement_Thread(power_meter=power_meter, capture_time=220)
+
+    wlan_obj.start()
+    wlan_obj.wait_for_exit()
+
+    time.sleep(2)
+
+    logger().info(f"Setting filter broadcast command")
+    wifi_dut.interfaces.wifi.set_filter_broadcast()
+    pm_obj.start()
+    time.sleep(2)
+    for i in range(0, iter_count):
+        logger().info(f"Enabling TA power save")
+        wifi_dut.interfaces.wifi.set_twt(
+            wake_duration=0x60,
+            wake_duration_tol=0x60,
+            wake_int_exp=13,
+            wake_int_exp_tol=13,
+            wake_int_mantissa=0x1D4C,
+            wake_int_mantissa_tol=0x1D4C,
+            implicit_twt=1,
+            un_announced_twt=1,
+            triggered_twt=0,
+            negotiation_type=0,
+            twt_channel=0,
+            twt_protection=0,
+            twt_flow_id=1,
+            restrict_tx_outside_tsp=1,
+            twt_retry_limit=6,
+            twt_retry_interval=10,
+            req_type=1,
+            twt_enable=1,
+            wake_duration_unit=0
+        )
+
+        logger().info(f"Enabling TA power save")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save")
+        time.sleep(2)
+        m4_obj.start()
+        time.sleep(180)
+        logger().info("Disabling the TWT ")
+        wifi_dut.interfaces.wifi.disable_twt()
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Remote device ip :{host_ip}")
+        wifi_dut.interfaces.wifi.switch_host_frequency()
+        time.sleep(2)
+        dut_ip = wlan_obj.getter()
+        ipv4_tx_obj = IperfThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, ip_version=4,
+                                  sl_collections=sl_collections, wifi_client=wifi_client, traffic_type="TX",
+                                  protocol="UDP", net_perf_client=net_perf_client, timeout=60, device_ip=dut_ip,
+                                  remote_ip=host_ip)
+        ipv4_tx_obj.start()
+        ipv4_tx_obj.wait_for_exit()
+        time.sleep(5)
+
+    pm_obj.wait_for_exit()
+    m4_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name,
+                                                             opn=opn,
+                                                             build_number=build_number,
+                                                             memory_configuration="test_352K_M4SS_320K",
+                                                             parsed_result=parsed_result["Output"],
+                                                             file_path=performance_file_root_dir,
+                                                             file_name=perf_file_name
+                                                             )
+
+    time.sleep(10)
 
 
