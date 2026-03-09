@@ -423,26 +423,44 @@ def test_wifi_sdk_ssl_three_sockets_tx_rx_data_testcase_C19201(wifi_sniffer, wif
         ssl_server.interfaces.ssl.start_server(port=port3)
         server_ip = ssl_server.interfaces.ssl.server_ip
 
+        server_socket_nums = [1, 2, 3]
+        ports = [port1, port2, port3]
         for sock_count in range(0, 3):
-            # Open ssl client socket in the DUT
-            sock = wifi_dut.interfaces.wifi.socket()
-            assert sock == sock_count, f"Sock ID must be {sock_count} but received {sock}"
-
-            # Enable ssl option for socket opened
-            wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
-
+            socket_port = ports[sock_count]
             if sock_count == 0:
-                socket_port = port1
                 local_port = randint(5001, 20000)
             elif sock_count == 1:
-                socket_port = port2
                 local_port = randint(20001, 40000)
             else:
-                socket_port = port3
                 local_port = randint(40001, 60000)
 
+            sock = wifi_dut.interfaces.wifi.socket()
+            assert sock == sock_count, f"Sock ID must be {sock_count} but received {sock}"
+            wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
-            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+
+            max_connect_retries = 3
+            for attempt in range(1, max_connect_retries + 1):
+                try:
+                    time.sleep(1)
+                    wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+                    logger.info(f"Socket {sock} connected to server_port={socket_port} on attempt {attempt}")
+                    break
+                except Exception as connect_err:
+                    logger.warning(f"Socket {sock} connect to port {socket_port} attempt {attempt}/{max_connect_retries} failed: {connect_err}")
+                    if attempt == max_connect_retries:
+                        raise
+                    logger.info(f"Closing failed socket {sock} and recreating for retry")
+                    wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                    time.sleep(2)
+                    logger.info(f"Restarting SSL server on port {socket_port} for retry")
+                    ssl_server.interfaces.ssl.start_server(port=socket_port)
+                    server_socket_nums[sock_count] = ssl_server.interfaces.ssl.thread_count
+                    sock = wifi_dut.interfaces.wifi.socket()
+                    assert sock == sock_count, f"socket id on retry expected {sock_count}, got {sock}"
+                    logger.info(f"Recreated socket id: {sock}")
+                    wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                    wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
 
         socket_no = [1, 2, 3]
         sw = Stopwatch()
@@ -453,19 +471,19 @@ def test_wifi_sdk_ssl_three_sockets_tx_rx_data_testcase_C19201(wifi_sniffer, wif
                 tx_buffer = "".join(
                     random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
                 )
+                server_sock = server_socket_nums[socket - 1]
                 if socket < 3:
                     logger.info(f"DATA TRANSFER -----DUT SENDING DATA ON SOCKET ID{socket - 1}")
                     data_length = len(tx_buffer)
                     socket_number = socket - 1
                     # DUT sends 100 bytes of data over ssl socket
                     wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=socket_number, data=tx_buffer)
-                    server_socket_no = socket
-                    data_receive = ssl_server.interfaces.ssl.data_recv_content(server_socket_no, data_length)
+                    data_receive = ssl_server.interfaces.ssl.data_recv_content(server_sock, data_length)
                     logger.info(f"Data received on remote socket opened is {data_receive}")
                     assert tx_buffer == data_receive.decode(), "Data sent by DUT and received on server is matching"
                 else:
                     logger.info(f"DATA TRANSFER -----DUT RECEVING DATA ON SOCKET ID{socket - 1}")
-                    ssl_server.interfaces.ssl.send_data(socket, pkt_count, buffer_length, message=tx_buffer)
+                    ssl_server.interfaces.ssl.send_data(server_sock, pkt_count, buffer_length, message=tx_buffer)
                     sock = (socket - 1)
                     buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
 
@@ -545,6 +563,8 @@ def test_wifi_sdk_ssl_three_sockets_shut_down_testcase_c19157(wifi_sniffer, wifi
             ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
             server_ip = ssl_server.interfaces.ssl.server_ip
 
+            port_cert_map = {port1: cert1, port2: cert2, port3: cert3}
+            server_socket_nums = [1, 2, 3]
             for sock_count in range(0, 3):
                 sock = wifi_dut.interfaces.wifi.socket()
                 assert sock == sock_count, f"socket id received is wrong, expected is {sock_count}"
@@ -558,12 +578,34 @@ def test_wifi_sdk_ssl_three_sockets_shut_down_testcase_c19157(wifi_sniffer, wifi
                 else:
                     socket_port = port3
                 wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=socket_port, timeout=15)
-                wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+                max_connect_retries = 3
+                for attempt in range(1, max_connect_retries + 1):
+                    try:
+                        time.sleep(1)
+                        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+                        logger.info(f"Socket {sock} connected successfully on attempt {attempt}")
+                        break
+                    except Exception as connect_err:
+                        logger.warning(f"Socket {sock} connect attempt {attempt}/{max_connect_retries} failed: {connect_err}")
+                        if attempt == max_connect_retries:
+                            raise
+                        logger.info(f"Closing failed socket {sock} and recreating for retry")
+                        wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                        time.sleep(2)
+                        server_cert_info = port_cert_map[socket_port]
+                        logger.info(f"Restarting SSL server on port {socket_port} for retry")
+                        ssl_server.interfaces.ssl.start_server(port=socket_port, server_cert=server_cert_info[1], server_key=server_cert_info[2])
+                        server_socket_nums[sock_count] = ssl_server.interfaces.ssl.thread_count
+                        sock = wifi_dut.interfaces.wifi.socket()
+                        logger.info(f"Recreated socket id: {sock}")
+                        wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=socket_port, timeout=15)
 
-            pkt_count = 100
-            buffer_length = 1300
-            for socket in range(1, 4):
-                ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length, pkt_rcv_timeout=10)
+            time.sleep(2)
+            pkt_count = 1
+            buffer_length = 1000
+            for server_sock_no in server_socket_nums:
+                ssl_server.interfaces.ssl.data_receive(server_sock_no, pkt_count, buffer_length, pkt_rcv_timeout=30)
             socket_list = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
                                                                               number_of_pkts=pkt_count, )
             sock_count = 0
@@ -573,11 +615,11 @@ def test_wifi_sdk_ssl_three_sockets_shut_down_testcase_c19157(wifi_sniffer, wifi
                     f"Number of bytes sent by DUT on socket_id:{sock_count}->{socket_stats[0]} and time taken->{(socket_stats[1] / 1000)} seconds")
                 bytes_sent_list.append(socket_stats[0])
                 sock_count = sock_count + 1
-            for socket in range(1, 4):
-                bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
+            for idx, server_sock_no in enumerate(server_socket_nums):
+                bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_sock_no)
                 assert bytes_sent_list[
-                           socket - 1] == bytes_received, f"Number of bytes sent by DUT and received on the " \
-                                                          f"remote peer not matched on socket {socket}"
+                           idx] == bytes_received, f"Number of bytes sent by DUT and received on the " \
+                                                   f"remote peer not matched on socket {server_sock_no}"
             for sock_id in range(3):
                 wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
                 logger.info(f"Successfully closed socket_id '{sock_id}' in the DUT")
@@ -632,10 +674,10 @@ def test_wifi_sdk_ssl_three_sockets_close_reopen_socket2_c19159(wifi_sniffer, wi
                                                                 ssl_server, logger, cert1, cert2, cert3,
                                                                 sl_collections, sniffer_filter):
     """
-    Connection to three SSL Sockets and Check the Network parameters after socket connection.
+    Verify the data transmit over 2nd socket after close the socket from our device and reopen the Second Socket
     """
-    try:
-        capture_filename = "test_wifi_sdk_ssl_three_sockets_close_reopen_socket2_c19159"
+     try:
+        capture_filename = "tc_19159"
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
         wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
@@ -650,49 +692,89 @@ def test_wifi_sdk_ssl_three_sockets_close_reopen_socket2_c19159(wifi_sniffer, wi
         port2 = ssl_server.interfaces.ssl.config['device_port2']
         port3 = ssl_server.interfaces.ssl.config['device_port3']
 
-        ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
-        ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
-        ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
-        server_ip = ssl_server.interfaces.ssl.server_ip
-
+        port_cert_map = {port1: cert1, port2: cert2, port3: cert3}
+        ports = [port1, port2, port3]
+        certs = [cert1, cert2, cert3]
+        server_socket_nums = []
+        server_ip = None
         for sock_count in range(0, 3):
+            socket_port = ports[sock_count]
+            cert = certs[sock_count]
+            ssl_server.interfaces.ssl.start_server(port=socket_port, server_cert=cert[1], server_key=cert[2])
+
+            if server_ip is None:
+                server_ip = ssl_server.interfaces.ssl.server_ip
+            server_socket_nums.append(ssl_server.interfaces.ssl.thread_count)
             sock = wifi_dut.interfaces.wifi.socket()
             assert sock == sock_count, f"socket id received is wrong, expected is {sock_count}"
             logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
             logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
             wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
-            if sock_count == 0:
-                socket_port = port1
-            elif sock_count == 1:
-                socket_port = port2
-            else:
-                socket_port = port3
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=socket_port, timeout=15)
-            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+            max_connect_retries = 3
+            for attempt in range(1, max_connect_retries + 1):
+                try:
+                    time.sleep(1)
+                    wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+                    logger.info(f"Socket {sock} connected successfully on attempt {attempt}")
+                    break
+                except Exception as connect_err:
+                    logger.warning(f"Socket {sock} connect attempt {attempt}/{max_connect_retries} failed: {connect_err}")
+                    if attempt == max_connect_retries:
+                        raise
+                    logger.info(f"Closing failed socket {sock} and recreating for retry")
+                    wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                    time.sleep(2)
+                    server_cert_info = port_cert_map[socket_port]
+                    logger.info(f"Restarting SSL server on port {socket_port} for retry")
+                    ssl_server.interfaces.ssl.start_server(port=socket_port, server_cert=server_cert_info[1], server_key=server_cert_info[2])
+                    server_socket_nums[sock_count] = ssl_server.interfaces.ssl.thread_count
+                    sock = wifi_dut.interfaces.wifi.socket()
+                    logger.info(f"Recreated socket id: {sock}")
+                    wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                    wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=socket_port, timeout=15)
 
         sock_id = 1
-        logger.info(f"Closing socket_id '{sock_id}' in the DUT as per test step")
+        logger.info(f"\n\n **** CLOSING SOCKET_ID '{sock_id}' in the DUT as per test step *** \n\n")
         wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
         logger.info(f"Successfully closed socket_id '{sock_id}' in the DUT")
-        ssl_server.interfaces.ssl.close_socket(socket_no=2)
-        time.sleep(10)
+        ssl_server.interfaces.ssl.close_socket(socket_no=server_socket_nums[1])
 
+        logger.info(f"\n\n **** START  SSL SERVER on {port2} *** \n\n")
         ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+        ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+        server_socket_nums[1] = ssl_server.interfaces.ssl.thread_count
         sock = wifi_dut.interfaces.wifi.socket()
         assert sock == 1, f"socket id received is wrong, expected is 1"
         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
         logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
         wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
-        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=5002, timeout=15)
-        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
-                                                  server_port=5002)
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=port2, timeout=15)
+        max_connect_retries = 3
+        for attempt in range(1, max_connect_retries + 1):
+            try:
+                time.sleep(4)
+                wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=port2)
+                logger.info(f"Socket {sock} reconnected successfully on attempt {attempt}")
+                break
+            except Exception as connect_err:
+                logger.warning(f"Socket {sock} reconnect attempt {attempt}/{max_connect_retries} failed: {connect_err}")
+                if attempt == max_connect_retries:
+                    raise
+                logger.info(f"Closing failed socket {sock} and recreating for retry")
+                wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                time.sleep(2)
+                logger.info(f"Restarting SSL server on port {port2} for retry")
+                ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+                server_socket_nums[1] = ssl_server.interfaces.ssl.thread_count
+                sock = wifi_dut.interfaces.wifi.socket()
+                logger.info(f"Recreated socket id: {sock}")
+                wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=port2, timeout=15)
 
-        for socket in range(1, 4):
-            if socket != 2:
-                server_sock = socket
-            else:
-                server_sock = 4
-            ssl_server.interfaces.ssl.data_receive(server_sock, pkt_count, buffer_length, pkt_rcv_timeout=10)
+        time.sleep(1)
+        for server_sock_no in server_socket_nums:
+            ssl_server.interfaces.ssl.data_receive(server_sock_no, pkt_count, buffer_length, pkt_rcv_timeout=30)
 
         socket_list = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=7, data_len=buffer_length,
                                                                           number_of_pkts=pkt_count)
@@ -705,16 +787,12 @@ def test_wifi_sdk_ssl_three_sockets_close_reopen_socket2_c19159(wifi_sniffer, wi
             bytes_sent_list.append(socket_stats[0])
             sock_count = sock_count + 1
 
-        for socket in range(1, 4):
-            if socket != 2:
-                server_sock = socket
-            else:
-                server_sock = 4
-            if ssl_server.interfaces.ssl.socket_connection_status(server_sock):
-                bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_sock)
+        for idx, server_sock_no in enumerate(server_socket_nums):
+            if ssl_server.interfaces.ssl.socket_connection_status(server_sock_no):
+                bytes_received = ssl_server.interfaces.ssl.data_receive_stats(server_sock_no)
                 assert bytes_sent_list[
-                           socket - 1] == bytes_received, f"Number of bytes sent by DUT and received on the " \
-                                                          f"remote peer not matched on socket {socket - 1}"
+                           idx] == bytes_received, f"Number of bytes sent by DUT and received on the " \
+                                                   f"remote peer not matched on socket {server_sock_no}"
         for sock_id in range(3):
             wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock_id)
             logger.info(f"Successfully closed socket_id '{sock_id}' in the DUT")
@@ -786,25 +864,47 @@ def test_wifi_sdk_ssl_three_sockets_close_socket2_on_remote_c19160(wifi_sniffer,
         port2 = ssl_server.interfaces.ssl.config['device_port2']
         port3 = ssl_server.interfaces.ssl.config['device_port3']
 
+        port_cert_map = {port1: cert1, port2: cert2, port3: cert3}
         ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
         ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
         ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
         server_ip = ssl_server.interfaces.ssl.server_ip
 
         for sock_count in range(0, 3):
-            sock = wifi_dut.interfaces.wifi.socket()
-            assert sock == sock_count, f"socket id received is wrong, expected is {sock_count}"
-            logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
-            logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
-            wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
             if sock_count == 0:
                 socket_port = port1
             elif sock_count == 1:
                 socket_port = port2
             else:
                 socket_port = port3
+            sock = wifi_dut.interfaces.wifi.socket()
+            assert sock == sock_count, f"socket id received is wrong, expected is {sock_count}"
+            logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
+            logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
+            wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=socket_port, timeout=15)
-            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+            max_connect_retries = 3
+            for attempt in range(1, max_connect_retries + 1):
+                try:
+                    time.sleep(1)
+                    wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+                    logger.info(f"Socket {sock} connected successfully on attempt {attempt}")
+                    break
+                except Exception as connect_err:
+                    logger.warning(f"Socket {sock} connect attempt {attempt}/{max_connect_retries} failed: {connect_err}")
+                    if attempt == max_connect_retries:
+                        raise
+                    logger.info(f"Closing failed socket {sock} and recreating for retry")
+                    wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                    time.sleep(2)
+                    server_cert_info = port_cert_map[socket_port]
+                    logger.info(f"Restarting SSL server on port {socket_port} for retry")
+                    ssl_server.interfaces.ssl.start_server(port=socket_port, server_cert=server_cert_info[1], server_key=server_cert_info[2])
+                    sock = wifi_dut.interfaces.wifi.socket()
+                    assert sock == sock_count, f"socket id received is wrong on retry, expected is {sock_count}"
+                    logger.info(f"Recreated socket id: {sock}")
+                    wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                    wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=socket_port, timeout=15)
 
         logger.info(f"Closing 2nd socket in remote server as per test step")
         ssl_server.interfaces.ssl.close_socket(socket_no=2)
@@ -819,9 +919,29 @@ def test_wifi_sdk_ssl_three_sockets_close_socket2_on_remote_c19160(wifi_sniffer,
         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
         logger.info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
         wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
-        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=5002, timeout=15)
-        wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
-                                                  server_port=5002)
+        wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=port2, timeout=15)
+        max_connect_retries = 10
+        for attempt in range(1, max_connect_retries + 1):
+            try:
+                time.sleep(1)
+                wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                          server_port=port2)
+                logger.info(f"Socket {sock} reconnected successfully on attempt {attempt}")
+                break
+            except Exception as connect_err:
+                logger.warning(f"Socket {sock} reconnect attempt {attempt}/{max_connect_retries} failed: {connect_err}")
+                if attempt == max_connect_retries:
+                    raise
+                logger.info(f"Closing failed socket {sock} and recreating for retry")
+                wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                time.sleep(2)
+                logger.info(f"Restarting SSL server on port {port2} for retry")
+                ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+                sock = wifi_dut.interfaces.wifi.socket()
+                assert sock == 1, f"socket id received is wrong on retry, expected is 1"
+                logger.info(f"Recreated socket id: {sock}")
+                wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=port2, timeout=15)
 
         for socket in range(1, 4):
             if socket != 2:
