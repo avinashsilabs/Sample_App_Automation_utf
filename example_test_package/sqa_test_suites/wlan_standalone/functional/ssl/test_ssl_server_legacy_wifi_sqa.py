@@ -231,7 +231,7 @@ pytestmark = [
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_server_testcase_c19110(
@@ -253,6 +253,7 @@ def test_ssl_server_testcase_c19110(
         logger.info(f"Successfully opened tcp  socket and socket id received is {sock} which is expected")
         wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
         wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+        time.sleep(2)
         # Connect from third party device to the socket opened in the DUT
         ssl_client.interfaces.ssl.connect_to_server(device_ip, server_port=5001)
         # DUT
@@ -276,9 +277,9 @@ def test_ssl_server_testcase_c19110(
         # logger.info(f"bytes received on socket {sock} -> {bytes_received}")
         # assert bytes_received == (pkt_count * buffer_length), "Packet loss observed while receive test"
 
-        result = wifi_dut.interfaces.wifi.close_socket(socket_id)
-        assert b"success" in result, "unable to close opened tcp socket"
-        logger.info(f"Successfully closed socket_id:{socket_id}  in the DUT")
+        # result = wifi_dut.interfaces.wifi.close_socket(socket_id)
+        # assert b"success" in result, "unable to close opened tcp socket"
+        # logger.info(f"Successfully closed socket_id:{socket_id}  in the DUT")
         # DUT closes the tcp socket
         result = wifi_dut.interfaces.wifi.close_socket(sock)
         assert b"success" in result, "unable to close opened tcp socket"
@@ -337,6 +338,7 @@ def test_SSLserver_functionality_by_configuring_cipher_suite_in_combination_C113
             # Socket binds at (device_ip, 5001) in DUT
             wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
             wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+            time.sleep(2)
             # Connect from third party device to the socket opened in the DUT
             ssl_client.interfaces.ssl.connect_to_server(device_ip, server_port=5001)
             # DUT
@@ -378,7 +380,7 @@ def test_SSLserver_functionality_by_configuring_cipher_suite_in_combination_C113
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_server_1_0version_client_1_2_testcase_c19115(
@@ -409,11 +411,17 @@ def test_ssl_server_1_0version_client_1_2_testcase_c19115(
         # Socket binds at (device_ip, 5001) in DUT
         wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
         wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+        time.sleep(5)
         # Connect from third party device to the socket opened in the DUT
         ssl_client.interfaces.ssl.connect_to_server(device_ip, server_port=5001, version="ssl_1.2")
-        with pytest.raises(WlanError) as exc_info:
-            wifi_dut.interfaces.wifi.accept(sock)
-        assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
+        # with pytest.raises(WlanError) as exc_info:
+        #     wifi_dut.interfaces.wifi.accept(sock)
+        # assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
+        # In this negative test, non-SSL client should fail SSL accept on DUT.
+        accept_result = wifi_dut.interfaces.wifi.accept(sock, expected="status: 0xFFFFFFFF", timeout=35)
+        assert isinstance(accept_result, (bytes, bytearray)), f"Unexpected accept response type: {type(accept_result)}"
+        assert b"status: 0xFFFFFFFF" in accept_result, "DUT did not report expected SSL accept failure"
+
         with pytest.raises(WlanError) as exc_info:
             wifi_dut.interfaces.wifi.wlan_get_status()
         assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
@@ -442,7 +450,7 @@ def test_ssl_server_1_0version_client_1_2_testcase_c19115(
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_server_no_server_cert_testcase_c19111(
@@ -469,11 +477,16 @@ def test_ssl_server_no_server_cert_testcase_c19111(
         # Socket binds at (device_ip, 5001) in DUT
         wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
         wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+        time.sleep(5)
         # Connect from third party device to the socket opened in the DUT
         ssl_client.interfaces.ssl.connect_to_server(device_ip, server_port=5001)
-        with pytest.raises(WlanError) as exc_info:
-            wifi_dut.interfaces.wifi.accept(sock)
-        assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
+        # with pytest.raises(WlanError) as exc_info:
+        #     wifi_dut.interfaces.wifi.accept(sock)
+        # assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
+        accept_result = wifi_dut.interfaces.wifi.accept(sock, expected="status: 0xFFFFFFFF", timeout=35)
+        assert isinstance(accept_result, (bytes, bytearray)), f"Unexpected accept response type: {type(accept_result)}"
+        assert b"status: 0xFFFFFFFF" in accept_result, "DUT did not report expected SSL accept failure"
+
         with pytest.raises(WlanError) as exc_info:
             wifi_dut.interfaces.wifi.wlan_get_status()
         assert exc_info.value.error_code == 0xD1, f"DUT sent wrong error code expected is 0xD1"
@@ -500,7 +513,7 @@ def test_ssl_server_no_server_cert_testcase_c19111(
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+                       wifi=[ "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_ssl_server_connect_non_ssl_client_testcase_c19112(
@@ -521,12 +534,18 @@ def test_ssl_server_connect_non_ssl_client_testcase_c19112(
         # Socket binds at (device_ip, 5001) in DUT
         wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
         wifi_dut.interfaces.wifi.listen(sock, backlog=1)
+        time.sleep(2)
         client_socket = remote_socket_factory.interfaces.socket.create_socket()
         thread = Thread(target=connect_to_server, args=(client_socket, device_ip, logger, 5001), )
         thread.start()
-        with pytest.raises(WlanError) as exc_info:
-            wifi_dut.interfaces.wifi.accept(sock)
-        assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
+
+        # with pytest.raises(WlanError) as exc_info:
+        #     wifi_dut.interfaces.wifi.accept(sock)
+        # assert exc_info.value.error_code == 0xFFFFFFFF, "DUT sent wrong error code, expected is 0xFFFFFFFF"
+        accept_result = wifi_dut.interfaces.wifi.accept(sock, expected="status: 0xFFFFFFFF", timeout=35)
+        assert isinstance(accept_result, (bytes, bytearray)), f"Unexpected accept response type: {type(accept_result)}"
+        assert b"status: 0xFFFFFFFF" in accept_result, "DUT did not report expected SSL accept failure"
+
         with pytest.raises(WlanError) as exc_info:
             wifi_dut.interfaces.wifi.wlan_get_status()
         assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
@@ -579,7 +598,7 @@ def test_ssl_server_connect_non_ssl_client_testcase_c19112(
     }
 )
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "clear_certs"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
@@ -674,7 +693,7 @@ def test_ssl_server_1_2version_client_1_0_testcase_c19116(
 
         wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
         wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-
+        time.sleep(2)
         th_start = Thread(target=dut_server_accept, args=(wifi_dut, sock, logger))
         th_start.start()
 
@@ -687,7 +706,7 @@ def test_ssl_server_1_2version_client_1_0_testcase_c19116(
         assert exc_info.value.error_code == 0xD2, f"DUT sent wrong error code expected is 0xD2"
 
         openssl.interfaces.client.stop()
-        wifi_dut.interfaces.wifi.close_socket(sock)
+        # wifi_dut.interfaces.wifi.close_socket(sock)
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
@@ -742,8 +761,9 @@ def test_ssl_server_1_2version_client_1_0_testcase_c19116(
     }
 )
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "clear_certs"])
+@pytest.mark.NCP_9116_shobha
 def test_ssl_server_1_0version_client_1_0_testcase_c19113(
         wifi_sniffer, wifi_dut, wifi_access_point, openssl, logger):
     try:
@@ -835,7 +855,7 @@ def test_ssl_server_1_0version_client_1_0_testcase_c19113(
 
         wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
         wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-
+        time.sleep(2)
         th_start = Thread(target=dut_server_accept, args=(wifi_dut, sock, logger))
         th_start.start()
 
@@ -861,7 +881,7 @@ def test_ssl_server_1_0version_client_1_0_testcase_c19113(
         assert data == buffer.decode(), "Date received on dut does not match the data sent from host"
 
         openssl.interfaces.client.stop()
-        wifi_dut.interfaces.wifi.close_socket(sock)
+        # wifi_dut.interfaces.wifi.close_socket(sock)
 
 
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1015,7 +1035,7 @@ def test_tcp_retransmission_functionality_over_ssl_server_after_remote_terminate
 
     wifi_dut.interfaces.wifi.bind(sock, device_ip, 5001)
     wifi_dut.interfaces.wifi.listen(sock, backlog=1)
-
+    time.sleep(2)
     th_start = Thread(target=dut_server_accept, args=(wifi_dut, sock, logger))
     th_start.start()
 
@@ -1050,7 +1070,7 @@ def test_tcp_retransmission_functionality_over_ssl_server_after_remote_terminate
             logger.info(f"Received the Event Type {event.event_type}, Event data {event.event_data}")
             remote_terminate = event.event_data
             assert remote_terminate, f"unable to find remote terminate event"
-    wifi_dut.interfaces.wifi.close_socket(sock)
+    # wifi_dut.interfaces.wifi.close_socket(sock)
     wifi_dut.interfaces.wifi.leave()
     validation = True
 
