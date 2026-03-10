@@ -1,0 +1,91 @@
+NUC Prerequisites Setup Guide
+Target Host: 10.207.18.161
+
+============================================================
+1) Verify Operating System Requirements (FIRST STEP)
+============================================================
+
+Requirement:
+- Ubuntu Version: 22.04 LTS
+- Kernel Version: 6.5.0-xx-generic (xx varies, e.g., 6.5.0-41-generic)
+
+1.1 Check Ubuntu version:
+    lsb_release -a
+Expected to include:
+    Description:    Ubuntu 22.04 LTS
+
+Alternative:
+    cat /etc/os-release
+
+1.2 Check kernel version:
+    uname -r
+Expected format:
+    6.5.0-xx-generic (Above 6.x)
+
+If the system is NOT Ubuntu 22.04 LTS and kernel 6.5.0-xx-generic (not above 6.x),
+upgrade Ubuntu and/or install the required kernel before continuing.
+
+============================================================
+2) Install Docker (if not already installed)
+============================================================
+
+    sudo apt update
+    sudo apt install docker.io -y
+
+Verify:
+    docker --version
+
+============================================================
+3) Configure Docker to Expose TCP Port 2375
+============================================================
+
+NOTE: Port 2375 exposes Docker WITHOUT TLS (insecure on untrusted networks).
+Use only in trusted environments or secure it with TLS.
+
+3.1 Create systemd override directory:
+    sudo mkdir -p /etc/systemd/system/docker.service.d
+
+3.2 Create Docker override configuration:
+    sudo tee /etc/systemd/system/docker.service.d/override.conf > /dev/null << 'EOF'
+    [Service]
+    ExecStart=
+    ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock
+    EOF
+
+3.3 Reload systemd and restart Docker:
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+
+3.4 Verify Docker is listening on port 2375:
+    sudo ss -tlnp | grep 2375
+
+Expected: output shows dockerd bound to 0.0.0.0:2375.
+
+============================================================
+4) Disable Bluetooth Service
+============================================================
+
+4.1 Stop Bluetooth:
+    sudo systemctl stop bluetooth.target
+
+4.2 Disable Bluetooth:
+    sudo systemctl disable Bluetooth
+
+4.3 Mask Bluetooth (prevent it from being started):
+    sudo systemctl mask Bluetooth
+
+4.4 Verify status:
+    systemctl status Bluetooth
+
+Expected: inactive (dead) and masked.
+
+============================================================
+Final Validation Checklist
+============================================================
+
+- Ubuntu 22.04 LTS installed
+- Kernel version 6.x.0-xx-generic
+- Docker installed
+- Docker service running
+- Docker listening on 2375
+- Bluetooth disabled and masked
