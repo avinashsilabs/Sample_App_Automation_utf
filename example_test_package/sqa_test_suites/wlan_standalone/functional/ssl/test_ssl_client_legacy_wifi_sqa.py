@@ -721,9 +721,10 @@ def test_ssl_client_cipher_suite_mismatch_testcase_c19133(wifi_sniffer, wifi_acc
         device_ip = wifi_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
         # Open ssl server socket in remote device(Raspberry pi or static device)
         logger.info(
-            f"Opening SSL server socket remotely with cipher suite->{Cipher.BIT_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA}")
-        wifi_dut.interfaces.wifi.select_ssl_cipher(cipher_list=Cipher.BIT_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA)
-        logger.info(f"Cipher suite selected in DUT is ECDHE-RSA-AES256-SHA384")
+            f"Cipher suite selected in DUT is BIT_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA & BIT(31)->{((Cipher.BIT_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA) | (Cipher.SSL_NEW_CIPHERS))}")
+        wifi_dut.interfaces.wifi.select_ssl_cipher(cipher_list=((Cipher.BIT_TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA) | (Cipher.SSL_NEW_CIPHERS)))
+        # "SSL_NEW_CIPHERS" is for BIT(31) so other than selected cipher not other ciphers are selected
+        logger.info(f"Opening SSL server socket remotely with cipher suite ECDHE-RSA-AES256-SHA384")
         ssl_server.interfaces.ssl.start_server(cipher_list="ECDHE-RSA-AES256-SHA384")
         # Open ssl client socket in the DUT
         sock = wifi_dut.interfaces.wifi.open_tcp_client_socket(protocol=SocketOptions.SSL_ENABLE)
