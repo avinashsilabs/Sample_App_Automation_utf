@@ -71,12 +71,23 @@ def ble_connection(ble_dut, ble_client):
 
 
 def ble_phy_events(ble_dut, ble_client_address):
-    events = ble_dut.interfaces.wifi.get_async_events()
-    phy_update = 0
-    for event in events:
-        if str(event.event_type) == str(RS9116AsyncEventType.BLE_PHY_UPDATE_COMPLETE):
-            phy_update = 1
-    assert phy_update, "phy event not received"
+    phy_update_found = False
+    preamble = b"rsi_ble_phy_set_update_complete_event"
+    max_attempts = 6
+    poll_interval = 5
+    for attempt in range(1, max_attempts + 1):
+        for _, data in ble_dut.interfaces.wifi.bus.get_input_log():
+            if preamble in data:
+                phy_update_found = True
+                break
+        if phy_update_found:
+            logger().info(f"BLE_PHY_UPDATE_COMPLETE event confirmed in bus log (attempt {attempt})")
+            break
+        logger().info(f"PHY update event not found yet, attempt {attempt}/{max_attempts}. "
+                      f"Waiting {poll_interval}s...")
+        time.sleep(poll_interval)
+    assert phy_update_found, (f"phy event not received after {max_attempts} attempts "
+                              f"({max_attempts * poll_interval}s total)")
     time.sleep(10)
     result = ble_dut.interfaces.bluetooth.ble_read_phy(ble_remote_dev_address=ble_client_address, timeout=120)
     logger().info(f"tx phy {result[0]}, rx phy {result[1]}")
