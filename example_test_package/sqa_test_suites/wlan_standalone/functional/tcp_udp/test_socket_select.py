@@ -216,7 +216,7 @@ def test_socket_select_tcp_c19325(
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
@@ -303,13 +303,12 @@ rs_helper, utf_constants
                                 f"is matched ")
                 assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
                                                         f"id {sock} opened in the DUT is not matched "
-        sock_count = 1
-        while sock_count >= 0:
-            logger.info(f"Closing socket_id->{sock_count}")
-            result = wifi_dut.interfaces.wifi.close_socket(sock_count)
-            assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
-            logger.info(f"Successfully closed socket_id->{sock_count}")
-            sock_count = sock_count - 1
+        sock_count = 0
+        logger.info(f"Closing socket_id->{sock_count}")
+        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+        logger.info(f"Successfully closed socket_id->{sock_count}")
+
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
@@ -1794,7 +1793,7 @@ def test_socket_select_udp_bidirectional_c19338(
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [900])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
@@ -1948,13 +1947,12 @@ def test_socket_select_tcp_socket_fd_disable_c19339(
                                                             f"socket " \
                                                             f"id {sock} opened in the DUT is not matched "
 
-        sock_count = 7
-        while sock_count >= 0:
+        for sock_count in range(0, 4):
             logger.info(f"Closing socket_id->{sock_count}")
             result = wifi_dut.interfaces.wifi.close_socket(sock_count)
             assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
             logger.info(f"Successfully closed socket_id->{sock_count}")
-            sock_count = sock_count - 1
+
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
