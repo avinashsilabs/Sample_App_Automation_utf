@@ -3307,7 +3307,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffe
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
-def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C163869_C163886(ble_dut, ble_sniffer, remote_wiseconnect3,
+def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C528627_C528644(ble_dut, ble_sniffer, remote_wiseconnect3,
                                                                             sl_collections,
                                                                             adv_type, min_interval, max_interval,
                                                                             test_case_id, pri_adv_phy, sec_adv_phy,
