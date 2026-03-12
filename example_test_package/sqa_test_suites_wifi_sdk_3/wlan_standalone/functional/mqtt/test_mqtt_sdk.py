@@ -624,6 +624,8 @@ class mqtt_publish_message_tx(ThreadBase):
     """
     Thread to publish data from DUT to mqtt server on subscribed topic and QOS value
     """
+    _PUBLISH_MAX_RETRIES = 3
+    _PUBLISH_RETRY_DELAY_SEC = 2
 
     def __init__(self, wifi_dut=None, mqtt_client=None, topic1=None, topic2=None, message=None, qos=None,
                  utf_constants=None):
@@ -636,17 +638,35 @@ class mqtt_publish_message_tx(ThreadBase):
         self.qos = qos
         self.utf_constants = utf_constants
 
+    def _dut_publish_with_retry(self, topic, message, qos):
+        """Publish from DUT with retries to avoid wrong address when async frames interleave mem.alloc response."""
+        last_exc = None
+        for attempt in range(self._PUBLISH_MAX_RETRIES):
+            try:
+                self.wifi_dut.interfaces.mqtt.mqtt_client_publish(
+                    topic=topic, message=message, qos=qos, timeout=20
+                )
+                return
+            except Exception as e:
+                last_exc = e
+                if attempt < self._PUBLISH_MAX_RETRIES - 1:
+                    logger().info(
+                        "DUT publish failed (attempt %s/%s), retrying after %ss: %s",
+                        attempt + 1, self._PUBLISH_MAX_RETRIES, self._PUBLISH_RETRY_DELAY_SEC, e,
+                    )
+                    time.sleep(self._PUBLISH_RETRY_DELAY_SEC)
+                else:
+                    raise last_exc
+
     def run(self):
         iter_count = self.utf_constants.get("iter_count")
         for count in range(iter_count):
             logger().info("********* DUT publishes message over the topic1 *********")
-            self.wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=self.topic1, message=self.message, qos=self.qos,
-                                                              timeout=20)
+            self._dut_publish_with_retry(self.topic1, self.message, self.qos)
             time.sleep(5)
 
             logger().info("********* DUT publishes message over the topic2 *********")
-            self.wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=self.topic2, message=self.message, qos=self.qos,
-                                                              timeout=20)
+            self._dut_publish_with_retry(self.topic2, self.message, self.qos)
             time.sleep(5)
 
         msgs = []
@@ -743,11 +763,11 @@ class mqtt_publish_message_rx(ThreadBase):
         for count in range(iter_count):
             logger().info("********* MQTT Client publishes message over the topic1 **********")
             self.mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=self.topic1, payload=self.message, qos=self.qos)
-            time.sleep(2)
+            time.sleep(4)
 
             logger().info("********* MQTT Client publishes message over the topic2 *********")
             self.mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=self.topic2, payload=self.message, qos=self.qos)
-            time.sleep(2)
+            time.sleep(4)
 
     def dut_receive_check(self):
         found = False
@@ -4753,6 +4773,7 @@ def test_wifi_sdk_qos0_mqtt_ssl_simultaneous_with_two_topic_length_C537955(
         time.sleep(5)
 
         mqtt_rx_obj.start()
+        time.sleep(1)
         mqtt_tx_obj.start()
         mqtt_tx_obj.wait_for_exit()
         mqtt_rx_obj.wait_for_exit()
@@ -4861,7 +4882,7 @@ def test_wifi_sdk_qos1_mqtt_ssl_simultaneous_with_two_topic_length_C537953(
 
             logger().info("....Unsubscribing from the topic2....")
             wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic2)
-            time.sleep(5)
+            time.sleep(10)
 
             logger().info("....disconnecting from MQTT broker....")
             wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
@@ -6318,7 +6339,7 @@ def test_wifi_sdk_qos1_wifi_init_mqtt_simultaneous_publish_subscribe_deinit_c586
             time.sleep(5)
 
             logger().info("....disconnecting from MQTT broker....")
-            wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
+            wifi_dut.interfaces.mqtt.mqtt_client_disconnect(async_timeout=30)
             time.sleep(5)
 
             logger().info("....initiating leave from DUT....")
