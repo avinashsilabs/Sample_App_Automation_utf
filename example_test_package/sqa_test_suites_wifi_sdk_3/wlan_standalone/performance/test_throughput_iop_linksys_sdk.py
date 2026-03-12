@@ -463,7 +463,6 @@ def test_wlan_standalone_tcp_tx_with_enh_psp_C402815(firmware_loader, wifi_clien
     finally:
         wifi_dut.interfaces.wifi.leave()
         time.sleep(2)
-        wifi_client.interfaces.wifi.leave()
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
