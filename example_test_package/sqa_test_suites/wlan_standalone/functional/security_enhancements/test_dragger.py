@@ -248,6 +248,7 @@ class EAP_Connectivity_with_ciphers:
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server_v2")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES256_SHA256_TLSv12_C113821(rs_helper, utf_constants, radius_server, net_perf_client,
@@ -263,7 +264,7 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA256_TLSv12_C113821(rs_helper, utf_constants,
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
                     f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x006b ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.2  and cipher suit DHE-RSA-AES256-SHA256 in sniffer"
     )
@@ -298,6 +299,7 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA256_TLSv12_C113821(rs_helper, utf_constants,
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server_v2")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES128_SHA256_TLSv12_C113822(rs_helper, utf_constants, radius_server, net_perf_client,
@@ -318,7 +320,7 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA256_TLSv12_C113822(rs_helper, utf_constants,
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
                     f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0067 ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.2  and cipher suit DHE-RSA-AES128-SHA256 in sniffer"
     )
@@ -353,6 +355,7 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA256_TLSv12_C113822(rs_helper, utf_constants,
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server_v2")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv12_C113823(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
@@ -368,7 +371,7 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv12_C113823(rs_helper, utf_constants, ra
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
                     f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0039 ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.2  and cipher suit DHE-RSA-AES256-SHA in sniffer"
     )
@@ -403,6 +406,7 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv12_C113823(rs_helper, utf_constants, ra
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server_v2")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv12_C113824(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
@@ -417,7 +421,7 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv12_C113824(rs_helper, utf_constants, ra
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
                     f'and eap and tls.record.version == 0x0303 and tls.handshake.ciphersuite == 0x0033 ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.2  and cipher suit DHE-RSA-AES128-SHA in sniffer"
     )
@@ -790,6 +794,7 @@ def test_WPA2_EAP_non_supported_ciphers_TLSv12_C113834(rs_helper, utf_constants,
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server_v2")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv10_C113835(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
@@ -804,7 +809,7 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv10_C113835(rs_helper, utf_constants, ra
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
                     f'and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x0039 ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.0  and cipher suit DHE-RSA-AES256-SHA in sniffer"
     )
@@ -839,6 +844,7 @@ def test_WPA2_EAP_DHE_RSA_AES256_SHA_TLSv10_C113835(rs_helper, utf_constants, ra
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.radius_server("raspi_radius_server_v2")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
 def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv10_C113836(rs_helper, utf_constants, radius_server, net_perf_client, protocol,
@@ -853,7 +859,7 @@ def test_WPA2_EAP_DHE_RSA_AES128_SHA_TLSv10_C113836(rs_helper, utf_constants, ra
     # Validating the EAP failure frames
     packet_filter = f'wlan.addr == {dut_mac_address} and wlan.addr == {ap_bssid} ' \
                     f'and eap and tls.record.version == 0x0301 and tls.handshake.ciphersuite == 0x0033 ' \
-                    f'and tls.handshake.cipher_suites_length == 2'
+                    f'and tls.handshake.cipher_suites_length == 4'
     logger().info(
         f"Validating EAP frames TLS version 1.0  and cipher suit DHE-RSA-AES128-SHA in sniffer"
     )
