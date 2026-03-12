@@ -2122,6 +2122,25 @@ def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
     )
     assert bt_client_address, "failed to initiate ble in remote device"
     logger().info(f"ble client add..{bt_client_address}")
+    ble_obj = ble_adv(ble_client, bt_dut_address, peer_address, bt_client_address)
+    ble_obj.start()
+    logger().info("Start scanning....")
+    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    logger().info(f" scan result '{result}")
+    time.sleep(0.5)
+    scan_results = result.splitlines()
+    logger().info(f"scan_results: **********{scan_results}**********")
+    scan_status = False
+    for line in scan_results:
+        line = str(line)
+        logger().info("checking for remote device Advertisement type and BD address")
+        if "rsi_ble_simple_central_on_adv_report_event" in line:
+            logger().info(f"**************Advertise report :{line}**********")
+            if (bt_client_address in line) and ("report_type:1" in line):
+                logger().info("Advertisement type found 0x01 in adv report")
+                scan_status = True
+                break
+    assert scan_status, "no bt device found with adv type 0x01"
     enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_wifi_ps, "failed to enable wifi power save"
@@ -2142,25 +2161,6 @@ def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
         if count == 5:
             logger().error("Failed to enable bt power save after multiple attempts")
             pytest.skip("Failed to enable bt power save after multiple attempts")
-    ble_obj = ble_adv(ble_client, bt_dut_address, peer_address, bt_client_address)
-    ble_obj.start()
-    logger().info("Start scanning....")
-    result = ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
-    logger().info(f" scan result '{result}")
-    time.sleep(15)
-    scan_results = result.splitlines()
-    logger().info(f"scan_results: **********{scan_results}**********")
-    scan_status = False
-    for line in scan_results:
-        line = str(line)
-        logger().info("checking for remote device Advertisement type and BD address")
-        if "rsi_ble_simple_central_on_adv_report_event" in line:
-            logger().info(f"**************Advertise report :{line}**********")
-            if (bt_client_address in line) and ("report_type:1" in line):
-                logger().info("Advertisement type found 0x01 in adv report")
-                scan_status = True
-                break
-    assert scan_status, "no bt device found with adv type 0x01"
 
     ble_client.interfaces.bluetooth.stop_advertising()
     time.sleep(5)

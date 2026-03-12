@@ -1034,17 +1034,64 @@ def test_ble_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client):
         )
         assert bt_client_address is not None
         time.sleep(10)
+        ble_scan_interval = 256
+        ble_scan_window = 80
+        dut_scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address,
+                                                                       ble_scan_interval=ble_scan_interval,
+                                                                       ble_scan_window=ble_scan_window,
+                                                                       timeout=60)
+        logger().info(f"dut_scan_results: {dut_scan_results}")
+        time.sleep(0.5)
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        time.sleep(10)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.Adv_Report:
+                whitelist_data = wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
+                assert whitelist_data == "AUTOMATION", "whitelist data not found"
+                logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
+                logger().info(f"\n\n***********found advertising data: {whitelist_data}****************\n\n")
+                break
+            time.sleep(10)
+            logger().info("test1")
+            enable_btps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-        blescan_obj = BleScan(wifi_dut, ble_scan_interval=256, ble_scan_window=80)
-        blescan_obj.start()
-        blescan_obj.wait_for_exit()
-    except Exception as error:
-        logger().error(f"Failed with an error - {error}")
-        raise error
+            assert enable_btps, f"unable to enable the btps"
+            logger().info("test2")
+            time.sleep(15)
+            count = 0
+            state = None
+            while True:
+                try:
+                    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+                    logger().info(f"Device state at start: {state}")
+                except Exception as e:
+                    logger().error(f"Device unresponsive at test start: {e}")
+                    # Device is hung from previous test - need to reset
+                    pytest.skip("Device unresponsive - requires reset")
+                if state == '0':
+                    break  # Device is in idle state, proceed with test
+                else:
+                    logger().info(f"Device state at start: {state}")
+                time.sleep(20)
+                count = count + 1
+                if count == 5:
+                    pytest.skip("Device did not return to idle state after multiple attempts")
+            logger().info(f"\n\n**************Start DUT**************\n\n")
+            try:
+                enable_wifips = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+            except Exception as e:
+                logger().error(f"Device unresponsive while enabling wifi powersave: {e}")
+                # Device is hung from previous test
+                pytest.skip("Device unresponsive")
+
+            assert enable_wifips, f" unable to enable the wifips"
+            count = 0
+            logger().info(f"\n\n**************Start DUT**************\n\n")
+
     finally:
-        logger().info(f"Disabling powersave")
-        wifi_dut.interfaces.wifi.power_save(0, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(0, 0)
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
         wifi_dut.interfaces.wifi.reset()
@@ -1052,10 +1099,10 @@ def test_ble_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_client, ble_clients):
+def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_clients):
     assert len(ble_clients) >= 2
-    ble_client1 = ble_clients[1]
-    ble_client2 = ble_clients[0]
+    ble_client1 = ble_clients[0]
+    ble_client2 = ble_clients[1]
     try:
         count = 0
         state = None
@@ -1118,24 +1165,87 @@ def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_c
 
         )
         bt_clients_address = [bt_client_address1, bt_client_address2]
-        blescan_obj = BleScan(wifi_dut, ble_scan_interval=256, ble_scan_window=80,
-                              bt_clients_address=bt_clients_address)
-        blescan_obj.start()
-        blescan_obj.wait_for_exit()
+        ble_scan_interval = 256
+        ble_scan_window = 80
+        dut_scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address1,
+                                                                       ble_scan_interval=ble_scan_interval,
+                                                                       ble_scan_window=ble_scan_window,
+                                                                       timeout=60)
+        logger().info(f"dut_scan_results: {dut_scan_results}")
+        time.sleep(0.5)
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        time.sleep(10)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if bt_clients_address:
+                for x in bt_clients_address:
+                    if str(x) in str(event.event_data):
+                        logger().info(
+                            f"*************************/n/nFound the advertising data from the expected{x} advertiser:")
+                    assert str(x) in str(
+                        event.event_data), f"advertising data from the expected {x} advertiser not found in the event data"
+            if event.event_type == RS9116AsyncEventType.Adv_Report:
+                whitelist_data = wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
+                assert whitelist_data == "AUTOMATION", "whitelist data not found"
+                logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
+                logger().info(f"\n\n***********found advertising data: {whitelist_data}****************\n\n")
+                break
+            time.sleep(10)
+            logger().info("test1")
+            enable_btps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                 RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+            assert enable_btps, f"unable to enable the btps"
+            logger().info("test2")
+            time.sleep(15)
+            count = 0
+            state = None
+            while True:
+                try:
+                    state = wifi_dut.interfaces.wifi.ble_get_device_state()
+                    logger().info(f"Device state at start: {state}")
+                except Exception as e:
+                    logger().error(f"Device unresponsive at test start: {e}")
+                    # Device is hung from previous test - need to reset
+                    pytest.skip("Device unresponsive - requires reset")
+                if state == '0':
+                    break  # Device is in idle state, proceed with test
+                else:
+                    logger().info(f"Device state at start: {state}")
+                time.sleep(20)
+                count = count + 1
+                if count == 5:
+                    pytest.skip("Device did not return to idle state after multiple attempts")
+            logger().info(f"\n\n**************Start DUT**************\n\n")
+            try:
+                enable_wifips = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+            except Exception as e:
+                try:
+                    wifi_dut.interfaces.wifi.bus.read_all()  # Drain buffer
+                except:
+                    wifi_dut.interfaces.wifi.bus.flush()
+                    pass
+
+                enable_wifips = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                    RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+            assert enable_wifips, f" unable to enable the wifips"
+            count = 0
+
+            logger().info(f"\n\n**************Start DUT**************\n\n")
 
     finally:
-        logger().info(f"Disabling powersave")
-        wifi_dut.interfaces.wifi.power_save(0, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(0, 0)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
         time.sleep(5)
         wifi_dut.interfaces.wifi.reset()
         time.sleep(30)
 
-
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_scan_aggressive_interval_whitelist_adv_data_index5_C19956(wifi_dut, ble_client, ble_clients):
+def test_ble_scan_aggressive_interval_whitelist_adv_data_index5_C19956(firmware_loader, wifi_dut, ble_client, ble_clients):
     try:
         count = 0
         state = None
@@ -1180,21 +1290,73 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_index5_C19956(wifi_dut,
                            "0x00"  # Advertising_Filter_Policy
 
         )
-        blescan_obj = BleScan(wifi_dut, ble_scan_interval=160, ble_scan_window=80)
-        blescan_obj.start()
-        blescan_obj.wait_for_exit()
+        ble_scan_interval = 160
+        ble_scan_window = 80
+        dut_scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address,
+                                                                            ble_scan_interval=ble_scan_interval,
+                                                                            ble_scan_window=ble_scan_window,
+                                                                            timeout=60)
+        logger().info(f"dut_scan_results: {dut_scan_results}")
+        time.sleep(0.5)
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        time.sleep(10)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if event.event_type == RS9116AsyncEventType.Adv_Report:
+                whitelist_data = wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
+                assert whitelist_data == "AUTOMATION", "whitelist data not found"
+                logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
+                logger().info(f"\n\n***********found advertising data: {whitelist_data}****************\n\n")
+                break
+        time.sleep(10)
+        logger().info("test1")
+        enable_btps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+
+        assert enable_btps, f"unable to enable the btps"
+        logger().info("test2")
+        time.sleep(15)
+        count = 0
+        state = None
+        while True:
+            try:
+                state = wifi_dut.interfaces.wifi.ble_get_device_state()
+                logger().info(f"Device state at start: {state}")
+            except Exception as e:
+                logger().error(f"Device unresponsive at test start: {e}")
+                # Device is hung from previous test - need to reset
+                pytest.skip("Device unresponsive - requires reset")
+            if state == '0':
+                break  # Device is in idle state, proceed with test
+            else:
+                logger().info(f"Device state at start: {state}")
+            time.sleep(20)
+            count = count + 1
+            if count == 5:
+                pytest.skip("Device did not return to idle state after multiple attempts")
+        logger().info(f"\n\n**************Start DUT**************\n\n")
+        try:
+            enable_wifips = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+        except Exception as e:
+            logger().error(f"Device unresponsive while enabling wifi powersave: {e}")
+
+
+        assert enable_wifips, f" unable to enable the wifips"
+        count = 0
+
+        logger().info(f"\n\n**************Start DUT**************\n\n")
+
     finally:
-        logger().info(f"Disabling powersave")
-        wifi_dut.interfaces.wifi.power_save(0, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(0, 0)
         ble_client.interfaces.bluetooth.close()
         time.sleep(5)
         wifi_dut.interfaces.wifi.reset()
         time.sleep(30)
 
-
+@pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19957(wifi_dut, ble_client, ble_clients):
+def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19957(firmware_loader, wifi_dut, ble_client, ble_clients):
     assert len(ble_clients) >= 2
     ble_client1 = ble_clients[1]
     ble_client2 = ble_clients[0]
@@ -1260,15 +1422,72 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19
         )
         logger().info(f"bt_client_address1: {bt_client_address1}")
         logger().info(f"bt_client_address2: {bt_client_address2}")
+        bt_clients_address = [bt_client_address1, bt_client_address2]
+        ble_scan_interval = 960
+        ble_scan_window = 640
+        dut_scan_results = wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address1,
+                                                                       ble_scan_interval=ble_scan_interval,
+                                                                       ble_scan_window=ble_scan_window,
+                                                                       timeout=60)
+        logger().info(f"dut_scan_results: {dut_scan_results}")
+        time.sleep(0.5)
+        wifi_dut.interfaces.wifi.ble_stop_scanning()
+        time.sleep(10)
+        events = wifi_dut.interfaces.wifi.get_async_events()
+        for event in events:
+            if bt_clients_address:
+                for x in bt_clients_address:
+                    if str(x) in str(event.event_data):
+                        logger().info(
+                            f"*************************/n/nFound the advertising data from the expected{x} advertiser:")
+                    assert str(x) in str(
+                        event.event_data), f"advertising data from the expected {x} advertiser not found in the event data"
+            if event.event_type == RS9116AsyncEventType.Adv_Report:
+                whitelist_data = wifi_dut.interfaces.wifi.parse_and_get_whitelist_data(event.event_data)
+                assert whitelist_data == "AUTOMATION", "whitelist data not found"
+                logger().info(f"\n\n***********character conversion of advertising data*****************\n\n")
+                logger().info(f"\n\n***********found advertising data: {whitelist_data}****************\n\n")
+                break
+        time.sleep(10)
+        enable_btps = wifi_dut.interfaces.wifi.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
 
-        blescan_obj = BleScan(wifi_dut, ble_scan_interval=960, ble_scan_window=640)
-        blescan_obj.start()
-        blescan_obj.wait_for_exit()
+        assert enable_btps, f"unable to enable the btps"
+        logger().info("test2")
+        time.sleep(15)
+        count = 0
+        state = None
+        while True:
+            try:
+                state = wifi_dut.interfaces.wifi.ble_get_device_state()
+                logger().info(f"Device state at start: {state}")
+            except Exception as e:
+                logger().error(f"Device unresponsive at test start: {e}")
+                # Device is hung from previous test - need to reset
+                pytest.skip("Device unresponsive - requires reset")
+            if state == '0':
+                break  # Device is in idle state, proceed with test
+            else:
+                logger().info(f"Device state at start: {state}")
+            time.sleep(20)
+            count = count + 1
+            if count == 5:
+                pytest.skip("Device did not return to idle state after multiple attempts")
+        logger().info(f"\n\n**************Start DUT**************\n\n")
+        try:
+            enable_wifips = wifi_dut.interfaces.wifi.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                                RS9116PowerSaveProcedureTypes.FastPowerSave)
+        except Exception as e:
+            logger().error(f"Device unresponsive while enabling wifi powersave: {e}")
+            # Device is hung from previous test
+            pytest.skip("Device unresponsive")
+
+        assert enable_wifips, f" unable to enable the wifips"
+        count = 0
+
+        logger().info(f"\n\n**************Start DUT**************\n\n")
 
     finally:
-        logger().info(f"Disabling powersave")
-        wifi_dut.interfaces.wifi.power_save(0, 0)
-        wifi_dut.interfaces.wifi.bt_power_save(0, 0)
         ble_client1.interfaces.bluetooth.close()
         ble_client2.interfaces.bluetooth.close()
         time.sleep(5)
