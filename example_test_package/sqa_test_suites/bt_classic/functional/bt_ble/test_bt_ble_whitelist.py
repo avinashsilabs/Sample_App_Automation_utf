@@ -163,7 +163,7 @@ def bt_spp_master_slave(wifi_dut, bt_client, mode):
 
 
 @retry(Exception, delay=15, tries=3)
-def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_needed=True):
+def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_needed=True, clear_whitelist=False):
     ble_client_address = None
     ble_dut_address = ble_dut_address
     if mode == "ble_master":
@@ -178,25 +178,27 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         assert ble_client_address, f"Unable to get ble_client_address"
         time.sleep(5)
         try:
-            logger().info(f"****** ADDING WHITELIST BEFORE SCANNING")
-            # Wake up DUT UART from power save before sending whitelist command.
-            # After BT power save Mode 2, the UART sleeps during idle gaps and can truncate the next command. A lightweight read wakes it reliably.
-            try:
-                wifi_dut.interfaces.wifi.ble_get_device_state()
-            except Exception:
-                pass
-            time.sleep(1)
-            # Retry whitelist add - UART may still truncate on first wake-up attempt
-            whitelist_added = False
-            for retry_count in range(1, 4):
+            if clear_whitelist:
+                logger().info(f"****** CLEARING WHITELIST BEFORE ADDING DEVICE")
                 try:
-                    wifi_dut.interfaces.wifi.ble_add_white_list(ble_client_address, timeout=15)
-                    whitelist_added = True
-                    break
-                except Exception as wl_err:
-                    logger().warning(f"ble_add_white_list attempt {retry_count} failed: {wl_err}")
-                    time.sleep(3)
-            assert whitelist_added, f"Failed to add BLE whitelist for '{ble_client_address}' after 3 attempts"
+                    wifi_dut.interfaces.wifi.ble_clear_whitelist()
+                    time.sleep(2)
+                except Exception as clr_err:
+                    logger().warning(f"ble_clear_whitelist failed (may be empty already): {clr_err}")
+
+            logger().info(f"****** ADDING {ble_client_address} TO WHITELIST BEFORE SCANNING")
+            try:
+                wifi_dut.interfaces.wifi.ble_add_white_list(ble_client_address)
+            except Exception as wl_err:
+                if not clear_whitelist:
+                    raise
+                logger().warning(f"ble_add_white_list failed: {wl_err}, retrying after clear")
+                try:
+                    wifi_dut.interfaces.wifi.ble_clear_whitelist()
+                    time.sleep(2)
+                except Exception:
+                    pass
+                wifi_dut.interfaces.wifi.ble_add_white_list(ble_client_address)
             logger().info(f"Start scanning and connect to ble client")
             wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, ble_scan_filter_type=1,
                                                         timeout=120)
@@ -210,14 +212,14 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
         except Exception as e:
             logger().info("*************** Exception block for stop advertising and stop scanning")
             ble_client.interfaces.bluetooth.stop_advertising()
-            # State check before stopping scanning
+            # Check device state before stopping scanning — if the connection actually succeeded the DUT is no longer scanning, and calling ble_stop_scanning raises 0x4E0C (Command disallowed).
             try:
                 state = wifi_dut.interfaces.wifi.ble_get_device_state()
                 state_int = int(state) if state.isdigit() else -1
                 if state_int == BLEDeviceState.Scanning:
                     wifi_dut.interfaces.wifi.ble_stop_scanning()
                 else:
-                    logger().info("Scanning not active, skipping ble_stop_scanning()")
+                    logger().info(f"Device state is {state}, not scanning — skipping ble_stop_scanning()")
             except Exception as scan_err:
                 logger().info(f"Exception during state check or stop scanning: {scan_err}")
             raise e
@@ -326,9 +328,20 @@ def check_connection_status(wifi_dut, ble_dut_address=None, ble_clients=None):
             logger().info(
                 f"\n***************** Checking connection status of BLE from Raspi Device {ble_client.name} ******************")
 
-            status = ble_client.interfaces.bluetooth.get_connection_status(ble_dut_address)
-            logger().info(f"Connection status in remote device is:{status}")
-            assert status, f"Remote device is not connected to DUT '{ble_dut_address}'"
+            connected = False
+            for attempt in range(1, 4):
+                try:
+                    status = ble_client.interfaces.bluetooth.get_connection_status(ble_dut_address)
+                    logger().info(f"Connection status in remote device is:{status}")
+                    if status:
+                        connected = True
+                        break
+                    else:
+                        logger().warning(f"BLE connection check returned False for {ble_client.name}, attempt {attempt}")
+                except Exception as conn_err:
+                    logger().warning(f"BLE connection check failed for {ble_client.name}, attempt {attempt}: {conn_err}")
+                time.sleep(5)
+            assert connected, f"Remote device {ble_client.name} is not connected to DUT '{ble_dut_address}'"
             logger().info(f"\n************* Remote BLE device still connected to DUT '{ble_dut_address}' *************")
 
 
@@ -575,23 +588,23 @@ def test_bt_ble_connection_with_ble_as_dual_role_C19995(firmware_loader, wifi_du
             ble_client1 = ble_clients[0]
             ble_client2 = ble_clients[1]
             bt_mode = "bt_slave"
-            logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
+            logger().info("Setting DUT as BT Slave. Remote device will scan, bond with PIN, and initiate SPP connection")
             bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
-            logger().info(f"bt_dut_address '{bt_dut_address}'")
-
+            logger().info(f"SPP connection successful. bt_dut_address: '{bt_dut_address}'")
             ble_mode = "ble_slave"
-            logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
+            logger().info("Remote BLE device scanning for DUT(BLE). DUT is advertising, remote will connect")
             ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client1, ble_mode)
-            logger().info(f"ble_dut_address after ble_slave connection '{ble_dut_address}'")
-
+            logger().info(f"BLE Slave connection successful. ble_dut_address: '{ble_dut_address}'")
             ble_mode = "ble_master"
-            logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
+            logger().info("SLAVE connections complete. Enabling remote BLE device in advertise mode. DUT(BLE) will initiate scan and connect as Master")
             ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address,
                                                             start_needed=False)
+            logger().info("DUT(BLE) Master connection successful")
 
-            logger().info("Checking connection status of BT, BLE")
+            logger().info("Checking connection status of BT and BLE (Dual Role) connections")
             time.sleep(60)
-            check_connection_status(wifi_dut, ble_dut_address, ble_clients)
+            check_connection_status(wifi_dut, ble_dut_address, [ble_client1, ble_client2])
+            logger().info("All connections (BT Slave + BLE Slave + BLE Master) verified stable")
     finally:
         dut_clean_up(wifi_dut, bt_socket)
 
@@ -635,22 +648,24 @@ def test_bt_ble_connection_stability_C19996(firmware_loader, wifi_dut, bt_client
             ble_client2 = ble_clients[1]
 
             bt_mode = "bt_slave"
-            logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
+            logger().info("Setting DUT as BT Slave. Remote device will scan, bond with PIN, and initiate SPP connection")
             bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
-
+            logger().info(f"SPP connection successful. bt_dut_address: '{bt_dut_address}'")
             ble_mode = "ble_slave"
-            logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
+            logger().info("Remote BLE device scanning for DUT(BLE). DUT is advertising, remote will connect")
             ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client1, ble_mode)
-            logger().info(f"ble_dut_address after ble_slave connection '{ble_dut_address}'")
+            logger().info(f"BLE Slave connection successful. ble_dut_address: '{ble_dut_address}'")
 
             ble_mode = "ble_master"
-            logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
+            logger().info("SLAVE connections complete. Enabling remote BLE device in advertise mode. DUT(BLE) will initiate scan and connect as Master")
             ble_master_slave(wifi_dut, ble_client2, ble_mode, ble_dut_address)
+            logger().info("DUT(BLE) Master connection successful")
 
-            logger().info("keeping the setup undisturbed for 60 seconds ")
-            time.sleep(60)
-            logger().info("Checking connection status of BT, BLE after 60 seconds of undisturbed setup ")
-            check_connection_status(wifi_dut, ble_dut_address, ble_clients)
+            logger().info("Keeping the setup undisturbed for 10 minutes for connection stability check")
+            time.sleep(600)
+            logger().info("Checking connection status of BT and BLE after 10 minutes of undisturbed setup")
+            check_connection_status(wifi_dut, ble_dut_address, [ble_client1, ble_client2])
+            logger().info("All connections (BT Slave + BLE Slave + BLE Master) stable after 10 minutes")
     finally:
         dut_clean_up(wifi_dut, bt_socket)
 
