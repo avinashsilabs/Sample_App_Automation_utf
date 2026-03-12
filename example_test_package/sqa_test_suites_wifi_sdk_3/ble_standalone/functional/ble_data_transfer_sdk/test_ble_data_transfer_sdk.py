@@ -176,8 +176,11 @@ class Ble_Data_Transfer:
                     self.ble_dut.interfaces.wifi.ble_set_mtu(mtu_size=mtu_size)
                 logger().info(f"Initiating connection, this can take up to {timeout} seconds....")
                 self.ble_dut.interfaces.bluetooth.ble_connect(
-                    ble_remote_dev_address=self.ble_client_address,
-                    timeout=timeout
+                    ble_remote_dev_address=self.ble_client_address,ble_scan_interval=80, ble_scan_window=80,
+                    ble_conn_interval_min=200,
+                    ble_conn_interval_max=200,
+                    ble_supervision_timeout=3000,
+                    timeout=timeout, async_timeout=90,
                 )
                 time.sleep(40)
 
@@ -2672,9 +2675,11 @@ def test_verify_ble_tx_write_without_response_data_220bytes_MTU_size_dut_as_mast
             # Configure buffer mode
             ble_obj.configure_buffer_mode(mode=1, count=2)
             data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=220))
+            write_count=50
             # Write and send BLE 232 bytes of write without response data using the below API
-            write_count = ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=220, data=data, write_time=100,
-                                            bt_mon_log_file_name=bt_mon_log_file_name, mtu_size=220, write_count=50)
+            ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=220, data=data,
+                                            bt_mon_log_file_name=bt_mon_log_file_name, write_count=write_count,
+                                            testcase_no="705952")
             ble_obj.check_device_state_on_dut()
 
             # Mapping Master and Slave Address for Adding devices for sniffer
@@ -2753,9 +2758,11 @@ def test_verify_ble_tx_write_without_response_data_200bytes_MTU_size_dut_as_mast
             # Configure buffer mode
             ble_obj.configure_buffer_mode(mode=1, count=2)
             data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
+            write_count=50
             # Write and send BLE 232 bytes of write without response data using the below API
-            write_count = ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=200, data=data, write_time=60,
-                                            bt_mon_log_file_name=bt_mon_log_file_name,write_count=10, testcase_no="705953")
+            ble_obj.gatt_write_without_resp(write_handle=write_handle, data_length=200, data=data,
+                                            bt_mon_log_file_name=bt_mon_log_file_name,write_count=write_count,
+                                            testcase_no="705953")
             ble_obj.check_device_state_on_dut()
 
             # Mapping Master and Slave Address for Adding devices for sniffer
@@ -3057,7 +3064,7 @@ def test_verify_ble_tx_indication_100bytes_MTU_size_dut_as_master_role_C705951(b
             sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
             logger().info(sniffer_data_df.head())
             assert len(sniffer_data_df.loc[
-                           (sniffer_data_df['Role'] == "* P") & (
+                           (sniffer_data_df['Role'] == "* C") & (
                                    sniffer_data_df['+BD Address (LE PKT)'] == f"0x{ble_dut_address.lower()}") & (
                                    sniffer_data_df['Opcode'] == "* ATT_HANDLE_VALUE_IND") & (
                                    sniffer_data_df['+PDU Length (L2CAP)'] == 100)]) >= int(
