@@ -258,7 +258,7 @@ pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_tx_with_fast_psp_C402811(firmware_loader, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_tx_with_fast_psp_C402821(firmware_loader, wifi_client, wifi_dut, net_perf_client,
                                                       wifi_access_point, protocol, utf_constants, request,
                                                       sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -304,7 +304,7 @@ def test_wlan_standalone_tcp_tx_with_fast_psp_C402811(firmware_loader, wifi_clie
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_rx_with_fast_psp_C402812(firmware_loader, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_rx_with_fast_psp_C402822(firmware_loader, wifi_client, wifi_dut, net_perf_client,
                                                       wifi_access_point, protocol, utf_constants, request, wifi_sniffer,
                                                       sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -350,7 +350,7 @@ def test_wlan_standalone_tcp_rx_with_fast_psp_C402812(firmware_loader, wifi_clie
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_tx_with_fast_psp_C402813(firmware_loader, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_tx_with_fast_psp_C402823(firmware_loader, wifi_client, wifi_dut, net_perf_client,
                                                       wifi_access_point, wifi_sniffer, protocol, utf_constants, request,
                                                       sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -396,7 +396,7 @@ def test_wlan_standalone_udp_tx_with_fast_psp_C402813(firmware_loader, wifi_clie
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_rx_with_fast_psp_C402814(firmware_loader, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_rx_with_fast_psp_C402824(firmware_loader, wifi_client, wifi_dut, net_perf_client,
                                                       wifi_access_point, protocol, utf_constants, request,
                                                       sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -443,7 +443,7 @@ def test_wlan_standalone_udp_rx_with_fast_psp_C402814(firmware_loader, wifi_clie
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_tx_with_enh_psp_C402815(firmware_loader, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_tx_with_enh_psp_C402825(firmware_loader, wifi_client, wifi_dut, net_perf_client,
                                                      wifi_access_point, protocol, utf_constants, request, wifi_sniffer,
                                                      sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -490,7 +490,7 @@ def test_wlan_standalone_tcp_tx_with_enh_psp_C402815(firmware_loader, wifi_clien
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_tcp_rx_with_enh_psp_C402816(firmware_loader, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_tcp_rx_with_enh_psp_C402826(firmware_loader, wifi_client, wifi_dut, net_perf_client,
                                                      wifi_access_point, protocol, utf_constants, request, wifi_sniffer,
                                                      sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -537,7 +537,7 @@ def test_wlan_standalone_tcp_rx_with_enh_psp_C402816(firmware_loader, wifi_clien
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_tx_with_enh_psp_C402817(firmware_loader, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_tx_with_enh_psp_C402827(firmware_loader, wifi_client, wifi_dut, net_perf_client,
                                                      wifi_access_point, protocol, utf_constants, request, wifi_sniffer,
                                                      sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -584,7 +584,7 @@ def test_wlan_standalone_udp_tx_with_enh_psp_C402817(firmware_loader, wifi_clien
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
-def test_wlan_standalone_udp_rx_with_enc_psp_C402818(firmware_loader, wifi_client, wifi_dut, net_perf_client,
+def test_wlan_standalone_udp_rx_with_enc_psp_C402828(firmware_loader, wifi_client, wifi_dut, net_perf_client,
                                                      wifi_access_point, protocol, utf_constants, request, wifi_sniffer,
                                                      sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -625,7 +625,7 @@ def test_wlan_standalone_udp_rx_with_enc_psp_C402818(firmware_loader, wifi_clien
 
     }
 )
-def test_wlan_ble_connected_udp_tx_with_fast_psp_C402819(wifi_access_point, wifi_client, wifi_sniffer,
+def test_wlan_ble_connected_udp_tx_with_fast_psp_C402829(wifi_access_point, wifi_client, wifi_sniffer,
                                                          wifi_dut, net_perf_client, protocol, utf_constants, request,
                                                          sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -668,7 +668,7 @@ def test_wlan_ble_connected_udp_tx_with_fast_psp_C402819(wifi_access_point, wifi
 
     }
 )
-def test_wlan_ble_connected_udp_tx_with_enh_psp_C402820(firmware_loader, wifi_access_point, wifi_client, wifi_sniffer,
+def test_wlan_ble_connected_udp_tx_with_enh_psp_C402830(firmware_loader, wifi_access_point, wifi_client, wifi_sniffer,
                                                         wifi_dut, net_perf_client, protocol, utf_constants, request,
                                                         sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
