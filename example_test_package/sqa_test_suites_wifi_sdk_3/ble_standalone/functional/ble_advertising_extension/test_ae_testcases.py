@@ -931,7 +931,7 @@ def test_ble_ae_simultaneous_scanning_and_advertising_C538064(ble_dut, ble_sniff
         adv_type= 0
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_ble_ae_simultaneous_scanning_and_advertising_C538064")
+            capture_file="test_ble_ae_simultaneous_C538064")
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)
         random_address = "11:44:33:AA:BB:CC"
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(set_smp=0)
@@ -1026,9 +1026,22 @@ def test_ble_ae_simultaneous_scanning_and_advertising_C538064(ble_dut, ble_sniff
         time.sleep(30)
         events = remote_wiseconnect3.interfaces.wifi.get_async_events()
         logger().info(f'events{events}')
+        ble_dut_address_hex = re.split(":", ble_dut_address)
+        ble_client_address_hex1 = re.split(":", ble_client_address)
+
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address1 = "0x"
+        for hex_data_part in ble_client_address_hex1:
+            slave_address1 = slave_address1 + hex_data_part
+        logger().info(f"slave_address1:{slave_address1}")
+
+        ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
+        time.sleep(40)
 
         ble_sniffer.interfaces.sniffer.stop_capture()
-        time.sleep(2)
+        time.sleep(10)
         captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
         time.sleep(10)
 
@@ -1158,7 +1171,7 @@ def test_verify_BLE_advertising_and_scanning_with_two_sets_enabled_C768359(ble_d
         logger().info("TESTCASE EXECUTION STARTED")
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_verify_BLE_advertising_and_scanning_with_two_sets_enabled_C768359")
+            capture_file="test_verify_BLE_advertising_and_scanning_C768359")
         logger().info("ble-started")
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)  # capability=3, set_smp=1)
         logger().info("ble-started-remote-side")
@@ -1328,10 +1341,29 @@ def test_verify_BLE_advertising_and_scanning_with_two_sets_enabled_C768359(ble_d
             remote_address=ble_client_address
         )
         time.sleep(8)
+        ble_dut_address_hex = re.split(":", ble_dut_address)
+        ble_client_address_hex1 = re.split(":", ble_client_address)
+        ble_client_address_hex2 = re.split(":", ble_client_address_2)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address1 = "0x"
+        for hex_data_part in ble_client_address_hex1:
+            slave_address1 = slave_address1 + hex_data_part
+        logger().info(f"slave_address1:{slave_address1}")
+        slave_address2 = "0x"
+        for hex_data_part in ble_client_address_hex2:
+            slave_address2 = slave_address2 + hex_data_part
+        logger().info(f"slave_address2:{slave_address2}")
+        ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1, slave_address2])
+        time.sleep(40)
+
         ble_sniffer.interfaces.sniffer.stop_capture()
         logger().info("Sniffer stop successful")
+        time.sleep(10)
+
         captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-        time.sleep(30)
+        time.sleep(40)
         exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "LE ADV")
         for captured_file in captured_files:
             captured_file = captured_file.replace("/tmp/reports", "/app/reports")
@@ -1435,7 +1467,7 @@ def test_verify_ae_scanning_with_enable_disable_two_sets_loop_C626222(ble_dut, b
         # Start BLE on DUT and get addresses
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_dut_master_and_slave_tx_rx_notification_C626222")
+            capture_file="test_dut_master_and_slave_C626222")
         logger().info("ble-started")
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)  # capability=3, set_smp=1)
         logger().info("ble-started-remote-side")
@@ -1620,6 +1652,22 @@ def test_verify_ae_scanning_with_enable_disable_two_sets_loop_C626222(ble_dut, b
                 adv_enable=0
             )
             time.sleep(2)
+        ble_dut_address_hex = re.split(":", ble_dut_address)
+        ble_client_address_hex1 = re.split(":", ble_client_address)
+        ble_client_address_hex2 = re.split(":", ble_client_address_2)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address1 = "0x"
+        for hex_data_part in ble_client_address_hex1:
+            slave_address1 = slave_address1 + hex_data_part
+        logger().info(f"slave_address1:{slave_address1}")
+        slave_address2 = "0x"
+        for hex_data_part in ble_client_address_hex2:
+            slave_address2 = slave_address2 + hex_data_part
+        logger().info(f"slave_address2:{slave_address2}")
+        ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1, slave_address2])
+        time.sleep(30)
         ble_sniffer.interfaces.sniffer.stop_capture()
         captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
         time.sleep(10)
@@ -1658,6 +1706,9 @@ def test_verify_ae_scanning_with_enable_disable_two_sets_loop_C626222(ble_dut, b
         logger().info(f'\naux_adv_in packets found:{len(aux_adv)}')
     except Exception as e:
         logger().info(f'e{e}')
+        assert False
+
+
 
 
 @pytest.mark.parametrize(
@@ -1748,7 +1799,7 @@ def test_verify_ble_ae_dual_role_adv_and_scan_interval_C538063(ble_dut, ble_snif
 
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_dut_master_and_slave_tx_rx_notification_C538063")
+            capture_file="test_dut_C538063")
 
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)  # capability=3, set_smp=1)
         logger().info("ble-started-remote-side")
@@ -1919,7 +1970,25 @@ def test_verify_ble_ae_dual_role_adv_and_scan_interval_C538063(ble_dut, ble_snif
         ble_dut.interfaces.bluetooth.ble_ae_set_scan_enable(
             enable=0, filter_duplicates=0, duration=0, period=0, remote_address=ble_client_address)
         # remote_wiseconnect3.interfaces.wifi.ble_stop_advertising()
+        ble_dut_address_hex = re.split(":", ble_dut_address)
+        ble_client_address_hex1 = re.split(":", ble_client_address)
+        ble_client_address_hex2 = re.split(":", ble_client_address_2)
+        master_address = "0x"
+        for hex_data_part in ble_dut_address_hex:
+            master_address = master_address + hex_data_part
+        slave_address1 = "0x"
+        for hex_data_part in ble_client_address_hex1:
+            slave_address1 = slave_address1 + hex_data_part
+        logger().info(f"slave_address1:{slave_address1}")
+        slave_address2 = "0x"
+        for hex_data_part in ble_client_address_hex2:
+            slave_address2 = slave_address2 + hex_data_part
+        logger().info(f"slave_address2:{slave_address2}")
+        ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1, slave_address2])
+        time.sleep(40)
+
         ble_sniffer.interfaces.sniffer.stop_capture()
+        time.sleep(10)
         captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
         time.sleep(10)
 
@@ -2250,7 +2319,7 @@ def test_ble_connection_stability_with_two_centrals_C19877(ble_dut, ble_sniffer,
         logger().info("ble-started-remote-side")
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_ble_connection_stability_with_two_centrals_C19877")
+            capture_file="test_ble_connection_stability_C19877")
 
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(
             set_smp=0)  # set_smp=0)#capability=3, set_smp=0)
@@ -2466,11 +2535,13 @@ def test_ble_connection_stability_with_two_centrals_C19877(ble_dut, ble_sniffer,
             slave_address2 = slave_address2 + hex_data_part
         logger().info(f"slave_address2:{slave_address2}")
         ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1, slave_address2])
-        time.sleep(30)
+        time.sleep(40)
         if link_key1 != "":
             ble_sniffer.interfaces.sniffer.add_link_key(link_key1.upper(), master_address, slave_address1)
+        time.sleep(10)
         if link_key2 != "":
             ble_sniffer.interfaces.sniffer.add_link_key(link_key2.upper(), master_address, slave_address2)
+        time.sleep(10)
         ble_sniffer.interfaces.sniffer.stop_capture()
         logger().info("Sniffer stop successful")
         captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
@@ -2578,7 +2649,7 @@ def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_sec
         logger().info("TESTCASE EXECUTION STARTED")
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_secure_mode_C768360")
+            capture_file="test_verify_ble_ae_advertising_2sets_scanning_C768360")
         write_handle_1 = None
         write_handle_2 = None
         logger().info("ble-started")
@@ -2780,7 +2851,7 @@ def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_sec
         logger().info("TESTCASE EXECUTION STARTED")
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_secure_mode_C768361")
+            capture_file="test_verify_ble_ae_advertising_2sets_scanning_C768361")
         write_handle_1 = None
         write_handle_2 = None
 
@@ -2969,7 +3040,7 @@ def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_sec
         logger().info("TESTCASE EXECUTION STARTED")
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_secure_mode_C768362")
+            capture_file="test_verify_ble_ae_advertising_2sets_scanning_C768362")
         write_handle_1 = None
         write_handle_2 = None
         logger().info("ble-started")
@@ -3209,7 +3280,7 @@ def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_sec
         logger().info("TESTCASE EXECUTION STARTED")
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_secure_mode_C768363")
+            capture_file="test_verify_ble_ae_advertising_2sets_scanning_C768363")
         write_handle_1 = None
         write_handle_2 = None
         adv_type = 0
