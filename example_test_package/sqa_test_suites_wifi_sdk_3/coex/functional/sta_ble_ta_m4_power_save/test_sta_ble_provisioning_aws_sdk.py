@@ -91,7 +91,7 @@ class ProvisioningFunctionality(ThreadBase):
             self.wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1)
             self.wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1)
 
-            if self.test_case == 537997:
+            if self.test_case == 537997 or self.test_case == 20153 or self.test_case == 20155:
                 self.wifi_dut.interfaces.wifi.ble_start_advertising()
 
             self.ble_client_address = self.sl_collections.scan_from_remote_device(
@@ -105,7 +105,7 @@ class ProvisioningFunctionality(ThreadBase):
                                             supervision_timeout=self.supervision_timeout)
             time.sleep(3)
 
-            if self.test_case == 537997:
+            if self.test_case == 537997 or self.test_case == 20153 or self.test_case == 20155:
                 self.wifi_dut.interfaces.wifi.ble_update_conn_param(
                     ble_remote_dev_address=self.ble_client_address, ble_conn_interval_min=3200,
                     ble_conn_interval_max=3200, ble_conn_latency=0, ble_supervision_timeout=2000)
@@ -131,7 +131,7 @@ class ProvisioningFunctionality(ThreadBase):
 
             # self.ble_client.interfaces.bluetooth.gatt_adapter.read_charac_value(char_path=self.char_path)
 
-            if self.test_case == 537997:
+            if self.test_case == 537997 or self.test_case == 20153 or self.test_case == 20155:
                 logger().info(f"******************** get all profiles ********************")
                 uuids = self.wifi_dut.interfaces.wifi.ble_get_profiles_async(
                     ble_remote_dev_address=self.ble_client_address)
@@ -248,11 +248,6 @@ class ProvisioningFunctionality(ThreadBase):
         device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
         logger().info(f"DUT IP is {device_ip}")
 
-        dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f'dut_mac_address is {dut_mac_address}')
-
-        logger().info(f"DUT MAC ADDRESS :  {dut_mac_address} DUT IP ADDRESS : {device_ip}")
-
         logger().info(f"....Pinging to DUT before Power Save")
         status = self.sl_collections.ping(device_ip=device_ip, ping_count=10)
         assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
@@ -265,6 +260,8 @@ class ProvisioningFunctionality(ThreadBase):
         status = self.sl_collections.ping(device_ip=device_ip, ping_count=10)
         assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
+        time.sleep(10)
+
         logger().info(f' *********************** subscribe to notifications ***********************')
         self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=self.char_path)
         self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
@@ -275,10 +272,24 @@ class ProvisioningFunctionality(ThreadBase):
 
         self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
             ble_remote_dev_address=self.ble_client_address, data=device_ip)
-        time.sleep(5)
+        time.sleep(3)
         logger().info("******************** Validate Data ********************")
         notifications_data = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
-        logger().info(f' *********************** Notification is DUT IP address {notifications_data} ***********************')
+        time.sleep(10)
+        logger().info(
+            f' *********************** Notification is DUT IP address {notifications_data} ***********************')
+
+        # Retry logic for empty notifications
+        retry_count = 0
+        max_retries = 3
+        while len(notifications_data) == 0 and retry_count < max_retries:
+            retry_count += 1
+            logger().warning(f"Notification is empty, retry {retry_count}/{max_retries}")
+            time.sleep(5)
+            notifications_data = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
+            logger().info(
+                f' *********************** Retry Notification is {notifications_data} ***********************')
+
         assert len(notifications_data) > 0, " .... received data is empty ...."
         assert notifications_data == [device_ip], ".... Device IP Mismatched or Acknowledgement not received ....."
 
@@ -286,7 +297,7 @@ class ProvisioningFunctionality(ThreadBase):
         self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=self.char_path)
         self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=self.char_uid)
         self.ble_client.interfaces.bluetooth.gatt_adapter.clear_notifications()
-        time.sleep(3)
+        time.sleep(10)
 
         logger().info(f' *********************** subscribe to notifications ***********************')
         self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=self.char_path)
@@ -310,7 +321,8 @@ class ProvisioningFunctionality(ThreadBase):
         self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=self.char_path)
         self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=self.char_uid)
         self.ble_client.interfaces.bluetooth.gatt_adapter.clear_notifications()
-        time.sleep(3)
+
+        time.sleep(60)
 
     def firmware_version(self):
         fw_version = self.wifi_dut.interfaces.wifi.get_fw_version()
@@ -355,6 +367,10 @@ class ProvisioningFunctionality(ThreadBase):
             ssid=self.credentials[0], passphrase='thisisnotatestnetwork', security=self.credentials[2],
             expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
         logger().info("....De-Authentication received when trying to connect with AP using wrong PSK....")
+
+    def access_point_leave_dut(self):
+        self.wifi_dut.interfaces.wifi.leave()
+        time.sleep(1)
 
     def ble_remove_service(self):
         logger().info("******************** ble_remove_service ***********************")
@@ -940,3 +956,379 @@ def test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997(
 
     finally:
         ble_obj.ble_cleanup_disconn()
+
+
+@wifi_dut_marker(with_certificates=True)
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "unassociated"])
+def test_wifi_sdk_ble_provisioning_power_save_aws_validation_C20153(
+        wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, aws_iot_client, request,
+        utf_constants):
+    """Verify BLE and WLAN connection using STA+BLE provisioning app by configuring Maximum BLE Conn interval with AWS IoT connectivity"""
+    ble_obj = None
+    try:
+        # -----------------------------------------------------------------
+        # Sniffer Capture
+        # -----------------------------------------------------------------
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="20153_ble_provisioning_power_save_aws_validation")
+
+        # -----------------------------------------------------------------
+        # BLE Provisioning
+        # -----------------------------------------------------------------
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, ble_pairing=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            test_case=20153, min_conn_interval=200, max_conn_interval=200)
+
+        logger().info(f"M4-TA secure handshake")
+        wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+
+        ble_obj.start()
+        time.sleep(5)
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.wifi_scan()
+        ble_obj.wifi_connect()
+        ble_obj.ble_remove_service()
+
+        # -----------------------------------------------------------------
+        # IoT Testing
+        # -----------------------------------------------------------------
+
+        # AWS IoT functionality
+        logger().info("\n\n******************** Starting AWS IoT Testing ********************\n\n")
+
+        # Prepare test messages
+        messages = []
+        for i in range(10):
+            messages.append(text_generator(size=100))
+        logger().info(f"Generated messages for AWS testing: {messages}")
+
+        # Setup AWS connection parameters
+        test_name = request.node.name
+        client_id = test_name + '_client'
+        topic = 'topic_' + test_name
+        qos = Si91xAwsQos.QOS0
+
+        # Create AWS connection instance
+        aws_conn = AwsConnection(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            wifi_sniffer=wifi_sniffer,
+            sl_collections=sl_collections,
+            test_name=test_name,
+            aws_iot_client=aws_iot_client,
+            messages=messages,
+            topic=topic,
+            qos=qos
+        )
+
+        # Connect DUT to AWS IoT
+        logger().info("Connecting DUT to AWS IoT server")
+        assert aws_conn.connect_to_aws_server_from_dut(
+            wifi_dut, client_id), "Failed to connect aws server from DUT"
+        logger().info("DUT connected to AWS IoT server successfully")
+
+        # Subscribe from DUT to topic_raspi (to receive messages from RasPi)
+        topic_dut = topic + '_dut'
+        topic_raspi = topic + '_raspi'
+        aws_conn.subscribe_from_dut(wifi_dut, topic_raspi, qos)
+        logger().info(f"DUT subscribed to topic: {topic_raspi}")
+
+        # Connect RasPi to AWS IoT
+        logger().info("Connecting RasPi (aws_iot_client) to AWS IoT server")
+        aws_conn.connect_to_aws_server_from_raspi(aws_iot_client)
+        logger().info("RasPi connected to AWS IoT server successfully")
+
+        # Subscribe from RasPi on a different topic to receive only DUT messages
+        topic_dut = topic + '_dut'
+        topic_raspi = topic + '_raspi'
+
+        aws_conn.subscribe_from_raspi(aws_iot_client, topic_dut, qos)
+        logger().info(f"RasPi subscribed to topic: {topic_dut}")
+
+        # Wait to ensure both subscriptions are active before publishing
+        logger().info("Waiting for subscriptions to be fully active...")
+        time.sleep(5)
+
+        # Generate messages for RasPi publish test
+        messages_raspi = []
+        for i in range(10):
+            messages_raspi.append(text_generator(size=100))
+        logger().info(f"Generated messages for RasPi publish test: {messages_raspi}")
+
+        # Run parallel publish operations from DUT and RasPi
+        logger().info("\n\n*** Starting Parallel Publish Operations: DUT and RasPi publishing simultaneously ***\n")
+
+        # Create thread for DUT publish (publish to topic_dut)
+        dut_publish_thread = aws_publish_message_Thread(
+            wifi_dut=wifi_dut,
+            topic=topic_dut,
+            message=messages,
+            qos=qos
+        )
+
+        # Create thread for RasPi publish (publish to topic_raspi)
+        raspi_publish_thread = aws_publish_raspi_Thread(
+            aws_iot_client=aws_iot_client,
+            topic=topic_raspi,
+            message=messages_raspi,
+            qos=qos,
+            aws_conn=aws_conn
+        )
+
+        # Start both threads in parallel
+        logger().info("Starting DUT publish thread...")
+        dut_publish_thread.start()
+
+        logger().info("Starting RasPi publish thread...")
+        raspi_publish_thread.start()
+
+        # Wait for both threads to complete
+        logger().info("Waiting for DUT publish thread to complete...")
+        dut_publish_thread.wait_for_exit()
+        logger().info("DUT publish thread completed")
+
+        logger().info("Waiting for RasPi publish thread to complete...")
+        raspi_publish_thread.wait_for_exit()
+        logger().info("RasPi publish thread completed")
+
+        logger().info("\n\n*** Both publish threads completed. Starting validation ***\n")
+
+        # Validate messages received on RasPi (from DUT on topic_dut)
+        logger().info("\n*** Validating messages published by DUT and received on RasPi ***")
+        aws_conn.validate_aws_messages_from_raspi(aws_iot_client, topic_dut, qos, messages, wait_time=15)
+        logger().info("Successfully validated: DUT published and RasPi received all messages")
+
+        # Wait a bit before starting DUT message reception to ensure all messages are delivered
+        logger().info("Waiting for AWS IoT to deliver all messages to DUT...")
+        time.sleep(10)
+
+        # Validate messages received on DUT (from RasPi)
+        logger().info("\n*** Validating messages published by RasPi and received on DUT ***")
+        for i, expected_msg in enumerate(messages_raspi):
+            received_msg = aws_conn.receive_aws_messages_from_dut(wifi_dut, retries=5, wait_time=5)
+            logger().info(f"Received message {i + 1} on DUT: {received_msg}")
+            assert received_msg == expected_msg, f"Message mismatch: expected '{expected_msg}', got '{received_msg}'"
+        logger().info("Successfully validated: RasPi published and DUT received all messages")
+
+        logger().info("\n\n*** Parallel Publish and Validation Completed Successfully ***\n")
+
+        # Unsubscribe and disconnect
+        logger().info("\n\nCleaning up AWS connections")
+        logger().info("DUT Unsubscribing from aws topic")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_raspi)
+
+        logger().info("Initiating aws_iot_disconnect from DUT")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+        time.sleep(10)
+
+        logger().info("\n\n******************** AWS IoT Testing Completed Successfully ********************\n\n")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_obj.ble_cleanup_disconn()
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                   ble_client_address=ble_obj.ble_client_address,
+                                   ble_dut_address=ble_obj.ble_dut_address)
+
+@pytest.mark.skip(reason="For this test case scripting corrections are needed and will be added in next sprint")
+@wifi_dut_marker(with_certificates=True)
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "unassociated"])
+def test_wifi_sdk_ble_provisioning_wifi_disconnect_reconnect_aws_validation_C20155(
+        wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, aws_iot_client, request,
+        utf_constants):
+    """Verify BLE and WLAN connection using STA+BLE provisioning app by configuring Maximum BLE Conn interval with AWS IoT connectivity"""
+    ble_obj = None
+    try:
+        # -----------------------------------------------------------------
+        # Sniffer Capture
+        # -----------------------------------------------------------------
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="20153_ble_provisioning_power_save_aws_validation")
+
+        # -----------------------------------------------------------------
+        # BLE Provisioning
+        # -----------------------------------------------------------------
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, ble_pairing=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            test_case=20153, min_conn_interval=200, max_conn_interval=200)
+
+        logger().info(f"M4-TA secure handshake")
+        wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
+
+        ble_obj.start()
+        time.sleep(5)
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        ble_obj.wifi_scan()
+        ble_obj.wifi_connect()
+        ble_obj.ble_remove_service()
+
+        # -----------------------------------------------------------------
+        # IoT Testing
+        # -----------------------------------------------------------------
+
+        # AWS IoT functionality
+        logger().info("\n\n******************** Starting AWS IoT Testing ********************\n\n")
+
+        # Prepare test messages
+        messages = []
+        for i in range(10):
+            messages.append(text_generator(size=100))
+        logger().info(f"Generated messages for AWS testing: {messages}")
+
+        # Setup AWS connection parameters
+        test_name = request.node.name
+        client_id = test_name + '_client'
+        topic = 'topic_' + test_name
+        qos = Si91xAwsQos.QOS0
+
+        # Create AWS connection instance
+        aws_conn = AwsConnection(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            wifi_sniffer=wifi_sniffer,
+            sl_collections=sl_collections,
+            test_name=test_name,
+            aws_iot_client=aws_iot_client,
+            messages=messages,
+            topic=topic,
+            qos=qos
+        )
+
+        # Connect DUT to AWS IoT
+        logger().info("Connecting DUT to AWS IoT server")
+        assert aws_conn.connect_to_aws_server_from_dut(
+            wifi_dut, client_id), "Failed to connect aws server from DUT"
+        logger().info("DUT connected to AWS IoT server successfully")
+
+        # Subscribe from DUT to topic_raspi (to receive messages from RasPi)
+        topic_dut = topic + '_dut'
+        topic_raspi = topic + '_raspi'
+        aws_conn.subscribe_from_dut(wifi_dut, topic_raspi, qos)
+        logger().info(f"DUT subscribed to topic: {topic_raspi}")
+
+        # Connect RasPi to AWS IoT
+        logger().info("Connecting RasPi (aws_iot_client) to AWS IoT server")
+        aws_conn.connect_to_aws_server_from_raspi(aws_iot_client)
+        logger().info("RasPi connected to AWS IoT server successfully")
+
+        # Subscribe from RasPi on a different topic to receive only DUT messages
+        topic_dut = topic + '_dut'
+        topic_raspi = topic + '_raspi'
+
+        aws_conn.subscribe_from_raspi(aws_iot_client, topic_dut, qos)
+        logger().info(f"RasPi subscribed to topic: {topic_dut}")
+
+        # Wait to ensure both subscriptions are active before publishing
+        logger().info("Waiting for subscriptions to be fully active...")
+        time.sleep(5)
+
+        # Generate messages for RasPi publish test
+        messages_raspi = []
+        for i in range(10):
+            messages_raspi.append(text_generator(size=100))
+        logger().info(f"Generated messages for RasPi publish test: {messages_raspi}")
+
+        # Run parallel publish operations from DUT and RasPi
+        logger().info("\n\n*** Starting Parallel Publish Operations: DUT and RasPi publishing simultaneously ***\n")
+
+        # Create thread for DUT publish (publish to topic_dut)
+        dut_publish_thread = aws_publish_message_Thread(
+            wifi_dut=wifi_dut,
+            topic=topic_dut,
+            message=messages,
+            qos=qos
+        )
+
+        # Create thread for RasPi publish (publish to topic_raspi)
+        raspi_publish_thread = aws_publish_raspi_Thread(
+            aws_iot_client=aws_iot_client,
+            topic=topic_raspi,
+            message=messages_raspi,
+            qos=qos,
+            aws_conn=aws_conn
+        )
+
+        # Start both threads in parallel
+        logger().info("Starting DUT publish thread...")
+        dut_publish_thread.start()
+
+        logger().info("Starting RasPi publish thread...")
+        raspi_publish_thread.start()
+
+        # Wait for both threads to complete
+        logger().info("Waiting for DUT publish thread to complete...")
+        dut_publish_thread.wait_for_exit()
+        logger().info("DUT publish thread completed")
+
+        logger().info("Waiting for RasPi publish thread to complete...")
+        raspi_publish_thread.wait_for_exit()
+        logger().info("RasPi publish thread completed")
+
+        logger().info("\n\n*** Both publish threads completed. Starting validation ***\n")
+
+        # Validate messages received on RasPi (from DUT on topic_dut)
+        logger().info("\n*** Validating messages published by DUT and received on RasPi ***")
+        aws_conn.validate_aws_messages_from_raspi(aws_iot_client, topic_dut, qos, messages, wait_time=15)
+        logger().info("Successfully validated: DUT published and RasPi received all messages")
+
+        # Wait a bit before starting DUT message reception to ensure all messages are delivered
+        logger().info("Waiting for AWS IoT to deliver all messages to DUT...")
+        time.sleep(10)
+
+        # Validate messages received on DUT (from RasPi)
+        logger().info("\n*** Validating messages published by RasPi and received on DUT ***")
+        for i, expected_msg in enumerate(messages_raspi):
+            received_msg = aws_conn.receive_aws_messages_from_dut(wifi_dut, retries=5, wait_time=5)
+            logger().info(f"Received message {i + 1} on DUT: {received_msg}")
+            assert received_msg == expected_msg, f"Message mismatch: expected '{expected_msg}', got '{received_msg}'"
+        logger().info("Successfully validated: RasPi published and DUT received all messages")
+
+        logger().info("\n\n*** Parallel Publish and Validation Completed Successfully ***\n")
+
+        # Unsubscribe and disconnect
+        logger().info("\n\nCleaning up AWS connections")
+        logger().info("DUT Unsubscribing from aws topic")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_raspi)
+
+        logger().info("Initiating aws_iot_disconnect from DUT")
+        wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+        time.sleep(10)
+
+        logger().info("\n\n******************** AWS IoT Testing Completed Successfully ********************\n\n")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_obj.ble_cleanup_disconn()
+        ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
+        sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                   ble_client_address=ble_obj.ble_client_address,
+                                   ble_dut_address=ble_obj.ble_dut_address)
+
+
