@@ -218,15 +218,25 @@ class http_server_provisioning(ThreadBase):
         else:
             security = self.wifi_access_point.interfaces.wifi.security
         self.wiseconnect_web.interfaces.wiseconnect_ui.connect(ip_address=dut_as_ap_ip, web_ui_port=80,
-                                                          ssid=self.wifi_access_point.interfaces.wifi.ssid,
-                                                          security=security,
-                                                          passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
-        data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
+                                                               ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                                                               security=security,
+                                                               passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
+        if self.testcase == "919373":
+            for _ in range(20):  # 10 minutes / 30 seconds = 20 iterations
+                logger().info(f"Refresh attempt: {_ + 1}/20")
+                data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
+                logger().info(f"credenatils from webpage: {data}")
+                self.credentials = re.search(r'ssid:(\w+),password:(\w+),security:(\w+)', data.decode())
+                logger().info(f"credenatils: {self.credentials}")
+                assert self.credentials, "Unable to fetch 3rd party AP details from DUT"
+                time.sleep(30)
 
+        data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
         logger().info(f"credenatils from webpage: {data}")
         self.credentials = re.search(r'ssid:(\w+),password:(\w+),security:(\w+)', data.decode())
         logger().info(f"credenatils: {self.credentials}")
         assert self.credentials, "Unable to fetch 3rd party AP details from DUT"
+
         self.wifi_dut.interfaces.wifi.http_server_stop()
         self.wifi_dut.interfaces.wifi.http_server_deinit()
         self.wifi_dut.interfaces.wifi.deinit()
@@ -530,3 +540,52 @@ def test_wifi_provisioning_via_ap_mixed_mode_c789510(wifi_dut, wifi_client, chan
         wifi_dut.interfaces.wifi.stop_ap()
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+
+@pytest.mark.config(
+"wifi_client",
+wifi={
+    "security": "WPA2",
+    "ssid": "SILABS_AP_MODE",
+    "passphrase": "Automation@123",
+    "channel": 1,
+    "interface": "wlan0",
+}
+)
+@pytest.mark.parametrize("channel", [1])
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.config('wifi_access_point',
+                wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', 'passphrase': '12345678'})
+def test_wifi_provisioning_via_ap_psk_and_refresh_login_page_every_30s_in_browser_c919373(wifi_dut, wifi_client,
+                                                                                      channel,
+                                                                                      wifi_access_point,
+                                                                                      wiseconnect_web,
+                                                                                      request,
+                                                                                      wifi_sniffer,
+                                                                                      sl_collections):
+    """
+    Verify HTTP server is initialized, and a remote client can connect to the AP, and refresh login page every 30 secs in browser
+    """
+    try:
+        capture_filename = request.node.name
+        logger().info("********** configuring the sniffer with access point channel **********")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+
+        provision_obj = http_server_provisioning(wifi_dut=wifi_dut, sl_collections=sl_collections,
+                                                 wifi_client=wifi_client,
+                                                 wiseconnect_web=wiseconnect_web,
+                                                 wifi_access_point=wifi_access_point,
+                                                 ap_channel=channel,
+                                                 testcase="919373", webpage=webpage1)
+
+        provision_obj.start()
+        provision_obj.wait_for_exit()
+        wifi_dut.interfaces.wifi.leave()
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        wifi_dut.interfaces.wifi.stop_ap()
+        logger().info("Stop sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
