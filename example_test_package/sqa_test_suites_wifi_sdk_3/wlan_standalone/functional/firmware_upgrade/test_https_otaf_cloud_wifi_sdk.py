@@ -129,6 +129,8 @@ class WifiJoin(ThreadBase):
         self.long_url = None
         self.url_len = url_len
         self.new_url = None
+        self.dut_addr = None
+        self.dut_mac_address = None
 
     def fw_download_from_aws_server(self, aws_s3, rps_path):
 
@@ -247,11 +249,13 @@ class WifiJoin(ThreadBase):
                 channel=self.wifi_access_point.interfaces.wifi.channel)
             logger().info(" ====== Start capturing with Sniffer by giving the test case name as filename ====== ")
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_case)
-            self.sl_collections.join_to_wifi_network(self.wifi_dut,
+            self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut,
                                                      wifi_access_point=self.wifi_access_point,
                                                      power_save=False,
                                                      retry_count=3,
                                                      associated=self.wifi_dut.interfaces.wifi.associated)
+
+            self.dut_mac_address = self.dut_addr["dut_mac_address"]
             if self.test_case == '876840':
                 delay_sec = 30 * 60  # 1800 seconds
                 end_time = datetime.now() + timedelta(seconds=delay_sec)
@@ -274,7 +278,8 @@ class WifiJoin(ThreadBase):
             logger().info("Pinging to server IP....")
             status = ping(self.host_ip, 10)
             logger().info(f'Ping status = {status}')
-
+            if self.test_case == 'C782609':
+                assert status is True, "Ping failed before firmware upgrade"
             logger().info("DUT firmware version before upgrade...")
             self.fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
             logger().info(f"*** DUT firmware version before upgrade = {self.fw_version_before_upgrade} ***")
@@ -312,6 +317,23 @@ class WifiJoin(ThreadBase):
                     password='""',
                     http_url='rps_path',
                     async_timeout=500)
+            if self.test_case == 'C782609':
+                # Keep TLS1.3 OTAF flag and pass a concrete URL path string.
+                c782609_http_url = 'rps_path'
+                if self.url and isinstance(self.url, str):
+                    c782609_http_url = self.url.replace("https://httpotaf.s3.us-east-2.amazonaws.com/", "")
+                logger().info(f"C782609 OTAF URL path used: {c782609_http_url}")
+                self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                    flags=2305,
+                    ip_address=self.host_ip,
+                    port=443,
+                    host_name=self.aws_host_name,
+                    extended_header='""',
+                    username='""',
+                    password='""',
+                    http_url=c782609_http_url,
+                    async_timeout=500)
+
             if self.test_case == '500496' or self.test_case == '500495':
                 logger().info(f"Test case 500496: URL received is {self.url}")
                 logger().info(
@@ -408,9 +430,26 @@ class WifiJoin(ThreadBase):
                 logger().info(f"*** DUT firmware version after upgrade = {self.fw_version_after_upgrade} ***")
 
                 if self.fw_version_before_upgrade == self.fw_version_after_upgrade:
+                    if self.test_case == 'C782609':
+                        raise AssertionError(
+                            f"Firmware upgrade failed: version unchanged for {self.test_case}. "
+                            f"before={self.fw_version_before_upgrade}, after={self.fw_version_after_upgrade}"
+                        )
                     logger().info("Firmware after upgrade matched with the previous firmware")
                 else:
                     logger().info("Firmware upgrade successful. Versions are different.")
+
+
+            if self.test_case == 'C782609':
+
+                packet_filter3 =f'((tls.handshake.extensions_server_name == "{self.aws_host_name}") && (tls.handshake.extensions.supported_version == 0x0304)) && (wlan.sa == {self.dut_mac_address})'
+
+                assert self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)[
+                    'packet_count'], \
+                    'Sniffer: SNI extension for {aws_host_name} not found in TLS 1.3 ClientHello'
+
+
+
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
@@ -876,6 +915,44 @@ def test_wifi_sdk_https_fw_url_length_1024_c500495(aws_s3, wifi_sniffer, wifi_ac
                             wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case,
                             rps_path=rps_path, url_len=1024)
 
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
+def test_wifi_sdk_tls13_sni_extension_verification_during_http_otaf_upgrade_C782609(
+    aws_s3, wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, utf_constants,sniffer_filter):
+    """
+    Verify SNI Extension in DUT TLS 1.3 Connections to AWS During http_otaf upgrade (C782609)
+    Steps:
+        1. Upload firmware to AWS S3 and get URL.
+        2. Configure sniffer.
+        3. Join DUT to WiFi using sl_collections.join_to_wifi_network.
+        4. Resolve AWS host to IP using DNS.
+        5. Ping AWS host IP.
+        6. Get DUT firmware version before upgrade.
+        7. Start sniffer capture.
+        8. Perform OTAF upgrade to AWS (TLS 1.3).
+        9. Stop sniffer and analyze handshake for SNI extension in ClientHello.
+    """
+    rps_path = utf_constants.get("rps_filename")
+    try:
+        test_case = 'C782609'
+        wlan_obj = WifiJoin(
+            aws_s3=aws_s3,
+            wifi_sniffer=wifi_sniffer,
+            sl_collections=sl_collections,
+            wifi_access_point=wifi_access_point,
+            wifi_dut=wifi_dut,
+            test_case=test_case,
+            rps_path=rps_path
+        )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
