@@ -221,7 +221,7 @@ def test_https_fw_upgrade_failure_with_non_rps_C19776(http_server, wifi_dut, wif
     time.sleep(120)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.get_http_otaf_status()
-    assert exc_info.value.error_code == 0xDD41, "observed wrong error code expected is 0xDD41"
+    assert exc_info.value.error_code == 0xDD41, "observed wrong error code expected is 0xDD41 (DD41 or BB41 - Confirm about the error code once SI91X-20815 is fixed)"
 
     time.sleep(5)
     logger().info("Initiating wireless_deinit from DUT....")

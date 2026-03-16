@@ -1254,18 +1254,18 @@ def test_http_fw_upgrade_failure_with_junk_rps_C19797(http_server, wifi_dut, wif
     time.sleep(2)
 
     logger().info("performing fw upgrade on dut by removing some content of  corrupted rps....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted_remove.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted_remove_footer.rps")
     time.sleep(120)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.get_http_otaf_status()
     assert exc_info.value.error_code == 0xFFFD, "observed wrong error code expected is 0xFFFD"
 
     logger().info("performing fw upgrade on dut by adding some content to  corrupted rps....")
-    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted_add.rps")
+    wifi_dut.interfaces.wifi.upgrade_firmware_http(0, host_ip, 80, "/RS9116.2.5.0.4_corrupted_add_footer.rps")
     time.sleep(120)
     with pytest.raises(WlanError) as exc_info:
         wifi_dut.interfaces.wifi.get_http_otaf_status()
-    assert exc_info.value.error_code == 0xBB41, "observed wrong error code expected is 0xBB41"
+    assert exc_info.value.error_code == 0xBB41, "observed wrong error code expected is 0xDD41 (DD41 or BB41 - Confirm about the error code once SI91X-20815 is fixed)"
 
     logger().info("resetting DUT....")
     wifi_dut.interfaces.wifi.wireless_deinit(timeout=timeout)
