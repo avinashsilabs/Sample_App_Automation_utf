@@ -724,7 +724,8 @@ def test_wifi_sdk_ssl_standalone_rx_480_192K_with_long_imcp_C512089(firmware_loa
     {
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.SL_SI91X_FEAT_LONG_ICMP_PACKET,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
                           Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -768,7 +769,8 @@ def test_wlan_with_rtt_40_ssl_tx_C146659(wifi_access_point, sniffer_filter, sl_c
     {
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.SL_SI91X_FEAT_LONG_ICMP_PACKET,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
                           Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -813,7 +815,8 @@ def test_wlan_with_rtt_40_rx_C146660(wifi_access_point, sniffer_filter, request,
     {
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.SL_SI91X_FEAT_LONG_ICMP_PACKET,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
                           Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
@@ -857,7 +860,8 @@ def test_wlan_with_rtt_80_ssl_tx_C146661(wifi_access_point, sniffer_filter, sl_c
     {
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.SL_SI91X_FEAT_LONG_ICMP_PACKET,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL |
                           Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
