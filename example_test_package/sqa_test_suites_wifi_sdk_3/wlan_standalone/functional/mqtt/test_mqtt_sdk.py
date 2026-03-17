@@ -8817,3 +8817,109 @@ def test_wifi_sdk_mqtt_password_equals_to_512_bytes_over_QoS1_with_SNI_wpa3_secu
 
     except Exception as Ex:
          sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.IEEE802_11W |Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ssid": 'Si917_asusap',
+        "security": 'wpa3_transition',
+        'protected_management_frame': 'Capable' ,
+        "passphrase": '12345678',
+        "channel": 11
+    }
+)
+
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'Si917_asusap', "security": 'WPA3', 'protected_management_frame': 'Required' , "passphrase": '12345678', "channel": 11})
+@pytest.mark.config("raspi_mosquitto_auth",
+                    mqtt={"username": "mytesttopic",
+                           "password": "aaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppfdssdgj"})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "unassociated", "wifi_powersave_disable", "bt_powersave_disable"])
+def test_wifi_sdk_mqtt_password_equals_to_512_bytes_over_QoS1_with_SNI_wpa3_transition_security_C962476(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
+
+    """QOS0: Validate MQTT password length support for 510 bytes over QOS1 with SNI in wpa3 transition security"""
+
+    try:
+        topic = "mytesttopic_C962476"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        capture_filename = request.node.name
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        username = "mytesttopic"
+        password = "aaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppgjcabaxvvejvuhtqpwxpudnhvqeypfqtvqmwztcgbxwidtynrmypnhfkjdguyeppfdssdgj"
+        logger().info(f"************* Username : {username} *************")
+        logger().info(f"************* Password Length : {len(password)} bytes *************")
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+
+        # Enable SNI for MQTT connection (socket-level, isolated to this test)
+        tls_sni_extension = "example.com"
+        # Create socket and set SNI before MQTT connect
+        mqtt_socket_id = wifi_dut.interfaces.mqtt.socket()
+        wifi_dut.interfaces.mqtt.bsdSetSocketOpt(
+            mqtt_socket_id, option_name="TCP_ULP", option_val="tls_1_0"
+        )
+        wifi_dut.interfaces.mqtt.bsdSetSocketOpt(
+            mqtt_socket_id, option_name="TCP_ULP", option_val="tls_1_0", tls_extensions_enable=1, tls_sni_extension=tls_sni_extension
+        )
+        # Now configure MQTT client and connect
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", qos=1)
+
+        logger().info(f".....DUT connects to MQTT server with 510-byte password and SNI '{tls_sni_extension}'.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(
+            server=mqtt_server.interfaces.mqtt, send_credentials=True, username=username, password=password)
+        time.sleep(25)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt,username=username, password=password)
+        time.sleep(5)
+
+        wifi_obj.subscribe_and_publish(qos=Si91xMqttQos.QOS1)
+
+        msgs = []
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            # Filter for the expected message
+            for msg in msgs:
+                if msg.topic == topic and msg.qos == Si91xMqttQos.QOS1 and msg.payload.decode() == message:
+                    found = True
+                    break
+            if found:
+                break
+        assert found, "No message is received by mqtt-client on subscribed topic or message received is wrong"
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        time.sleep(1)
+
+        logger().info("************ Stop the sniffer **************")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
