@@ -643,7 +643,7 @@ def test_EXT_Scan_test_for_Filter_policy_0x01_and_0x03_C528524_C528525(ble_dut, 
     "filter_duplicates, test_case_id",
     [
         (0, "C528526"),
-        # (1, "C528527"),
+        (1, "C528527"),
     ],
 )
 @pytest.mark.config(
