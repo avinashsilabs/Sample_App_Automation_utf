@@ -1800,6 +1800,7 @@ def test_wifi_sdk_mbssid_scan_all_vap_c219285(
 )
 @pytest.mark.test_src_map_id('C219286')
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_mbssid_T_open_sec_c219286(
     wifi_sniffer,
     wifi_access_point,

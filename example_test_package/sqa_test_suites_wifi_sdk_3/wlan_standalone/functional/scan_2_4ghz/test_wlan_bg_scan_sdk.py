@@ -402,6 +402,7 @@ def test_wifi_sdk_bgscan_rejoin_infinite_retry_c19038(wifi_sniffer, wifi_access_
           },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_bgscan_primary_channel_2g_c19039(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                    sl_collections, sniffer_filter, request):
     test_name = request.node.name

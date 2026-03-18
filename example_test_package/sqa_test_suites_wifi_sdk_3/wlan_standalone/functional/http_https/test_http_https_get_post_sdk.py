@@ -2995,6 +2995,7 @@ def test_wifi_sdk_https_get_tls_v1_c19208(http_server, wifi_dut, http_client, wi
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_https_get_tls_v1_3_c535795(http_server, wifi_dut, http_client, wifi_access_point,
                                              wifi_sniffer, sl_collections, sniffer_filter, index_path):
     """ Verify HTTPs GET with TLS v 1.3 """

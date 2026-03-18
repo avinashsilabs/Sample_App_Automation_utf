@@ -254,6 +254,7 @@ class WifiJoin(ThreadBase):
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_c19780(http_server, wifi_sniffer, wifi_access_point,
                                                                        wifi_dut, request, wifi_client, sl_collections,
                                                                        sniffer_filter):

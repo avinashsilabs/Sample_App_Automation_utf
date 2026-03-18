@@ -828,6 +828,7 @@ Map_security = {
     },
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.WLAN_Dev_sanity_917
 def test_RAM_autojoin_with_one_profile_and_one_credential_C769960(
     wifi_dut,
     wifi_access_point,

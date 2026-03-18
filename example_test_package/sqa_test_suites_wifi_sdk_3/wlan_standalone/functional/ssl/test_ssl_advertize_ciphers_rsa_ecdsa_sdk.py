@@ -674,6 +674,7 @@ def test_wifi_sdk_ssl_client_1_3_version_server_1_2_c537926(wifi_sniffer, wifi_d
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_ssl_1_3_with_all_ciphers_c537928(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                    cipher_list, sl_collections, request, sniffer_filter, ca_cert):
     """

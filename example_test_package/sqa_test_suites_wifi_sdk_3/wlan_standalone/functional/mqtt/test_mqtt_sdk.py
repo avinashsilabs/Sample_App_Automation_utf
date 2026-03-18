@@ -1160,6 +1160,7 @@ class http_server_provisioning(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_TC127757(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """QOS1: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""

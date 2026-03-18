@@ -1405,6 +1405,7 @@ class FilterPacket:
 @pytest.mark.config("wifi_access_point", wifi={"beacon_interval": 100, "dtim": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_max_psp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
     """
     Verify whether RSI_STA is wake up and receive data based on configured listen interval when enable power save

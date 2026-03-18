@@ -462,6 +462,7 @@ class ConcurrentThread(ThreadBase):
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_concurrent_mode_sta_ap_c19312(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter, utf_constants, sl_collections, protocol, net_perf_client):
     """ To Verify Dut Behaviour in  STA and AP connection by enabling concurrent mode"""
     try:

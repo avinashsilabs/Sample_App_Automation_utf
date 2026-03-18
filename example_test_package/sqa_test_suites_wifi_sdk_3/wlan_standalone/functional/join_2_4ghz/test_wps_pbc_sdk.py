@@ -1186,6 +1186,7 @@ def test_wifi_sdk_wps_pbc_wpa2_wpa3_PMF_capable_c922293(wifi_dut, wifi_access_po
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_sta_wps_pbc_conn_ipv6_c925838(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                            sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC connection via Software API with IPV6"""

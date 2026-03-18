@@ -1224,6 +1224,7 @@ def test_wsdk_WPA3_EAP_Conn_TLS_conn_with_wrong_security_C680017(wifi_dut, wifi_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs", "reset_wifi_conn_stats"])
 @pytest.mark.deployed_25q2
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wsdk_WPA3_EAP_Conn_TLS_conn_with_sntp_C680020(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                          wifi_client, radius_server, sl_collections, request,
                                                          utf_constants):

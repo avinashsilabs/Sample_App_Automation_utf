@@ -1031,6 +1031,7 @@ def test_wifi_sdk_dtls_1_0_c766259(wifi_sniffer, wifi_client, wifi_dut, wifi_acc
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_dtls_1_2_c766260(wifi_sniffer, wifi_client, wifi_dut, wifi_access_point, openssl,
                                    sl_collections, sniffer_filter):
     """ Verify the DUT functionality by opening client socket with DTLS1.2 version and do data transfer """

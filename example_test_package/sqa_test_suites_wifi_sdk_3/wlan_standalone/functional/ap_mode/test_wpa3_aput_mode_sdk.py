@@ -1478,6 +1478,7 @@ def test_wifi_sdk_keep_alive_disable_c463730(wifi_sniffer, wifi_dut, remote_wise
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_calculate_assoc_time_c463731(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                sl_collections):
     """Verify 3rd party association time with APUT in WPA3 H2E mode(150 to 180 ms)"""

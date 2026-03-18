@@ -1031,6 +1031,7 @@ def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
         "channel": 1,
     },
 )
+@pytest.mark.WLAN_Dev_sanity_917
 def test_mqtt_subscribe_publish_with_qos2_on_host_lwip_C876780(
     wifi_dut,
     wifi_access_point,

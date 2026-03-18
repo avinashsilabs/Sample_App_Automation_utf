@@ -1444,6 +1444,7 @@ def test_wifi_sdk_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi_ac
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_conn_to_AP_in_korea_reg_C477823(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, request,
                                                   sl_collections,
                                                   sniffer_filter, wifi_client, net_perf_client):

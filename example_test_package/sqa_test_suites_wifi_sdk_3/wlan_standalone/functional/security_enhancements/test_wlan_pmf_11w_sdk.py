@@ -303,6 +303,7 @@ def test_wifi_sdk_pmf_req_ap_pmf_cap_dut_c19661(wifi_sniffer, wifi_access_point,
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                         request, sniffer_filter):
     test_name = request.node.name

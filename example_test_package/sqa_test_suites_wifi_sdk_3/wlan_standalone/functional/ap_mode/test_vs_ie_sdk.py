@@ -926,6 +926,7 @@ class VSIEInjection(ThreadBase):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing"])
+@pytest.mark.WLAN_Dev_sanity_917
 def test_vs_ie_injection_in_soft_ap_mgmt_frames_C893061(
     wifi_dut, wifi_sniffer, wifi_client, request, sl_collections, sniffer_filter
 ):

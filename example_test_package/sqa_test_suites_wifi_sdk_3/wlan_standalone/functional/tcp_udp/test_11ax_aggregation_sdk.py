@@ -244,6 +244,7 @@ def test_tcp_data_tx_with_VO_c148311(wifi_sniffer, net_perf_client, wifi_access_
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x80', 4, "qos_video_tx")])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_tcp_data_tx_with_VI_c148313(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client,
                                      protocol, sl_collections, sniffer_filter, traffic, qos, filter_name):
     """ Verify whether DUT is sending TCP packets by aggregating in series of A-MPDU subframes when Access category of

@@ -620,6 +620,7 @@ def test_wifi_sdk_verify_conc_http_webpage_with_sta_tcp_rx_c547024(sl_collection
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_rx_interface_c569445(sl_collections, wifi_dut, wifi_client, channel,
                                                                             remote_socket, wifi_access_point, wiseconnect_web, wifi_sniffer, http_client):
     """

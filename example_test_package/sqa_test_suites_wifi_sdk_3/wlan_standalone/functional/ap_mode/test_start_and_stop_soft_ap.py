@@ -365,6 +365,7 @@ class ConcurrentFun(ThreadBase):
 )
 @pytest.mark.parametrize("channel", [8])
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_dut_soft_stop_ap_functionality_after_enabling_start_ap_C191344(wifi_sniffer, wifi_dut, wifi_clients,
                                                                                  utf_constants, sl_collections,
                                                                                  sniffer_filter, channel):

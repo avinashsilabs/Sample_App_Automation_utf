@@ -281,6 +281,7 @@ def test_wifi_sdk_mdns_ipv6_stateless_with_avahi_loop_c767019(firmware_loader,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_mdns_ipv6_stateful_with_avahi_loop_c767020(firmware_loader,
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):

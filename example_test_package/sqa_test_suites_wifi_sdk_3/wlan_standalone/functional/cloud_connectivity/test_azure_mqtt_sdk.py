@@ -458,6 +458,7 @@ pytestmark = [pytest.mark.firmware_app("test_azure")]
                              "disassociated"])
 @pytest.mark.test_src_map_id('C19515')
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_azure_mqtt_subscribe_publish_C19515(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter):
 

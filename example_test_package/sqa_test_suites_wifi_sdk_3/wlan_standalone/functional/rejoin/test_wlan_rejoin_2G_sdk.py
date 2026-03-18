@@ -1883,6 +1883,7 @@ def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wif
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "US", "channel": 11})
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                              sl_collections, sniffer_filter, net_perf_client, protocol, wifi_client):
     """ Verify Rejoin Functionality with US region enabled in 2.4GHZ band"""
@@ -1942,6 +1943,7 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 11})
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                              sl_collections, sniffer_filter):
     """Verify Rejoin Functionality with EU region enabled in 2.4GHZ band"""
@@ -2024,6 +2026,7 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 13})
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer, wifi_dut, switch, utf_constants,
                                                 request, sl_collections, sniffer_filter, net_perf_client, protocol,
                                                 wifi_client):
@@ -2093,6 +2096,7 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer,
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Asia", "channel": 11})
 @pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants,
                                                     request, sl_collections, sniffer_filter):
     """ Verify Rejoin Functionality with world mode region enabled in 2.4GHZ band"""

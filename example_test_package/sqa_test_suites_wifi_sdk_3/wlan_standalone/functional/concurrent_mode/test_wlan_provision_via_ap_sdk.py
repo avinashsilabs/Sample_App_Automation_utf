@@ -392,6 +392,7 @@ def test_wifi_provisioning_via_ap_loop_c667577(wifi_dut, wifi_client, channel, w
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA3', "channel": 1, "ssid": 'ThirdPartyAP', 'passphrase': 'test1234'})
 @pytest.mark.deployed_25q4
+@pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_provisioning_via_ap_WPA3_c694947(wifi_dut, wifi_client, channel, wifi_access_point,
                                                                  wiseconnect_web, request, wifi_sniffer, sl_collections):
     """
