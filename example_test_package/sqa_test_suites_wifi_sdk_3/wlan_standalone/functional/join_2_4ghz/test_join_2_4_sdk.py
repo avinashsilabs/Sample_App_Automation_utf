@@ -2458,6 +2458,7 @@ def test_wifi_sdk_long_icmp_packet_more_than_1472_bytes_c770039(wifi_dut, wifi_a
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+
 @pytest.mark.deployed_25q2
 def test_wifi_sdk_long_icmp_packet_more_than_1452_bytes_ipv6_c770040(firmware_loader, wifi_dut, wifi_access_point,
                                                                      wifi_sniffer, utf_constants,
@@ -2689,5 +2690,59 @@ Test Steps:
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": "Testssid",
+                          "passphrase": "1234567890qwertyuioplkjhgfdsazxcvbnmoirgrgrtyuio123456!@#$%+=_,",
+                          "security": "WPA2"})
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_sl_net_init_re_calling_functionality_c876843(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper,
+                                                          utf_constants, request, sl_collections, sniffer_filter):
+    """Verify sl_net_init() API re-calling functionality """
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+    try:
+        test_case = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        sl_collections.join_to_wifi_network(wifi_dut=wifi_dut,
+                                                                 wifi_access_point=wifi_access_point,
+                                                                 associated=wifi_dut.interfaces.wifi.associated,
+                                                                 power_save=False,
+                                                                 ping_after_power_save=False)
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.sl_net_init(mode="client", expected_status=SLStatus.SL_STATUS_ALREADY_INITIALIZED)
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.start_state("wifi_dut", wifi=['reset'])
+def test_host_reset_over_simplicity_commander_console_c793591(wifi_dut):
+    """Host reset over simplicity commander console"""
+    try:
+        wifi_dut.interfaces.wifi.reset()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

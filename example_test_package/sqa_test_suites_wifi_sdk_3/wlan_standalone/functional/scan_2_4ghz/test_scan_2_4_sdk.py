@@ -2284,3 +2284,214 @@ def test_wifi_sdk_all_scan_channels_c789529(wifi_sniffer, wifi_dut, wifi_access_
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.legacy_deployed
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+def test_wifi_sdk_scan_congested_channel_c925907(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
+    """Verify the scan in the congested channel (channel 1)."""
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device MAC address: {sa_addr}")
+
+        logger().info(f"Configuring the sniffer for channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{wifi_access_point.interfaces.wifi.channel}")
+        time.sleep(2)
+
+        logger().info("Initiating scan from DUT...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=wifi_access_point.interfaces.wifi.channel, ssid=None)
+        time.sleep(20)
+
+        assert len(scan_results) > 0, "Scan failed or no results found"
+        logger().info(f"Scan results: {scan_results}")
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, filter_name="probe_request")
+        logger().info("Validating probe requests")
+        validation_result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)
+        assert validation_result['packet_count'] > 0, "No probe requests captured"
+
+        logger().info("Scan in congested channel verified successfully")
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+def test_PMU_good_time_Functionality_c919215(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
+    """Verify PMU good time functionality using 'sl_si91x_set_nwp_config_request' API by configuring different values."""
+
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device MAC address: {sa_addr}")
+        config_val = [900, 1500, 2000]
+        for val in config_val:
+            logger().info(f"Configuring PMU good time with value: {val}")
+            wifi_dut.interfaces.wifi.write_nwp_config(code = 16,config_val=val)
+            time.sleep(2)  # Wait for the configuration to take effect
+            logger().info(f"Configured val = {val} PMU good time successfully ")
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+def test_XTAL_good_time_Functionality_c919214(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
+    """Verify XTAL good time functionality using 'sl_si91x_set_nwp_config_request' API by configuring different values."""
+
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device MAC address: {sa_addr}")
+        config_val = [600, 2000, 3000, 4000, 5000]
+        for val in config_val:
+            logger().info(f"Configuring XTAL good time with value: {val}")
+            wifi_dut.interfaces.wifi.write_nwp_config(code= 8, config_val=val)
+            time.sleep(2)  # Wait for the configuration to take effect
+            logger().info(f"Configured val = {val} XTAL good time successfully ")
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+def test_configuring_wrong_config_values_PMU_c919217(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
+    """API functionality by configuring wrong config values of PMU good time"""
+
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device MAC address: {sa_addr}")
+        config_val = [500]
+        for val in config_val:
+            logger().info(f"Configuring PMU good time with value: {val}")
+            wifi_dut.interfaces.wifi.write_nwp_config(code = 16,config_val=val, expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+            time.sleep(2)  # Wait for the configuration to take effect
+            logger().info(f"Configured val = {val} Observed the expected error successfully ")
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+def test_configuring_wrong_config_values_XTAL_c919216(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
+    """API functionality by configuring wrong config values of XTAL good time"""
+
+    try:
+        test_name = request.node.name
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device MAC address: {sa_addr}")
+        config_val = [6000]
+        for val in config_val:
+            logger().info(f"Configuring XTAL good time with value: {val}")
+            wifi_dut.interfaces.wifi.write_nwp_config(code= 8, config_val=val, expected_status=SLStatus.SL_STATUS_INVALID_PARAMETER)
+            time.sleep(2)  # Wait for the configuration to take effect
+            logger().info(f"Configured val = {val} Observed the expected error successfully ")
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
