@@ -3,7 +3,7 @@ import pytest
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xTCPIPFeatureBitMap, \
     Si91xExtTCPIPFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xOperatingMode, Si91xPowerSaveModes, \
-    Si91xPowerSaveProcedureTypes
+    Si91xPowerSaveProcedureTypes, Si91xAwsQos
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.iperf.iperf_utils import ping
 from utf.utils.thread_base import ThreadBase
@@ -19,6 +19,9 @@ from threading import Thread
 from utf.interfaces.wifi import SecurityMode
 import subprocess
 import re
+from retry import retry
+from utf.utils import get_tls_certificate_dir
+from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
 
 
 def logger():
@@ -511,6 +514,191 @@ class WifiJoinThread(ThreadBase):
 
         if self.stop_capture:
             self.wifi_sniffer.interfaces.capture.stop_capture()
+
+class AwsConnection(ThreadBase):
+    """
+    Class to connect, subscribe, publish data from DUT/Raspi to AWS server.
+    """
+
+    def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, sl_collections=None, test_name=None,
+                 aws_iot_client=None, client_id=None, messages=None, topic=None, qos=Si91xAwsQos.QOS1, port=8883, negative_case=False,
+                 test_case=None):
+        super().__init__()
+        self.client_id = None
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.wifi_sniffer = wifi_sniffer
+        self.sl_collections = sl_collections
+        self.test_name = test_name
+        self.test_case = test_case
+        self.timeout = 120
+        self.aws_iot_client = aws_iot_client
+        self.messages = messages
+        self.topic = topic
+        self.qos = qos
+        self.port = port
+        self.client_id = client_id
+
+    def mqtt_keep_alive_check(self, dut_mac_address, test_case_name):
+        remote_capture_file = self.wifi_sniffer.interfaces.capture.remote_capture_file
+        logger().info(f"capture file is:{remote_capture_file}")
+
+        filter_files = "/tmp/filter_files"
+        test_case = test_case_name
+        filtered_file = f"{filter_files}/{test_case}_main_filter.pcap"
+        self.wifi_sniffer.interfaces.capture.shell(
+            f"sudo rm -rf {filter_files}; sudo mkdir {filter_files}; sudo chmod +777 {filter_files};"
+        )
+        filter1 = f'tshark -r {remote_capture_file} -Y "(wlan.addr eq {dut_mac_address})" -w {filtered_file}'
+        logger().info("Creating filtered packets")
+        self.wifi_sniffer.interfaces.capture.shell(filter1)
+
+        logger().info("Getting the ping request and response")
+        filter3 = (
+            f'tshark -r {filtered_file} -Y "(wlan.addr eq {dut_mac_address}) && (mqtt.msgtype ==4 or mqtt.msgtype '
+            f'== 12)" -Tfields -e "mqtt.msgtype" -e "frame.time" -e "frame.time_re'
+            f'lative" > {filter_files}/mqtt_publish_ack_ping_req.txt'
+        )
+        self.wifi_sniffer.interfaces.capture.shell(filter3)
+        if isinstance(self.wifi_sniffer.interfaces.capture.shell, SSHShell):
+            with self.wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp_main:
+                sftp_main.get(filtered_file, f"./reports/{test_case}_delta_filter.pcap")
+                result_file = f"./reports/mqtt_publish_ack_ping_req.txt"
+                sftp_main.get(
+                    f"{filter_files}/mqtt_publish_ack_ping_req.txt", result_file
+                )
+                sftp_main.close()
+        publish_ack = []
+        ping_request = []
+        with open(result_file) as f:
+            for line in f:
+                if int(line.split()[0]) == 4:
+                    publish_ack.append(line.split()[-1])
+                elif int(line.split()[0]) == 12:
+                    ping_request.append(line.split()[-1])
+        return publish_ack, ping_request
+
+    def load_certificate(self, certificate):
+        cert_file = str(get_tls_certificate_dir().joinpath(certificate))
+        with open(cert_file) as f:
+            cert_contents = f.read()
+        size = len(cert_contents)
+        logger().info(f"\nLoading  Certificate {certificate} ")
+        buffer_size = (512 * (int(size / 512))) + 512  # buffer_size should be more than size
+        address = self.wifi_dut.interfaces.wifi.allocate_memory(size=buffer_size)
+        self.wifi_dut.interfaces.wifi.load_memory(
+            address, size=size, write_content=cert_contents
+        )
+        return address, size
+
+    @retry(Exception, delay=15, tries=5)
+    def subscribe_from_dut(self, timeout=120):
+        logger().info(f"DUT is Subscribing on topic '{self.topic}' and QOS:'{self.qos}'")
+        self.wifi_dut.interfaces.wifi.aws_lwip_mqtt_subscribe_command_handler(topic=self.topic, qos_level=self.qos,
+                                                                         timeout=timeout)
+
+    @retry(Exception, delay=10, tries=5)
+    def connect_to_aws_server_from_raspi(self):
+        logger().info("Connecting to aws server from aws_iot_client")
+        self.aws_iot_client.interfaces.aws_iot.aws_iot_connect()
+        time.sleep(5)
+        status = self.aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        assert status == ClientStatus.STABLE, "Connecting to AWS server from aws_iot_client is failed"
+
+    @retry(Exception, delay=10, tries=3)
+    def subscribe_from_raspi(self):
+        logger().info(f"\n\n *** aws_iot_client is Subscribing on topic '{self.topic}' and QOS:'{self.qos}'*** \n\n")
+        self.aws_iot_client.interfaces.aws_iot.received_messages.clear()
+        self.aws_iot_client.interfaces.aws_iot.aws_iot_subscribe(self.topic, qos=self.qos)
+        status = self.aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        assert status == ClientStatus.STABLE, f"Subscribe on topic:'{self.topic}' is failed from aws_iot_client"
+
+    @retry(Exception, delay=5, tries=5)
+    def publish_from_raspi(self, messages):
+        status = self.aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        assert status == ClientStatus.STABLE, f"Publish on topic:'{self.topic}' is failed from aws_iot_client"
+
+        if isinstance(messages, list):
+            for i, msg in enumerate(messages):
+                logger().info(
+                    f"\naws_iot_client publishing message{i + 1} on topic:'{self.topic}' \nQOS:'{self.qos}'"
+                    f"\nMessage{i + 1} with length:'{len(msg)} bytes'\nMessage{i + 1} is:'{msg}'")
+                self.aws_iot_client.interfaces.aws_iot.aws_iot_publish(self.topic, msg, qos=self.qos)
+                time.sleep(5)
+        else:
+            self.aws_iot_client.interfaces.aws_iot.aws_iot_publish(self.topic, messages, qos=self.qos)
+
+    @retry(Exception, delay=15, tries=1)
+    def publish_from_dut(self, message, higher_data_len=0, negative_case=False):
+        logger().info(f"\nDUT is publishing message on topic:'{self.topic}' \nQOS:'{self.qos}'")
+        if higher_data_len > 0:
+            address = self.wifi_dut.interfaces.wifi.allocate_memory(size=len(message))
+            self.wifi_dut.interfaces.wifi.load_memory(address=address, size=len(message), write_content=message)
+            result = self.wifi_dut.interfaces.wifi.aws_lwip_mqtt_publish_command_handler(topic=self.topic,
+                                                                                         qos_level=self.qos,
+                                                                                         msg_payload=message,
+                                                                                         use_higher_data_len=higher_data_len,
+                                                                                         data_buffer=address)
+            self.wifi_dut.interfaces.wifi.memory_free(address)
+        else:
+            logger().info(f"\nDUT is publishing message on topic:'{topic}' \nQOS:'{qos}'")
+            result = self.wifi_dut.interfaces.wifi.aws_lwip_mqtt_publish_command_handler(topic=self.topic,
+                                                                                         qos_level=self.qos,
+                                                                                         msg_payload=message)
+        if negative_case:
+            return result
+
+    def receive_aws_messages_from_dut(self, retries=3, wait_time=3, expected_status=SLStatus.SL_STATUS_OK):
+        for retry_count in range(retries):
+            try:
+                time.sleep(wait_time)
+                yield_data = self.wifi_dut.interfaces.wifi.aws_lwip_mqtt_yield_command_handler(timeout_ms=5000)
+                pattern = re.compile(r"Topic:\s*(?P<Topic>[^,]+),\s*Message:\s*(?P<Message>[^\r\n]+)", re.DOTALL)
+                match = pattern.search(yield_data)
+                if match:
+                    topic = match.group("Topic")
+                    message = match.group("Message")
+                    logger().info(f"\n Received MQTT message on DUT - Topic: {topic}, Message: {message} \n")
+                    return message
+                else:
+                    raise AssertionError("No MQTT message received on DUT")
+            except Exception as err:
+                logger().warning(f"Failed to receive published message in DUT\n{err}")
+                if "0x1" in str(err):
+                    self.wifi_dut.interfaces.wifi.is_dut_bad_state = True
+                    raise
+                time.sleep(5)
+
+    def connect_to_aws_server_from_dut(self, keep_alive=1200, timeout=120):
+        ca_cert, ca_cert_size = self.load_certificate(certificate="start_field.pem")
+        client_cert, client_cert_size = self.load_certificate(certificate="client-certificate.crt")
+        client_key, client_key_size = self.load_certificate(certificate="private-key.key")
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+
+        for attempt in range(3):
+            try:
+                logger().info(f"AWS connection attempt {attempt + 1}/3")
+                self.wifi_dut.interfaces.wifi.aws_lwip_mqtt_init_command_handler(cacert=ca_cert,
+                                                                                 cacert_length=ca_cert_size,
+                                                                                 client_cert=client_cert,
+                                                                                 client_cert_length=client_cert_size,
+                                                                                 client_key=client_key,
+                                                                                 client_key_length=client_key_size,
+                                                                                 timeout=timeout)
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.aws_lwip_mqtt_connect_command_handler(client_id=self.client_id,
+                                                                                    keepalive_interval=keep_alive,
+                                                                                    timeout=timeout)
+                logger().info(f"AWS connection successful on attempt {attempt + 1}")
+                return True
+            except Exception as e:
+                logger().warning(f"AWS connection attempt {attempt + 1} failed: {e}")
+                if attempt < 2:  # Not the last attempt
+                    logger().info("Retrying AWS connection...")
+                    time.sleep(10)  # Wait before retry
+                else:
+                    logger().error("All AWS connection attempts failed")
+                    raise e
 
 
 @pytest.mark.config(
@@ -1903,7 +2091,7 @@ def test_wifi_sdk_dhcp_start_stop_c919317(wifi_sniffer, wifi_access_point, wifi_
 def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919309(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                                           sniffer_filter, utf_constants, sl_collections, request,
                                                           remote_wiseconnect3):
-    """ To verify DHCP DORA process after DHCP conflict scenario in LWIP stack with default timer"""
+    """ To verify DHCP DORA process after DHCP conflict scenario in LWIP stack with optimized timer"""
     capture_filename = request.node.name
     wlan_obj = WifiThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           sl_collections=sl_collections, capture_filename=capture_filename, ping_count=5,
@@ -2026,7 +2214,7 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919309(wifi_access_point, wif
 def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919319(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                                           sniffer_filter, utf_constants, sl_collections, request,
                                                           remote_wiseconnect3):
-    """ To verify DHCP DORA process after DHCP conflict scenario in loop in LWIP stack with default timer"""
+    """ To verify DHCP DORA process after DHCP conflict scenario in loop in LWIP stack with optimized timer"""
     capture_filename = request.node.name
     wlan_obj = WifiThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           sl_collections=sl_collections, capture_filename=capture_filename, ping_count=5,
@@ -2113,3 +2301,429 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919319(wifi_access_point
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated"])
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "channel": 6,
+    },
+)
+def test_wifi_sdk_aws_tcp_shutdown_C919302(wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, sl_collections,
+                                           sniffer_filter, utf_constants, request):
+    """
+    Connect to AWS MQTT server subscribe to any topic, Receive data on the subscribed topic. Close the TCP connection
+    and check the Connection stability in LWIP stack with optimized timer.
+    """
+    client_id = 'client_c19546'
+    topic = "topic_c19546"
+    iterations = utf_constants.get('iter_count')
+    capture_filename = request.node.name
+    wlan_obj = WifiThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          sl_collections=sl_collections, capture_filename=capture_filename, ping_count=5,
+                          test_case_no=919193, stop_capture=False, leave=False, power_save=True)
+
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
+
+        for iter_count in range(2):
+            logger.info(f"\n ===================== Initiating aws test for iteration:{iter_count + 1} ================= \n")
+            messages = []
+            for i in range(3):
+                messages.append(text_generator(size=10))
+            logger().info(f"Messages are:{messages}")
+
+            aws_obj = AwsConnection(wifi_dut=wifi_dut, aws_iot_client=aws_iot_client, client_id=client_id, topic=topic,
+                                    messages=messages, qos=Si91xAwsQos.QOS0)
+            logger().info("Initiating aws connect from DUT")
+            assert aws_obj.connect_to_aws_server_from_dut(), "Failed to connect aws server from DUT"
+            logger().info("Connecting to AWS server from DUT is successful")
+            aws_obj.subscribe_from_dut()
+            aws_obj.connect_to_aws_server_from_raspi()
+            aws_obj.subscribe_from_raspi()
+            time.sleep(5)
+
+            for count, msg in enumerate(messages):
+                logger().info(
+                    f"Raspi is publishing message{count + 1} on topic:'{topic}'\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+                aws_obj.publish_from_raspi(msg)
+                recv_msg = aws_obj.receive_aws_messages_from_dut()
+                assert msg == recv_msg, "Failed to receive published message in DUT"
+            logger().info("Successfully received all published messages\n")
+
+            logger().info("Initiating AWS shutdown")
+            wifi_dut.interfaces.wifi.lwipSockClose(socket_fd=0)
+            logger().info("AWS shutdown success")
+            wifi_dut.interfaces.wifi.lwip_aws_flags['connected'] = False
+
+            logger().info(f"Iteration '{iter_count + 1}' completed")
+
+        logger().info("Disconnection will issued after verification")
+        wifi_dut.interfaces.wifi.leave()
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        device_address = {'sa_addr': wlan_obj.dut_addr, 'da_addr': wlan_obj.ap_addr,
+                          'ta_addr': wlan_obj.dut_addr, 'ra_addr': wlan_obj.ap_addr}
+
+        filters_name = {1: 'assoc_req_resp_eapol_4_way_handshake', 2: 'probe_req_response', 3: 'power_mgmt_bit',
+                        4: 'dhcp_4_way_handshake_packets', 5: 'tcp_syn_with_syn_ack_with_ack'}
+
+        output = sl_collections.sniffer_validation_for_packet_filters(
+            wifi_sniffer, sniffer_filter, device_address, filters_name=filters_name)
+
+        logger().info(f'\n OUTPUT 1 = {output}\n')
+        assert all(output.values()), 'Unable to find expected filter'
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated"])
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "channel": 6,
+    },
+)
+def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_diff_len_C919305(wifi_sniffer, wifi_access_point,
+                                                                               wifi_dut, aws_iot_client, sl_collections,
+                                                                               sniffer_filter, utf_constants, request):
+    """
+    Connect to AWS MQTT server subscribe to any topic, Receive data on the subscribed topic. Close the TCP connection
+    and check the Connection stability in LWIP stack with optimized timer.
+    """
+    client_id = 'client_c919188'
+    topic = "topic_c919188"
+    capture_filename = request.node.name
+    wlan_obj = WifiThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          sl_collections=sl_collections, capture_filename=capture_filename, ping_count=5,
+                          test_case_no=919193, stop_capture=False, leave=False, power_save=True)
+
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
+        messages = []
+        # for size in (1, 10, 100, 512, 1000, 1390):
+        for size in (1, 10, 100):
+            messages.append(''.join(random.choice(string.ascii_uppercase) for _ in range(size)))
+        logger().info(f"Messages are:{messages}")
+
+        aws_obj = AwsConnection(wifi_dut=wifi_dut, aws_iot_client=aws_iot_client, client_id=client_id, topic=topic,
+                                messages=messages, qos=Si91xAwsQos.QOS0)
+        logger().info("Initiating aws connect from DUT")
+        assert aws_obj.connect_to_aws_server_from_dut(), "Failed to connect aws server from DUT"
+        logger().info("Connecting to AWS server from DUT is successful")
+        aws_obj.subscribe_from_dut()
+        aws_obj.connect_to_aws_server_from_raspi()
+        aws_obj.subscribe_from_raspi()
+        time.sleep(5)
+
+        for count, msg in enumerate(messages):
+            logger().info(
+                f"Raspi is publishing message{count + 1} on topic:'{topic}'\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+            aws_obj.publish_from_raspi(msg)
+            recv_msg = aws_obj.receive_aws_messages_from_dut()
+            assert msg == recv_msg, "Failed to receive published message in DUT"
+            logger().info(f"\n Successfully received message{count + 1}: {msg} in DUT\n")
+        logger().info("\nSuccessfully received all published messages\n")
+
+        logger().info("Initiating AWS shutdown")
+        wifi_dut.interfaces.wifi.lwipSockClose(socket_fd=0)
+        logger().info("AWS shutdown success")
+        wifi_dut.interfaces.wifi.lwip_aws_flags['connected'] = False
+
+        logger().info("Disconnection will issued after verification")
+        wifi_dut.interfaces.wifi.leave()
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        device_address = {'sa_addr': wlan_obj.dut_addr, 'da_addr': wlan_obj.ap_addr,
+                          'ta_addr': wlan_obj.dut_addr, 'ra_addr': wlan_obj.ap_addr}
+
+        filters_name = {1: 'assoc_req_resp_eapol_4_way_handshake', 2: 'probe_req_response', 3: 'power_mgmt_bit',
+                        4: 'dhcp_4_way_handshake_packets', 5: 'tcp_syn_with_syn_ack_with_ack'}
+
+        output = sl_collections.sniffer_validation_for_packet_filters(
+            wifi_sniffer, sniffer_filter, device_address, filters_name=filters_name)
+
+        logger().info(f'\n OUTPUT 1 = {output}\n')
+        assert all(output.values()), 'Unable to find expected filter'
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated"])
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "channel": 6,
+    },
+)
+def test_wifi_sdk_aws_publish_data_with_different_length_C919304(wifi_sniffer, wifi_access_point, wifi_dut,
+                                                                 aws_iot_client, sl_collections, sniffer_filter,
+                                                                 request):
+    """
+    Connect to AWS MQTT server subscribe to any topic, Receive data on the subscribed topic. Close the TCP connection
+    and check the Connection stability in LWIP stack with optimized timer.
+    """
+    client_id = 'client_c919187'
+    topic = "topic_c919187"
+    capture_filename = request.node.name
+    wlan_obj = WifiThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          sl_collections=sl_collections, capture_filename=capture_filename, ping_count=5,
+                          test_case_no=919193, stop_capture=False, leave=False, power_save=True)
+
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
+        messages = []
+        # for size in (1, 10, 100, 512, 1000, 1390):
+        for size in (1, 10, 100):
+            messages.append(''.join(random.choice(string.ascii_uppercase) for _ in range(size)))
+        logger().info(f"Messages are:{messages}")
+
+        aws_obj = AwsConnection(wifi_dut=wifi_dut, aws_iot_client=aws_iot_client, client_id=client_id, topic=topic,
+                                messages=messages, qos=Si91xAwsQos.QOS0)
+        logger().info("Initiating aws connect from DUT")
+        assert aws_obj.connect_to_aws_server_from_dut(), "Failed to connect aws server from DUT"
+        logger().info("Connecting to AWS server from DUT is successful")
+        aws_obj.subscribe_from_dut()
+        aws_obj.connect_to_aws_server_from_raspi()
+        aws_obj.subscribe_from_raspi()
+        time.sleep(5)
+        received_messages = []
+        for count, msg in enumerate(messages):
+            logger().info(
+                f"DUT is publishing message{count + 1} on topic:'{topic}'\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+            aws_obj.publish_from_dut(message=msg, higher_data_len=1)
+            time.sleep(10)
+            received = aws_iot_client.interfaces.aws_iot.get_received_messages()[-1]
+            received_messages.append(received.payload.decode('latin-1'))
+
+        for i, message in enumerate(messages):
+            assert any(message in recv_msg for recv_msg in
+                       received_messages), f"Raspi did not received published message {message} from DUT"
+            logger().info(f"Received Message{i + 1}: {message} ")
+
+        logger().info("\nSuccessfully Published all messages from DUT and received at Rasp\n")
+
+        logger().info("Initiating AWS shutdown")
+        wifi_dut.interfaces.wifi.lwipSockClose(socket_fd=0)
+        logger().info("AWS shutdown success")
+        wifi_dut.interfaces.wifi.lwip_aws_flags['connected'] = False
+        # aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
+
+        logger().info("Disconnection will issued after verification")
+        wifi_dut.interfaces.wifi.leave()
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        device_address = {'sa_addr': wlan_obj.dut_addr, 'da_addr': wlan_obj.ap_addr,
+                          'ta_addr': wlan_obj.dut_addr, 'ra_addr': wlan_obj.ap_addr}
+
+        filters_name = {1: 'assoc_req_resp_eapol_4_way_handshake', 2: 'probe_req_response', 3: 'power_mgmt_bit',
+                        4: 'dhcp_4_way_handshake_packets', 5: 'tcp_syn_with_syn_ack_with_ack'}
+
+        output = sl_collections.sniffer_validation_for_packet_filters(
+            wifi_sniffer, sniffer_filter, device_address, filters_name=filters_name)
+
+        logger().info(f'\n OUTPUT 1 = {output}\n')
+        assert all(output.values()), 'Unable to find expected filter'
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.TCPIPBypass,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            1),
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "lwip_aws_unsubscribe", "lwip_aws_disconnect", "disassociated"])
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "channel": 6,
+    },
+)
+@pytest.mark.parametrize("keep_alive", [60])
+def test_wifi_sdk_aws_mqtt_keep_alive_C919303(wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, sl_collections,
+                                              sniffer_filter, utf_constants, request, keep_alive):
+    """
+    Connect to AWS MQTT server subscribe to any topic, Receive data on the subscribed topic with different keepalive interval and check the Connection stability in LWIP stack with optimized timer.
+    """
+    client_id = 'client_c19546'
+    topic = "topic_c19546"
+    capture_filename = request.node.name
+    wlan_obj = WifiThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                          sl_collections=sl_collections, capture_filename=capture_filename, ping_count=5,
+                          test_case_no=919193, stop_capture=False, leave=False, power_save=True)
+
+    try:
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+        time.sleep(2)
+        messages = []
+        for i in range(3):
+            messages.append(text_generator(size=10))
+        logger().info(f"Messages are:{messages}")
+
+        aws_obj = AwsConnection(wifi_dut=wifi_dut, aws_iot_client=aws_iot_client, client_id=client_id, topic=topic,
+                                messages=messages, qos=Si91xAwsQos.QOS0, wifi_sniffer=wifi_sniffer)
+        logger().info("Initiating aws connect from DUT")
+        assert aws_obj.connect_to_aws_server_from_dut(keep_alive=keep_alive), "Failed to connect aws server from DUT"
+        logger().info("Connecting to AWS server from DUT is successful")
+        aws_obj.subscribe_from_dut()
+        aws_obj.connect_to_aws_server_from_raspi()
+        aws_obj.subscribe_from_raspi()
+        time.sleep(5)
+        for count, msg in enumerate(messages):
+            logger().info(
+                f"Raspi is publishing message{count + 1} on topic:'{topic}'\nMessage{count + 1} with length:'{len(msg)} bytes'\nMessage{count + 1} is:'{msg}'")
+            aws_obj.publish_from_raspi(msg)
+            recv_msg = aws_obj.receive_aws_messages_from_dut()
+            assert msg == recv_msg, "Failed to receive published message in DUT"
+        logger().info("Successfully received all published messages\n")
+
+        time.sleep(keep_alive * 3)
+
+        logger().info("Initiating AWS shutdown")
+        wifi_dut.interfaces.wifi.lwipSockClose(socket_fd=0)
+        logger().info("AWS shutdown success")
+        wifi_dut.interfaces.wifi.lwip_aws_flags['connected'] = False
+        aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
+        logger().info("Disconnection will issued after verification")
+        wifi_dut.interfaces.wifi.leave()
+
+        publish_ack, ping_request = aws_obj.mqtt_keep_alive_check(wlan_obj.dut_addr, request.node.name)
+        logger().info(f"ping request timestamps : {ping_request}")
+        if len(ping_request) >= 1 and len(publish_ack) >= 1:
+            logger().info(
+                f"len of publish ack is {len(publish_ack)} and number of ping request packets observed is : {len(ping_request)} publish ack : {publish_ack}, ping request : {ping_request}")
+            assert ((keep_alive_time - 5)
+                    < (float(ping_request[0]) - float(publish_ack[-1]))
+                    <= (keep_alive_time + 5)
+                    ), (f"mqtt ping request is not observed even after {keep_alive_time} is "
+                        f"exhausted or before {keep_alive_time - 5} ")
+            logger().info(
+                f"MQTT KEEP ALIVE CHECK FUNCTIONALITY ** PING REQUEST PACKET OBSERVED AT DIFFERENCE OF {(float(ping_request[0]) - float(publish_ack[-1]))} SECONDS")
+
+        if len(ping_request) > 1:
+            for i in range(0, len(ping_request)):
+                if i == len(ping_request) - 1:
+                    break
+                assert (
+                        (keep_alive_time - 5)
+                        < (float(ping_request[i + 1]) - float(ping_request[i]))
+                        <= (keep_alive_time + 5)
+                ), (
+                    f"mqtt ping request is not observed even after {keep_alive_time} is "
+                    f"exhausted or before {keep_alive_time - 5} and the ping re"
+                    f"quest arrival time is {ping_request[i]} "
+                )
+                logger().info(
+                    f"MQTT KEEP ALIVE CHECK FUNCTIONALITY ** PING REQUEST PACKET OBSERVED AT DIFFERENCE OF {(float(ping_request[i + 1]) - float(ping_request[i]))} SECONDS"
+                )
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
