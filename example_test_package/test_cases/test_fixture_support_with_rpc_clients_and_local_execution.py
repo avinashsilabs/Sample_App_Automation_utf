@@ -14,7 +14,7 @@ from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.mqtt.client.paho_client import ensure_mqtt_message
 from random import randint, random
 import random as random1
-
+import random
 from utf_wiseconnect.devices.rs911x import SocketOptions
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.devices.si91x import (
@@ -1471,3 +1471,215 @@ def test_wifi_sdk_multicast_interface_rpc(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+
+def test_ftp_server(ftp_server, ftp_client):
+    ftp_client.interfaces.ftp_client.login()
+    assert (
+        ftp_client.interfaces.ftp_client.read_from_file("readMe.txt")
+        == "This is read me file"
+    )
+    ftp_client.interfaces.ftp_client.write_to_file(
+        "readMe1.txt", "This is read me file1"
+    )
+    logger().info(ftp_client.interfaces.ftp_client.read_from_file("readMe1.txt"))
+    logger().info(ftp_client.interfaces.ftp_client.list_files_and_dirs())
+    assert (
+        ftp_client.interfaces.ftp_client.delete_file("readMe1.txt")
+        == "250 Delete operation successful."
+    )
+    assert (
+        ftp_client.interfaces.ftp_client.create_dir("ftp_test_dir") == "/ftp_test_dir"
+    )
+    ftp_client.interfaces.ftp_client.set_dir("/ftp_test_dir")
+    logger().info(ftp_client.interfaces.ftp_client.get_current_working_dir())
+    ftp_client.interfaces.ftp_client.set_dir("/")
+    assert (
+        ftp_client.interfaces.ftp_client.remove_dir("ftp_test_dir")
+        == "250 Remove directory operation successful."
+    )
+
+
+@pytest.mark.ftp_server("raspi_ftp_server_tls")
+@pytest.mark.ftp_client("raspi_ftp_client_tls")
+def test_ftp_server_tls(ftp_server, ftp_client):
+    ftp_client.interfaces.ftp_client.login()
+    assert (
+        ftp_client.interfaces.ftp_client.read_from_file("readMe.txt")
+        == "This is read me file"
+    )
+    ftp_client.interfaces.ftp_client.write_to_file(
+        "readMe1.txt", "This is read me file1"
+    )  # read file to ftp server
+    logger().info(ftp_client.interfaces.ftp_client.read_from_file("readMe1.txt"))
+    logger().info(ftp_client.interfaces.ftp_client.list_files_and_dirs())
+    assert (
+        ftp_client.interfaces.ftp_client.delete_file("readMe1.txt")
+        == "250 Delete operation successful."
+    )
+    assert ftp_client.interfaces.ftp_client.create_dir("ftp_tls_dir") == "/ftp_tls_dir"
+    ftp_client.interfaces.ftp_client.set_dir("/ftp_tls_dir")
+    logger().info(ftp_client.interfaces.ftp_client.get_current_working_dir())
+    ftp_client.interfaces.ftp_client.set_dir("/")
+    assert (
+        ftp_client.interfaces.ftp_client.remove_dir("ftp_tls_dir")
+        == "250 Remove directory operation successful."
+    )
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server
+        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+        | Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "client_socket_limit": 10,
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@123",
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "SILABS_AP_MODE",
+            "passphrase": "Automation@123",
+            "channel": 11,
+            "interface": "wlan0",
+        }
+    },
+)
+@pytest.mark.end_state("wifi_dut", ["close_sockets"])
+@pytest.mark.legacy_deployed
+def test_remote_multi_socket_rpc(
+    wifi_dut,
+    remote_socket,
+    utf_constants,
+    remote_socket_factory,
+    sl_collections,
+    wifi_clients,
+    remote_multi_socket,
+):
+    """Open  UDP server sockets and Data RX"""
+    try:
+        sl_collections.configure_dut_in_static_ip(
+            wifi_dut,
+            static_ip="192.168.100.76",
+            static_subnet="255.255.255.0",
+            static_gateway="192.168.100.76",
+        )
+        dut_addr_dict = sl_collections.ap_mode_clients_connection(
+            wifi_dut,
+            wifi_clients,
+            channel=11,
+            ssid="SILABS_AP_MODE",
+            security="WPA2",
+            password="Automation@123",
+            dtim_count=1,
+            beacon_interval=100,
+            ping_count=10,
+            no_of_clients=1,
+            leave=False,
+        )
+        dut = 6001
+        udp_socks = []
+        local_port = randint(6001, 60000)
+        for sock_count in range(0, 1):
+            port = local_port + sock_count
+            port_dut = 6001 + sock_count
+            sock_id = wifi_dut.interfaces.wifi.Asyncsocket(
+                stream_type="SOCK_DGRAM", protocol="IPPROTO_UDP"
+            )
+            remote_multi_socket.interfaces.socket.start_server(
+                port=port, socket_type=1, sock_id=sock_id
+            )
+            udp_socks.append(sock_id)
+            logger().info(
+                f"Successfully opened UDP client socket and socket id received is {sock_id} which is expected"
+            )
+            wifi_dut.interfaces.wifi.bind(
+                socket_fd=sock_id,
+                device_ip=dut_addr_dict["dut_ip"],
+                server_port=port_dut,
+                asynch=1,
+            )
+        i = 0
+        for socket_no in range(0, 1):
+            data_sent = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=1460)
+            )
+            data_length = len(data_sent)
+            if socket_no == 0:
+                start_port_dut = 6001
+            elif socket_no == 1:
+                start_port_dut = 6002
+            elif socket_no == 2:
+                start_port_dut = 6003
+            elif socket_no == 3:
+                start_port_dut = 6004
+            elif socket_no == 4:
+                start_port_dut = 6005
+            elif socket_no == 5:
+                start_port_dut = 6006
+            elif socket_no == 6:
+                start_port_dut = 6007
+            elif socket_no == 7:
+                start_port_dut = 6008
+            elif socket_no == 8:
+                start_port_dut = 6009
+            elif socket_no == 9:
+                start_port_dut = 6010
+            sw = Stopwatch()
+            while sw.elapsed_sec <= 60:
+                logger().info(
+                    f"###################### start_port from DUT : {start_port_dut}  ######################"
+                )
+                remote_multi_socket.interfaces.socket.send_data_udp(
+                    tx_buffer=data_sent,
+                    server_ip=dut_addr_dict["dut_ip"],
+                    port=start_port_dut,
+                    sock_id=udp_socks[i],
+                )
+                logger().info(f"********data on socket {data_sent}")
+                time.sleep(2)
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(
+                    socket_fd=socket_no
+                )
+                logger().info(
+                    f"###################### Buffer Data  {data_sent}  ######################"
+                )
+                logger().info(
+                    f"###################### Buffer Data Length  {data_length}  ######################"
+                )
+                logger().info(
+                    f"###################### Received Data: {buffer_rx} ######################"
+                )
+                assert data_length == len(
+                    buffer_rx
+                ), f"buffer length sent by remote peer and received on the socket id {socket_no} opened in the DUT is not matched "
+                time.sleep(2)
+            i += 1
+        for socket in udp_socks:
+            logger().info(f"Closing socket_id->{socket}")
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket)
+        for i in range(0, 1):
+            logger().info(f"RASPI-STA{i + 1} Disconnecting from DUT-AP")
+            wifi_clients[i].interfaces.wifi.leave()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
+        wifi_dut.interfaces.wifi.stop_ap()
