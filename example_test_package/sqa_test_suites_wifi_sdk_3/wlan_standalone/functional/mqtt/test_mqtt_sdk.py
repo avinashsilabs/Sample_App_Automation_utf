@@ -2847,7 +2847,7 @@ def test_wifi_sdk_qos1_subscribe_publish_disconnect_and_subscribe_again_30_min_C
             while sw.elapsed_sec < 10:
                 time.sleep(0.1)
                 msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
-                if len(msgs) == 1:
+                if len(msgs) >= 2:
                     break
             assert len(msgs), "No message is received by DUT"
             assert msgs[0] == topic, "No message received by DUT on subscribed topic"
@@ -2859,7 +2859,7 @@ def test_wifi_sdk_qos1_subscribe_publish_disconnect_and_subscribe_again_30_min_C
             wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
             time.sleep(1)
             logger().info("Disconnecting from MQTT Server")
-            wifi_dut.interfaces.wifi.mqtt_client_disconnect()
+            wifi_dut.interfaces.wifi.mqtt_client_disconnect(timeout=30)
             time.sleep(5)
             wifi_dut.interfaces.wifi.leave()
             logger().info("Stop the sniffer")
@@ -2948,7 +2948,7 @@ def test_wifi_sdk_qos0_subscribe_publish_disconnect_and_subscribe_again_for_30_m
             while sw.elapsed_sec < 10:
                 time.sleep(0.1)
                 msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
-                if len(msgs) == 1:
+                if len(msgs) >= 2:
                     break
             assert len(msgs), "No message is received by dut"
             assert msgs[0] == topic, "No message received by DUT on subscribed topic"
@@ -2960,7 +2960,7 @@ def test_wifi_sdk_qos0_subscribe_publish_disconnect_and_subscribe_again_for_30_m
             wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
             time.sleep(1)
             logger().info("Disconnecting from MQTT Server")
-            wifi_dut.interfaces.wifi.mqtt_client_disconnect()
+            wifi_dut.interfaces.wifi.mqtt_client_disconnect(timeout=30)
             time.sleep(5)
             wifi_dut.interfaces.wifi.leave()
             logger().info("Stop the sniffer")
