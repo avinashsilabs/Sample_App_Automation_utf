@@ -53,21 +53,21 @@ def logger():
 
 class WLanThread(ThreadBase):
     def __init__(
-        self,
-        wifi_dut=None,
-        wifi_access_point=None,
-        wifi_sniffer=None,
-        test_case_no=None,
-        sniffer_filter=None,
-        ping_count=None,
-        test_name=None,
-        sl_collections=None,
-        net_perf_client=None,
-        wifi_client=None,
-        switch=None,
-        wifi_clients=None,
-        protocol=None,
-        multicast_client=None,
+            self,
+            wifi_dut=None,
+            wifi_access_point=None,
+            wifi_sniffer=None,
+            test_case_no=None,
+            sniffer_filter=None,
+            ping_count=None,
+            test_name=None,
+            sl_collections=None,
+            net_perf_client=None,
+            wifi_client=None,
+            switch=None,
+            wifi_clients=None,
+            protocol=None,
+            multicast_client=None,
     ):
         super().__init__()
         self.scan_list = None
@@ -338,14 +338,14 @@ class WLanThread(ThreadBase):
                 for i in range(0, 5):
                     self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                     time.sleep(5)
-                    
+
                     # Ensure clean state before EAP connection
                     try:
                         self.wifi_dut.interfaces.wifi.leave()
                         time.sleep(2)
                     except:
                         pass  # Ignore if not connected
-                    
+
                     # Verify AP is accessible before attempting EAP join
                     try:
                         scan_result = self.wifi_dut.interfaces.wifi.scan()
@@ -355,19 +355,20 @@ class WLanThread(ThreadBase):
                                 ap_found = True
                                 logger().info(f"Target AP found in scan: {ap.ssid}")
                                 break
-                        
+
                         if not ap_found:
-                            logger().warning(f"Target AP {self.wifi_access_point.interfaces.wifi.ssid} not found in scan results")
+                            logger().warning(
+                                f"Target AP {self.wifi_access_point.interfaces.wifi.ssid} not found in scan results")
                     except Exception as scan_error:
                         logger().warning(f"Scan failed: {scan_error}, proceeding with EAP join attempt")
-                    
+
                     self.wifi_sniffer.interfaces.capture.configure_interface(
                         channel=self.wifi_access_point.interfaces.wifi.channel
                     )
                     self.wifi_sniffer.interfaces.capture.start_capture(
                         capture_file=self.test_name
                     )
-                    
+
                     # Validate EAP certificate configuration before attempting connection
                     try:
                         logger().info("Validating EAP certificate configuration...")
@@ -375,15 +376,15 @@ class WLanThread(ThreadBase):
                         logger().info(f"Target AP SSID: {self.wifi_access_point.interfaces.wifi.ssid}")
                         logger().info(f"Target AP Security: {self.wifi_access_point.interfaces.wifi.security.name}")
                         logger().info("EAP Type: TLS")
-                        
+
                         # Log the AP configuration to help with debugging
                         logger().info(f"AP Channel: {self.wifi_access_point.interfaces.wifi.channel}")
                         logger().info(f"AP BSSID: {self.wifi_access_point.interfaces.wifi.bssid}")
-                        
+
                         time.sleep(1)
                     except Exception as cert_error:
                         logger().warning(f"Certificate validation warning: {cert_error}")
-                    
+
                     # Retry logic for EAP network join with better error handling
                     max_retries = 3
                     retry_count = 0
@@ -1631,7 +1632,9 @@ def test_wifi_sdk_mbssid_c219284(
 
         logger().info(f"\n\n\n DUT MAC Address = {wlan_obj.dut_addr['dut_mac_address']}\n\n")
         time.sleep(60)
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_addr["dut_mac_address"],radio_ch=wifi_access_point.interfaces.wifi.channel, filter_name="assoc_mbssid",)
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=wlan_obj.dut_addr["dut_mac_address"], radio_ch=wifi_access_point.interfaces.wifi.channel,
+            filter_name="assoc_mbssid", )
 
         logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
 
@@ -1640,9 +1643,15 @@ def test_wifi_sdk_mbssid_c219284(
         wifi_dut.interfaces.wifi.leave()
 
         time.sleep(2)
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter2=packet_filter2)["packet_count"], "Unable to find MBSSID bit enable in extended capability field in sniffer capture"
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                  packet_filter2=packet_filter2)[
+            "packet_count"], "Unable to find MBSSID bit enable in extended capability field in sniffer capture"
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1736,6 +1745,10 @@ def test_wifi_sdk_mbssid_scan_all_vap_c219285(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1835,6 +1848,10 @@ def test_wifi_sdk_mbssid_T_open_sec_c219286(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1933,6 +1950,10 @@ def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2034,6 +2055,10 @@ def test_wifi_sdk_mbssid_NT_wpa2_psk_c219288(
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
         raise e
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2142,6 +2167,10 @@ def test_wifi_sdk_mbssid_T_wpa3_c219289(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2249,6 +2278,10 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
         raise e
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.config(
@@ -2368,6 +2401,10 @@ def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.skip(reason="AP does not support WPA2 Enterprise in NT BSSID")
@@ -2480,6 +2517,10 @@ def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2593,6 +2634,9 @@ def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2707,6 +2751,10 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
+
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2821,6 +2869,10 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
+
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2940,6 +2992,9 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -3058,6 +3113,9 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(
     finally:
         logger().info("******* Turn on Access point Finally **********")
         switch.interfaces.pdu_switch.turn_on(delay=60)
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -3153,6 +3211,10 @@ def test_wifi_sdk_mbssid_c219298(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -3247,6 +3309,10 @@ def test_wifi_sdk_mbssid_negative_c219299(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -3330,6 +3396,10 @@ def test_wifi_sdk_mbssid_connection_failure_c219300(
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
         raise e
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -3420,6 +3490,10 @@ def test_wifi_sdk_mbssid_c219301(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -3512,6 +3586,10 @@ def test_wifi_sdk_mbssid_c219302(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -3610,6 +3688,10 @@ def test_wifi_sdk_mbssid_c219319(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -3708,6 +3790,10 @@ def test_wifi_sdk_mbssid_c219320(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -3796,6 +3882,10 @@ def test_wifi_sdk_mbssid_c219321(
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.config(
@@ -3897,6 +3987,9 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
     finally:
         logger().info("Stop DUT AP finally")
         wifi_dut.interfaces.wifi.stop_ap()
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.config(
@@ -3999,6 +4092,9 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
     finally:
         logger().info("Stop Sniffer finally")
         wifi_dut.interfaces.wifi.stop_ap()
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.config(
@@ -4110,6 +4206,9 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
     finally:
         logger().info("Stop Soft AP finally")
         wifi_dut.interfaces.wifi.stop_ap()
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.config(
@@ -4220,6 +4319,9 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(
     finally:
         logger().info("Stop Sniffer finally")
         wifi_dut.interfaces.wifi.stop_ap()
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.config(
@@ -4335,6 +4437,9 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(
     finally:
         logger().info("Stop DUT AP finally")
         wifi_dut.interfaces.wifi.stop_ap()
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.config(
@@ -4451,6 +4556,9 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
     finally:
         logger().info("Stop DUT AP finally")
         wifi_dut.interfaces.wifi.stop_ap()
+    # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+    logger().info("C219284: stopping all guest BSS on AP after test")
+    sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -4551,6 +4659,10 @@ def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c219315(
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
         raise e
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.skip(reason="This test is skipped as it is not applicable for the current setup.")
@@ -4682,6 +4794,10 @@ def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c535828(
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
         raise e
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -4783,6 +4899,10 @@ Check the connection with hidden MBSSID AP with WPA2 security enabled in AP"""
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -4870,4 +4990,7 @@ def test_wifi_sdk_mbssid_T_NT_connect_disconnect_hidden_mode_c535831(
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
         raise e
-
+    finally:
+        # Tear down all guest BSS on third-party AP (indices 1–3 / MBSSID_TEST_*).
+        logger().info("C219284: stopping all guest BSS on AP after test")
+        sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
