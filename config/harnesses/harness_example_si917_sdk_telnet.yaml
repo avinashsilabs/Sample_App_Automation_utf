@@ -449,41 +449,78 @@ devices:
             defaults: { }
 
     raspi_ip_socket:
-            interfaces:
-                # the docker_host interface specifies which device to connect to, login credentials, and
-                # the docker image to run
-                docker_host:
-                    type: 'docker'
-                    ip_address: '192.168.150.180'
-                    image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                    username: pi
-                    password: 'raspberry'
-                    skip_rabbitmq_check: True
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.180'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
 
-                socket:
-                    type: 'socket.rpc_client'
-                    forward_to: 'raspi_ip_socket:socket'
-                    host: 'docker_host'
-                    ip_socket_type: 'ip_socket'
-            harness:
-                devices:
-                    raspi_ip_socket:
-                        interfaces:
-                            linux_shell:
-                                type: 'shell.shell'
-                            socket:
-                                type: 'socket.ip_socket'
-                                ip_version: 4
-                                dut_local_socket: 5001
-                                destination_socket: 5001
-                                server_ip: '192.168.150.180'
-                                time: 30
-                                buffer_length: 1470
-                                no_of_pkts: 500
-                                socket_type: 0  #0- TCP, 1 - UDP
-                                interface: 'eth0'
+            socket:
+                type: 'socket.rpc_client'
+                forward_to: 'raspi_ip_socket:socket'
+                host: 'docker_host'
+                ip_socket_type: 'ip_socket'
+        harness:
+            devices:
+                raspi_ip_socket:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        socket:
+                            type: 'socket.ip_socket'
+                            ip_version: 4
+                            dut_local_socket: 5001
+                            destination_socket: 5001
+                            server_ip: '192.168.150.180'
+                            time: 30
+                            buffer_length: 1470
+                            no_of_pkts: 500
+                            socket_type: 0  #0- TCP, 1 - UDP
+                            interface: 'eth0'
 
-                defaults: { }
+            defaults: { }
+
+    raspi_multi_socket:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.180'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
+            socket:
+                type: 'socket.rpc_client'
+                forward_to: 'raspi_multi_socket:socket'
+                host: 'docker_host'
+                ip_socket_type: 'ip_multi_sockets'
+        harness:
+            devices:
+                raspi_multi_socket:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        socket:
+                            type: 'socket.ip_multi_sockets'
+                            ip_version: 4
+                            dut_local_socket: 5001
+                            destination_socket: 5001
+                            server_ip: '192.168.150.180'
+                            time: 30
+                            buffer_length: 1470
+                            no_of_pkts: 500
+                            socket_type: 0  #0- TCP, 1 - UDP
+                            interface: 'eth0'
+
+            defaults: { }
 
     ip_socket_factory:
         interfaces:
@@ -511,20 +548,6 @@ devices:
                             interface: 'eth0'
 
             defaults: { }
-
-    raspi_multi_socket:
-        interfaces:
-            socket:
-                type: 'socket.ip_multi_sockets'
-                ip_version: 4
-                dut_local_socket: 5001
-                destination_socket: 5001
-                server_ip: '192.168.100.50'
-                time: 30
-                buffer_length: 1470
-                no_of_pkts: 500
-                socket_type: 1  #0- TCP, 1 - UDP
-                interface: 'eth1'
 
     raspi_ip_remote_socket:
         interfaces:
@@ -619,7 +642,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.55'       #configure secondary Rpi rd_1 IP address
+                ip_address: '192.168.0.6'      #configure secondary Rpi rd_1 IP address
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1468,31 +1491,135 @@ devices:
                 host_username: "test"
                 host_password: "test123"
 
-    raspi_ftp_server:
-        interfaces:
-            ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
-                tls_enabled: false
-
     raspi_ftp_server_tls:
         interfaces:
-            ftp_server:
-                type: 'ftp.server.vsftpd_ftp_server'
-                tls_enabled: true
-                tls_key: 'mosquitto-utf.silabs.com.key.pem'
-                tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.180'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
 
-    raspi_ftp_client:
-        interfaces:
-            ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
-                tls_enabled: false
+            ftp_server:
+                type: 'ftp.server.rpc_client'
+                forward_to: 'raspi_ftp_server:ftp_server'
+                host: 'docker_host'
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                raspi_ftp_server:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        ftp_server:
+                            type: 'ftp.server.vsftpd_ftp_server'
+                            shell: 'linux_shell'
+                            tls_enabled: true
+                            tls_key: 'mosquitto-utf.silabs.com.key.pem'
+                            tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
+            defaults: { }
 
     raspi_ftp_client_tls:
         interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.180'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
             ftp_client:
-                type: 'ftp.client.ftplib_ftp_client'
-                tls_enabled: true
+                type: 'ftp.client.rpc_client'
+                forward_to: 'raspi_ftp_client:ftp_client'
+                host: 'docker_host'
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                raspi_ftp_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        ftp_client:
+                            type: 'ftp.client.ftplib_ftp_client'
+                            shell: 'linux_shell'
+                            tls_enabled: true
+            defaults: { }
+
+    raspi_ftp_server:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.180'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
+            ftp_server:
+                type: 'ftp.server.rpc_client'
+                forward_to: 'raspi_ftp_server:ftp_server'
+                host: 'docker_host'
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                raspi_ftp_server:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        ftp_server:
+                            type: 'ftp.server.vsftpd_ftp_server'
+                            shell: 'linux_shell'
+                            tls_enabled: false
+
+            defaults: { }
+
+    raspi_ftp_client:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.150.180'
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
+            ftp_client:
+                type: 'ftp.client.rpc_client'
+                forward_to: 'raspi_ftp_client:ftp_client'
+                host: 'docker_host'
+
+        # this section represents the harness configuration for the server side.
+        # the devices and interfaces here will be created on-demand by the server
+        # and can be used by the rpc_client-based interfaces above
+        harness:
+            devices:
+                raspi_ftp_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        ftp_client:
+                            type: 'ftp.client.ftplib_ftp_client'
+                            shell: 'linux_shell'
+                            tls_enabled: false
+
+            defaults: { }
 
     raspi_radius_server:
         interfaces:
@@ -1663,6 +1790,36 @@ devices:
                 #                serial_number: 'CA8B51D6DB51' # configure nrf52840 dongle serial number
                 serial_number: 'E7B17A8AAE5E' # configure nrf52840 dongle serial number
                 port: 'auto'
+
+    secondary_nrf_52840_ble_client:
+        interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.0.6'                 # <--- remote host where dongle is attached
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
+            bluetooth:
+                type: 'bluetooth.nrf_blatann.rpc_client'
+                forward_to: 'nrf_52840_ble_host:bluetooth'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                nrf_52840_ble_host:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.nrf_blatann'
+                            shell: 'linux_shell'
+                            serial: serial
+                            vid: 0x1915
+                            pid: 0xC00A
+                            port: 'auto'
+            defaults: { }
 
     ellisys_bt_tracker_win_wcf:
         interfaces:
@@ -1937,7 +2094,7 @@ defaults:
 
     azure_iot_client: 'azure_iot'
 
-    nrf_ble_client: 'nrf_52840_ble_client'
+    nrf_ble_client: 'secondary_nrf_52840_ble_client'
 
     azure_iot_clients:
         - 'azure_iot_1'
