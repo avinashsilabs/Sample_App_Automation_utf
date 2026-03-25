@@ -676,7 +676,7 @@ def test_wifi_sdk_ssl_three_sockets_close_reopen_socket2_c19159(wifi_sniffer, wi
     """
     Verify the data transmit over 2nd socket after close the socket from our device and reopen the Second Socket
     """
-     try:
+    try:
         capture_filename = "tc_19159"
         ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
         device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
@@ -2655,7 +2655,6 @@ def test_wifi_sdk_2ssl_1aws_testcase_c19150(wifi_sniffer, wifi_dut, wifi_access_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated", "disable_store_config", "clear_certs"])
 @pytest.mark.legacy_deployed
-@pytest.mark.skip()
 def test_wifi_sdk_dns_get_func_with_multiple_APs_c19183(wifi_sniffer, wifi_access_points, wifi_dut, domain_name,
                                                         logger, sl_collections, sniffer_filter):
     """
@@ -3578,7 +3577,6 @@ def test_wifi_sdk_ssl_three_sockets_load_remove_certs_connection_c19163(wifi_sni
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.skip("Skipped since https server feature is not available")
 @pytest.mark.config(
     "wifi_dut",
     wifi=
