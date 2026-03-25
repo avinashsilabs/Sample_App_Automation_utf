@@ -267,7 +267,7 @@ def test_central_without_passcode_pairing(ble_client, nrf_ble_client):
     assert (
         str(bt_dut_address) in found_devices
         and found_devices[str(bt_dut_address)]
-        == ble_client.interfaces.bluetooth.ble_advertising_data
+        == ble_client.interfaces.bluetooth.get_ble_advertising_data()
     )
 
     nrf_ble_client.interfaces.bluetooth.stop_scanning()
@@ -292,7 +292,7 @@ def test_central_without_passcode_pairing(ble_client, nrf_ble_client):
                 bt_dut_address
             )
         )
-        assert security_level.value == 2
+        assert security_level == 2
     finally:
         if connection_status:
             nrf_ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
@@ -322,7 +322,7 @@ def test_central_with_passcode_pairing(ble_client, nrf_ble_client):
     assert (
         str(bt_dut_address) in found_devices
         and found_devices[str(bt_dut_address)]
-        == ble_client.interfaces.bluetooth.ble_advertising_data
+        == ble_client.interfaces.bluetooth.ble_advertising_data()
     )
 
     nrf_ble_client.interfaces.bluetooth.stop_scanning()
@@ -363,14 +363,14 @@ def test_central_with_passcode_pairing(ble_client, nrf_ble_client):
                 bt_dut_address
             )
         )
-        assert security_level.value == 4  # LESC_MITM
+        assert security_level == 4  # LESC_MITM
     finally:
         if connection_status:
             nrf_ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
 
 
 @pytest.mark.test_src_map_id("SM03839")
-def test_peripheral_without_passcode_pairing(ble_client, nrf_ble_client):
+def test_peripheral_without_passcode_pairing( ble_client, nrf_ble_client):
     nrf_ble_client.interfaces.bluetooth.set_security_params()
 
     # Start ble client
@@ -414,7 +414,7 @@ def test_peripheral_without_passcode_pairing(ble_client, nrf_ble_client):
                 bt_dut_address
             )
         )
-        assert security_level.value == 2
+        assert security_level == 2
     finally:
         if connected:
             ble_client.interfaces.bluetooth.disconnect(ble_client_address)
@@ -478,7 +478,7 @@ def test_peripheral_with_passcode_pairing(ble_client, nrf_ble_client):
                 bt_dut_address
             )
         )
-        assert security_level.value == 4
+        assert security_level == 4
     finally:
         if connected:
             ble_client.interfaces.bluetooth.disconnect(ble_client_address)
@@ -512,7 +512,7 @@ def test_nrf_ble_client_adv_with_displayonly_and_ble_client_scan_connect_with_ke
         if (
                 ble_client_address in found_devices
                 and found_devices[ble_client_address]
-                == nrf_ble_client.interfaces.bluetooth.ble_advertising_data
+                == nrf_ble_client.interfaces.bluetooth.get_ble_advertising_data()
         ):
             device_found = True
             break
@@ -538,7 +538,7 @@ def test_nrf_ble_client_adv_with_displayonly_and_ble_client_scan_connect_with_ke
         assert nrf_ble_client.interfaces.bluetooth.get_connection_status(bt_dut_address)
 
         security_level = nrf_ble_client.interfaces.bluetooth.get_connection_security_status(bt_dut_address)
-        assert security_level.value == 4
+        assert security_level == 4
     finally:
         if connected:
             ble_client.interfaces.bluetooth.disconnect(ble_client_address)
@@ -553,7 +553,7 @@ def test_nrf_ble_client_adv_with_keyboardonly_and_ble_client_scan_connect_with_d
     nrf_ble_client.interfaces.bluetooth.register_on_disconnect()
     nrf_ble_client.interfaces.bluetooth.register_on_client_pairing_complete()
     nrf_ble_client.interfaces.bluetooth.register_passkey_display()
-    nrf_ble_client.interfaces.bluetooth.register_dynamic_passkey_entry()
+    # nrf_ble_client.interfaces.bluetooth.register_dynamic_passkey_entry()
 
     # Start ble client
     ble_client_address = nrf_ble_client.interfaces.bluetooth.start_advertising(
@@ -600,7 +600,7 @@ def test_nrf_ble_client_adv_with_keyboardonly_and_ble_client_scan_connect_with_d
         assert nrf_ble_client.interfaces.bluetooth.get_connection_status(bt_dut_address)
 
         security_level = nrf_ble_client.interfaces.bluetooth.get_connection_security_status(bt_dut_address)
-        assert security_level.value == 4
+        assert security_level == 4
     finally:
         if connected:
             ble_client.interfaces.bluetooth.disconnect(ble_client_address)
@@ -664,7 +664,7 @@ def test_nrf_custom_service_and_characteristic_addition(
     assert (
         str(bt_dut_address) in found_devices
         and found_devices[str(bt_dut_address)]
-        == ble_client.interfaces.bluetooth.ble_advertising_data
+        == ble_client.interfaces.bluetooth.get_ble_advertising_data()
     )
 
     nrf_ble_client.interfaces.bluetooth.stop_scanning()

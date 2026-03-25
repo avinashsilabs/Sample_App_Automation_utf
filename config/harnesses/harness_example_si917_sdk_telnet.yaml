@@ -642,7 +642,7 @@ devices:
         interfaces:
             docker_host:
                 type: 'docker'
-                ip_address: '10.207.18.55'       #configure secondary Rpi rd_1 IP address
+                ip_address: '192.168.0.6'      #configure secondary Rpi rd_1 IP address
                 image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
                 username: pi
                 password: 'raspberry'
@@ -1791,6 +1791,36 @@ devices:
                 serial_number: 'E7B17A8AAE5E' # configure nrf52840 dongle serial number
                 port: 'auto'
 
+    secondary_nrf_52840_ble_client:
+        interfaces:
+            docker_host:
+                type: 'docker'
+                ip_address: '192.168.0.6'                 # <--- remote host where dongle is attached
+                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+                username: pi
+                password: 'raspberry'
+                skip_rabbitmq_check: True
+
+            bluetooth:
+                type: 'bluetooth.nrf_blatann.rpc_client'
+                forward_to: 'nrf_52840_ble_host:bluetooth'
+                host: 'docker_host'
+
+        harness:
+            devices:
+                nrf_52840_ble_host:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.nrf_blatann'
+                            shell: 'linux_shell'
+                            serial: serial
+                            vid: 0x1915
+                            pid: 0xC00A
+                            port: 'auto'
+            defaults: { }
+
     ellisys_bt_tracker_win_wcf:
         interfaces:
             wcf_sniffer_ellysis_bluetooth_analyzer_service:
@@ -2064,7 +2094,7 @@ defaults:
 
     azure_iot_client: 'azure_iot'
 
-    nrf_ble_client: 'nrf_52840_ble_client'
+    nrf_ble_client: 'secondary_nrf_52840_ble_client'
 
     azure_iot_clients:
         - 'azure_iot_1'
