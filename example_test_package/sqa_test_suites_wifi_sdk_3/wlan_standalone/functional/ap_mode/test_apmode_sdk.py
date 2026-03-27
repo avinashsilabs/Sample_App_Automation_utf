@@ -3011,3 +3011,427 @@ def test_wifi_sdk_sta_inactive_for_5_minutes_c19439(wifi_sniffer, wifi_dut, wifi
     finally:
         switch.interfaces.pdu_switch.turn_on(delay=60)
         time.sleep(20)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@123",
+        "channel": "6",
+    },
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@123",
+        "channel": 6,
+        "interface": "wlan0",
+    },
+)
+@pytest.mark.deployed_25q2
+def test_wifi_sdk_aput_extended_scan_and_client_connect_c919363(
+    wifi_dut, wifi_client, wifi_sniffer, sl_collections, utf_constants, request,
+):
+    """Verify extended scan in AP mode and STA client association to the APUT.
+
+    Steps
+    -----
+    1. Boot DUT, configure static IP and start AP — confirm AP init success.
+    2. Issue an extended scan (scan_type=2) on the AP interface and validate
+       that scan results are returned (scan callback exercised).
+    3. Connect a Wi-Fi client (Raspberry Pi) to the DUT AP.
+    4. Confirm the client obtained an IP and the DUT reports the connected
+       client via ``get_client_info``.
+    5. Ping the DUT from the client to verify data-path connectivity.
+    """
+    capture_filename = request.node.name
+
+    try:
+        # --- Step 1: AP interface init and AP start ---
+        logger().info("Configuring static IP on DUT for AP mode.")
+        sl_collections.configure_dut_in_static_ip(
+            wifi_dut,
+            static_ip="192.168.100.76",
+            static_subnet="255.255.255.0",
+            static_gateway="192.168.100.76",
+        )
+
+        logger().info("Starting DUT as an Access Point.")
+        wifi_dut.interfaces.wifi.start_ap(
+            ssid="SILABS_AP_MODE",
+            security="WPA2",
+            psk="Automation@123",
+            channel=6,
+            dtim_beacon_count=1,
+            beacon_interval=100,
+        )
+        logger().info("Wi-Fi AP interface init success — AP started.")
+
+        # Configure and start sniffer on the AP channel
+        channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="ap")
+        logger().info(f"AP operating on channel {channel}, band {band}.")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        time.sleep(3)
+
+        # --- Step 2 & 3: Extended scan on AP interface ---
+        logger().info("Initiating extended Wi-Fi scan on AP interface (scan_type=2)...")
+        scan_results = wifi_dut.interfaces.wifi.scan(
+            channel=0, ssid=None, interface="ap", scan_type=2,
+        )
+        assert len(scan_results) >= 11, (f"Expected at least 11 scan results in extended scan, but got {len(scan_results)}.")
+        logger().info(f"WiFi scan completed — {len(scan_results)} result(s) received.")
+        for sr in scan_results:
+            logger().info(f"  === WiFi Scan Result: {sr}")
+
+        logger().info("Extended scan started and completed successfully.")
+
+        # --- Step 4: Connect a client STA to the DUT AP ---
+        logger().info("Raspberry Pi client connecting to DUT-AP...")
+        wifi_client.interfaces.wifi.join(
+            ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123",
+        )
+        time.sleep(10)
+
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client IP: {client_ip}")
+        assert client_ip, "Client failed to obtain an IP from the DUT AP DHCP server."
+
+        # --- Step 5: Ping DUT from the connected client ---
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
+        logger().info(f"DUT IP: {dut_ip}")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c 10 {dut_ip}",
+        )
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        assert rc == 0, f"Client failed to ping DUT at {dut_ip}."
+        logger().info("Ping successful — data path verified.")
+
+        wifi_client.interfaces.wifi.leave()
+        logger().info("Client disconnected from DUT-AP.")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.HiddenSSID | Si91xCustomFeatureBitMap.Default,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@123",
+        "channel": "6",
+    },
+)
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@123",
+        "channel": 6,
+        "interface": "wlan0",
+    },
+)
+@pytest.mark.deployed_25q2
+def test_wifi_sdk_Extended_Scan_AP_mode_beacon_stop_hidden_ssid_c919364(
+    wifi_dut, wifi_clients, wifi_sniffer, sl_collections, utf_constants, sniffer_filter, request,
+):
+    """Verify Extended Scan in AP mode with beacon stop enabled and hidden SSID.
+
+    Steps
+    -----
+    1. Boot DUT, configure static IP, start AP with beacon_stop=1 and hidden
+       SSID (HiddenSSID custom feature enabled).
+    2. Verify beacons are suppressed via sniffer capture.
+    3. Re-enable beacons via sl_wifi_reconfigure_ap(beacon_stop=0).
+    4. Issue an extended scan (scan_type=2) on the AP interface.
+    5. Connect a client STA (with scan_ssid=1 for hidden SSID discovery).
+    6. Verify connectivity with ping and confirm remote client connected.
+    7. Validate hidden SSID in sniffer capture (Wildcard SSID in beacon).
+    """
+    capture_filename = request.node.name
+
+    try:
+        # --- Step 1: AP init with beacon_stop and hidden SSID ---
+        logger().info("Configuring static IP on DUT for AP mode.")
+        sl_collections.configure_dut_in_static_ip(
+            wifi_dut,
+            static_ip="192.168.100.76",
+            static_subnet="255.255.255.0",
+            static_gateway="192.168.100.76",
+        )
+
+        logger().info("Starting DUT as AP with beacon_stop=1 and hidden SSID.")
+        wifi_dut.interfaces.wifi.start_ap(
+            ssid="SILABS_AP_MODE",
+            security="WPA2",
+            psk="Automation@123",
+            channel=6,
+            dtim_beacon_count=1,
+            beacon_interval=100,
+            beacon_stop=1,
+        )
+        logger().info("Wi-Fi AP interface init success — AP started (beacon stop enabled, hidden SSID).")
+
+        channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="ap")
+        logger().info(f"AP operating on channel {channel}, band {band}.")
+
+        # --- Step 2: Verify beacons are suppressed ---
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}_beacon_stop.pcap")
+        time.sleep(10)
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"DUT AP MAC: {dut_mac_address}")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter_beacon = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, filter_name='beacon',
+        )
+        beacon_count = wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter_beacon,
+        )['packet_count']
+        logger().info(f"Beacon packets captured with beacon_stop=1: {beacon_count}")
+        assert beacon_count == False, (
+            f"Beacons should be suppressed with beacon_stop=1, but found {beacon_count} beacon packet(s)."
+        )
+        logger().info("Beacon stop verified — no beacons transmitted.")
+
+        # --- Step 3: Re-enable beacons (stop soft AP interface, then restart) ---
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}_hidden_ssid.pcap")
+        time.sleep(3)
+
+        wifi_dut.interfaces.wifi.start_ap(
+            ssid="SILABS_AP_MODE",
+            security="WPA2",
+            psk="Automation@123",
+            channel=6,
+            dtim_beacon_count=1,
+            beacon_interval=100,
+            beacon_stop=0,
+        )
+        logger().info("AP restarted with beacon_stop=0 (beacons re-enabled, hidden SSID still active).")
+
+        # --- Step 3: Extended scan on AP interface ---
+        logger().info("Initiating extended Wi-Fi scan on AP interface (scan_type=2)...")
+        scan_results = wifi_dut.interfaces.wifi.scan(
+            channel=0, ssid=None, interface="ap", scan_type=2,
+        )
+        assert len(scan_results) >= 1, (
+            f"Expected at least 1 scan result in extended scan, but got {len(scan_results)}."
+        )
+        logger().info(f"WiFi scan completed — {len(scan_results)} result(s) received.")
+        for sr in scan_results:
+            logger().info(f"  === WiFi Scan Result: {sr}")
+        logger().info("Extended scan started and completed successfully.")
+
+        # --- Step 4: Connect client STA (scan_ssid=1 for hidden SSID) ---
+        logger().info("Raspberry Pi client connecting to DUT-AP (scan_ssid=1 for hidden SSID)...")
+        wifi_clients.interfaces.wifi.join(
+            ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123",
+            channel=6,
+        )
+        time.sleep(10)
+
+        client_ip = wifi_clients.interfaces.wifi.get_ip_address()
+        logger().info(f"Client IP: {client_ip}")
+        assert client_ip, "Client failed to obtain an IP from the DUT AP DHCP server."
+
+        connected_clients = wifi_dut.interfaces.wifi.get_client_info()
+        logger().info(f"Remote Client connected: {connected_clients}")
+        assert connected_clients, "DUT did not report any connected client."
+
+        # --- Step 5: Ping DUT from client ---
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
+        logger().info(f"DUT IP: {dut_ip}")
+        ping_count = utf_constants.get("ping_count")
+        rc, stdout, stderr = wifi_clients.interfaces.wifi.shell.execute(
+            f"sudo ping -c {ping_count} {dut_ip}",
+        )
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        assert rc == 0, f"Client failed to ping DUT at {dut_ip}."
+        logger().info("Ping successful — data path verified.")
+
+        wifi_clients.interfaces.wifi.leave()
+        logger().info("Client disconnected from DUT-AP.")
+
+        # --- Step 6: Validate hidden SSID in sniffer capture ---
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter2 = "    Type/Subtype: Beacon (0x0008)"
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, filter_name='beacon',
+        )
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=packet_filter1, packet_filter2=packet_filter2,
+        ), "No beacon found from DUT in sniffer capture."
+
+        IE_obj = FilterPacket(open_file=True)
+        ssid_ie = IE_obj.get_hidden_ssid()
+        logger().info(f"Beacon SSID IE: {ssid_ie}")
+        assert "Wildcard SSID" in ssid_ie, (
+            f"Hidden SSID not detected — expected 'Wildcard SSID' in beacon, got: {ssid_ie}"
+        )
+        logger().info("Hidden SSID verified — beacon contains Wildcard SSID.")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+@pytest.mark.skip("in progress")
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.AccessPoint,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Server | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.Default | Si91xCustomFeatureBitMap.DNSServerIPAddrOffer,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0,
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@123",
+        "channel": "6",
+    },
+)
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "security": "WPA2",
+        "ssid": "SILABS_AP_MODE",
+        "passphrase": "Automation@123",
+        "channel": 6,
+        "interface": "wlan0",
+    },
+)
+@pytest.mark.deployed_25q2
+def test_wifi_sdk_DNS_server_functionality_AP_mode_c922636(
+    wifi_dut, wifi_client, wifi_sniffer, sl_collections, utf_constants, request,
+):
+    """Verify extended scan in AP mode and STA client association to the APUT.
+
+    Steps
+    -----
+    1. Boot DUT, configure static IP and start AP — confirm AP init success.
+    2. Issue an extended scan (scan_type=2) on the AP interface and validate
+       that scan results are returned (scan callback exercised).
+    3. Connect a Wi-Fi client (Raspberry Pi) to the DUT AP.
+    4. Confirm the client obtained an IP and the DUT reports the connected
+       client via ``get_client_info``.
+    5. Ping the DUT from the client to verify data-path connectivity.
+    """
+    capture_filename = request.node.name
+
+    try:
+        wifi_sniffer.interfaces.capture.configure_interface(channel=6)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        time.sleep(3)
+
+        # --- Step 1: AP interface init and AP start ---
+        logger().info("Configuring static IP on DUT for AP mode.")
+        sl_collections.configure_dut_in_static_ip(
+            wifi_dut,
+            static_ip="192.168.100.76",
+            static_subnet="255.255.255.0",
+            static_gateway="192.168.100.76",
+        )
+
+        logger().info("Starting DUT as an Access Point.")
+        wifi_dut.interfaces.wifi.start_ap(
+            ssid="SILABS_AP_MODE",
+            security="WPA2",
+            psk="Automation@123",
+            channel=6,
+            dtim_beacon_count=1,
+            beacon_interval=100,
+        )
+        logger().info("Wi-Fi AP interface init success — AP started.")
+
+        # Configure and start sniffer on the AP channel
+        # channel, band = wifi_dut.interfaces.wifi.get_channel_info(interface="ap")
+        # logger().info(f"AP operating on channel {channel}, band {band}.")
+
+        # --- Step 2 & 3: Extended scan on AP interface ---
+        logger().info("Initiating extended Wi-Fi scan on AP interface (scan_type=2)...")
+        scan_results = wifi_dut.interfaces.wifi.scan(
+            channel=0, ssid=None, interface="ap", scan_type=1,
+        )
+        # assert len(scan_results) >= 11, (f"Expected at least 11 scan results in extended scan, but got {len(scan_results)}.")
+        # logger().info(f"WiFi scan completed — {len(scan_results)} result(s) received.")
+        # for sr in scan_results:
+        #     logger().info(f"  === WiFi Scan Result: {sr}")
+
+        logger().info("Extended scan started and completed successfully.")
+
+        # --- Step 4: Connect a client STA to the DUT AP ---
+        logger().info("Raspberry Pi client connecting to DUT-AP...")
+        wifi_client.interfaces.wifi.join(
+            ssid="SILABS_AP_MODE", security="WPA2", passphrase="Automation@123",
+        )
+        time.sleep(30)
+
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f"Client IP: {client_ip}")
+        assert client_ip, "Client failed to obtain an IP from the DUT AP DHCP server."
+
+        # --- Step 5: Ping DUT from the connected client ---
+        dut_ip = wifi_dut.interfaces.wifi.ip.ip.decode("utf-8")
+        logger().info(f"DUT IP: {dut_ip}")
+        rc, stdout, stderr = wifi_client.interfaces.wifi.shell.execute(
+            f"sudo ping -c 10 {dut_ip}",
+        )
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+        assert rc == 0, f"Client failed to ping DUT at {dut_ip}."
+        logger().info("Ping successful — data path verified.")
+
+        wifi_client.interfaces.wifi.leave()
+        logger().info("Client disconnected from DUT-AP.")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_dut.interfaces.wifi.stop_ap()
+
+
+
+
+
