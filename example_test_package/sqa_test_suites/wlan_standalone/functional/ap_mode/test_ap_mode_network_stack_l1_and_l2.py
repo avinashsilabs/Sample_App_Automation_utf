@@ -1375,6 +1375,14 @@ def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_a
                                                                           wifi_client, channel, utf_constants,
                                                                           remote_socket_factory):
     try:
+        # Temporarily remove 0xffffffff from recovery error codes for this test
+        from utf.utils.recovery_error import RecoveryError
+        recovery_error_instance = RecoveryError.get_instance()
+        original_error_codes = recovery_error_instance.error_codes.copy() if recovery_error_instance else []
+        if recovery_error_instance and '0xffffffff' in recovery_error_instance.error_codes:
+            recovery_error_instance.error_codes.remove('0xffffffff')
+            logger().info("Temporarily removed 0xffffffff from recovery error codes for this test")
+
         socket_limit = 11
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="multi_sockets_C19472")
@@ -1403,10 +1411,17 @@ def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_a
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as err:
+        # Skip recovery for 0xFFFFFFFF error code as it's expected in this test
+        if isinstance(err, WlanError) and err.error_code == 0xFFFFFFFF:
+            logger().info(f"Skipping recovery for expected error code: 0x{err.error_code:08X}")
+            raise
         raise err
     finally:
         cleanup_obj = Cleanup(wifi_dut)
         cleanup_obj.dut_clean_up()
+        if recovery_error_instance and 'original_error_codes' in locals():
+            recovery_error_instance.error_codes = original_error_codes
+            logger().info("Restored original recovery error codes")
 
 @pytest.mark.config(
     "wifi_dut",
