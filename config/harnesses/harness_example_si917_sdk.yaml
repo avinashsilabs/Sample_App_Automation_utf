@@ -1241,6 +1241,12 @@ devices:
                 command_args: '"TestService" _http._tcp 80 /index.html'
                 shell: 'linux_shell'
 
+    keysight_spectrum_analyzer:
+        interfaces:
+            spectrum_analyzer:
+                type: 'spectrum_analyzer.keysight_spectrum_analyzer'
+                instrument_lan_ip_address: '10.207.4.95'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1376,6 +1382,8 @@ defaults:
     service_discovery: 'avahi_service_discovery'
 
     service_advertisement: 'avahi_service_advertisement'
+
+    spectrum_analyzer: 'keysight_spectrum_analyzer'
 
     net_perf_server: 'secondary_raspi_iperf'
 
