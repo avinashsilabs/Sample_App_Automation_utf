@@ -216,7 +216,7 @@ def test_socket_select_tcp_c19325(
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat_count", [30])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
@@ -303,12 +303,13 @@ rs_helper, utf_constants
                                 f"is matched ")
                 assert tx_buffer.encode() == buffer_rx, f"contents of data sent by remote peer and received on the socket " \
                                                         f"id {sock} opened in the DUT is not matched "
-        sock_count = 0
-        logger.info(f"Closing socket_id->{sock_count}")
-        result = wifi_dut.interfaces.wifi.close_socket(sock_count)
-        assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
-        logger.info(f"Successfully closed socket_id->{sock_count}")
-
+        sock_count = 1
+        while sock_count >= 0:
+            logger.info(f"Closing socket_id->{sock_count}")
+            result = wifi_dut.interfaces.wifi.close_socket(sock_count)
+            assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
+            logger.info(f"Successfully closed socket_id->{sock_count}")
+            sock_count = sock_count - 1
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
@@ -613,6 +614,14 @@ def test_socket_select_neg_c19332(
 ):
 
     try:
+        # Temporarily remove 0xffffffff from recovery error codes for this test
+        from utf.utils.recovery_error import RecoveryError
+        recovery_error_instance = RecoveryError.get_instance()
+        original_error_codes = recovery_error_instance.error_codes.copy() if recovery_error_instance else []
+        if recovery_error_instance and '0xffffffff' in recovery_error_instance.error_codes:
+            recovery_error_instance.error_codes.remove('0xffffffff')
+            logger.info("Temporarily removed 0xffffffff from recovery error codes for this test")
+
         capture_filename = "test_socket_select_neg_TCC19332"
         device_ip, dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger,
                                                  rs_helper, utf_constants)
@@ -636,8 +645,17 @@ def test_socket_select_neg_c19332(
         logger.info(f"PS-POLL packets are captured in the sniffer")
 
     except Exception as e:
+        # Skip recovery for 0xFFFFFFFF error code as it's expected in this test
+        if isinstance(e, WlanError) and e.error_code == 0xFFFFFFFF:
+            logger.info(f"Skipping recovery for expected error code: 0x{e.error_code:08X}")
+            raise
         rs_helper.dut_recovery(wifi_dut, e)
         raise
+    finally:
+        # Restore original recovery error codes
+        if recovery_error_instance and 'original_error_codes' in locals():
+            recovery_error_instance.error_codes = original_error_codes
+            logger.info("Restored original recovery error codes")
 
 
 
@@ -1793,7 +1811,7 @@ def test_socket_select_udp_bidirectional_c19338(
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [900])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
@@ -1947,12 +1965,13 @@ def test_socket_select_tcp_socket_fd_disable_c19339(
                                                             f"socket " \
                                                             f"id {sock} opened in the DUT is not matched "
 
-        for sock_count in range(0, 4):
+        sock_count = 7
+        while sock_count >= 0:
             logger.info(f"Closing socket_id->{sock_count}")
             result = wifi_dut.interfaces.wifi.close_socket(sock_count)
             assert b"success" in result, f"unable to close opened tcp socket in the dut for socket_id->{sock_count}"
             logger.info(f"Successfully closed socket_id->{sock_count}")
-
+            sock_count = sock_count - 1
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger.info("Stop Sniffer finally")
