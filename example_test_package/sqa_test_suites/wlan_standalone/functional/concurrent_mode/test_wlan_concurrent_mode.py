@@ -1154,7 +1154,7 @@ def test_device_as_sta_and_ap_c19320(firmware_loader, wifi_access_point, wifi_du
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client | RS9116TCPIPFeatureBitMap.DHCPv4Server | RS9116TCPIPFeatureBitMap.Ping,
         "custom_features": RS9116CustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
-        "band": RS9116Band.Default,
+        "band": RS9116Band.TwoPointFourGHz,
         "security": 'WPA2', "ssid": "RASPI_AP", "channel": 8, "passphrase": "12345678"
     }
 )
@@ -1169,7 +1169,7 @@ def test_device_as_sta_and_ap_c19320(firmware_loader, wifi_access_point, wifi_du
 )
 @pytest.mark.config(
     "wifi_client",
-    wifi={"security": "WPA2", "ssid": "RASPI_AP", "channel": 8, "passphrase": "12345678"}
+    wifi={"security": "WPA2", "ssid": "RASPI_AP", "channel": 8, "passphrase": "12345678", "interface": "wlan0"}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_concurrent_mode")
@@ -1196,9 +1196,9 @@ def test_device_as_sta_and_ap_c19316(firmware_loader, wifi_access_point, wifi_du
     logger().info(f'ap mac is {ap_mac}')
     logger().info(f"DUT MAC_Address: {dut_mac_address}")
     logger().info("Bringing up DUT in AP mode")
-    wifi_dut.interfaces.wifi.start_ap()
+    wifi_dut.interfaces.wifi.start_ap(ssid="RASPI_AP", security="WPA2", passphrase="12345678", channel=8)
     logger().info("joining 3rd party client to DUT ap")
-    time.sleep(20)
+    time.sleep(25)
     wifi_client.interfaces.wifi.join(ssid="RASPI_AP")
     logger().info("fetching gateway ip of ap")
     device_ip_dut_as_ap = wifi_client.interfaces.wifi.client_gateway_ip
