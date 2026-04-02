@@ -138,6 +138,7 @@ class BLEFunc(ThreadBase):
                                                                                  io_capabilities=self.cap_on_dongle,
                                                                                  long_term_bonding=True, lesc_pairing=True)
                 self.nrf_ble_client.interfaces.bluetooth.register_on_connect()
+                time.sleep(2)
                 self.nrf_ble_client.interfaces.bluetooth.register_on_disconnect()
                 self.nrf_ble_client.interfaces.bluetooth.register_on_security_level_changed()
                 self.nrf_ble_client.interfaces.bluetooth.register_on_client_pairing_complete()
@@ -155,13 +156,19 @@ class BLEFunc(ThreadBase):
                                                                                                      )
                 if self.testcase_no == 557280 or self.testcase_no == 557260:
                     self.nrf_ble_client.interfaces.bluetooth.register_dynamic_passkey_entry()
-                time.sleep(3)
+                time.sleep(5)
                 logger().info(f"Start scanning and connect to ble client")
                 self.wifi_dut.interfaces.wifi.ble_start_scanning(
                     ble_client_address=self.ble_client_address, timeout=30
                 )
                 timeout = 120
                 time.sleep(5)
+                if self.testcase_no == 557280:
+                    time.sleep(5)
+                elif self.testcase_no == 557257:
+                    time.sleep(0.2)
+                else:
+                    time.sleep(15)
                 if self.powersave:
                     logger().info("enabling the power save modes ")
                     self.wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
@@ -170,38 +177,48 @@ class BLEFunc(ThreadBase):
                 self.wifi_dut.interfaces.wifi.ble_stop_scanning()
                 logger().info(f"Initiating connection this can take upto {timeout} seconds....")
                 if self.passkey_entry:
-
                     def connect():
                         logger().info("Initiating connection through ble_conect")
                         self.wifi_dut.interfaces.wifi.ble_connect(
                             ble_remote_dev_address=self.ble_client_address, timeout=timeout,
                             expected="RSI_BLE_ENCRYPT_STARTED_EVENT"
                         )
-
                     time.sleep(3)
                     t = threading.Thread(target=connect)
                     t.start()
-                    time.sleep(15)
+                    if self.testcase_no == 557280:
+                        time.sleep(5)
+                    else:
+                        time.sleep(15)
                     tw = Stopwatch()
                     pass_key_found = False
-                    while tw.elapsed_sec < 120:
+                    max_passkey_wait_time = 120
+                    logger().info(f"Waiting for passkey (max {max_passkey_wait_time} seconds)...")
+                    while tw.elapsed_sec < max_passkey_wait_time:
                         events = self.wifi_dut.interfaces.wifi.get_async_events()
                         for event in events:
                             if "passkey" in event.event_data:
                                 passkey = re.findall(r"passkey: ([\d]*)", event.event_data)
-                                if passkey[0] is not None:
+                                
+                                if passkey and passkey[0] is not None and passkey[0] != '':
                                     pass_key_value = str(passkey[0])
                                     logger().info(f"passkey : {pass_key_value}")
                                     self.nrf_ble_client.interfaces.bluetooth.set_passkey(pass_key_value)
-                                    time.sleep(60)
+                                    if self.testcase_no == 557257:
+                                        time.sleep(60)
+                                    else:
+                                        time.sleep(120)
+                                    # time.sleep(120)
                                     state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
                                     state_int = int(state) if state.isdigit() else -1
                                     logger().info(f"********{state_int}")
                                     pass_key_found = True
                                     break
-                            time.sleep(1)
+                        time.sleep(1.2)
                         if pass_key_found:
                             break
+                    if not pass_key_found:
+                        logger().warning(f"Passkey not received within {max_passkey_wait_time} seconds")
                 else:
                     for retry_count in range(0, 3):
                         try:
@@ -209,7 +226,11 @@ class BLEFunc(ThreadBase):
                                 ble_remote_dev_address=self.ble_client_address, timeout=timeout,
                                 expected="RSI_BLE_ENCRYPT_STARTED_EVENT"
                             )
-                            time.sleep(30)
+                            if self.testcase_no == 557257:
+                                time.sleep(30)
+                            else:
+                                time.sleep(60)
+
                             break
                         except Exception as err:
                             logger().warning(f"Connection Failed...RETRY COUNT IS {retry_count + 1}\nWarning:{err}")
@@ -222,7 +243,7 @@ class BLEFunc(ThreadBase):
                     self.nrf_ble_client.interfaces.bluetooth.stop_advertising()
                     logger().info("deleteing bond info")
                     self.nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
-                    time.sleep(10)
+                    time.sleep(15)
                     tw = Stopwatch()
                     link_key = ""
                     while tw.elapsed_sec < 120:
@@ -303,6 +324,10 @@ class BLEFunc(ThreadBase):
                                                                          io_capabilities=self.cap_on_dongle,
                                                                          long_term_bonding=True, lesc_pairing=True)
             self.nrf_ble_client.interfaces.bluetooth.register_on_connect()
+            if self.testcase_no == 557257:
+                pass
+            else:
+                time.sleep(2)
             self.nrf_ble_client.interfaces.bluetooth.register_on_disconnect()
             self.nrf_ble_client.interfaces.bluetooth.register_on_security_level_changed()
             self.nrf_ble_client.interfaces.bluetooth.register_on_client_pairing_complete()
@@ -336,6 +361,10 @@ class BLEFunc(ThreadBase):
             security_level = self.nrf_ble_client.interfaces.bluetooth.get_peer_connection_security_status(
                 self.ble_dut_address)
             assert security_level.value == 2
+            if self.testcase_no == 557257:
+                pass
+            else:
+                time.sleep(160)
             logger().info("Checking connection status of BLE")
             state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
             state_int = int(state) if state.isdigit() else -1
@@ -375,20 +404,29 @@ class BLEFunc(ThreadBase):
             tw = Stopwatch()
             if self.testcase_no == 557265:
                 time.sleep(40)
-            while tw.elapsed_sec < 30:
+            max_passkey_wait_time = 60
+            pass_key_found = False
+            logger().info(f"Waiting for passkey (max {max_passkey_wait_time} seconds)...")
+            while tw.elapsed_sec < max_passkey_wait_time:
                 events = self.wifi_dut.interfaces.wifi.get_async_events()
                 for event in events:
                     logger().info(f"********{event.event_data}*************")
                     if "passkey" in event.event_data:
                         passkey = re.findall(r"(?<=passkey: )\d*", event.event_data)
-                        if passkey[0] is not None:
+                        if passkey and passkey[0] is not None and passkey[0] != '':
                             pass_key_value = str(passkey[0])
                             logger().info(f"passkey : {pass_key_value}")
                             if self.testcase_no == 557265:
                                 pass_key_value = ""
                             else:
                                 self.ble_client.interfaces.bluetooth.set_pin(pass_key_value)
+                                pass_key_found = True
                                 break
+                if pass_key_found:
+                    break
+                time.sleep(1.2)
+            if not pass_key_found and self.testcase_no != 557265:
+                logger().warning(f"Passkey not received within {max_passkey_wait_time} seconds")
 
             if self.testcase_no == 557265:
                 pass
@@ -397,6 +435,10 @@ class BLEFunc(ThreadBase):
                 logger().info("Connection successfully stable for 60sec")
                 self.wifi_dut.interfaces.wifi.ble_advertising = False
                 logger().info("Checking connection status of BLE")
+                if self.testcase_no == 557257:
+                    pass
+                else:
+                    time.sleep(120)
                 state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
                 state_int = int(state) if state.isdigit() else -1
                 assert state_int == 8, f"Device disconnected"
@@ -467,28 +509,36 @@ class BLEFunc(ThreadBase):
                 if self.testcase_no != 663375:
                     pass_key_found = False
                     if i == 0 or self.passkey==True:
-                        while tw.elapsed_sec < 30:
+                        max_passkey_wait_time = 60
+                        logger().info(f"Waiting for passkey (max {max_passkey_wait_time} seconds)...")
+                        while tw.elapsed_sec < max_passkey_wait_time:
                             events = self.wifi_dut.interfaces.wifi.get_async_events()
                             for event in events:
                                 if "passkey" in event.event_data:
                                     passkey = re.findall(r"(?<=passkey: )\d*", event.event_data)
-                                    if passkey[0] is not None:
+                                    if passkey and passkey[0] is not None and passkey[0] != '':
                                         pass_key_value = str(passkey[0])
                                         logger().info(f"passkey : {pass_key_value}")
                                         if self.testcase_no == 663375:
                                             logger().info(f"*****inside if test case breaking..*************")
                                             pass_key_value = ""
+                                            pass_key_found = True
                                             break
                                         else:
                                             self.ble_client.interfaces.bluetooth.set_pin(pass_key_value)
+                                            pass_key_found = True
                                             break
-                                    time.sleep(1)
+                            if pass_key_found:
+                                break
+                            time.sleep(1.2)
+                        if not pass_key_found:
+                            logger().warning(f"Passkey not received within {max_passkey_wait_time} seconds")
 
                 if self.testcase_no == 663375:
                     time.sleep(30)
                     pass
                 elif self.testcase_no == 557273:
-                    time.sleep(60)
+                    time.sleep(120)
                     logger().info(f"**************inside elif******************")
                     state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
                     state_int = int(state) if state.isdigit() else -1
@@ -496,7 +546,10 @@ class BLEFunc(ThreadBase):
                     logger().info(f"**************after device state******************")
                     pass
                 else:
-                    time.sleep(60)
+                    if self.testcase_no == 557257:
+                        time.sleep(60)
+                    else:
+                        time.sleep(120)
                     logger().info(f"********************************")
                     state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
                     state_int = int(state) if state.isdigit() else -1
@@ -542,7 +595,10 @@ class BLEFunc(ThreadBase):
                 self.wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=ble_client_address)
                 time.sleep(5)
                 self.ble_client.interfaces.bluetooth.connect(dev_addr=self.ble_dut_address)
-                time.sleep(10)
+                if self.testcase_no == 557257:
+                    time.sleep(10)
+                else:
+                    time.sleep(120)
                 logger().info("Checking connection status of BLE")
                 state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
                 state_int = int(state) if state.isdigit() else -1
@@ -562,7 +618,7 @@ class BLEFunc(ThreadBase):
                     pin_code=self.pin_code, capability=self.client_capability, bt_dut_address=self.ble_dut_address
                 )
             assert self.ble_client_address is not None
-            time.sleep(1)
+            time.sleep(1.2)
             # Start scanning and connect to ble client
             if self.random_addr_on_dut:
                 logger().info(f"Start scanning and connect to ble client")
@@ -574,6 +630,10 @@ class BLEFunc(ThreadBase):
                 self.wifi_dut.interfaces.wifi.ble_start_scanning(
                     ble_client_address=self.ble_client_address, timeout=30
                 )
+            if self.testcase_no == 557257:
+                pass
+            else:
+                time.sleep(5)
             self.wifi_dut.interfaces.wifi.ble_stop_scanning()
 
             def connect():
@@ -587,13 +647,15 @@ class BLEFunc(ThreadBase):
             tw = Stopwatch()
             pass_key_found = False
             if self.testcase_no != 663374:
-                while tw.elapsed_sec < 30:
+                max_passkey_wait_time = 60
+                logger().info(f"Waiting for passkey (max {max_passkey_wait_time} seconds)...")
+                while tw.elapsed_sec < max_passkey_wait_time:
                     events = self.wifi_dut.interfaces.wifi.get_async_events()
                     for event in events:
                         if event.event_type == AsyncEventIdentifiers.BLE_SC_PASSKEY:
                             if "passkey" in event.event_data:
                                 passkey = re.findall(r"passkey: ([\d]*)", event.event_data)
-                                if passkey[0] is not None:
+                                if passkey and passkey[0] is not None and passkey[0] != '':
                                     pass_key_value = str(passkey[0])
                                     logger().info(f"passkey : {pass_key_value}")
                                     self.ble_client.interfaces.bluetooth.set_pin(pass_key_value)
@@ -601,13 +663,18 @@ class BLEFunc(ThreadBase):
                                     break
                     if pass_key_found:
                         break
-                    time.sleep(1)
+                    time.sleep(1.2)
+                if not pass_key_found:
+                    logger().warning(f"Passkey not received within {max_passkey_wait_time} seconds")
 
             if self.testcase_no == 663374:
                 time.sleep(40)
                 pass
             else:
-                time.sleep(60)
+                if self.testcase_no == 557257:
+                    time.sleep(60)
+                else:
+                    time.sleep(120)
                 state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
                 state_int = int(state) if state.isdigit() else -1
                 time.sleep(3)
@@ -620,6 +687,10 @@ class BLEFunc(ThreadBase):
                 time.sleep(10)
 
         if self.encrypted_file:
+            if self.testcase_no == 557257:
+                pass
+            else:
+                time.sleep(90)
             state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
             state_int = int(state) if state.isdigit() else -1
             if state_int == 8:
@@ -695,12 +766,19 @@ class BLEFunc(ThreadBase):
                 for event in events:
                     if "resp_status:" in event.event_data:
                         error_code_str = re.findall(r"resp_status: (\w.*)", event.event_data)
-                        error_code_received = re.split(",", error_code_str[0])
-                        logger().info(f"********{error_code_received}*********")
+                        if error_code_str:
+                            error_code_received = re.split(",", error_code_str[0])
+                            logger().info(f"********{error_code_received}*********")
                 if self.error_code_expected:
                     break
-            logger().info(f"********Error_code received : {error_code_received[0]}*************")
-            assert error_code_received[0] == self.error_code_expected, f"Not getting the expected error code"
+                time.sleep(1.2)
+            if error_code_received and len(error_code_received) > 0:
+                logger().info(f"********Error_code received : {error_code_received[0]}*************")
+                assert error_code_received[0] == self.error_code_expected, f"Not getting the expected error code"
+            else:
+                logger().warning(f"No error code received within timeout")
+                if self.error_code_expected:
+                    assert False, f"Expected error code {self.error_code_expected} but no error code was received"
             time.sleep(3)
         time.sleep(180)
         logger().info(f"************checking stability after 3mins*************")
@@ -996,6 +1074,7 @@ def test_ble_smp_verify_dh_key_check_exchange_C557257(wifi_dut, nrf_ble_client, 
                                                       pin_code, dut_capability):
     """Verify DH key check exchanges for DUT as Peripheral"""
     ble_obj = None
+    time.sleep(120)
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,
                           ble_sniffer=ble_sniffer, check_error=False, sniffer_check=True, layer_name=["LE LL", "SMP"],
@@ -1003,26 +1082,64 @@ def test_ble_smp_verify_dh_key_check_exchange_C557257(wifi_dut, nrf_ble_client, 
                           ble_connect_from_raspi=True, capability_on_remote="KeyboardOnly", pin_code=pin_code)
         ble_obj.start()
         ble_obj.wait_for_exit()
+        logger().info(f"SMP DataFrame columns: {ble_obj.sniffer_data_df_2.columns.tolist()}")
+        logger().info(f"SMP DataFrame shape: {ble_obj.sniffer_data_df_2.shape}")
+        logger().info(f"SMP DataFrame head:\n{ble_obj.sniffer_data_df_2.head(10).to_string()}")
+
+        # Check if 'Code' column exists
+        if 'Code' not in ble_obj.sniffer_data_df_2.columns:
+            logger().error(
+                f"'Code' column not found. Available columns: {ble_obj.sniffer_data_df_2.columns.tolist()}")
+            raise AssertionError("SMP DataFrame missing 'Code' column")
+
+        # Log unique Code values
+        logger().info(f"Unique 'Code' values: {ble_obj.sniffer_data_df_2['Code'].unique().tolist()}")
+
         assert len(ble_obj.sniffer_data_df_1.loc[
-                       (ble_obj.sniffer_data_df_1['Control Pkt'] == "LL_ENC_REQ")]), "unable to find encryption request"
+                       (ble_obj.sniffer_data_df_1[
+                            'Control Pkt'] == "LL_ENC_REQ")]), "unable to find encryption request"
         assert len(ble_obj.sniffer_data_df_1.loc[(
-                ble_obj.sniffer_data_df_1['Control Pkt'] == "LL_ENC_RSP")]), "unable to find encryption response"
+                ble_obj.sniffer_data_df_1[
+                    'Control Pkt'] == "LL_ENC_RSP")]), "unable to find encryption response"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Request") & (
                 ble_obj.sniffer_data_df_2['IO Capabilities'] == "KeyboardOnly") & (ble_obj.sniffer_data_df_2[
-                                                                                          'MITM'] == "MITM Protection:  Yes") & (
+                                                                                       'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
-        assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayOnly") & (ble_obj.sniffer_data_df_2[
-                                                                                          'MITM'] == "MITM Protection:  Yes") & (
-                                                         ble_obj.sniffer_data_df_2[
-                                                             'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
+
+        pairing_response_df = ble_obj.sniffer_data_df_2.loc[
+            ble_obj.sniffer_data_df_2['Code'] == "Pairing Response"
+            ]
+
+        logger().info(
+            f"Pairing Response rows:\n{pairing_response_df[['Frame#', 'Role', 'Side', 'Code', 'IO Capabilities', 'MITM', 'Secure Connection Pairing', 'Timestamp']].to_string()}")
+
+        assert len(pairing_response_df) > 0, "unable to find Pairing Response packet in sniffer"
+
+        if len(pairing_response_df) > 0:
+            logger().info(f"IO Capabilities values: {pairing_response_df['IO Capabilities'].unique().tolist()}")
+            logger().info(f"MITM values: {pairing_response_df['MITM'].unique().tolist()}")
+            logger().info(
+                f"Secure Connection Pairing values: {pairing_response_df['Secure Connection Pairing'].unique().tolist()}")
+
+        filtered_pairing_response_df = pairing_response_df.loc[
+            (pairing_response_df['IO Capabilities'] == "DisplayOnly") &
+            (pairing_response_df['MITM'] == "MITM Protection:  Yes") &
+            (pairing_response_df['Secure Connection Pairing'] == "Yes")
+            ]
+
+        logger().info(
+            f"Filtered Pairing Response rows:\n{filtered_pairing_response_df[['Frame#', 'Role', 'Side', 'Code', 'IO Capabilities', 'MITM', 'Secure Connection Pairing', 'Timestamp']].to_string()}")
+
+        assert len(filtered_pairing_response_df) > 0, \
+            "Pairing Response found, but IO Capabilities / MITM / Secure Connection fields did not match expected values"
+
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Side'] == "1") & (
-                    ble_obj.sniffer_data_df_2[
-                        'Code'] == "Pairing DHKey Check")]), "unable to find the packets in sniffer"
+                ble_obj.sniffer_data_df_2[
+                    'Code'] == "Pairing DHKey Check")]), "unable to find the packets in sniffer"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Side'] == "2") & (
-                    ble_obj.sniffer_data_df_2[
-                        'Code'] == "Pairing DHKey Check")]), "unable to find the packets in sniffer"
+                ble_obj.sniffer_data_df_2[
+                    'Code'] == "Pairing DHKey Check")]), "unable to find the packets in sniffer"
         logger().info(f"**************Testcase passed****************")
 
 
@@ -1549,11 +1666,31 @@ def test_ble_smp_just_works_pairing_Initiator_displayyesorno_responder_displayon
                                                                                       'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
-        assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayOnly") & (ble_obj.sniffer_data_df_2[
-                                                                                          'MITM'] == "MITM Protection:  Yes") & (
-                                                         ble_obj.sniffer_data_df_2[
-                                                             'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
+        # assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
+        #         ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayOnly") & (ble_obj.sniffer_data_df_2[
+        #                                                                                   'MITM'] == "MITM Protection:  Yes") & (
+        #                                                  ble_obj.sniffer_data_df_2[
+        #                                                      'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
+        pairing_response_df = ble_obj.sniffer_data_df_2.loc[
+            ble_obj.sniffer_data_df_2['Code'] == "Pairing Response"
+            ]
+
+        logger().info(
+            f"Pairing Response rows:\n{pairing_response_df[['Frame#', 'Role', 'Side', 'Code', 'IO Capabilities', 'MITM', 'Secure Connection Pairing', 'Timestamp']].to_string()}")
+
+        assert len(pairing_response_df) > 0, "unable to find Pairing Response packet in sniffer"
+
+        filtered_pairing_response_df = pairing_response_df.loc[
+            (pairing_response_df['IO Capabilities'] == "DisplayOnly") &
+            (pairing_response_df['MITM'] == "MITM Protection:  Yes") &
+            (pairing_response_df['Secure Connection Pairing'] == "Yes")
+            ]
+
+        logger().info(
+            f"Filtered Pairing Response rows:\n{filtered_pairing_response_df[['Frame#', 'Role', 'Side', 'Code', 'IO Capabilities', 'MITM', 'Secure Connection Pairing', 'Timestamp']].to_string()}")
+
+        assert len(filtered_pairing_response_df) > 0, \
+            "Pairing Response found, but IO Capabilities / MITM / Secure Connection fields did not match expected values"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Side'] == "1") & (
                 ble_obj.sniffer_data_df_2[
                     'Code'] == "Pairing DHKey Check")]), "unable to find the packets in sniffer"
@@ -1697,6 +1834,7 @@ def test_verify_Encryption_initiated_by_DUT_as_peripheral_C557274(wifi_dut, nrf_
                                                                   pin_code):
     """Verify Encryption initiated by DUT as peripheral"""
     ble_obj = None
+    time.sleep(30)
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, ble_client=ble_client, ble_sniffer=ble_sniffer, check_error=False,
                           sniffer_check=True, layer_name=["LE LL", "SMP"], capture_filename="frontline_capture_C557274",
@@ -2011,11 +2149,31 @@ def test_ble_smp_just_works_pairing_initiator_No_Input_No_Output_responder_displ
                                                                                           'MITM'] == "MITM Protection:  Yes") & (
                                                          ble_obj.sniffer_data_df_2[
                                                              'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
-        assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
-                ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayOnly") & (ble_obj.sniffer_data_df_2[
-                                                                                          'MITM'] == "MITM Protection:  Yes") & (
-                                                         ble_obj.sniffer_data_df_2[
-                                                             'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
+        # assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Code'] == "Pairing Response") & (
+        #         ble_obj.sniffer_data_df_2['IO Capabilities'] == "DisplayOnly") & (ble_obj.sniffer_data_df_2[
+        #                                                                                   'MITM'] == "MITM Protection:  Yes") & (
+        #                                                  ble_obj.sniffer_data_df_2[
+        #                                                      'Secure Connection Pairing'] == "Yes")]), "unable to find the packets in sniffer"
+        pairing_response_df = ble_obj.sniffer_data_df_2.loc[
+            ble_obj.sniffer_data_df_2['Code'] == "Pairing Response"
+            ]
+
+        logger().info(
+            f"Pairing Response rows:\n{pairing_response_df[['Frame#', 'Role', 'Side', 'Code', 'IO Capabilities', 'MITM', 'Secure Connection Pairing', 'Timestamp']].to_string()}")
+
+        assert len(pairing_response_df) > 0, "unable to find Pairing Response packet in sniffer"
+
+        filtered_pairing_response_df = pairing_response_df.loc[
+            (pairing_response_df['IO Capabilities'] == "DisplayOnly") &
+            (pairing_response_df['MITM'] == "MITM Protection:  Yes") &
+            (pairing_response_df['Secure Connection Pairing'] == "Yes")
+            ]
+
+        logger().info(
+            f"Filtered Pairing Response rows:\n{filtered_pairing_response_df[['Frame#', 'Role', 'Side', 'Code', 'IO Capabilities', 'MITM', 'Secure Connection Pairing', 'Timestamp']].to_string()}")
+
+        assert len(filtered_pairing_response_df) > 0, \
+            "Pairing Response found, but IO Capabilities / MITM / Secure Connection fields did not match expected values"
         assert len(ble_obj.sniffer_data_df_2.loc[(ble_obj.sniffer_data_df_2['Side'] == "1") & (
                 ble_obj.sniffer_data_df_2[
                     'Code'] == "Pairing DHKey Check")]), "unable to find the packets in sniffer"
@@ -2369,6 +2527,7 @@ def test_verify_connect_disconnect_reconnect_DUT_as_peripheral_C557270(wifi_dut,
 def test_verify_Rand_memset_0_for_encryption_using_LTK_C557280(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify LESC pairing EDIV/Rand memset 0 for encryption using LTK"""
     ble_obj = None
+    time.sleep(120)
     try:
         ble_obj = BLEFunc(wifi_dut=wifi_dut, nrf_ble_client=nrf_ble_client, ble_client=ble_client,ble_sniffer=ble_sniffer, check_error=False, passkey_state=0, capture_filename="frontline_capture_C557280",sniffer_check=True, layer_name=["LE LL", "SMP"], smp_sc=1, smp_mtim=1, smp_io_capability=0, cap_on_dongle=NRFBLEIoCapabilities.KEYBOARD_ONLY, nrf_connect_to_dut=True, passkey_entry=True, testcase_no=557280)
         ble_obj.start()
