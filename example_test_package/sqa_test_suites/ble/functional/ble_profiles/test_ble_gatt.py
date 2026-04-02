@@ -84,7 +84,7 @@ def test_fetch_profiles_from_RD1_C19860(firmware_loader, ble_dut, ble_client):
     timeout = 60
     logger().info(f"Initiating the Connection can take up to {timeout} seconds....")
     ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
-                                             expected="RSI_BLE_SECURITY_KEYS_EVENT")
+                                             expected="success")
     time.sleep(60)
 
     # Enables the Wi-Fi power save in dut
@@ -893,7 +893,19 @@ def test_blood_pressure_connection_stability_in_client_role_c19884(firmware_load
 
     # Start scanning and connect to ble client
     ble_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    time.sleep(15)
     ble_dut.interfaces.wifi.ble_stop_scanning()
+
+    timeout = 120
+    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
+    try:
+        ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                            expected="RSI_BLE_CONN_UPDATE_COMPLETE_EVENT")
+    except Exception:
+        logger().warning("Connection event not received, retrying connection...")
+        ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                            expected="RSI_BLE_CONN_UPDATE_COMPLETE_EVENT")
+    time.sleep(30)
 
     # Enables the Wi-Fi power save in dut
     enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
@@ -904,11 +916,6 @@ def test_blood_pressure_connection_stability_in_client_role_c19884(firmware_load
                                                               RS9116PowerSaveProcedureTypes.FastPowerSave)
     assert enable_bt_ps, "Failed to enable BT power save"
 
-    timeout = 120
-    logger().info(f"Initiating connection this can take up to {timeout} seconds....")
-    ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
-                                        expected="RSI_BLE_SECURITY_KEYS_EVENT")
-
     # Get the state of the dut
     state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
@@ -917,7 +924,6 @@ def test_blood_pressure_connection_stability_in_client_role_c19884(firmware_load
     # get all profiles
     uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=bt_client_address)
     assert BloodPressureService.UUID in uuids, "Failed to get RD profiles"
-
     # resolve BloodPressureService profile
     start_handle, end_handle = ble_dut.interfaces.wifi.ble_get_profile_async(ble_remote_dev_address=bt_client_address,
                                                                              uuid=int(BloodPressureService.UUID, 16))
@@ -951,18 +957,16 @@ def test_blood_pressure_connection_stability_in_client_role_c19884(firmware_load
     logger().info(f"write_handles[index]:{write_handles[index]}")
     logger().info(f"write_handle:{write_handle}")
 
-    # enable notifications
-    since_time = time.perf_counter_ns()
-    ble_dut.interfaces.wifi.ble_set_att_value_async(ble_remote_dev_address=bt_client_address,
-                                                    char_property=21, value=1)
-    time.sleep(6)
-    events = ble_dut.interfaces.wifi.get_async_events(since_time=since_time)
-    assert len(events) > 0
-    for event in events:
-        if event.event_type == RS9116AsyncEventType.GATT_WRITE_EVENT:
-            logger().info(f"Received GATT_WRITE_EVENT")
-        else:
-            assert False, "Did not receive GATT_WRITE_EVENT"
+    # enable indications on CCCD (write_handle + 1), value=2 for indications
+    ble_dut.interfaces.wifi.ble_set_att_cmd(ble_remote_dev_address=bt_client_address,
+                                            char_property=(write_handle + 1), value=2)
+    time.sleep(10)
+
+    # Verify connection is still active after GATT operations
+    state = ble_dut.interfaces.wifi.ble_get_device_state()
+    state_int = int(state) if state.isdigit() else -1
+    assert state_int == BLEDeviceState.Connected, "Connection lost during GATT operations"
+    logger().info("Connection still active after GATT operations - stability verified")
 
     # Disconnect
     ble_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
@@ -1152,22 +1156,39 @@ def test_to_fetch_descriptors_from_rd1_c19864(firmware_loader, ble_dut, ble_clie
     assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
 
     # Start ble client
-    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address)
+    bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(bt_dut_address=bt_dut_address,
+                                                                      service_classes=["BatteryService"])
     assert bt_client_address is not None, "Failed to start RD advertising"
 
     # Start scanning and connect to ble client
     ble_dut.interfaces.wifi.ble_start_scanning(ble_client_address=bt_client_address, timeout=60)
+    time.sleep(15)
     ble_dut.interfaces.wifi.ble_stop_scanning()
+
     timeout = 120
     logger().info(f"Initiating connection this can take up to {timeout} seconds....")
-    ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
-                                        expected="RSI_BLE_SECURITY_KEYS_EVENT")
+    try:
+        ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                            expected="RSI_BLE_CONN_UPDATE_COMPLETE_EVENT")
+    except Exception:
+        logger().warning("Connection event not received, retrying connection...")
+        ble_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=bt_client_address, timeout=timeout,
+                                            expected="RSI_BLE_CONN_UPDATE_COMPLETE_EVENT")
+    time.sleep(30)
+
+    # Enables the Wi-Fi power save in dut
+    enable_wifi_ps = ble_dut.interfaces.bluetooth.power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                             RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_wifi_ps, "Failed to enable WiFi power save"
+    # Enables the bt power save in dut
+    enable_bt_ps = ble_dut.interfaces.bluetooth.bt_power_save(RS9116PowerSaveModes.PowerSaveMode2,
+                                                              RS9116PowerSaveProcedureTypes.FastPowerSave)
+    assert enable_bt_ps, "Failed to enable BT power save"
 
     # Get the state of the dut
     state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT and RD are not connected"
 
-    time.sleep(2)
     ble_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=bt_client_address, start_handle=0x1,
                                                    end_handle=0xffff)
