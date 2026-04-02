@@ -217,9 +217,8 @@ class Ble_Data_Transfer:
             try:
                 logger().info(f"Initiating connection, this can take up to {timeout} seconds....")
                 self.ble_dut.interfaces.bluetooth.ble_connect(
-                    ble_remote_dev_address=self.ble_client_address,
-                    timeout=timeout
-                )
+                    ble_remote_dev_address=self.ble_client_address, ble_scan_interval=80, ble_scan_window=80,
+                    ble_conn_interval_min=200, ble_conn_interval_max=200, ble_supervision_timeout=3000, timeout=timeout)
                 time.sleep(60)
                 logger().info("Checking connection status of BLE")
                 state = self.ble_dut.interfaces.wifi.ble_get_device_state()
