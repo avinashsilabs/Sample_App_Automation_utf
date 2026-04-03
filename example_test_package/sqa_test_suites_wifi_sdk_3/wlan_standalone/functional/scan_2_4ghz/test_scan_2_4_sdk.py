@@ -1253,9 +1253,6 @@ def test_wifi_sdk_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi_ac
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}.pcap")
             time.sleep(2)
 
-            logger().info("Initiating m4 ta secure_handshake...")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
-
             logger().info("Initiating scan from dut...")
             wifi_dut.interfaces.wifi.scan(ssid="None", scan_bitmap_2_4=0, scan_type=0, bg_scan_periodicity=10,
                                           expected_status=SLStatus.SL_STATUS_SI91X_NO_AP_FOUND)
@@ -1374,9 +1371,6 @@ def test_wifi_sdk_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi_ac
             wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
             time.sleep(2)
-
-            logger().info("Initiating m4 ta secure_handshake...")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
             logger().info("Initiating scan from dut...")
             scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid='Explore@WiFi', scan_bitmap_2_4=0, scan_type=0,
@@ -1793,8 +1787,6 @@ def test_wifi_sdk_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_d
         ap_bssid = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"AP MAC: {ap_bssid}")
 
-        logger().info("Initiating m4 ta secure_handshake...")
-        wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
         logger().info("Initiating scan from DUT...")
         scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0, scan_type=0,
