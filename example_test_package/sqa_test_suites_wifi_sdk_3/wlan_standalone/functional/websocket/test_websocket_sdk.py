@@ -1818,6 +1818,10 @@ def test_wifi_sdk_websocket_data_transfer_while_rejoin_688068(switch, wifi_dut, 
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
+    finally:
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
 
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi="init")
