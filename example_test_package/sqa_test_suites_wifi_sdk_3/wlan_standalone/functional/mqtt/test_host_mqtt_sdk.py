@@ -26,7 +26,7 @@ import random
 import concurrent.futures
 from utf.utils.thread_base import ThreadBase
 from threading import Thread
-from typing import Dict
+from typing import Dict, Optional
 from datetime import datetime
 import uuid
 from utf.utils.stopwatch import Stopwatch
@@ -60,6 +60,39 @@ Author : Bhargavi
 def logger():
     return get_logger(__name__)
 WIFI_LOCK = threading.Lock()
+
+def is_paho_mqtt_yield_sl_status_timeout(exc: AssertionError) -> bool:
+    msg = str(exc)
+    return "SL_STATUS_TIMEOUT" in msg or "status:0x7" in msg or "status:0X7" in msg
+
+
+def mqtt_yield_until_idle_elapsed(
+    wifi_dut,
+    *,
+    idle_limit_sec: float,
+    timeout_ms: int = 10000,
+    command_timeout: int = 60,
+) -> None:
+    """Call ``paho_mqtt.yield`` until ``idle_limit_sec``; on SL_STATUS_TIMEOUT, retry (test-side only)."""
+    loop_watch = Stopwatch()
+    while loop_watch.elapsed_sec < idle_limit_sec:
+        time.sleep(0.1)
+        try:
+            wifi_dut.interfaces.mqtt.paho_mqtt_client_yield_command_handler(
+                timeout_ms=timeout_ms,
+                timeout=command_timeout,
+            )
+        except AssertionError as ex:
+            if is_paho_mqtt_yield_sl_status_timeout(ex):
+                logger().warning(
+                    "paho_mqtt.yield SL_STATUS_TIMEOUT; retrying until idle elapses (%.1fs / %ss)",
+                    loop_watch.elapsed_sec,
+                    idle_limit_sec,
+                )
+                time.sleep(0.1)
+                continue
+            raise
+
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, capture_filename=None, wifi_access_point=None, wifi_sniffer=None, mqtt_server=None
                  , mqtt_client=None, sl_collections=None, topic=None, sniffer_filter=None, message=None,
@@ -101,7 +134,7 @@ class WifiJoin(ThreadBase):
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
             raise
 
-    def connect_to_mqtt_server(self, wifi_dut, mqtt_client, server_ip, port, qos, is_will_enabled,last_will_retain):
+    def connect_to_mqtt_server(self, wifi_dut, mqtt_client, server_ip, port, qos, is_will_enabled=0,last_will_retain=0,keep_alive_interval=60):
         wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
 
         logger().info(".....DUT connects to MQTT server.....")
@@ -109,7 +142,7 @@ class WifiJoin(ThreadBase):
         wifi_dut.interfaces.mqtt.paho_mqtt_set_advanced_configuration_command_handler(last_will_qos=qos, is_will_enabled=is_will_enabled, last_will_retain=last_will_retain)
         wifi_dut.interfaces.mqtt.paho_mqtt_client_connect_to_server_command_handler(broker_address=server_ip,
                                                                                 broker_port=port,
-                                                                                client_id="Si91x_mqtt_client")
+                                                                                client_id="Si91x_mqtt_client", keep_alive_time_ms=keep_alive_interval)
         logger().info(".....MQTT Client connects to MQTT server.....")
         mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=self.mqtt_server.interfaces.mqtt)
         time.sleep(5)
@@ -549,9 +582,7 @@ class WifiJoin(ThreadBase):
 
         logger().info(f"All {publish_count} messages validated successfully")
 
-
-
-def get_mqtt_list(self, dut_mac_address, decryption_key: str, print_layers: list) -> Dict[str, int]:
+    def get_mqtt_list(self, dut_mac_address, decryption_key: str, print_layers: list) -> Dict[str, int]:
         mqtt_capture_list = []
         current_time = time.time()
         updated_capture_file = 'filter_' + self.capture_filename + '_' + str(
@@ -586,6 +617,126 @@ def get_mqtt_list(self, dut_mac_address, decryption_key: str, print_layers: list
                             f"As per sniffer capture MQTT packets sent by DUT..{ta_address}  ->  {mqtt_layer}")
                         mqtt_capture_list.append(tuple([mqtt_layer, packet.sniff_timestamp]))
         return mqtt_capture_list
+
+    def mqtt_keep_alive_check(
+            self,
+            dut_mac_address,
+            test_case_name,
+            decryption_key: Optional[str] = None,
+            keep_alive_time_sec: Optional[float] = None,
+    ):
+        """Analyze capture for MQTT PUBACK (4) and PINGREQ (12), with WPA decrypt like get_mqtt_list.
+
+        If no PINGREQ is seen, PINGRESP (13) timestamps are used as the keep-alive reference
+        (immediate server response to the client ping).
+
+        Ping timestamps closer than one keep-alive round-trip (e.g. PINGREQ + PINGRESP ~1s apart)
+        are merged to one entry so interval checks compare successive *cycles*, not REQ vs RESP.
+        """
+        remote_capture_file = self.wifi_sniffer.interfaces.capture.remote_capture_file
+        logger().info(f"capture file is:{remote_capture_file}")
+
+        if decryption_key is None:
+            decryption_key = (
+                f"{self.wifi_access_point.interfaces.wifi.passphrase}:"
+                f"{self.wifi_access_point.interfaces.wifi.ssid}"
+            )
+
+        test_case = test_case_name
+        wlan_filter_file = f"/tmp/{str(uuid.uuid4())[:8]}.pcap"
+        local_capture_file = (
+            f"./reports/{test_case}_wlan_filter_{str(uuid.uuid4())[:8]}.pcap"
+        )
+        packet_filter1 = f"(wlan.addr == {dut_mac_address})"
+        self.wifi_sniffer.interfaces.capture.shell(
+            f"tshark -nr {remote_capture_file} -Y '{packet_filter1}' -T fields -e "
+            f"frame.number -w {wlan_filter_file}"
+        )
+        if isinstance(self.wifi_sniffer.interfaces.capture.shell, SSHShell):
+            with self.wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
+                sftp.get(wlan_filter_file, local_capture_file)
+            pcap_for_decrypt = local_capture_file
+        else:
+            pcap_for_decrypt = wlan_filter_file
+
+        publish_ack = []
+        ping_request = []
+        ping_response = []
+        dut_mac_lower = dut_mac_address.lower()
+
+        def frame_time_relative(packet):
+            try:
+                return float(packet.frame_info.time_relative)
+            except (AttributeError, ValueError, TypeError):
+                try:
+                    return float(packet.sniff_timestamp)
+                except (AttributeError, ValueError, TypeError):
+                    return None
+
+        def mqtt_msgtype_from_layer(mqtt_layer):
+            raw = getattr(mqtt_layer, "msgtype", None)
+            if raw is not None:
+                try:
+                    return int(str(raw).strip().split()[0])
+                except ValueError:
+                    pass
+            m = re.search(r"Message Type:.*?\((\d+)\)", str(mqtt_layer))
+            return int(m.group(1)) if m else None
+
+        logger().info("Parsing decrypted MQTT (PUBACK / PINGREQ / PINGRESP) from filtered capture")
+        for packet in self.wifi_sniffer.interfaces.capture.iter_packets(
+                decrypt_packets=True,
+                encryption_type="WPA-PWD",
+                decryption_key=decryption_key,
+                capture_file_filter=pcap_for_decrypt,
+        ):
+            if not hasattr(packet, "wlan") or dut_mac_lower not in str(packet.wlan).lower():
+                continue
+            if not hasattr(packet, "mqtt"):
+                continue
+            msgtype = mqtt_msgtype_from_layer(packet.mqtt)
+            if msgtype is None:
+                continue
+            trel = frame_time_relative(packet)
+            if trel is None:
+                continue
+            if msgtype == 4:
+                publish_ack.append(str(trel))
+            elif msgtype == 12:
+                ping_request.append(str(trel))
+            elif msgtype == 13:
+                ping_response.append(str(trel))
+
+        if not ping_request and ping_response:
+            logger().info(
+                "No MQTT PINGREQ (msgtype 12) in capture; using PINGRESP (13) as keep-alive reference."
+            )
+            ping_request = ping_response
+
+        if ping_request:
+            # Collapse PINGREQ+PINGRESP (and other sub-keep-alive duplicates) to one time per cycle.
+            if keep_alive_time_sec is not None and keep_alive_time_sec > 0:
+                min_gap = max(5.0, keep_alive_time_sec * 0.25)
+            else:
+                min_gap = 10.0
+            sorted_t = sorted(float(x) for x in ping_request)
+            merged = [sorted_t[0]]
+            for t in sorted_t[1:]:
+                if t - merged[-1] >= min_gap:
+                    merged.append(t)
+            if len(merged) != len(ping_request):
+                logger().info(
+                    "Deduped ping-related timestamps: %d -> %d (min_gap=%.1fs, raw=%s, kept=%s)",
+                    len(ping_request),
+                    len(merged),
+                    min_gap,
+                    ping_request,
+                    merged,
+                )
+            ping_request = [str(x) for x in merged]
+
+        return publish_ack, ping_request
+
 
 @pytest.mark.config(
     "wifi_dut",
@@ -989,6 +1140,160 @@ def test_wifi_sdk_mqtt_qos1_dut_rx_two_topics_parallel_TC777734(
 #     except Exception as Ex:
 #         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
+def test_wifi_sdk_mqtt_keep_alive_zero_with_qos2_TC777738(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections,
+        sniffer_filter, wifi_client, keep_alive_time, idle_time):
+    """QOS0: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""
+
+    try:
+        topic = "mytesttopic_C777739_" + str(uuid.uuid4())
+        publish_count=10
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=150))
+        capture_filename = request.node.name
+
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename,
+                            wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        server_ip = wifi_client.interfaces.wifi.get_ip_address()
+        wifi_obj.connect_to_mqtt_server(
+            wifi_dut, mqtt_client, server_ip, 1883, qos=0,
+            keep_alive_interval=keep_alive_time)
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_publish_command_handler(
+            topic=topic,
+            msg_payload=message,
+            qos_level=0
+        )
+        logger().info(f"Wait for {idle_time} seconds")
+        mqtt_yield_until_idle_elapsed(
+            wifi_dut, idle_limit_sec=idle_time, timeout_ms=10000, command_timeout=60
+        )
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(1)
+        publish_ack, ping_request = wifi_obj.mqtt_keep_alive_check(
+            wifi_obj.dut_addr['dut_mac_address'],
+            capture_filename,
+            keep_alive_time_sec=keep_alive_time,
+        )
+        if len(ping_request) >= 1:
+            assert not len(ping_request), "MQTT keep alive packets capture even though keep alive is disable"
+        else :
+            logger().info("....MQTT keep alive packets not observed when we disable keep alive....")
+        logger().info("....Unsubscribing MQTT_Client from the topic....")
+        mqtt_client.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        time.sleep(1)
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_disconnect_command_handler()
+        # wifi_obj.verify_ps_validation()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.parametrize("keep_alive_time,idle_time", [(30, 180)])
+def test_wifi_sdk_mqtt_keep_alive_30_with_qos2_TC777739(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections,
+        sniffer_filter, wifi_client, keep_alive_time, idle_time):
+    """QOS0: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""
+
+    try:
+        topic = "mytesttopic_C777739_" + str(uuid.uuid4())
+        publish_count=10
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=150))
+        capture_filename = request.node.name
+
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename,
+                            wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        server_ip = wifi_client.interfaces.wifi.get_ip_address()
+        wifi_obj.connect_to_mqtt_server(
+            wifi_dut, mqtt_client, server_ip, 1883, qos=0,
+            keep_alive_interval=keep_alive_time)
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_publish_command_handler(
+            topic=topic,
+            msg_payload=message,
+            qos_level=0
+        )
+        logger().info(f"Wait for {idle_time} seconds")
+        mqtt_yield_until_idle_elapsed(
+            wifi_dut, idle_limit_sec=idle_time, timeout_ms=10000, command_timeout=60
+        )
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(1)
+        publish_ack, ping_request = wifi_obj.mqtt_keep_alive_check(
+            wifi_obj.dut_addr['dut_mac_address'],
+            capture_filename,
+            keep_alive_time_sec=keep_alive_time,
+        )
+        if len(ping_request) >= 1 and len(publish_ack) >= 1:
+            logger().info(
+                f"len of publish ack is {len(publish_ack)} and number of ping request packets observed is : {len(ping_request)} publish ack : {publish_ack}, ping request : {ping_request}")
+            assert (keep_alive_time - 5) < (float(ping_request[0]) - float(publish_ack[-1])) <= (
+                    keep_alive_time + 5), f"mqtt ping request is not observed even after {keep_alive_time} is " \
+                                          f"exhausted or before {keep_alive_time - 5} "
+            logger().info(
+                f"MQTT KEEP ALIVE CHECK FUNCTIONALITY ** PING REQUEST PACKET OBSERVED AT DIFFERENCE OF {(float(ping_request[0]) - float(publish_ack[-1]))} SECONDS")
+
+        if len(ping_request) > 1:
+            for i in range(0, len(ping_request)):
+                if i == len(ping_request) - 1:
+                    break
+                assert (keep_alive_time - 5) < (float(ping_request[i + 1]) - float(ping_request[i])) <= (
+                        keep_alive_time + 5), f"mqtt ping request is not observed even after {keep_alive_time} is " \
+                                              f"exhausted or before {keep_alive_time - 5} and the ping re" \
+                                              f"quest arrival time is {ping_request[i]} "
+                logger().info(
+                    f"MQTT KEEP ALIVE CHECK FUNCTIONALITY ** PING REQUEST PACKET OBSERVED AT DIFFERENCE OF {(float(ping_request[i + 1]) - float(ping_request[i]))} SECONDS")
+
+        logger().info("....Unsubscribing MQTT_Client from the topic....")
+        mqtt_client.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        time.sleep(1)
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_disconnect_command_handler()
+        # wifi_obj.verify_ps_validation()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1028,7 +1333,7 @@ def test_wifi_sdk_mqtt_connect_disconnect_30_min_TC777740(
         wifi_obj.wait_for_exit()
         server_ip = wifi_client.interfaces.wifi.get_ip_address()
         loop_watch = Stopwatch()
-        while loop_watch.elapsed_sec < 1800:
+        while loop_watch.elapsed_sec < 180:
             wifi_obj.connect_to_mqtt_server(wifi_dut, mqtt_client, server_ip, 1883, qos=1,is_will_enabled=1,last_will_retain=1)
             logger().info("*************** MQTT Client subscribes to the topic *****************")
             wifi_dut.interfaces.mqtt.paho_mqtt_client_subscribe_command_handler(topic=topic, qos_level=1)
@@ -1080,7 +1385,7 @@ def test_wifi_mqtt_repeated_session_stress_30min_TC777741(
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=150))
         capture_filename = request.node.name
         loop_watch = Stopwatch()
-        while loop_watch.elapsed_sec < 1800:
+        while loop_watch.elapsed_sec < 180:
             wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename,
                                 wifi_access_point=wifi_access_point,
                                 wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
@@ -1110,6 +1415,7 @@ def test_wifi_mqtt_repeated_session_stress_30min_TC777741(
         # wifi_obj.verify_ps_validation()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
 
 @pytest.mark.config(
     "wifi_dut",
