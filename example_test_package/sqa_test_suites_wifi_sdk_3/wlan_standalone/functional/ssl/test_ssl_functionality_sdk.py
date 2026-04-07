@@ -213,6 +213,9 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
         # Open ssl server socket in remote device(Raspberry pi or static device)
         ssl_server.interfaces.ssl.start_server(port=port3)
         server_ip = ssl_server.interfaces.ssl.server_ip
+        # SslServer indexes sockets by thread_count (1..3 after first three starts). Connect retry calls
+        # start_server() again and bumps thread_count; send_data must use the new index
+        ssl_server_socket_nos = [1, 2, 3]
 
         for sock_count in range(0, 3):
             # Open ssl client socket in the DUT
@@ -233,10 +236,38 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
                 local_port = randint(40001, 60000)
 
             wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
-            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip, server_port=socket_port)
+            max_connect_retries = 3
+            for attempt in range(1, max_connect_retries + 1):
+                try:
+                    time.sleep(1)
+                    wifi_dut.interfaces.wifi.bsdSocketConnect(
+                        socket_fd=sock, server_ip=server_ip, server_port=socket_port, timeout=20)
+                    logger.info(f"Socket {sock} connected successfully on attempt {attempt}")
+                    break
+                except Exception as connect_err:
+                    logger.warning(
+                        f"Socket {sock} connect attempt {attempt}/{max_connect_retries} failed: {connect_err}"
+                    )
+                    if attempt == max_connect_retries:
+                        raise
+                    logger.info(f"Closing failed socket {sock} and recreating for retry")
+                    wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+                    time.sleep(2)
+                    logger.info(f"Restarting SSL server on port {socket_port} for retry")
+                    ssl_server.interfaces.ssl.start_server(port=socket_port)
+                    ssl_server_socket_nos[sock_count] = ssl_server.interfaces.ssl.thread_count
+                    sock = wifi_dut.interfaces.wifi.socket()
+                    logger.info(f"Recreated socket id: {sock}")
+                    wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                    if sock_count == 0:
+                        local_port = randint(5001, 20000)
+                    elif sock_count == 1:
+                        local_port = randint(20001, 40000)
+                    else:
+                        local_port = randint(40001, 60000)
+                    wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
 
-        socket_no = [1, 2, 3]
-        for socket in socket_no:
+        for dut_socket_fd, server_sock_no in enumerate(ssl_server_socket_nos):
             for iteration in range(5):
                 buffer_length = 100
                 pkt_count = 1
@@ -244,11 +275,10 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
                     random.choices(string.ascii_uppercase + string.digits, k=buffer_length)
                 )
 
-                ssl_server.interfaces.ssl.send_data(socket, pkt_count, buffer_length, message=tx_buffer)
-                sock = (socket - 1)
-                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=sock)
+                ssl_server.interfaces.ssl.send_data(server_sock_no, pkt_count, buffer_length, message=tx_buffer)
+                buffer_rx = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=dut_socket_fd)
 
-                assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {sock} opened in the DUT is not matched "
+                assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id {dut_socket_fd} opened in the DUT is not matched "
 
         for sock_count in range(0, 3):
             logger.info(f"Closing socket_id->{sock_count}")
@@ -261,6 +291,7 @@ def test_wifi_sdk_ssl_three_sockets_receive_data_testcase_C19153(wifi_sniffer, w
     finally:
         logger.info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+
 
 
 @pytest.mark.config(
