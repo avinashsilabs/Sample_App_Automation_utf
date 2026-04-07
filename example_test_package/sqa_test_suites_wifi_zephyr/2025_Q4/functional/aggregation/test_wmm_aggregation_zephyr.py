@@ -4,6 +4,7 @@ import time
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
+from utf.utf_config import UtfConfig
 
 """This function runs below test steps for DUT-Si91x
         1. Configuration of DUT in 2G : gnbax
@@ -36,7 +37,7 @@ def __print_throughput(iperf_throughput: dict):
 
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, net_perf_client=None, wifi_client=None,
-                 protocol=None, capture_filename=None, zephyr_wifi_collections=None):
+                 protocol=None, capture_filename=None, zephyr_wifi_collections=None, power_save=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -47,6 +48,7 @@ class WifiJoin(ThreadBase):
         self.capture_filename = capture_filename
         self.zephyr_wifi_collections = zephyr_wifi_collections
         self.dut_addr = None
+        self.power_save = power_save
 
     def run(self):
         try:
@@ -55,7 +57,9 @@ class WifiJoin(ThreadBase):
                 channel=self.wifi_access_point.interfaces.wifi.channel)
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
             self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
-                                                                              associated=self.wifi_dut.interfaces.wifi.associated)
+                                                                              associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                              retry_count=3, power_save=self.power_save,
+                                                                              ping_after_power_save=True)
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
 
@@ -78,6 +82,8 @@ def test_wifi_zephyr_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_per
     """ Verifying UDP Tx by enabling Aggregation in WPA2-AES mode and verifying sniffer packets """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         logger().info(f"******** AP MAC ADD *******")
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
@@ -85,7 +91,8 @@ def test_wifi_zephyr_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_per
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=wifi_obj.dut_addr['device_ip'],
@@ -149,6 +156,9 @@ def test_wifi_zephyr_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_per
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
             'packet_count']
         assert snif_pkt_count, "Unable to find Block ACK packets"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -173,6 +183,8 @@ def test_wifi_zephyr_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_
     """ Verifying UDP Tx aggregation in OPEN mode and verifying sniffer packets """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         logger().info(f"******** AP MAC ADD *******")
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
@@ -180,7 +192,8 @@ def test_wifi_zephyr_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=wifi_obj.dut_addr['device_ip'],
@@ -244,6 +257,9 @@ def test_wifi_zephyr_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
             'packet_count']
         assert snif_pkt_count, "Unable to find Block ACK packets"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -267,6 +283,8 @@ def test_wifi_zephyr_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_per
     """ Verifying UDP Rx by enabling Aggregation in WPA2-AES mode and verifying sniffer packets """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         logger().info(f"******** AP MAC ADD *******")
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
@@ -274,7 +292,8 @@ def test_wifi_zephyr_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_per
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         logger().info(f"********** Calling IPERF RX UDP traffic DUT configured as Server **************")
@@ -335,6 +354,9 @@ def test_wifi_zephyr_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_per
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
             'packet_count']
         assert snif_pkt_count, "Unable to find Block ACK packets"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -359,6 +381,8 @@ def test_wifi_zephyr_udp_rx_aggregation_open_mode_c19034(wifi_sniffer, net_perf_
     """Verifying UDP Rx aggregation in OPEN mode and verifying sniffer packets """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         logger().info(f"******** AP MAC ADD *******")
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
@@ -366,7 +390,8 @@ def test_wifi_zephyr_udp_rx_aggregation_open_mode_c19034(wifi_sniffer, net_perf_
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         logger().info(f"********** Calling IPERF RX UDP traffic DUT configured as Server **************")
@@ -427,6 +452,9 @@ def test_wifi_zephyr_udp_rx_aggregation_open_mode_c19034(wifi_sniffer, net_perf_
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter5)[
             'packet_count']
         assert snif_pkt_count, "Unable to find Block ACK packets"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

@@ -1229,7 +1229,7 @@ defaults:
         afe_type: 1
         features_enable: 0
         board_type: "rs9116"
-        power_save: False
+        power_save: True
 
     wiseconnect_web: 'wiseconnect_web'
 

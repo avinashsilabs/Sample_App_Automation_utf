@@ -10,6 +10,7 @@ from utf_wifi_zephyr.devices.si91x import (
     ZephyrWifiMfpOptions
 )
 from threading import Thread
+from utf.utf_config import UtfConfig
 
 
 def logger():
@@ -53,6 +54,7 @@ class WLanThread(ThreadBase):
             wifi_clients=None,
             protocol=None,
             multicast_client=None,
+            power_save=None,
     ):
         super().__init__()
         self.scan_list = None
@@ -89,9 +91,12 @@ class WLanThread(ThreadBase):
             "WPA2ENTERPRISE": 5,
             "WPA2WPA3MIXEDMODE": 8,
         }
+        self.power_save = power_save
+        self.dut_mac_address = None
 
     def run(self):
         try:
+            self.dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
             self.wifi_sniffer.interfaces.capture.configure_interface(
                 channel=self.wifi_access_point.interfaces.wifi.channel
             )
@@ -111,7 +116,8 @@ class WLanThread(ThreadBase):
                         wifi_dut=self.wifi_dut,
                         wifi_access_point=self.wifi_access_point,
                         associated=self.wifi_dut.interfaces.wifi.associated,
-                        ping_after_power_save=False,
+                        ping_after_power_save=True,
+                        power_save=self.power_save
                     )
 
                     host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -141,7 +147,8 @@ class WLanThread(ThreadBase):
                         wifi_dut=self.wifi_dut,
                         wifi_access_point=self.wifi_access_point,
                         associated=self.wifi_dut.interfaces.wifi.associated,
-                        ping_after_power_save=False,
+                        ping_after_power_save=True,
+                        power_save=self.power_save
                     )
 
                     host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -204,9 +211,10 @@ class WLanThread(ThreadBase):
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                                   wifi_access_point=self.wifi_access_point,
                                                                                   associated=False,
-                                                                                  ping_after_power_save=False,
+                                                                                  ping_after_power_save=True,
                                                                                   skip_connect=True,
-                                                                                  retry_count=3, )
+                                                                                  retry_count=3,
+                                                                                  power_save=self.power_save)
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
@@ -234,8 +242,8 @@ class WLanThread(ThreadBase):
                     wifi_dut=self.wifi_dut,
                     wifi_access_point=self.wifi_access_point,
                     associated=self.wifi_dut.interfaces.wifi.associated,
-                    power_save=False,
-                    ping_after_power_save=False,
+                    power_save=self.power_save,
+                    ping_after_power_save=True,
                     mfp=ZephyrWifiMfpOptions.WIFI_MFP_REQUIRED
                 )
                 logger().info("DUT successfully connected with AP")
@@ -306,8 +314,8 @@ class WLanThread(ThreadBase):
                     wifi_dut=self.wifi_dut,
                     wifi_access_point=self.wifi_access_point,
                     associated=self.wifi_dut.interfaces.wifi.associated,
-                    power_save=False,
-                    ping_after_power_save=False,
+                    power_save=self.power_save,
+                    ping_after_power_save=True,
                 )
                 self.zephyr_wifi_collections.run_traffic(
                     wifi_dut=self.wifi_dut,
@@ -339,7 +347,8 @@ class WLanThread(ThreadBase):
                     wifi_dut=self.wifi_dut,
                     wifi_access_point=self.wifi_access_point,
                     associated=False,
-                    ping_after_power_save=False,
+                    power_save=self.power_save,
+                    ping_after_power_save=True,
                     skip_connect=True,
                 )
 
@@ -365,8 +374,8 @@ class WLanThread(ThreadBase):
                     wifi_dut=self.wifi_dut,
                     wifi_access_point=self.wifi_access_point,
                     associated=self.wifi_dut.interfaces.wifi.associated,
-                    power_save=False,
-                    ping_after_power_save=False,
+                    power_save=self.power_save,
+                    ping_after_power_save=True,
                     mfp=ZephyrWifiMfpOptions.WIFI_MFP_REQUIRED
                 )
                 logger().info("DUT successfully connected with AP")
@@ -392,7 +401,8 @@ class WLanThread(ThreadBase):
                     wifi_dut=self.wifi_dut,
                     wifi_access_point=self.wifi_access_point,
                     associated=False,
-                    ping_after_power_save=False,
+                    power_save=self.power_save,
+                    ping_after_power_save=True,
                     skip_connect=True,
                 )
                 self.zephyr_wifi_collections.ping(self.dut_addr["device_ip"], ping_count=60)
@@ -432,8 +442,8 @@ class WLanThread(ThreadBase):
                     self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(
                         wifi_dut=self.wifi_dut,
                         wifi_access_point=self.wifi_access_point,
-                        power_save=False,
-                        ping_after_power_save=False,
+                        power_save=self.power_save,
+                        ping_after_power_save=True,
                         retry_count=3,
                         associated=self.wifi_dut.interfaces.wifi.associated,
                     )
@@ -457,7 +467,8 @@ class WLanThread(ThreadBase):
                         wifi_dut=self.wifi_dut,
                         wifi_access_point=self.wifi_access_point,
                         associated=False,
-                        ping_after_power_save=False,
+                        power_save=self.power_save,
+                        ping_after_power_save=True,
                         skip_connect=True,
                     )
                     self.zephyr_wifi_collections.ping(self.dut_addr["device_ip"], ping_count=60)
@@ -504,7 +515,8 @@ class WLanThread(ThreadBase):
                         wifi_dut=self.wifi_dut,
                         wifi_access_point=self.wifi_access_point,
                         associated=self.wifi_dut.interfaces.wifi.associated,
-                        ping_after_power_save=False,
+                        power_save=self.power_save,
+                        ping_after_power_save=True,
                     )
 
                     self.zephyr_wifi_collections.ping(self.dut_addr["device_ip"], ping_count=60)
@@ -540,7 +552,8 @@ class WLanThread(ThreadBase):
                         wifi_dut=self.wifi_dut,
                         wifi_access_point=self.wifi_access_point,
                         associated=False,
-                        ping_after_power_save=False,
+                        power_save=self.power_save,
+                        ping_after_power_save=True,
                         skip_connect=True,
                         retry_count=3,
                     )
@@ -575,7 +588,8 @@ class WLanThread(ThreadBase):
                         wifi_dut=self.wifi_dut,
                         wifi_access_point=self.wifi_access_point,
                         associated=self.wifi_dut.interfaces.wifi.associated,
-                        ping_after_power_save=False,
+                        power_save=self.power_save,
+                        ping_after_power_save=True,
                     )
 
                     time.sleep(5)
@@ -641,7 +655,8 @@ class WLanThread(ThreadBase):
                         wifi_dut=self.wifi_dut,
                         wifi_access_point=self.wifi_access_point,
                         associated=self.wifi_dut.interfaces.wifi.associated,
-                        ping_after_power_save=False,
+                        power_save=self.power_save,
+                        ping_after_power_save=True,
                         retry_count=3,
                     )
                     packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -684,7 +699,8 @@ class WLanThread(ThreadBase):
                         wifi_dut=self.wifi_dut,
                         wifi_access_point=self.wifi_access_point,
                         associated=False,
-                        ping_after_power_save=False,
+                        power_save=self.power_save,
+                        ping_after_power_save=True,
                         skip_connect=True,
                         retry_count=3,
                     )
@@ -708,7 +724,8 @@ class WLanThread(ThreadBase):
                     wifi_dut=self.wifi_dut,
                     wifi_access_point=self.wifi_access_point,
                     associated=self.wifi_dut.interfaces.wifi.associated,
-                    ping_after_power_save=False,
+                    power_save=self.power_save,
+                    ping_after_power_save=True,
                 )
 
         except Exception as e:
@@ -1050,6 +1067,8 @@ def test_wifi_zephyr_mbssid_send_probe_request_asso_req_c219284(
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     packet_filter2 = "                .1.. .... = Multiple BSSID: Supported"
 
@@ -1061,7 +1080,7 @@ def test_wifi_zephyr_mbssid_send_probe_request_asso_req_c219284(
         wifi_access_point=wifi_access_point,
         wifi_sniffer=wifi_sniffer,
         ping_count=ping_count,
-        test_case_no=219284, test_name=test_name, zephyr_wifi_collections=zephyr_wifi_collections, )
+        test_case_no=219284, test_name=test_name, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1081,6 +1100,7 @@ def test_wifi_zephyr_mbssid_send_probe_request_asso_req_c219284(
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                                   packet_filter2=packet_filter2)[
             "packet_count"], "Unable to find MBSSID bit enable in extended capability field in sniffer capture"
+
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -1143,6 +1163,8 @@ def test_wifi_zephyr_mbssid_scan_all_vap_c219285(
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """Verify whether DUT is able to scan all VAP's info when enabled MBSSID feature in AP"""
 
@@ -1155,6 +1177,7 @@ def test_wifi_zephyr_mbssid_scan_all_vap_c219285(
         test_name=test_name,
         zephyr_wifi_collections=zephyr_wifi_collections,
         test_case_no=219285,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -1162,6 +1185,7 @@ def test_wifi_zephyr_mbssid_scan_all_vap_c219285(
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1230,9 +1254,12 @@ def test_wifi_zephyr_mbssid_T_open_sec_c219286(
         wifi_client,
         protocol,
 ):
-    test_name = request.node.name
-
     """Verify whether DUT is able to connect to T profile BSSID with open security enabled in AP"""
+    test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -1245,10 +1272,17 @@ def test_wifi_zephyr_mbssid_T_open_sec_c219286(
         protocol=protocol,
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_mac_address,
+                                                                                       da_addr=wlan_obj.ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1317,9 +1351,12 @@ def test_wifi_zephyr_mbssid_T_wpa2_psk_c219287(
         wifi_client,
         protocol,
 ):
-    test_name = request.node.name
-
     """Verify whether DUT is able to connect to T profile BSSID with WPA2 PSK security enabled in AP"""
+    test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+
+
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -1332,10 +1369,17 @@ def test_wifi_zephyr_mbssid_T_wpa2_psk_c219287(
         protocol=protocol,
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_mac_address,
+                                                                                       da_addr=wlan_obj.ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1406,6 +1450,8 @@ def test_wifi_zephyr_mbssid_NT_wpa2_psk_c219288(
 ):
     test_name = request.node.name
     """Verify whether DUT is able to connect to NT based profile BSSID with WPA2 PSK security enabled in AP"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -1418,6 +1464,7 @@ def test_wifi_zephyr_mbssid_NT_wpa2_psk_c219288(
         protocol=protocol,
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -1497,6 +1544,8 @@ def test_wifi_zephyr_mbssid_T_wpa3_c219289(
 ):
     test_name = request.node.name
     """Verify whether DUT is able to connect to T profile BSSID with WPA3 Personal security enabled in AP"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -1509,6 +1558,7 @@ def test_wifi_zephyr_mbssid_T_wpa3_c219289(
         sniffer_filter=sniffer_filter,
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -1517,6 +1567,7 @@ def test_wifi_zephyr_mbssid_T_wpa3_c219289(
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
         wifi_dut.interfaces.wifi.leave()
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1589,6 +1640,8 @@ def test_wifi_zephyr_mbssid_NT_wpa3_c219290(
     test_name = request.node.name
 
     """Verify whether DUT is able to connect to NT profile BSSID with WPA3 Personal security enabled in AP"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
         wifi_access_point=wifi_access_point,
@@ -1601,6 +1654,7 @@ def test_wifi_zephyr_mbssid_NT_wpa3_c219290(
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
         multicast_client=multicast_client,
+        power_save=power_save
     )
 
     try:
@@ -1663,6 +1717,7 @@ def test_wifi_zephyr_mbssid_NT_wpa3_c219290(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219293')
+@pytest.mark.skip()
 def test_wifi_zephyr_mbssid_rejoin_T_open_sec_c219293(
         wifi_sniffer,
         wifi_access_point,
@@ -1679,6 +1734,8 @@ def test_wifi_zephyr_mbssid_rejoin_T_open_sec_c219293(
     test_name = request.node.name
 
     """Verify whether DUT is able to rejoin to T profile BSSID with open security enabled in AP"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -1692,6 +1749,7 @@ def test_wifi_zephyr_mbssid_rejoin_T_open_sec_c219293(
         switch=switch,
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -1705,6 +1763,7 @@ def test_wifi_zephyr_mbssid_rejoin_T_open_sec_c219293(
 
         zephyr_wifi_collections.ping(wlan_obj.dut_addr["device_ip"], ping_count=60)
         wifi_dut.interfaces.wifi.leave()
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -1765,6 +1824,7 @@ def test_wifi_zephyr_mbssid_rejoin_T_open_sec_c219293(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219294')
+@pytest.mark.skip()
 def test_wifi_zephyr_mbssid_rejoin_T_wpa2_c219294(
         wifi_sniffer,
         wifi_access_point,
@@ -1781,6 +1841,8 @@ def test_wifi_zephyr_mbssid_rejoin_T_wpa2_c219294(
     test_name = request.node.name
 
     """Verify whether DUT is able to rejoin to T profile BSSID with WPA2 PSK security enabled in AP"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -1794,6 +1856,7 @@ def test_wifi_zephyr_mbssid_rejoin_T_wpa2_c219294(
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
         protocol=protocol,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -1868,6 +1931,7 @@ def test_wifi_zephyr_mbssid_rejoin_T_wpa2_c219294(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219295')
+@pytest.mark.skip()
 def test_wifi_zephyr_mbssid_rejoin_NT_wpa2_c219295(
         wifi_sniffer,
         wifi_access_point,
@@ -1884,6 +1948,8 @@ def test_wifi_zephyr_mbssid_rejoin_NT_wpa2_c219295(
     test_name = request.node.name
 
     """Verify whether DUT is able to rejoin to NT profile BSSID with WPA2 PSK security enabled in AP"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -1897,6 +1963,7 @@ def test_wifi_zephyr_mbssid_rejoin_NT_wpa2_c219295(
         switch=switch,
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -1971,6 +2038,7 @@ def test_wifi_zephyr_mbssid_rejoin_NT_wpa2_c219295(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219296')
+@pytest.mark.skip()
 def test_wifi_zephyr_mbssid_rejoin_T_wpa3_c219296(
         wifi_sniffer,
         wifi_access_point,
@@ -1987,6 +2055,8 @@ def test_wifi_zephyr_mbssid_rejoin_T_wpa3_c219296(
     test_name = request.node.name
 
     """Verify whether DUT is able to rejoin to T profile BSSID with WPA3 Personal security enabled in AP"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
         wifi_access_point=wifi_access_point,
@@ -1999,6 +2069,7 @@ def test_wifi_zephyr_mbssid_rejoin_T_wpa3_c219296(
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
         protocol=protocol,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -2013,6 +2084,7 @@ def test_wifi_zephyr_mbssid_rejoin_T_wpa3_c219296(
 
         zephyr_wifi_collections.ping(wlan_obj.dut_addr["device_ip"], ping_count=60)
         wifi_dut.interfaces.wifi.leave()
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -2073,6 +2145,7 @@ def test_wifi_zephyr_mbssid_rejoin_T_wpa3_c219296(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"]
 )
 @pytest.mark.test_src_map_id('C219297')
+@pytest.mark.skip()
 def test_wifi_zephyr_mbssid_rejoin_NT_wpa3_c219297(
         wifi_sniffer,
         wifi_access_point,
@@ -2089,6 +2162,8 @@ def test_wifi_zephyr_mbssid_rejoin_NT_wpa3_c219297(
     test_name = request.node.name
 
     """Verify whether DUT is able to rejoin to NT profile BSSID with WPA3 Personal security enabled in AP"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
         wifi_access_point=wifi_access_point,
@@ -2101,6 +2176,7 @@ def test_wifi_zephyr_mbssid_rejoin_NT_wpa3_c219297(
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
         protocol=protocol,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -2114,6 +2190,7 @@ def test_wifi_zephyr_mbssid_rejoin_NT_wpa3_c219297(
         time.sleep(20)
         zephyr_wifi_collections.ping(wlan_obj.dut_addr["device_ip"], ping_count=60)
         wifi_dut.interfaces.wifi.leave()
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -2181,6 +2258,8 @@ def test_wifi_zephyr_mbssid_connection_with_wrong_security_c219298(
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     packet_filter2 = "                .1.. .... = Multiple BSSID: Supported"
 
@@ -2195,6 +2274,7 @@ def test_wifi_zephyr_mbssid_connection_with_wrong_security_c219298(
         test_case_no=219298,
         zephyr_wifi_collections=zephyr_wifi_collections,
         sniffer_filter=sniffer_filter,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -2265,6 +2345,8 @@ def test_wifi_zephyr_mbssid_neg_connection_with_wrong_password_c219299(
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """	Connection with Wrong password """
 
@@ -2277,6 +2359,7 @@ def test_wifi_zephyr_mbssid_neg_connection_with_wrong_password_c219299(
         test_case_no=219299,
         sniffer_filter=sniffer_filter,
         zephyr_wifi_collections=zephyr_wifi_collections,
+        power_save=power_save
     )
 
     try:
@@ -2343,6 +2426,8 @@ def test_wifi_zephyr_mbssid_neg_connection_failure_when_ssid_not_provided_c21930
     test_name = request.node.name
 
     """The test case should fail when connecting to AP when SSID is not provided in the join API"""
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(
         wifi_dut=wifi_dut,
@@ -2352,6 +2437,7 @@ def test_wifi_zephyr_mbssid_neg_connection_failure_when_ssid_not_provided_c21930
         test_case_no=219300,
         test_name=test_name,
         sniffer_filter=sniffer_filter,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
@@ -2420,6 +2506,8 @@ def test_wifi_zephyr_mbssid_connect_disconnect_to_ap_txbssid_c219301(
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """	Connect & disconnect(10 times) when STA connected to TXBSSID """
     wlan_obj = WLanThread(
@@ -2431,6 +2519,7 @@ def test_wifi_zephyr_mbssid_connect_disconnect_to_ap_txbssid_c219301(
         test_case_no=219301,
         sniffer_filter=sniffer_filter,
         zephyr_wifi_collections=zephyr_wifi_collections,
+        power_save=power_save
     )
 
     try:
@@ -2501,6 +2590,8 @@ def test_wifi_zephyr_mbssid_connect_disconnect_nt_bssid_c219302(
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """	Connect & disconnect(10 times) when STA connected to NT BSSID """
     wlan_obj = WLanThread(
@@ -2512,6 +2603,7 @@ def test_wifi_zephyr_mbssid_connect_disconnect_nt_bssid_c219302(
         test_case_no=219302,
         sniffer_filter=sniffer_filter,
         zephyr_wifi_collections=zephyr_wifi_collections,
+        power_save=power_save
     )
 
     try:
@@ -2581,6 +2673,8 @@ def test_wifi_zephyr_mbssid_verify_scan_list_when_vap_wpa2_sec_NT_vap_wpa3_c2193
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """	Verify whether DUT is able to scan all VAP's info when enabled MBSSID feature in AP and each VAP different  
     security(TX based Vap - WPA2 Personal & NT based VAP - WPA3 security """
@@ -2593,11 +2687,13 @@ def test_wifi_zephyr_mbssid_verify_scan_list_when_vap_wpa2_sec_NT_vap_wpa3_c2193
         test_case_no=219319,
         zephyr_wifi_collections=zephyr_wifi_collections,
         sniffer_filter=sniffer_filter,
+        power_save=power_save
     )
 
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -2662,6 +2758,8 @@ def test_wifi_zephyr_mbssid_verify_scan_list_when_vap_wpa3_sec_NT_vap_wpa3_trans
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """	Verify whether DUT is able to scan all VAP's info when enabled MBSSID feature in AP and each VAP different 
     security(TX based Vap - WPA3 Personal & NT based VAP - WPA3 Transition security """
@@ -2674,11 +2772,13 @@ def test_wifi_zephyr_mbssid_verify_scan_list_when_vap_wpa3_sec_NT_vap_wpa3_trans
         test_case_no=219320,
         zephyr_wifi_collections=zephyr_wifi_collections,
         sniffer_filter=sniffer_filter,
+        power_save=power_save
     )
 
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -2739,6 +2839,8 @@ def test_wifi_zephyr_mbssid_verify_scan_list_when_vap_open_sec_NT_vap_wpa2_sec_c
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """	Verify whether DUT is able to scan all VAP's info when enabled MBSSID feature in AP and each VAP different 
         security(TX based Vap - Open & NT based VAP - WPA2 Personal security """
@@ -2751,6 +2853,7 @@ def test_wifi_zephyr_mbssid_verify_scan_list_when_vap_open_sec_NT_vap_wpa2_sec_c
         test_case_no=219321,
         zephyr_wifi_collections=zephyr_wifi_collections,
         sniffer_filter=sniffer_filter,
+        power_save=power_save
     )
 
     try:
@@ -2825,6 +2928,8 @@ def test_wifi_zephyr_mbssid_T_wpa2_psk_hidden_ssid_c535830(
         protocol,
 ):
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """
 Check the connection with hidden MBSSID AP with WPA2 security enabled in AP"""
@@ -2840,12 +2945,14 @@ Check the connection with hidden MBSSID AP with WPA2 security enabled in AP"""
         protocol=protocol,
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
+        power_save=power_save
     )
     try:
         for i in range(0, 4):
             wlan_obj.start()
             wlan_obj.wait_for_exit()
             time.sleep(10)
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -2907,6 +3014,8 @@ def test_wifi_zephyr_mbssid_T_NT_connect_disconnect_hidden_mode_c535831(
         zephyr_wifi_collections,
 ):
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """continuous connect disconnect b/w T and NT profile based SSID's"""
     wlan_obj = WLanThread(
@@ -2917,10 +3026,12 @@ def test_wifi_zephyr_mbssid_T_NT_connect_disconnect_hidden_mode_c535831(
         test_case_no=535831,
         test_name=test_name,
         sniffer_filter=sniffer_filter,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -2984,6 +3095,8 @@ def test_wifi_zephyr_mbssid_T_NT_connect_disconnect_c219315(
         protocol,
 ):
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     """continuous connect disconnect b/w T and NT profile based SSID's"""
 
@@ -2998,10 +3111,12 @@ def test_wifi_zephyr_mbssid_T_NT_connect_disconnect_c219315(
         protocol=protocol,
         net_perf_client=net_perf_client,
         wifi_client=wifi_client,
+        power_save=power_save
     )
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
+
 
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

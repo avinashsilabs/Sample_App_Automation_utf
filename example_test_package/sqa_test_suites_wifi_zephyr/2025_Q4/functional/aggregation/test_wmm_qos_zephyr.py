@@ -6,6 +6,7 @@ from utf.utils.logger import get_logger
 from utf.utils.iperf.iperf_utils import ping, ping_qos
 from utf.utils.thread_base import ThreadBase
 from threading import Thread
+from utf.utf_config import UtfConfig
 
 """This function runs below test steps :
         1. Configuration of DUT in 2G
@@ -48,7 +49,7 @@ def __print_throughput(iperf_throughput: dict):
 
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, net_perf_client=None, wifi_client=None,
-                 protocol=None, capture_filename=None, zephyr_wifi_collections=None):
+                 protocol=None, capture_filename=None, zephyr_wifi_collections=None, power_save=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -59,6 +60,7 @@ class WifiJoin(ThreadBase):
         self.capture_filename = capture_filename
         self.zephyr_wifi_collections = zephyr_wifi_collections
         self.dut_addr = None
+        self.power_save = power_save
 
     def run(self):
         try:
@@ -68,7 +70,8 @@ class WifiJoin(ThreadBase):
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
 
             self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
-                                                                              associated=self.wifi_dut.interfaces.wifi.associated)
+                                                                              associated=self.wifi_dut.interfaces.wifi.associated, retry_count=3, power_save=self.power_save,
+                                                                              ping_after_power_save=True)
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
 
@@ -96,12 +99,15 @@ def test_wifi_zephyr_tcp_data_tx_with_BE_BK_VI_VO_c19752(wifi_sniffer, net_perf_
        configured TOS value."""
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=wifi_obj.dut_addr['device_ip'],
@@ -133,6 +139,9 @@ def test_wifi_zephyr_tcp_data_tx_with_BE_BK_VI_VO_c19752(wifi_sniffer, net_perf_
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
         assert snif_pkt_count, "qos categories packets are not captured in the sniffer"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -160,12 +169,15 @@ def test_wifi_zephyr_udp_data_tx_with_BE_BK_VI_VO_c19753(wifi_sniffer, net_perf_
     """Verifying UDP data Tx with VO, VI, BE, BK traffic type and analyzing all sniffer capture packets."""
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         net_perf_client.interfaces.net_perf.init_server(host_ip=host_ip, device_ip=wifi_obj.dut_addr['device_ip'],
@@ -197,6 +209,9 @@ def test_wifi_zephyr_udp_data_tx_with_BE_BK_VI_VO_c19753(wifi_sniffer, net_perf_
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
             'packet_count']
         assert snif_pkt_count, "qos categories packets are not captured in the sniffer"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -218,11 +233,14 @@ def test_wifi_zephyr_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sn
     """Verifying Ping from AP to module IP with all the four traffics"""
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     traffic_category_list = ['0x00', '0x20', '0x80', '0xC8']
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client, capture_filename=capture_filename,
-                            zephyr_wifi_collections=zephyr_wifi_collections)
+                            zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         for qos_category in traffic_category_list:
@@ -259,6 +277,9 @@ def test_wifi_zephyr_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sn
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter6)[
             'packet_count']
         assert snif_pkt_count, "qos_voice packets are not captured in the sniffer"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -287,12 +308,15 @@ def test_wifi_zephyr_udp_data_rx_with_BE_BK_VI_VO_c22116(wifi_sniffer, net_perf_
        configured TOS value."""
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         logger().info(f"********** Calling IPERF RX UDP traffic DUT configured as Server **************")
@@ -321,6 +345,9 @@ def test_wifi_zephyr_udp_data_rx_with_BE_BK_VI_VO_c22116(wifi_sniffer, net_perf_
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter6)[
             'packet_count']
         assert snif_pkt_count, "qos_categories packets are not captured in the sniffer"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -348,12 +375,15 @@ def test_wifi_zephyr_tcp_data_rx_with_BE_BK_VI_VO_c22115(wifi_sniffer, net_perf_
     """Verifying TCP data Rx with VO, VI, BE, BK traffic type and analyzing all sniffer capture packets."""
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         net_perf_client.interfaces.net_perf.init_client(host_ip=host_ip, device_ip=wifi_obj.dut_addr['device_ip'],
@@ -389,6 +419,9 @@ def test_wifi_zephyr_tcp_data_rx_with_BE_BK_VI_VO_c22115(wifi_sniffer, net_perf_
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter7)[
             'packet_count']
         assert snif_pkt_count, "qos_categories packets are not captured in the sniffer"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

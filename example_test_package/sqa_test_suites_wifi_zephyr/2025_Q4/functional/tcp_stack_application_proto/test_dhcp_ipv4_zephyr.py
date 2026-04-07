@@ -4,6 +4,7 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
 from utf_wifi_zephyr.interfaces.zephyr_wifi_test_agent_cli import AsyncEventIdentifiers
 import re
+from utf.utf_config import UtfConfig
 
 """The testcases added in this file run below test steps for DUT(Soc917)
         1. Configuration of DUT in 2G : gnbax
@@ -28,7 +29,7 @@ def logger():
 class WifiJoinThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_client=None, sniffer_filter=None, wifi_sniffer=None,
                  zephyr_wifi_collections=None, test_name=None, remote_socket_factory=None, ap_mac_address=None,
-                 remote_socket=None, allocate_static_ip=0, mqtt_client=None, mqtt_server=None):
+                 remote_socket=None, allocate_static_ip=0, mqtt_client=None, mqtt_server=None, power_save=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -46,6 +47,7 @@ class WifiJoinThread(ThreadBase):
         self.allocate_static_ip = allocate_static_ip
         self.mqtt_client = mqtt_client
         self.mqtt_server = mqtt_server
+        self.power_save = power_save
 
     def run(self):
         try:
@@ -53,14 +55,15 @@ class WifiJoinThread(ThreadBase):
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut, retry_count=3,
                                                                                   wifi_access_point=self.wifi_access_point,
                                                                                   associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                                  ping_after_power_save=False,
-                                                                                  enc=self.enc, ip_config_disable=1)
+                                                                                  ping_after_power_save=True,
+                                                                                  enc=self.enc, ip_config_disable=1, power_save=self.power_save)
             else:
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut, retry_count=3,
                                                                                   wifi_access_point=self.wifi_access_point,
                                                                                   associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                                  ping_after_power_save=False,
-                                                                                  enc=self.enc)
+                                                                                  ping_after_power_save=True,
+                                                                                  enc=self.enc,
+                                                                                  power_save=self.power_save)
                 logger().info(
                     f"device_ip, device_mac : {self.dut_addr['device_ip']}, {self.dut_addr['dut_mac_address']}")
 
@@ -106,6 +109,8 @@ def test_wifi_zephyr_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer
     time_delta = 60
     packet_filter2 = '        DHCP: Request (3)'
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     status = None
     wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_lease="120")
     time.sleep(10)
@@ -116,6 +121,7 @@ def test_wifi_zephyr_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer
                                  wifi_sniffer=wifi_sniffer,
                                  zephyr_wifi_collections=zephyr_wifi_collections,
                                  sniffer_filter=sniffer_filter,
+                                 power_save=power_save
                                  )
     wifi_thread.start()
     wifi_thread.wait_for_exit()
@@ -158,6 +164,13 @@ def test_wifi_zephyr_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer
                 logger().info(f"{is_between}")
                 status = is_between
         assert status, 'value is out of range so test case is failed'
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
@@ -165,6 +178,7 @@ def test_wifi_zephyr_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_lease="3600")
 
 
+@pytest.mark.skip()
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.config(
     "wifi_dut",

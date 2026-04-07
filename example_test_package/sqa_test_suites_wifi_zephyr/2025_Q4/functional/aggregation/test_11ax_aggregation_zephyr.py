@@ -7,6 +7,7 @@ from utf.utils.iperf.iperf_utils import ping, ping_qos
 from utf.utils.thread_base import ThreadBase
 import re
 from threading import Thread
+from utf.utf_config import UtfConfig
 
 """This function runs below test steps for DUT-Si91x
         1. Configuration of DUT in 2G : gnbax
@@ -41,7 +42,7 @@ class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, net_perf_client=None, wifi_client=None,
                  protocol=None, capture_filename=None, zephyr_wifi_collections=None, filter_name=None,
                  test_case_no=None,
-                 sniffer_filter=None, traffic=None, qos=None):
+                 sniffer_filter=None, traffic=None, qos=None, power_save=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -60,6 +61,7 @@ class WifiJoin(ThreadBase):
         self.qos = qos
         self.dut_addr = None
         self.iperf_throughput = None
+        self.power_save = power_save
 
     def print_throughput(self):
         if self.iperf_throughput is not None:
@@ -74,7 +76,8 @@ class WifiJoin(ThreadBase):
 
             self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
                                                                               associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                              retry_count=3)
+                                                                              retry_count=3, power_save=self.power_save,
+                                                                              ping_after_power_save=True)
             self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
             logger().info(f"******** AP MAC ADDRESS is {self.ap_mac_address} *******")
             self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -152,6 +155,9 @@ class WifiJoin(ThreadBase):
         snif_pkt_count = self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter4)[
             'packet_count']
         assert snif_pkt_count, "Unable to HE information in the radio tap header"
+        self.zephyr_wifi_collections.join_sniffer_validation(self.wifi_access_point, self.wifi_sniffer,
+                                                             self.dut_addr['dut_mac_address'], self.ap_mac_address,
+                                                             self.sniffer_filter, power_save=self.power_save)
 
     def sequence_number_tid_validation(self):
         filter_file = open(f'./reports/filter2_file.txt', 'r')
@@ -210,12 +216,15 @@ def test_wifi_zephyr_tcp_data_tx_with_VO_c148311(wifi_sniffer, net_perf_client, 
     the TCP socket selected is AC-VO, when Aggregation feature is enabled in the DUT """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             filter_name=filter_name,
-                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, test_case_no=148311)
+                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, power_save=power_save,
+                            test_case_no=148311)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -245,12 +254,15 @@ def test_wifi_zephyr_tcp_data_tx_with_VI_c148313(wifi_sniffer, net_perf_client, 
     the TCP socket selected is AC-VI, when Aggregation feature is enabled in the DUT """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             test_case_no=148313,
-                            filter_name=filter_name, sniffer_filter=sniffer_filter, qos=qos, traffic=traffic)
+                            filter_name=filter_name, sniffer_filter=sniffer_filter, qos=qos, traffic=traffic,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -280,12 +292,15 @@ def test_wifi_zephyr_tcp_data_tx_with_BK_c148314(wifi_sniffer, net_perf_client, 
     the TCP socket selected is AC-BK, when Aggregation feature is enabled in the DUT. """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             test_case_no=148314,
-                            sniffer_filter=sniffer_filter, filter_name=filter_name, qos=qos, traffic=traffic)
+                            sniffer_filter=sniffer_filter, filter_name=filter_name, qos=qos, traffic=traffic,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -315,12 +330,15 @@ def test_wifi_zephyr_tcp_data_tx_with_BE_c148315(wifi_sniffer, net_perf_client, 
     the TCP socket selected is AC-BE, when Aggregation feature is enabled in the DUT. """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             test_case_no=148315,
-                            sniffer_filter=sniffer_filter, filter_name=filter_name, qos=qos, traffic=traffic)
+                            sniffer_filter=sniffer_filter, filter_name=filter_name, qos=qos, traffic=traffic,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -340,16 +358,18 @@ def test_wifi_zephyr_tcp_data_tx_with_BE_c148315(wifi_sniffer, net_perf_client, 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
 def test_wifi_zephyr_send_SMPDU_c148312(wifi_sniffer, wifi_access_point, wifi_dut, request, wifi_client,
-                                                     zephyr_wifi_collections, sniffer_filter):
+                                        zephyr_wifi_collections, sniffer_filter):
     """ Verify whether DUT is able to send SMPDU when we do only single packet from remote PC """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         ping_count = 20
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client, capture_filename=capture_filename,
                             zephyr_wifi_collections=zephyr_wifi_collections,
-                            test_case_no=148312, sniffer_filter=sniffer_filter)
+                            test_case_no=148312, sniffer_filter=sniffer_filter, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -380,6 +400,11 @@ def test_wifi_zephyr_send_SMPDU_c148312(wifi_sniffer, wifi_access_point, wifi_du
             'packet_count']
         assert snif_pkt_count, "Unable to find AP is sending the Ack for each ping reply from DUT"
 
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], wifi_obj.ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
+
+
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -404,12 +429,15 @@ def test_wifi_zephyr_udp_data_tx_with_VO_c148316(wifi_sniffer, net_perf_client, 
     the UDP socket selected is AC-VO, when Aggregation feature is enabled in the DUT """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             filter_name=filter_name,
-                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, test_case_no=148316)
+                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, test_case_no=148316,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -439,12 +467,15 @@ def test_wifi_zephyr_udp_data_tx_with_VI_c148317(wifi_sniffer, net_perf_client, 
     the UDP socket selected is AC-VI, when Aggregation feature is enabled in the DUT """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             filter_name=filter_name,
-                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, test_case_no=148317)
+                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, test_case_no=148317,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -473,12 +504,15 @@ def test_wifi_zephyr_udp_data_tx_with_BE_c148318(wifi_sniffer, net_perf_client, 
     the UDP socket selected is AC-BE, when Aggregation feature is enabled in the DUT """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             filter_name=filter_name,
-                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, test_case_no=148318)
+                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, test_case_no=148318,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -507,12 +541,15 @@ def test_wifi_zephyr_udp_data_tx_with_BK_c148319(wifi_sniffer, net_perf_client, 
     the UDP socket selected is AC-BK, when Aggregation feature is enabled in the DUT """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             filter_name=filter_name,
-                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, test_case_no=148319)
+                            sniffer_filter=sniffer_filter, traffic=traffic, qos=qos, test_case_no=148319,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -540,12 +577,14 @@ def test_wifi_zephyr_udp_rx_check_block_ack_for_aggregated_frame_c148320(wifi_sn
     """ Verify whether DUT is able to send Block ACK properly to all the aggregated frames received from AP with UDP """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
 
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
-                            sniffer_filter=sniffer_filter, test_case_no=148320)
+                            sniffer_filter=sniffer_filter, test_case_no=148320, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         net_perf_client.interfaces.net_perf.init_client(host_ip=wifi_obj.host_ip,
@@ -592,6 +631,10 @@ def test_wifi_zephyr_udp_rx_check_block_ack_for_aggregated_frame_c148320(wifi_sn
             'packet_count']
         assert snif_pkt_count, "Unable to HE information in the radio tap header"
 
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], wifi_obj.ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
+
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -613,13 +656,15 @@ def test_wifi_zephyr_dut_sending_mpdu_same_qos_cateqory_c148323(wifi_sniffer, wi
     capture_filename = request.node.name
     traffic = ['0x80', '0xc8']
     filter_list = [4, 6]
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     try:
         packet_filter4 = '    Type/Subtype: QoS Data (0x0028)'
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client, capture_filename=capture_filename,
                             zephyr_wifi_collections=zephyr_wifi_collections,
-                            test_case_no=148323, sniffer_filter=sniffer_filter)
+                            test_case_no=148323, sniffer_filter=sniffer_filter, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -660,6 +705,9 @@ def test_wifi_zephyr_dut_sending_mpdu_same_qos_cateqory_c148323(wifi_sniffer, wi
         snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)[
             'packet_count']
         assert snif_pkt_count, "Unable to find Block ACK packets"
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], wifi_obj.ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -681,12 +729,14 @@ def test_wifi_zephyr_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, 
     capture_filename = request.node.name
     traffic_category_list = ['0xC8', '0x80']
     filter_list = [6, 4]
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         packet_filter4 = '    Type/Subtype: QoS Data (0x0028)'
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client, capture_filename=capture_filename,
                             zephyr_wifi_collections=zephyr_wifi_collections,
-                            test_case_no=148326, sniffer_filter=sniffer_filter)
+                            test_case_no=148326, sniffer_filter=sniffer_filter, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -728,6 +778,10 @@ def test_wifi_zephyr_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, 
 
             """This below method is used to validate TID and sequence numbers from DUT Tx Packet"""
             wifi_obj.sequence_number_tid_validation()
+            zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                            wifi_obj.dut_addr['dut_mac_address'],
+                                                            wifi_obj.ap_mac_address,
+                                                            sniffer_filter, power_save=power_save)
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -751,13 +805,15 @@ def test_wifi_zephyr_dut_send_mpdu_with_same_receiver_addr_c148322(
     """ To verify whether DUT is sending individual MPDU within an A-MPDU are having the same receiver address """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         packet_filter4 = '    Type/Subtype: QoS Data (0x0028)'
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             test_case_no=148322,
-                            sniffer_filter=sniffer_filter, qos=qos, traffic=traffic)
+                            sniffer_filter=sniffer_filter, qos=qos, traffic=traffic, power_save=power_save)
 
         wifi_obj.start()
         wifi_obj.wait_for_exit()
@@ -791,6 +847,9 @@ def test_wifi_zephyr_dut_send_mpdu_with_same_receiver_addr_c148322(
 
         """This below method is used to validate Receiver Address and Sequence Numbers and TID from DUT Tx Packet"""
         wifi_obj.receiver_address_sequence_number_validation()
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], wifi_obj.ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -815,6 +874,8 @@ def test_wifi_zephyr_dut_receive_block_ack_after_ampdu_frames_c148324(
         zephyr_wifi_collections,
         sniffer_filter, traffic, qos):
     """ To check whether DUT is able to receive Block ACK properly after sending AMPDU frames """
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     capture_filename = request.node.name
     try:
@@ -823,7 +884,7 @@ def test_wifi_zephyr_dut_receive_block_ack_after_ampdu_frames_c148324(
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             test_case_no=148324,
-                            sniffer_filter=sniffer_filter, qos=qos, traffic=traffic)
+                            sniffer_filter=sniffer_filter, qos=qos, traffic=traffic, power_save=power_save)
 
         wifi_obj.start()
         wifi_obj.wait_for_exit()
@@ -857,6 +918,9 @@ def test_wifi_zephyr_dut_receive_block_ack_after_ampdu_frames_c148324(
 
         """This below method is used to validate TID and sequence numbers from DUT Tx Packet"""
         wifi_obj.sequence_number_tid_validation()
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], wifi_obj.ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -883,13 +947,15 @@ def test_wifi_zephyr_dut_duration_id_carrying_same_value_c148325(
     value or not """
 
     capture_filename = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     try:
         packet_filter4 = '    Type/Subtype: QoS Data (0x0028)'
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
                             capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
                             test_case_no=148325,
-                            sniffer_filter=sniffer_filter, qos=qos, traffic=traffic)
+                            sniffer_filter=sniffer_filter, qos=qos, traffic=traffic, power_save=power_save)
 
         wifi_obj.start()
         wifi_obj.wait_for_exit()
@@ -923,6 +989,9 @@ def test_wifi_zephyr_dut_duration_id_carrying_same_value_c148325(
 
         """This below method is used to validate duration ID and sequence numbers from DUT Tx Packet"""
         wifi_obj.duration_id_sequence_number_validation()
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wifi_obj.dut_addr['dut_mac_address'], wifi_obj.ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

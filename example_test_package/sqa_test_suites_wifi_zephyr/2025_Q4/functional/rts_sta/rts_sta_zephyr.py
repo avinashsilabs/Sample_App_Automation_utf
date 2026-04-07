@@ -4,6 +4,7 @@ from datetime import datetime
 from utf.interfaces.shell.ssh_shell import SSHShell
 from utf.utils.logger import get_logger
 from utf_wifi_zephyr.utils.sl_status import SLStatus
+from utf.utf_config import UtfConfig
 
 """
     setup requirement:
@@ -85,20 +86,22 @@ def rts_cts_data_sequence_check(wifi_sniffer, dut_mac, ap_bssid, rts_threshold, 
     }
 )
 def test_zephyr_verify_rts_threshold_256_c19511(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
-                                                request):
+                                                request, sniffer_filter):
     """
     Verify whether DUT is not sending any RTS packet for every data packet if we configure RTS Threshold as '256'
     """
     try:
         capture_filename = request.node.name
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"Configuring the sniffer with access point channel {wifi_access_point.interfaces.wifi.channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
         time.sleep(3)
 
-        result = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
+        result = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True,
                                                               ping_count=10,
-                                                              associated=False, retry_count=3)
+                                                              associated=False, retry_count=3, ping_after_power_save=True)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
         set_rts_threshold_value = wifi_dut.interfaces.wifi.wifi_rts_threshold(threshold_value=256)
@@ -119,6 +122,12 @@ def test_zephyr_verify_rts_threshold_256_c19511(wifi_dut, wifi_access_point, wif
         status = rts_cts_data_sequence_check(wifi_sniffer, dut_mac_address, ap_bssid, rts_threshold=256,
                                              test_case="test_C19511")
         assert status, "Unable to find sequence RTS--->CTS--->DATA packets with data length more than rts_threshold value"
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_bssid,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as err:
         zephyr_wifi_collections.exception_handling(wifi_dut, err)
 
@@ -134,20 +143,22 @@ def test_zephyr_verify_rts_threshold_256_c19511(wifi_dut, wifi_access_point, wif
     }
 )
 def test_zephyr_verify_rts_threshold_0_c19512(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
-                                              request):
+                                              request, sniffer_filter):
     """
     Verify whether DUT is sending RTS packets for every data packet if we configure RTS Threshold as '0'
     """
     try:
         capture_filename = request.node.name
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"Configuring the sniffer with access point channel {wifi_access_point.interfaces.wifi.channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
         time.sleep(3)
 
-        result = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
+        result = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True,
                                                               ping_count=10,
-                                                              associated=False, retry_count=3)
+                                                              associated=False, retry_count=3, ping_after_power_save=True)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
         set_rts_threshold_value = wifi_dut.interfaces.wifi.wifi_rts_threshold(threshold_value=0)
@@ -169,6 +180,12 @@ def test_zephyr_verify_rts_threshold_0_c19512(wifi_dut, wifi_access_point, wifi_
         status = rts_cts_data_sequence_check(wifi_sniffer, dut_mac_address, ap_bssid, rts_threshold=0,
                                              test_case="test_C19512")
         assert status, "Unable to find sequence RTS--->CTS--->DATA packets with data length more than rts_threshold value"
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_bssid,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as err:
         zephyr_wifi_collections.exception_handling(wifi_dut, err)
 
@@ -184,20 +201,22 @@ def test_zephyr_verify_rts_threshold_0_c19512(wifi_dut, wifi_access_point, wifi_
     }
 )
 def test_zephyr_verify_rts_threshold_2347_c19513(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
-                                                 request):
+                                                 request, sniffer_filter):
     """
     Verify whether DUT is not sending any RTS packet for every data packet if we configure RTS Threshold as '2347'
     """
     try:
         capture_filename = request.node.name
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"Configuring the sniffer with access point channel {wifi_access_point.interfaces.wifi.channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
         time.sleep(3)
 
-        result = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
+        result = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=True,
                                                               ping_count=10,
-                                                              associated=False, retry_count=3)
+                                                              associated=False, retry_count=3, ping_after_power_save=True)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
         set_rts_threshold_value = wifi_dut.interfaces.wifi.wifi_rts_threshold(threshold_value=2347)
@@ -220,6 +239,12 @@ def test_zephyr_verify_rts_threshold_2347_c19513(wifi_dut, wifi_access_point, wi
                                              test_case="test_c19513")
         assert not status, "Found sequence RTS--->CTS--->DATA packets with data length more than rts_threshold value which is not expected"
         logger().info("DUT did not send RTS packets which is expected as per the testcase")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_bssid,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as err:
         zephyr_wifi_collections.exception_handling(wifi_dut, err)
 
@@ -240,6 +265,8 @@ def test_zephyr_invalid_rts_c537946(wifi_dut, wifi_access_point, wifi_sniffer, z
     """
     try:
         capture_filename = request.node.name
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"Configuring the sniffer with access point channel {wifi_access_point.interfaces.wifi.channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)

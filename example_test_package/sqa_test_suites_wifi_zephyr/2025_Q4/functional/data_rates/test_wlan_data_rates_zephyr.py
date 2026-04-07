@@ -7,6 +7,7 @@ from utf.utils.logger import get_logger
 
 from utf.utils.stopwatch import Stopwatch
 from utf_wifi_zephyr.interfaces.zephyr_wifi_test_agent_cli import SLWifiCLI
+from utf.utf_config import UtfConfig
 
 
 def logger():
@@ -95,7 +96,8 @@ class SocketDataTransfer:
 
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None, time_period=None
-                 , ping_count=None, data_transfer=True, test_name=None, zephyr_wifi_collections=None, data_rates=None):
+                 , ping_count=None, data_transfer=True, test_name=None, zephyr_wifi_collections=None, data_rates=None,
+                 power_save=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -109,6 +111,7 @@ class WLanThread(ThreadBase):
         self.zephyr_wifi_collections = zephyr_wifi_collections
         self.test_name = test_name
         self.data_rates = data_rates
+        self.power_save = power_save
         self.socket_obj = SocketDataTransfer(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point,
                                              time_period=self.time_period, data=self.data)
 
@@ -119,8 +122,10 @@ class WLanThread(ThreadBase):
             self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
             self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                               wifi_access_point=self.wifi_access_point,
-                                                                              associated=self.wifi_dut.interfaces.wifi.associated
-                                                                              , ping_after_power_save=False)
+                                                                              associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                              retry_count=3, power_save=self.power_save,
+                                                                              ping_after_power_save=True
+                                                                              )
             logger().info("DUT successfully connected with AP")
             time.sleep(10)
             if self.data_transfer:
@@ -151,11 +156,13 @@ def test_wifi_zephyr_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wif
 
     '''Data rates used for Management packets, Verify for following management packets,Assoc req,Assoc resp.Reassoc 
     req,Re assoc resp,Probe req,Prob res'''
-
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, ping_count=ping_count, test_name=test_name,
-                          zephyr_wifi_collections=zephyr_wifi_collections, data_transfer=False)
+                          zephyr_wifi_collections=zephyr_wifi_collections, data_transfer=False, power_save=power_save)
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
@@ -173,6 +180,9 @@ def test_wifi_zephyr_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wif
         time.sleep(2)
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Probe Request & Authentication Req & Association Req & EAPOL(2&4) and Deauth mgmt packets'
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wlan_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -197,11 +207,14 @@ def test_wifi_zephyr_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_po
        Ps-PollRTSCTSACK'''
     ap_mac_address = wifi_access_point.interfaces.wifi.bssid
     logger().info(f'AP BSSID = {ap_mac_address}')
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, ping_count=ping_count, test_name=test_name,
-                          zephyr_wifi_collections=zephyr_wifi_collections, data_transfer=False)
+                          zephyr_wifi_collections=zephyr_wifi_collections, data_transfer=False, power_save=power_save)
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
@@ -232,6 +245,9 @@ def test_wifi_zephyr_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_po
                 f"Block Ack req/RTS = {result1}, Block Ack res/CTS = {result2}")
             logger().info("Sniffer validation Passed")
             assert True
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wlan_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -252,12 +268,15 @@ def test_wifi_zephyr_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     '''Data rates used for Data packets, Verify for following Data packets,Data.Null Data and Qos Null data.Qos Data'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, ping_count=ping_count, test_name=test_name,
-                          zephyr_wifi_collections=zephyr_wifi_collections, data_transfer=False)
+                          zephyr_wifi_collections=zephyr_wifi_collections, data_transfer=False, power_save=power_save)
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
@@ -272,6 +291,9 @@ def test_wifi_zephyr_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access
         logger().info("Stop Sniffer finally")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find Data/Null/Qos packets data rates'
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wlan_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -291,12 +313,16 @@ def test_wifi_zephyr_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wi
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     '''Data rates used for EAPOL key exchanges and GTK key renewal exchanges with auto rate'''
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, ping_count=ping_count, test_name=test_name,
-                          test_case_no=19628, zephyr_wifi_collections=zephyr_wifi_collections, data_transfer=False)
+                          test_case_no=19628, zephyr_wifi_collections=zephyr_wifi_collections, data_transfer=False,
+                          power_save=power_save)
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
@@ -309,6 +335,9 @@ def test_wifi_zephyr_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wi
         logger().info("Stop Sniffer finally")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find packets for EAPOL packets for 1 Mbps data rates'
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wlan_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -328,6 +357,8 @@ def test_wifi_zephyr_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wi
     ping_count = utf_constants.get("ping_count")
     time_period = utf_constants.get("time_period")
     test_name = request.node.name
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     '''Verify data rates in Assoc Req, is same as data rates present in probe Resp of connected AP or not'''
     ap_bssid = wifi_access_point.interfaces.wifi.bssid
@@ -335,8 +366,10 @@ def test_wifi_zephyr_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wi
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           time_period=time_period, ping_count=ping_count, test_name=test_name,
-                          zephyr_wifi_collections=zephyr_wifi_collections, test_case_no=19634, data_transfer=False)
+                          zephyr_wifi_collections=zephyr_wifi_collections, test_case_no=19634, data_transfer=False,
+                          power_save=power_save)
     try:
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         wlan_obj.start()
         wlan_obj.wait_for_exit()
 
@@ -374,5 +407,8 @@ def test_wifi_zephyr_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wi
                 f"Assoc req = {result1['packet_count']}, Probe res = {result2['packet_count']}, Probe req = {result3['packet_count']}")
             logger().info("Sniffer validation Passed")
             assert True
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wlan_obj.dut_addr['dut_mac_address'], ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

@@ -1,6 +1,7 @@
 import pytest
 import time
 from utf.utils.logger import get_logger
+from utf.utf_config import UtfConfig
 
 """
     setup requirement:
@@ -37,12 +38,14 @@ def logger():
 @pytest.mark.config('wifi_access_point', wifi={"region": "Korea", "channel": 12})
 def test_zephyr_verify_connection_in_korea_region_c19511(wifi_dut, wifi_access_point, wifi_sniffer,
                                                          zephyr_wifi_collections,
-                                                         request):
+                                                         request, sniffer_filter):
     """
     Verify whether DUT is able to connect in channel 12 in korea region
     """
     try:
         capture_filename = request.node.name
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"Configuring the sniffer with access point channel {wifi_access_point.interfaces.wifi.channel}")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
@@ -52,10 +55,10 @@ def test_zephyr_verify_connection_in_korea_region_c19511(wifi_dut, wifi_access_p
         region_code = wifi_dut.interfaces.wifi.wifi_get_reg_domain()
 
         assert set_region_code == region_code, "region code set, and the region code received using wifi_get_reg_domain is not same"
-
-        result = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
+        result = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=power_save,
                                                               ping_count=10,
-                                                              associated=False, retry_count=3)
+                                                              associated=False, retry_count=3,
+                                                              ping_after_power_save=True)
         device_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
 
         logger().info(f'DUT ip {device_ip}')
@@ -66,6 +69,13 @@ def test_zephyr_verify_connection_in_korea_region_c19511(wifi_dut, wifi_access_p
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
 
     except Exception as err:
         zephyr_wifi_collections.exception_handling(wifi_dut, err)
@@ -110,7 +120,3 @@ def test_zephyr_verify_connection_in_us_region_when_aus_selected_in_ap_c19511(wi
 
     except Exception as err:
         zephyr_wifi_collections.exception_handling(wifi_dut, err)
-
-
-
-

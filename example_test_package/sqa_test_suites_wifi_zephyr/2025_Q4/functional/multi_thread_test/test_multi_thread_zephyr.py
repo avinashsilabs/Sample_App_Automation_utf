@@ -9,6 +9,7 @@ import string
 from utf.utils.stopwatch import Stopwatch
 from utf_wifi_zephyr.devices.si91x import Si91xBSDSocketParams, ZephyrHttpMethods
 from base64 import b64decode
+from utf.utf_config import UtfConfig
 
 """This function runs below test steps for DUT-Si91x
         1. Configuration of DUT in 2G : gnbax
@@ -39,7 +40,7 @@ def __print_throughput(iperf_throughput: dict):
 
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, net_perf_client=None, wifi_client=None,
-                 protocol=None, capture_filename=None, zephyr_wifi_collections=None):
+                 protocol=None, capture_filename=None, zephyr_wifi_collections=None, power_save=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -50,6 +51,7 @@ class WifiJoin(ThreadBase):
         self.capture_filename = capture_filename
         self.zephyr_wifi_collections = zephyr_wifi_collections
         self.dut_addr = None
+        self.power_save = power_save
 
     def run(self):
         try:
@@ -62,7 +64,9 @@ class WifiJoin(ThreadBase):
             #                                                               beacon_missed_count=40,
             #                                                               first_time_retry_enable=0)
             self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
-                                                                              associated=self.wifi_dut.interfaces.wifi.associated)
+                                                                              associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                              ping_after_power_save=True,
+                                                                              power_save=self.power_save)
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
 
@@ -420,15 +424,20 @@ def test_wifi_zephyr_tcp_tx_udp_tx_c19033(wifi_dut, wifi_access_point,
 
     capture_filename = request.node.name
     try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
         device_ip = wifi_obj.dut_addr['device_ip']
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"DUT MAC ADDRESS: {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
 
         ipv4_obj = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                sl_collections=zephyr_wifi_collections,
@@ -457,6 +466,12 @@ def test_wifi_zephyr_tcp_tx_udp_tx_c19033(wifi_dut, wifi_access_point,
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
 
 
     except Exception as Ex:
@@ -482,15 +497,20 @@ def test_wifi_zephyr_tcp_tx_tcp_rx_c19033(wifi_dut, wifi_access_point,
 
     capture_filename = request.node.name
     try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
         device_ip = wifi_obj.dut_addr['device_ip']
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"DUT MAC ADDRESS: {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
 
         socket1_thread = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=zephyr_wifi_collections,
@@ -519,6 +539,12 @@ def test_wifi_zephyr_tcp_tx_tcp_rx_c19033(wifi_dut, wifi_access_point,
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -542,15 +568,20 @@ def test_wifi_zephyr_udp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
 
     capture_filename = request.node.name
     try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
         device_ip = wifi_obj.dut_addr['device_ip']
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"DUT MAC ADDRESS: {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
 
         socket1_thread = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=zephyr_wifi_collections,
@@ -579,6 +610,12 @@ def test_wifi_zephyr_udp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -602,15 +639,20 @@ def test_wifi_zephyr_tcp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
 
     capture_filename = request.node.name
     try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
         device_ip = wifi_obj.dut_addr['device_ip']
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"DUT MAC ADDRESS: {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
 
         socket1_thread = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=zephyr_wifi_collections,
@@ -639,6 +681,12 @@ def test_wifi_zephyr_tcp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -662,15 +710,20 @@ def test_wifi_zephyr_tcp_rx_udp_rx_c19033(wifi_dut, wifi_access_point,
 
     capture_filename = request.node.name
     try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
         device_ip = wifi_obj.dut_addr['device_ip']
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"DUT MAC ADDRESS: {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
 
         socket1_thread = IperfThraed(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                      sl_collections=zephyr_wifi_collections,
@@ -699,6 +752,12 @@ def test_wifi_zephyr_tcp_rx_udp_rx_c19033(wifi_dut, wifi_access_point,
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -721,15 +780,20 @@ def test_wifi_zephyr_icmp_tx_icmp_rx_c19033(wifi_dut, wifi_access_point,
 
     capture_filename = request.node.name
     try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
         device_ip = wifi_obj.dut_addr['device_ip']
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"DUT MAC ADDRESS: {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
 
         target_ip = host_ip
         packet_count = 1000
@@ -749,6 +813,12 @@ def test_wifi_zephyr_icmp_tx_icmp_rx_c19033(wifi_dut, wifi_access_point,
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -772,13 +842,18 @@ def test_wifi_zephyr_sntp_mqtt_operations_in_multiple_threads_c19033(wifi_dut, w
 
     capture_filename = request.node.name
     try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"DUT MAC ADDRESS: {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         query_count = 300
         sntp_thread = SNTPTHREAD(wifi_dut, query_count)
         mqtt_thread = MQTTTHREAD(wifi_dut, mqtt_client, mqtt_server, iteration_count=20)
@@ -792,6 +867,12 @@ def test_wifi_zephyr_sntp_mqtt_operations_in_multiple_threads_c19033(wifi_dut, w
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -815,13 +896,18 @@ def test_wifi_zephyr_dns_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wi
 
     capture_filename = request.node.name
     try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"DUT MAC ADDRESS: {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         query_count = 300
         dns_thread = DNSTHREAD(wifi_dut, query_count)
         mqtt_thread = MQTTTHREAD(wifi_dut, mqtt_client, mqtt_server, iteration_count=20)
@@ -835,6 +921,12 @@ def test_wifi_zephyr_dns_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wi
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
@@ -860,14 +952,19 @@ def test_wifi_zephyr_http_client_icmp_in_multiple_threads_c19033(wifi_dut, wifi_
 
     capture_filename = request.node.name
     try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
         logger().info(f"***** Start get IP address ******")
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
         device_ip = wifi_obj.dut_addr['device_ip']
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"DUT MAC ADDRESS: {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         iteration_count = 20
 
         target_ip = host_ip
@@ -889,5 +986,11 @@ def test_wifi_zephyr_http_client_icmp_in_multiple_threads_c19033(wifi_dut, wifi_
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

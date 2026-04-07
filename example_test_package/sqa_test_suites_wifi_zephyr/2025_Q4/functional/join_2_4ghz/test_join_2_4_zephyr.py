@@ -7,6 +7,9 @@ from utf.utils.thread_base import ThreadBase
 from utf.utils.time_measurer import TimeMeasurer
 from utf.utf_config import UtfConfig
 from utf_wifi_zephyr.utils.sl_status import SLStatus
+from utf_wifi_zephyr.devices.si91x import (
+    ZephyrWifiMfpOptions
+)
 
 
 def logger():
@@ -371,6 +374,10 @@ def test_wifi_zephyr_verify_connectivity_with_correct_psk_after_wrong_psk_c69455
 
         logger().info("Stopping sniffer...")
         wifi_sniffer.interfaces.capture.stop_capture()
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        wlan_obj.dut_addr['dut_mac_address'],
+                                                        ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
 
     except Exception as Ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
@@ -441,7 +448,7 @@ def test_wifi_zephyr_connectivity_neg_psk_7_bytes_or_64_bytes_c79234(wifi_dut, w
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
                                                     request,
-                                                    utf_constants):
+                                                    utf_constants, sniffer_filter):
     """ Test case verifies the device is able to get the wireless statistics in station mode"""
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -453,9 +460,11 @@ def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point,
         test_case = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
-        zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point,
-                                                     ping_after_power_save=True,
-                                                     retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
+        dut_addr = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point,
+                                                                ping_after_power_save=True,
+                                                                retry_count=3,
+                                                                associated=wifi_dut.interfaces.wifi.associated,
+                                                                power_save=power_save)
 
         state, ssid, bssid, band, channel, iface_mode, link_mode, wpa3_ent_type, security, mfp, rssi, dtim_period, beacon_interval, twt_capable, current_phy_tx_rate = wifi_dut.interfaces.wifi.get_wifi_operational_stats(
             timeout=15)
@@ -473,6 +482,10 @@ def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point,
         # assert int(twt_capable) == wifi_access_point.interfaces.wifi.twt, "TWT info set in AP, and retrieved using WIFI_IFACE_STATUS API is not same"
 
         wifi_sniffer.interfaces.capture.stop_capture()
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        dut_addr['dut_mac_address'],
+                                                        ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -490,7 +503,7 @@ def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point,
 def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_access_point, wifi_sniffer,
                                                              zephyr_wifi_collections,
                                                              request,
-                                                             utf_constants):
+                                                             utf_constants, sniffer_filter):
     """ Test case verifies the device is able to get the wireless statistics in station mode"""
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
     logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
@@ -502,9 +515,11 @@ def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_acce
         test_case = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
-        zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point,
-                                                     ping_after_power_save=True,
-                                                     retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
+        dut_addr = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point,
+                                                                ping_after_power_save=True,
+                                                                retry_count=3,
+                                                                associated=wifi_dut.interfaces.wifi.associated,
+                                                                power_save=power_save)
 
         state, ssid, bssid, band, channel, iface_mode, link_mode, wpa3_ent_type, security, mfp, rssi, dtim_period, beacon_interval, twt_capable, current_phy_tx_rate = wifi_dut.interfaces.wifi.get_wifi_operational_stats(
             timeout=15)
@@ -522,6 +537,10 @@ def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_acce
         # assert int(twt_capable) == wifi_access_point.interfaces.wifi.twt, "TWT info set in AP, and retrieved using WIFI_IFACE_STATUS API is not same"
 
         wifi_sniffer.interfaces.capture.stop_capture()
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        dut_addr['dut_mac_address'],
+                                                        ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -549,9 +568,11 @@ def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_acc
         test_case = request.node.name
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_case)
-        zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point,
-                                                     ping_after_power_save=False,
-                                                     retry_count=3, associated=wifi_dut.interfaces.wifi.associated)
+        dut_addr = zephyr_wifi_collections.join_to_wifi_network(wifi_dut, wifi_access_point=wifi_access_point,
+                                                                ping_after_power_save=True,
+                                                                retry_count=3,
+                                                                associated=wifi_dut.interfaces.wifi.associated,
+                                                                power_save=power_save, mfp=ZephyrWifiMfpOptions.WIFI_MFP_REQUIRED)
 
         state, ssid, bssid, band, channel, iface_mode, link_mode, wpa3_ent_type, security, mfp, rssi, dtim_period, beacon_interval, twt_capable, current_phy_tx_rate = wifi_dut.interfaces.wifi.get_wifi_operational_stats(
             timeout=15)
@@ -569,5 +590,9 @@ def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_acc
         # assert int(twt_capable) == wifi_access_point.interfaces.wifi.twt, "TWT info set in AP, and retrieved using WIFI_IFACE_STATUS API is not same"
 
         wifi_sniffer.interfaces.capture.stop_capture()
+        zephyr_wifi_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                        dut_addr['dut_mac_address'],
+                                                        ap_mac_address,
+                                                        sniffer_filter, power_save=power_save)
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
