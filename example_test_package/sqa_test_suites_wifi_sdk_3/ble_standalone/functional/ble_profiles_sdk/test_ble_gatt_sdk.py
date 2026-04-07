@@ -1461,7 +1461,7 @@ def test_ble_sdk_enable_enable_disable_indication_C667637(ble_dut, ble_client, s
 
 
 # Helper functions for test_ble_sdk_read_long_descriptor_from_RD1_C19868
-def ble_connection(ble_dut, remote_wiseconnect3, data=None, ble_sniffer=None):
+def ble_connection(ble_dut, remote_wiseconnect3, data=None):
     logger().info("======== start ble in dut")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)
     assert bt_dut_address, "failed to initiate ble in dut"
@@ -1620,21 +1620,17 @@ def service_discovery_on_remote_standalone(ble_dut, ble_client_address, service_
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_read_long_descriptor_from_RD1_C19868(ble_dut, remote_wiseconnect3, sl_collections, utf_constants, ble_sniffer):
+def test_ble_sdk_read_long_descriptor_from_RD1_C19868(ble_dut, remote_wiseconnect3, sl_collections):
     """Read long descriptor value from remote device"""
     ble_client_address = None
     ble_dut_address = None
     service_added = False
     try:
         logger().info("TESTCASE EXECUTION STARTED")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_ble_sdk_read_long_descriptor_from_RD1_C19868")
         data = "123456789abcdef123456789abcdef123456789abcdef123456789abcdef123456789abcdef123456789"
-        ble_client_address, ble_dut_address = ble_connection(ble_dut, remote_wiseconnect3, data, ble_sniffer)
+        ble_client_address, ble_dut_address = ble_connection(ble_dut, remote_wiseconnect3, data)
         service_added = True
         link_key1 = extract_link_key(ble_dut)
         logger().info(f"link_key1:{link_key1}")
@@ -1658,34 +1654,6 @@ def test_ble_sdk_read_long_descriptor_from_RD1_C19868(ble_dut, remote_wiseconnec
                 break
         assert dec_val == data, "failed to get long descriptor value"
         logger().info("Att-value read successfully")
-        # Mapping Master and Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        ble_client_address_hex1 = re.split(":", ble_client_address)
-        master_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            master_address = master_address + hex_data_part
-        slave_address1 = "0x"
-        for hex_data_part in ble_client_address_hex1:
-            slave_address1 = slave_address1 + hex_data_part
-        logger().info(f"slave_address1:{slave_address1}")
-        ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
-        time.sleep(30)
-        if link_key1 != "":
-            ble_sniffer.interfaces.sniffer.add_link_key(link_key1.upper(), master_address, slave_address1)
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        logger().info("Sniffer stop successful")
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
     except Exception as error:
         logger().info(f"Exception occurred: {error}")
         raise
@@ -2799,10 +2767,41 @@ def test_ble_sdk_gatt_primary_services_C667632(wifi_dut, ble_client, sl_collecti
                                        ble_dut_address=bt_dut_address)
 
 
-@wifi_dut_marker()
-@pytest.mark.ble_sniffer("frontline_sniffer")
+pytestmark = [
+    pytest.mark.config(
+        "wifi_dut",
+        wifi={
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                        Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                                   Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                               Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC|
+                            Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID|
+                            Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|
+                            Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS|
+                            Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE|
+                            Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE| 1<<27 | 2<<12,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        },
+    )
+]
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_dut_as_master_and_master_get_profiles_C19873(ble_dut, ble_clients, sl_collections, ble_sniffer):
+def test_ble_dut_as_master_and_master_get_profiles_C19873(ble_dut, ble_clients, sl_collections):
     """DUT as master with dual connections, get profiles from both remotes"""
     ble_obj = None
     ble_obj_1 = None
@@ -3002,18 +3001,14 @@ def service_discovery_on_remote_for_blood_pressure(ble_dut, ble_client_address, 
                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
-@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
-def test_ble_sdk_enable_blood_pressure_service_in_client_role_C19884(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
+def test_ble_sdk_enable_blood_pressure_service_in_client_role_C19884(ble_dut, remote_wiseconnect3, sl_collections):
     """Verify the BLE blood pressure service in client role with connection stability"""
     ble_client_address = None
     ble_dut_address = None
     try:
         logger().info("TESTCASE EXECUTION STARTED")
-        ble_sniffer.interfaces.sniffer.init_sniffer()
-        ble_sniffer.interfaces.sniffer.start_capture(
-            capture_file="test_ble_sdk_enable_blood_pressure_service_in_client_role_C19884")
         ble_client_address, ble_dut_address = ble_master_for_blood_pressure(ble_dut, remote_wiseconnect3)
         time.sleep(10)
         write_handle_1 = service_discovery_on_remote_for_blood_pressure(
@@ -3030,32 +3025,6 @@ def test_ble_sdk_enable_blood_pressure_service_in_client_role_C19884(ble_dut, re
         logger().info(f"\nDevice state: {state_int}")
         assert state_int == 8, "There is no connection stability"
         logger().info("Connection is stable after 10 mins")
-        # Mapping Master and Slave Address for Adding devices for sniffer
-        ble_dut_address_hex = re.split(":", ble_dut_address)
-        ble_client_address_hex1 = re.split(":", ble_client_address)
-        master_address = "0x"
-        for hex_data_part in ble_dut_address_hex:
-            master_address = master_address + hex_data_part
-        slave_address1 = "0x"
-        for hex_data_part in ble_client_address_hex1:
-            slave_address1 = slave_address1 + hex_data_part
-        logger().info(f"slave_address1:{slave_address1}")
-        ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
-        time.sleep(30)
-        ble_sniffer.interfaces.sniffer.stop_capture()
-        logger().info("Sniffer stop successful")
-        captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-        time.sleep(30)
-        exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
-        for captured_file in captured_files:
-            captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(captured_file)
-            assert file_size > 0
-        exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-        file_size = os.path.getsize(exported_csv_file)
-        assert file_size > 0
-        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-        logger().info(sniffer_data_df.head())
 
     except Exception as error:
         logger().info(f"Exception occurred: {error}")
@@ -3105,18 +3074,14 @@ pytestmark = [
         },
     )
 ]
-@pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
-def test_add_multiple_services_establish_connection_C537616(ble_dut, ble_client, sl_collections, ble_sniffer):
+def test_add_multiple_services_establish_connection_C537616(ble_dut, ble_client, sl_collections):
     """BLE Add 10 services, 80 attribute values and establish connections in slave mode"""
     bt_dut_address = None
     bt_client_address = None
     try:
         with BleLogs(start_collecting_logs=True,
                      bt_log_path=f"reports/test_add_multiple_services_C537616_{int(time.time())}.log") as bt_logs:
-            ble_sniffer.interfaces.sniffer.init_sniffer()
-            ble_sniffer.interfaces.sniffer.start_capture(
-                capture_file="test_add_multiple_services_establish_connection_C537616")
             service_uid_1 = "0000180d-0000-1000-8000-00805f9b34fb"
             service_uid_2 = "00001810-0000-1000-8000-00805f9b34fb"
             service_uid_3 = "00001802-0000-1000-8000-00805f9b34fb"
@@ -3279,34 +3244,6 @@ def test_add_multiple_services_establish_connection_C537616(ble_dut, ble_client,
             # Disconnection
             logger().info("Disconnecting from dut...")
             ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
-            # Mapping Master and Slave Address for Adding devices for sniffer
-            ble_dut_address_hex = re.split(":", bt_dut_address)
-            ble_client_address_hex1 = re.split(":", bt_client_address)
-            master_address = "0x"
-            for hex_data_part in ble_dut_address_hex:
-                master_address = master_address + hex_data_part
-            slave_address1 = "0x"
-            for hex_data_part in ble_client_address_hex1:
-                slave_address1 = slave_address1 + hex_data_part
-            logger().info(f"slave_address1:{slave_address1}")
-            logger().info(f"master_address:{master_address}")
-            ble_sniffer.interfaces.sniffer.select_bt_devices([master_address, slave_address1])
-            logger().info("Devices are selected")
-            time.sleep(30)
-            ble_sniffer.interfaces.sniffer.stop_capture()
-            logger().info("Sniffer stop successful")
-            captured_files = str(ble_sniffer.interfaces.sniffer.local_capture_files).split(';')
-            time.sleep(30)
-            exported_csv_file = ble_sniffer.interfaces.sniffer.export_to_csv("LE", "ATT")
-            for captured_file in captured_files:
-                captured_file = captured_file.replace("/tmp/reports", "/app/reports")
-                file_size = os.path.getsize(captured_file)
-                assert file_size > 0
-            exported_csv_file = exported_csv_file.replace("/tmp/reports", "/app/reports")
-            file_size = os.path.getsize(exported_csv_file)
-            assert file_size > 0
-            sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
-            logger().info(sniffer_data_df.head())
 
     except Exception as error:
         sl_collections.exception_handling(ble_dut, error)
