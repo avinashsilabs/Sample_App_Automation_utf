@@ -734,6 +734,7 @@ class MQTTClientThread(ThreadBase):
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -806,6 +807,7 @@ def test_mqtt_subscribe_publish_with_qos0_on_host_lwip_C876776(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -877,6 +879,7 @@ def test_mqtts_subscribe_publish_with_qos0_on_host_lwip_C876777(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -949,6 +952,7 @@ def test_mqtt_subscribe_publish_with_qos1_on_host_lwip_C876778(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1020,6 +1024,7 @@ def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1093,6 +1098,7 @@ def test_mqtt_subscribe_publish_with_qos2_on_host_lwip_C876780(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1165,6 +1171,7 @@ def test_mqtts_subscribe_publish_with_qos2_on_host_lwip_C876781(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1267,6 +1274,7 @@ def test_mqtts_publish_using_qos1_on_diff_topics_using_threads_C876782(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1371,6 +1379,7 @@ def test_mqtts_publish_using_qos2_on_diff_topics_using_threads_C876783(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1470,6 +1479,7 @@ def test_mqtts_publish_subscribe_using_different_topics_C876784(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1547,6 +1557,7 @@ def test_mqtts_publish_with_max_supported_length_qos2_C876785(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1625,6 +1636,7 @@ def test_mqtts_keepalive_functionality_with_zero_keepalive_time_C876786(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1748,6 +1760,7 @@ def test_mqtt_keepalive_functionality_with_30sec_keepalive_time_C876787(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -1870,6 +1883,7 @@ def test_mqtts_publish_after_rejoin_successful_C876791(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -2019,6 +2033,7 @@ def test_mqtts_connection_after_rejoin_error_event_C876792(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -2099,6 +2114,7 @@ def test_mqtts_subscribe_publish_with_dhcp_lease_120_secs_c876793(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -2227,6 +2243,7 @@ def test_mqtt_connection_with_last_will_and_retained_bit_set_c876794(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -2322,6 +2339,7 @@ def test_mqtts_subscription_with_single_and_multilevel_wild_characters_c876795(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -2404,6 +2422,7 @@ def test_mqtts_connection_with_persistent_and_clean_session_c876798(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -2492,6 +2511,7 @@ def test_mqtts_negative_scenario_publish_1400_bytes_message_c876799(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -2566,6 +2586,7 @@ def test_mqtts_connection_with_empty_client_id_c876800(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -2650,6 +2671,7 @@ def test_mqtts_connection_failure_with_invalid_expired_certs_c876801(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(

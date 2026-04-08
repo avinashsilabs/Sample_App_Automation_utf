@@ -717,7 +717,7 @@ class AwsConnection(ThreadBase):
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -839,7 +839,7 @@ def test_wifi_sdk_dhcp_2_min_renewal_func_lwip_opt_c919291(wifi_sniffer, wifi_ac
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -934,7 +934,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c919297(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1026,7 +1026,7 @@ def test_wifi_sdk_verify_tcp_keep_alive_functionality_c919299(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1123,7 +1123,7 @@ def test_wifi_sdk_tcp_tx_rx_simultaneously_c919300(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1220,7 +1220,7 @@ def test_wifi_sdk_2_tcp_client_data_transfer_using_1_socket_c919301(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1283,7 +1283,7 @@ def test_wifi_sdk_dhcp_garp_verification_c919310(sniffer_filter, wifi_access_poi
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1355,7 +1355,7 @@ def test_wifi_sdk_dhcp_discon_connect_garp_verification_c919316(sniffer_filter, 
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["reset"])
+@pytest.mark.end_state("wifi_dut", wifi=["disable_external_stack", "reset"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1434,7 +1434,7 @@ def test_wifi_sdk_dhcp_deinit_init_cycle_garp_verification_c919318(sniffer_filte
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1507,7 +1507,7 @@ def test_wifi_sdk_dhcp_renewal_LWIP_congestion_env_c919321(wifi_sniffer, wifi_ac
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1599,7 +1599,7 @@ def test_wifi_sdk_dhcp_renewal_LWIP_after_AP_reboot_c919320(wifi_sniffer, wifi_a
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1671,7 +1671,7 @@ def test_wifi_sdk_udp_tx_lwip_c919311(sniffer_filter, wifi_access_point, wifi_du
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1750,7 +1750,7 @@ def test_wifi_sdk_ipv6_functionality_lwip_c919308(sniffer_filter, wifi_access_po
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1892,7 +1892,7 @@ def test_wifi_sdk_dhcp_discover_failure_lwip_c919293(wifi_sniffer, wifi_access_p
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1982,7 +1982,7 @@ def test_wifi_sdk_dhcp_request_failure_lwip_c919294(wifi_sniffer, wifi_access_po
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2076,8 +2076,8 @@ def test_wifi_sdk_dhcp_start_stop_c919317(wifi_sniffer, wifi_access_point, wifi_
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.start_state("remote_wiseconnect3", wifi=["sl_net_init_client", "reset"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client"])
-@pytest.mark.end_state("remote_wiseconnect3", wifi=["sl_net_deinit_client"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("remote_wiseconnect3", wifi=["sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2199,8 +2199,8 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919309(wifi_access_point, wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.start_state("remote_wiseconnect3", wifi=["sl_net_init_client", "reset"])
-@pytest.mark.end_state("wifi_dut", wifi=["reset"])
-@pytest.mark.end_state("remote_wiseconnect3", wifi=["reset"])
+@pytest.mark.end_state("wifi_dut", wifi=["disable_external_stack", "reset"])
+@pytest.mark.end_state("remote_wiseconnect3", wifi=["disable_external_stack", "reset"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2326,7 +2326,7 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919319(wifi_access_point
 )
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated"])
+                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2429,7 +2429,7 @@ def test_wifi_sdk_aws_tcp_shutdown_C919302(wifi_sniffer, wifi_access_point, wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated"])
+                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2529,7 +2529,7 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_diff_len_C919305(w
 )
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated"])
+                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2637,7 +2637,7 @@ def test_wifi_sdk_aws_publish_data_with_different_length_C919304(wifi_sniffer, w
 )
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "lwip_aws_unsubscribe", "lwip_aws_disconnect", "disassociated"])
+                       wifi=["wifi_powersave_disable", "lwip_aws_unsubscribe", "lwip_aws_disconnect", "disassociated", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={

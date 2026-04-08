@@ -275,6 +275,7 @@ class MQTTConnectionThread(ThreadBase):
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -349,6 +350,7 @@ def test_mqtts_subscribe_publish_disconnect_for_30min_C876788(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -425,6 +427,7 @@ def test_mqtts_subscribe_publish_disconnect_over_wifi_for_30min_C876789(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
@@ -503,6 +506,7 @@ def test_mqtts_subscribe_publish_disconnect_deinit_for_30min_C876790(
         "wifi_powersave_disable",
         "bt_powersave_disable",
         "unassociated",
+        "disable_external_stack"
     ],
 )
 @pytest.mark.config(
