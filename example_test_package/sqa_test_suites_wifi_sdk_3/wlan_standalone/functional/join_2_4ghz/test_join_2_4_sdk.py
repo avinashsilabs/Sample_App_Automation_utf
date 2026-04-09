@@ -226,9 +226,12 @@ class WLanJoinThread(ThreadBase):
             if packet_filter1 in x:
                 result = re.search(r'\d+:\d+:\d+.\d+', x)
                 logger().info(f" RESULT {result}")
-                time_stamp = result.group()
-                logger().info(f'time_stamp={time_stamp}')
-                time_diff_list.append(time_stamp)
+                if result:
+                    time_stamp = result.group(0)
+                    logger().info(f'time_stamp={time_stamp}')
+                    time_diff_list.append(time_stamp)
+                else:
+                    logger().info(f"No time stamp found")
 
         filter_file.close()
         logger().info(f'time stamp list ={time_diff_list}')
