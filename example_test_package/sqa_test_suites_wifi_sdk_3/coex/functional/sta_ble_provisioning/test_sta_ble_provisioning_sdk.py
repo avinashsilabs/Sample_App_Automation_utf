@@ -732,14 +732,14 @@ def test_wifi_sdk_ble_conn_500ms_adv_wlan_scan_provisioning_C20159(
         ble_client.interfaces.bluetooth.close()
 
 
-@pytest.mark.skip("Not Deployed Yet - BLE Connection is not working when enabling adv int 10.24s ")
+
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-def test_wifi_sdk_ble_conn_10_24s_adv_wlan_scan_provisioning_C20160(
+def test_wifi_sdk_ble_conn_250ms_adv_wlan_scan_provisioning_C20160(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
-    """Verify wifi scan by enabling 10.24 s advertising interval on DUT"""
+    """Verify wifi scan by enabling 250ms advertising interval on DUT"""
     try:
-        bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_conn_10_24s_adv_wlan_scan_provisioning_C20160"
+        bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_conn_250ms_adv_wlan_scan_provisioning_C20160"
                                 f"{int(time.time())}.log")
         test_name = request.node.name
 
@@ -753,7 +753,7 @@ def test_wifi_sdk_ble_conn_10_24s_adv_wlan_scan_provisioning_C20160(
             ble_obj = ProvisioningFunctionality(
                 wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, ble_pairing=0,
                 utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                adv_int=10240, test_case=20160)
+                adv_int=250, test_case=20160)
 
             ble_obj.start()
             ble_obj.wait_for_exit()
