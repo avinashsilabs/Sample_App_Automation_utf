@@ -1038,6 +1038,22 @@ class WLanJoinThread(ThreadBase):
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
             raise e
 
+    def pdu_switch(self, sleep_time=10, switch=None):
+        time.sleep(3)
+        if not switch:
+            logger().info("\n\nDisabling Wireless in AP")
+            self.wifi_access_point.interfaces.wifi.stop_ap()
+            time.sleep(sleep_time)
+            logger().info("\n\nEnabling Wireless in AP")
+            self.wifi_access_point.interfaces.wifi.start_ap()
+            time.sleep(sleep_time)
+            return
+        logger().info("Turning off the AP")
+        switch.interfaces.pdu_switch.turn_off()
+        logger().info("Successfully powered off AP")
+        time.sleep(sleep_time)
+        logger().info("Again turning on the AP")
+        switch.interfaces.pdu_switch.turn_on()
 
 @wifi_dut_marker(ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
                  client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
@@ -2436,3 +2452,98 @@ def test_wifi_sdk_azure_mqtt_ssl_private_wrap_key_ecb_mode_c719571(wifi_access_p
 
     finally:
         azure_iot_client.interfaces.device.disconnect()
+
+@wifi_dut_marker(
+    ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+    client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+    tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+    ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+def test_wifi_sdk_ssl_private_key_wrap_ecb_rx_while_rejoining_c719565(switch, wifi_dut, wifi_access_point,
+                                                                      wifi_sniffer, ssl_server, sl_collections,
+                                                                      sniffer_filter, client_key, request):
+    """
+    To check SSL rx functionality of DUT while rejoining
+    """
+    try:
+        capture_filename = request.node.name
+        tx_buffer_len = ssl_server.interfaces.ssl.config['buffer_length']
+        channel = wifi_access_point.interfaces.wifi.channel
+        wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_ECB_WRAP,
+                                                   cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
+
+        sl_collections.load_tls_client_private_key(wifi_dut, cert_file=client_key,
+                                                   cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_ECB_WRAP,
+                                                   wrap_iv_mode=Si91xCryptoWrapMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                                                   iv=None)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"\n **** AP MAC ADDRESS ={ap_mac_address} ****\n")
+        result = sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, power_save=False,
+                                                     retry_count=3, associated=False)
+        dut_ip, dut_mac_address = result['device_ip'], result['dut_mac_address']
+        logger().info(f"Device mac address: {dut_mac_address}")
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        ssl_server.interfaces.ssl.start_server(
+            port=port1,
+            server_cert='server_test1.crt',
+            server_key='server_test1.key',
+            tls_client_enable=True,
+            client_cert='ca_test1.crt'
+        )
+        server_ip = ssl_server.interfaces.ssl.server_ip
+        time.sleep(3)
+
+        socket_fd = wifi_dut.interfaces.wifi.async_sdk_socket(
+            domain="AF_INET", stream_type="SOCK_STREAM", protocol="IPPROTO_TCP"
+        )
+        assert socket_fd == 0, f"Socket id received is wrong: {socket_fd}, expected 0"
+
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+            socket_fd, option_name="TCP_ULP", option_val="tls_1_2"
+        )
+        time.sleep(2)
+
+        local_port = randint(5001, 60000)
+        wifi_dut.interfaces.wifi.bind(
+            socket_fd=socket_fd,
+            device_ip=dut_ip,
+            server_port=local_port,
+            timeout=15,
+        )
+        wifi_dut.interfaces.wifi.bsdSocketConnect(
+            socket_fd=socket_fd,
+            server_ip=server_ip,
+            server_port=port1,
+            timeout=20,
+        )
+        for tx_buffer in [tx_buffer_len, 20]:
+            logger().info(f"\n************** Sending data from DUT with data size {tx_buffer} bytes **************")
+            for pkt_count in range(8):
+                if pkt_count == 4:
+                    WLanJoinThread.pdu_switch(10, switch)
+                    time.sleep(60)
+                ssl_server.interfaces.ssl.send_data(1, 1, msg_length=tx_buffer)
+                wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+                rx_buffer = wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(socket_fd=socket_fd, async_timeout=120,
+                                                                          timeout=120)
+                assert rx_buffer, "Packet loss observed at receiver side"
+            time.sleep(5)
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=0)
+            logger().info("Successfully closed socket_id 0 in the DUT")
+            ssl_server.interfaces.ssl.stop_server()
+
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_mac_address,
+                                               sniffer_filter)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)

@@ -5009,6 +5009,170 @@ def test_wifi_sdk_ssl_with_different_tls_versions_C780930(wifi_sniffer, wifi_dut
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.MultipleSslVersionSupport,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
+            3) | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_FEAT_SSL_MEMORY_CLOUD | Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "ca_cert": [("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+                    ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"),
+                    ("ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START")]
+    }
+)
+@pytest.mark.parametrize("cert1, cert2, cert3",
+                         [
+                             (["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"],
+                              ["ca-chain.cert.pem", "mosquitto-utf.silabs.com.cert.pem",
+                               "mosquitto-utf.silabs.com.key.pem"]
+                              )
+                         ]
+                         )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated", "clear_certs"])
+def test_wifi_sdk_ssl_three_openssl_sockets_with_different_tls_versions_c778767(
+        wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cert1, cert2, cert3,
+        logger, sl_collections, sniffer_filter):
+    """
+    Test Case: C780931
+    Title: Verify SSL functionality across three OpenSSL sockets each using a different TLS version.
+
+    Description:
+        This test verifies that the device can establish three simultaneous SSL connections to
+        three separate OpenSSL servers, where each socket negotiates a different TLS version:
+          - Socket 0: TLS 1.2
+          - Socket 1: TLS 1.3
+          - Socket 2: TLS 1.3
+        Data is transmitted from the DUT over all three sockets and received/validated on the
+        server side.
+
+    Parameters:
+        wifi_sniffer: Sniffer object for capturing network traffic.
+        wifi_dut: Device Under Test (DUT) WiFi interface.
+        wifi_access_point: Access point used for the WiFi connection.
+        ssl_server: SSL server object providing three independent server instances.
+        cert1: Certificate set [ca_cert, server_cert, server_key] for socket 0.
+        cert2: Certificate set [ca_cert, server_cert, server_key] for socket 1.
+        cert3: Certificate set [ca_cert, server_cert, server_key] for socket 2.
+        logger: Logger object.
+        sl_collections: Test utility/helper collection.
+        sniffer_filter: Sniffer filter configuration.
+
+    Steps:
+        1. Join the WiFi network and obtain the DUT IP address.
+        2. Enable power-save profile on the DUT.
+        3. Start three independent OpenSSL servers on separate ports.
+        4. Open three SSL sockets on the DUT, assigning TLS versions:
+              Socket 0 -> TLS 1.2, Socket 1 -> TLS 1.3, Socket 2 -> TLS 1.3.
+        5. Associate each socket's cert index and bind/connect to its respective server.
+        6. Transmit data over all three sockets simultaneously.
+        7. Validate that bytes sent by the DUT match bytes received on each server socket.
+        8. Close all sockets and stop the servers.
+        9. Run sniffer validation.
+
+    Expected Outcome:
+        All three SSL sockets connect successfully, data is transferred without loss, and
+        the sniffer confirms correct power-save behaviour during the session.
+
+    Raises:
+        Exception: If any connection, data transfer, or validation step fails.
+    """
+    try:
+        capture_filename = "test_wifi_sdk_ssl_three_openssl_sockets_with_different_tls_versions_c778767"
+        pkt_count = ssl_server.interfaces.ssl.config['no_of_pkts']
+        buffer_length = ssl_server.interfaces.ssl.config['buffer_length']
+        port1 = ssl_server.interfaces.ssl.config['device_port1']
+        port2 = ssl_server.interfaces.ssl.config['device_port2']
+        port3 = ssl_server.interfaces.ssl.config['device_port3']
+
+        ssl_obj = ssl_connection(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections)
+        device_ip, dut_mac_address = ssl_obj.join_get_ip(power_save=False)
+
+        wifi_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency', listen_interval=700)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        ap_bssid = wifi_access_point.interfaces.wifi.bssid
+        logger.info(f'AP BSSID = {ap_bssid}')
+
+        # Start three independent OpenSSL servers on separate ports
+        ssl_server.interfaces.ssl.start_server(port=port1, server_cert=cert1[1], server_key=cert1[2])
+        ssl_server.interfaces.ssl.start_server(port=port2, server_cert=cert2[1], server_key=cert2[2])
+        ssl_server.interfaces.ssl.start_server(port=port3, server_cert=cert3[1], server_key=cert3[2])
+        server_ip = ssl_server.interfaces.ssl.server_ip
+
+        # TLS version to assign per socket index: 0->TLS 1.2, 1->TLS 1.3, 2->TLS 1.3
+        tls_versions = ["tls_1_2", "tls_1_3", "tls_1_3"]
+        ports = [port1, port2, port3]
+
+        for sock_count in range(3):
+            sock = wifi_dut.interfaces.wifi.socket()
+            assert sock == sock_count, f"Socket id received is wrong, expected {sock_count} but got {sock}"
+            logger.info(f"Opened SSL socket id={sock}, assigning TLS version={tls_versions[sock_count]}")
+
+            wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP",
+                                                     option_val=tls_versions[sock_count])
+            wifi_dut.interfaces.wifi.bsdSsetCustomSyncSockopt(socket_fd=sock, cert_index=sock_count)
+
+            local_port = randint(5001 + sock_count * 20000, 5001 + sock_count * 20000 + 19999)
+            wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip,
+                                          server_port=local_port, timeout=15)
+            wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ip,
+                                                      server_port=ports[sock_count])
+            logger.info(f"Socket {sock} connected to server port {ports[sock_count]} using {tls_versions[sock_count]}")
+
+        # Prepare server sockets to receive data
+        for socket in range(1, 4):
+            ssl_server.interfaces.ssl.data_receive(socket, pkt_count, buffer_length, pkt_rcv_timeout=10)
+
+        # Transmit data from DUT over all three sockets simultaneously
+        socket_list = wifi_dut.interfaces.wifi.set_tx_on_multiple_sockets(socket_list=3, data_len=buffer_length,
+                                                                           number_of_pkts=pkt_count)
+        sock_count = 0
+        bytes_sent_list = []
+        for socket_stats in socket_list:
+            logger.info(
+                f"Bytes sent by DUT on socket_id:{sock_count} -> {socket_stats[0]}, "
+                f"time taken -> {(socket_stats[1] / 1000):.2f}s")
+            bytes_sent_list.append(socket_stats[0])
+            sock_count += 1
+
+        # Validate bytes sent by DUT match bytes received on each server socket
+        for socket in range(1, 4):
+            if ssl_server.interfaces.ssl.socket_connection_status(socket):
+                bytes_received = ssl_server.interfaces.ssl.data_receive_stats(socket)
+                assert bytes_sent_list[socket - 1] == bytes_received, (
+                    f"Byte count mismatch on socket {socket}: "
+                    f"DUT sent {bytes_sent_list[socket - 1]}, server received {bytes_received}"
+                )
+                logger.info(f"Byte count validated on socket {socket}: {bytes_received} bytes")
+
+        for sock in range(3):
+            wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+            logger.info(f"Successfully closed socket_id '{sock}'")
+
+        ssl_server.interfaces.ssl.stop_server()
+        logger.info("Stop Sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        sl_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer, dut_mac_address, ap_bssid,
+                                               sniffer_filter, power_save=False)
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
 
 """Below testcases are not supported in Si917_Beta_Soc_WIFISDK"""
 # @pytest.mark.config(
