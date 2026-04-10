@@ -56,7 +56,34 @@ class BLESMPPairingTest:
         self.oob_data_flag = oob_data_flag  # Added OOB data flag parameter
         self.ble_dut_address = None
         self.ble_client_address = None
-    
+
+    def _verify_connection_status(self, max_retries=0):
+        """
+        Verify BLE connection status with retries.
+       
+        Args:
+            max_retries: Maximum number of retry attempts (default: 0)
+           
+        Returns:
+            bool: True if connected, False otherwise
+        """
+        logger().info(f"Verifying connection status to {self.ble_dut_address}...")
+       
+        for attempt in range(max_retries + 1):
+            try:
+                connection_status = self.ble_client.interfaces.bluetooth.get_connection_status(self.ble_dut_address)
+                logger().info(f"Connection status (attempt {attempt + 1}/{max_retries + 1}): {connection_status}")
+                if connection_status:
+                    logger().info(f"Connection verified to {self.ble_dut_address}")
+                    return True
+            except Exception as e:
+                logger().warning(f"Could not get connection status (attempt {attempt + 1}/{max_retries + 1}): {e}")
+            if attempt < max_retries:
+                time.sleep(2)
+       
+        logger().error(f"Connection verification failed after {max_retries + 1} attempts")
+        return False
+
     def _extract_passkey_from_dut_log(self):
         """Extract passkey from DUT serial log and ensure it's 6 digits with leading zeros if needed"""
         serial_conn = self.wifi_dut.interfaces.wifi.bus  # HostSerialConnectionAsync
@@ -441,6 +468,16 @@ class BLESMPPairingTest:
                 smp_encrypt_event_found = True
                 logger().info(f"SMP encrypt event detected: {decoded_line}")
 
+             # Check for SMP failure - multiple patterns to catch all SMP failure scenarios
+            if any(pattern in decoded_lower for pattern in ["smp failed", "in smp failed", "security failed"]):
+                smp_failed = True
+                # Extract status code if present
+                status_match = re.search(r"status\s*:\s*([0-9a-fA-F]+)", decoded_line, re.IGNORECASE)
+                if status_match:
+                    logger().error(f"SMP failed detected with status 0x{status_match.group(1)}: {decoded_line}")
+                else:
+                    logger().error(f"SMP failed detected: {decoded_line}")    
+
             # Detect connection failure
             if any(pattern in decoded_lower for pattern in ["connection failed", "connect failed", "failed to connect", "connection establishment failed"]):
                 connection_failed = True
@@ -535,6 +572,11 @@ class BLESMPPairingTest:
         # Final success assertion
         logger().info("Test PASSED: Connection established, encryption started, connection stable")
         assert True, "SMP pairing completed successfully"
+
+        connection_verified = self._verify_connection_status(max_retries=0)
+        if not connection_verified:
+            assert False, "BLE connection verification failed - device is not connected"
+        time.sleep(5)
         
         # Disconnect from the BLE client
         logger().info(f"Disconnecting from BLE client at {self.ble_client_address}")
@@ -563,7 +605,7 @@ class BLESMPPairingTest:
             time.sleep(5)
 
 # Just works, Raspi: 0x00 (Display) DUT: 0x00 (Display)
-def test_ble_smp_just_works_dut_0x00_raspi_0x00(wifi_dut, ble_client):
+def test_ble_smp_just_works_dut_0x00_raspi_0x00_C1696465(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -576,7 +618,7 @@ def test_ble_smp_just_works_dut_0x00_raspi_0x00(wifi_dut, ble_client):
     
 
 # Just works, Raspi: 0x01 (Display Yes/No) DUT: 0x00 (Display)
-def test_ble_smp_just_works_dut_0x00_raspi_0x01(wifi_dut, ble_client):
+def test_ble_smp_just_works_dut_0x00_raspi_0x01_C1696470(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -588,7 +630,7 @@ def test_ble_smp_just_works_dut_0x00_raspi_0x01(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x02 (Keyboard Only) DUT: 0x00 (Display)
-def test_ble_smp_passkey_entry_dut_0x00_raspi_0x02(wifi_dut, ble_client):
+def test_ble_smp_passkey_entry_dut_0x00_raspi_0x02_C1696475(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -600,7 +642,7 @@ def test_ble_smp_passkey_entry_dut_0x00_raspi_0x02(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x00 (Display)
-def test_ble_smp_just_works_dut_0x00_raspi_0x03(wifi_dut, ble_client):
+def test_ble_smp_just_works_dut_0x00_raspi_0x03_C1696480(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -612,7 +654,7 @@ def test_ble_smp_just_works_dut_0x00_raspi_0x03(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x04 (Keyboard Display) DUT: 0x00 (Display)
-def test_ble_smp_passkey_entry_dut_0x00_raspi_0x04(wifi_dut, ble_client):
+def test_ble_smp_passkey_entry_dut_0x00_raspi_0x04_C1696485(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -624,7 +666,7 @@ def test_ble_smp_passkey_entry_dut_0x00_raspi_0x04(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x00 (DisplayOnly) DUT: 0x01 (DisplayYesNo)
-def test_ble_smp_just_works_dut_0x01_raspi_0x00(wifi_dut, ble_client):
+def test_ble_smp_just_works_dut_0x01_raspi_0x00_C1696466(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -636,7 +678,7 @@ def test_ble_smp_just_works_dut_0x01_raspi_0x00(wifi_dut, ble_client):
     ble_test.run()
 
 # NumericComparison, Raspi: 0x01 (DisplayYesNo) DUT: 0x01 (DisplayYesNo)
-def test_ble_smp_just_works_dut_0x01_raspi_0x01(wifi_dut, ble_client):
+def test_ble_smp_just_works_dut_0x01_raspi_0x01_C1696471(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -648,7 +690,7 @@ def test_ble_smp_just_works_dut_0x01_raspi_0x01(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x02 (KeyboardOnly) DUT: 0x01 (DisplayYesNo)
-def test_ble_smp_passkey_entry_dut_0x01_raspi_0x02(wifi_dut, ble_client):
+def test_ble_smp_passkey_entry_dut_0x01_raspi_0x02_C1696476(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -660,7 +702,7 @@ def test_ble_smp_passkey_entry_dut_0x01_raspi_0x02(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x01 (DisplayYesNo)
-def test_ble_smp_just_works_dut_0x01_raspi_0x03(wifi_dut, ble_client):
+def test_ble_smp_just_works_dut_0x01_raspi_0x03_C1696481(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -672,7 +714,7 @@ def test_ble_smp_just_works_dut_0x01_raspi_0x03(wifi_dut, ble_client):
     ble_test.run()
 
 # passkey entry, Raspi: 0x04 (KeyboardDisplay) DUT: 0x01 (DisplayYesNo)
-def test_ble_smp_passkey_entry_dut_0x01_raspi_0x04(wifi_dut, ble_client):
+def test_ble_smp_passkey_entry_dut_0x01_raspi_0x04_C1696486(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -684,7 +726,7 @@ def test_ble_smp_passkey_entry_dut_0x01_raspi_0x04(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x00 (DisplayOnly) DUT: 0x02 (KeyboardOnly) 
-def test_ble_dut_0x02_raspi_0x00(wifi_dut, ble_client):
+def test_ble_dut_0x02_raspi_0x00_C1696467(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -697,7 +739,7 @@ def test_ble_dut_0x02_raspi_0x00(wifi_dut, ble_client):
 
 
 # Passkey, Raspi: 0x01 (DisplayYesNo) DUT: 0x02 (KeyboardOnly)
-def test_ble_dut_0x02_raspi_0x01(wifi_dut, ble_client):
+def test_ble_dut_0x02_raspi_0x01_C1696472(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -709,7 +751,7 @@ def test_ble_dut_0x02_raspi_0x01(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x02 (KeyboardOnly) DUT: 0x02 (KeyboardOnly)
-def test_ble_dut_0x02_raspi_0x02(wifi_dut, ble_client):
+def test_ble_dut_0x02_raspi_0x02_C1696477(wifi_dut, ble_client):
     time.sleep(20)
     # For KeyboardOnly/KeyboardOnly, both sides must enter the same fixed passkey after SMP pairing starts.
     fixed_passkey = "123456"
@@ -800,7 +842,7 @@ def test_ble_dut_0x02_raspi_0x02(wifi_dut, ble_client):
     ble_test.run()
 
 # justwork, Raspi: 0x03 (NoInputNoOutput) DUT: 0x02 (KeyboardOnly)
-def test_ble_dut_0x02_raspi_0x03(wifi_dut, ble_client):
+def test_ble_dut_0x02_raspi_0x03_C1696482(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -812,7 +854,7 @@ def test_ble_dut_0x02_raspi_0x03(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x04 (KeyboardDisplay) DUT: 0x02 (KeyboardOnly)
-def test_ble_dut_0x02_raspi_0x04(wifi_dut, ble_client):
+def test_ble_dut_0x02_raspi_0x04_C1696487(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -824,7 +866,7 @@ def test_ble_dut_0x02_raspi_0x04(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x00 (DisplayOnly) DUT: 0x03 (NoInputNoOutput)
-def test_ble_dut_0x03_raspi_0x00(wifi_dut, ble_client):
+def test_ble_dut_0x03_raspi_0x00_C1696468(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -836,7 +878,7 @@ def test_ble_dut_0x03_raspi_0x00(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x01 (DisplayYesNo) DUT: 0x03 (NoInputNoOutput)
-def test_ble_dut_0x03_raspi_0x01(wifi_dut, ble_client):
+def test_ble_dut_0x03_raspi_0x01_C1696473(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -848,7 +890,7 @@ def test_ble_dut_0x03_raspi_0x01(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x02 (KeyboardOnly) DUT: 0x03 (NoInputNoOutput)
-def test_ble_dut_0x03_raspi_0x02(wifi_dut, ble_client):
+def test_ble_dut_0x03_raspi_0x02_C1696478(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -860,7 +902,7 @@ def test_ble_dut_0x03_raspi_0x02(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x03 (NoInputNoOutput)
-def test_ble_dut_0x03_raspi_0x03(wifi_dut, ble_client):
+def test_ble_dut_0x03_raspi_0x03_C1696483(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -872,7 +914,7 @@ def test_ble_dut_0x03_raspi_0x03(wifi_dut, ble_client):
     ble_test.run()  
 
 # JustWorks, Raspi: 0x04 (KeyboardDisplay) DUT: 0x03 (NoInputNoOutput)
-def test_ble_dut_0x03_raspi_0x04(wifi_dut, ble_client):
+def test_ble_dut_0x03_raspi_0x04_C1696488(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -884,7 +926,7 @@ def test_ble_dut_0x03_raspi_0x04(wifi_dut, ble_client):
     ble_test.run() 
 
 # Passkey, Raspi: 0x00 (DisplayOnly) DUT: 0x04 (KeyboardDisplay)
-def test_ble_dut_0x04_raspi_0x00(wifi_dut, ble_client):
+def test_ble_dut_0x04_raspi_0x00_C1696469(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -896,7 +938,7 @@ def test_ble_dut_0x04_raspi_0x00(wifi_dut, ble_client):
     ble_test.run() 
 
 # passkeyentry Raspi: 0x01 (DisplayYesNo) DUT: 0x04 (KeyboardDisplay)
-def test_ble_dut_0x04_raspi_0x01(wifi_dut, ble_client):
+def test_ble_dut_0x04_raspi_0x01_C1696474(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -909,7 +951,7 @@ def test_ble_dut_0x04_raspi_0x01(wifi_dut, ble_client):
 
 
 # Passkey, Raspi: 0x02 (KeyboardOnly) DUT: 0x04 (KeyboardDisplay)
-def test_ble_dut_0x04_raspi_0x02(wifi_dut, ble_client):
+def test_ble_dut_0x04_raspi_0x02_C1696479(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -921,7 +963,7 @@ def test_ble_dut_0x04_raspi_0x02(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x04 (KeyboardDisplay)
-def test_ble_dut_0x04_raspi_0x03(wifi_dut, ble_client):
+def test_ble_dut_0x04_raspi_0x03_C1696484(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
@@ -933,7 +975,7 @@ def test_ble_dut_0x04_raspi_0x03(wifi_dut, ble_client):
     ble_test.run()
 
 # passkeyentry Raspi: 0x04 (KeyboardDisplay) DUT: 0x04 (KeyboardDisplay)
-def test_ble_dut_0x04_raspi_0x04(wifi_dut, ble_client):
+def test_ble_dut_0x04_raspi_0x04_C1696489(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
         wifi_dut=wifi_dut,
