@@ -968,7 +968,9 @@ def test_wifi_sdk_websocket_send_max_data_c19340(wifi_dut, wifi_access_point, wi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
-@wifi_dut_marker()
+@wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+                 tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
@@ -1004,7 +1006,9 @@ def test_wifi_sdk_websocket_close_c19341(wifi_dut, wifi_access_point, wifi_sniff
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
 
-@wifi_dut_marker()
+@wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+                 tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
@@ -1097,9 +1101,12 @@ def test_wifi_sdk_websocket_verify_rx_without_fin_bit_c19344(wifi_dut, wifi_acce
         "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "tcpip_feat": Si91xTCPIPFeatureBitMap.SSL,
+        "ext_custom_feat": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -1515,7 +1522,9 @@ def test_wifi_sdk_websocket_ssl_connect_disconnect_c37479(wifi_dut, wifi_access_
     except Exception as EX:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=EX)
 
-@wifi_dut_marker()
+@wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+                 tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+                 ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
