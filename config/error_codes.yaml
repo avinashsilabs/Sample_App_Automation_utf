@@ -1,0 +1,467 @@
+# error_codes.yaml
+# Master SAPI, Bluetooth, BLE, and BT Classic Error Codes Reference
+
+SAPI_Generic_Error_Codes:
+  - code: -1
+    hex: 0xffffffff
+    description: Host Time out error
+  - code: -2
+    hex: 0xfffffffe
+    description: Invalid parameters
+  - code: -3
+    hex: 0xfffffffd
+    description: Command given in wrong state
+  - code: -4
+    hex: 0xfffffffc
+    description: Packet allocation failure
+  - code: -5
+    hex: 0xfffffffb
+    description: Command not supported
+  - code: -6
+    hex: 0xfffffffa
+    description: Insufficient buffer
+  - code: -7
+    hex: 0xfffffff9
+    description: Error in O.S Operation
+  - code: -8
+    hex: 0xfffffff8
+    description: Error due to Invalid Memory
+  - code: -9
+    hex: 0xfffffff7
+    description: Boot_up Options not saved
+  - code: -10
+    hex: 0xfffffff6
+    description: Boot up Options check sum fail
+  - code: -11
+    hex: 0xfffffff5
+    description: Boot loader Version not Match
+  - code: -12
+    hex: 0xfffffff4
+    description: Waiting for Board Ready
+  - code: -13
+    hex: 0xfffffff3
+    description: Invalid Address
+  - code: -14
+    hex: 0xfffffff2
+    description: Valid Firmware not present
+  - code: -15
+    hex: 0xfffffff1
+    description: Invalid option
+  - code: -16
+    hex: 0xfffffff0
+    description: Maximum Callbacks are Exceeded
+  - code: -17
+    hex: 0xffffffef
+    description: Set_Timer error
+  - code: -18
+    hex: 0xffffffee
+    description: SIGACTION error
+  - code: -19
+    hex: 0xffffffed
+    description: Not in Connected state
+  - code: -20
+    hex: 0xffffffec
+    description: Not in IP Config state
+  - code: -21
+    hex: 0xffffffeb
+    description: SPI busy error
+  - code: -22
+    hex: 0xffffffea
+    description: SPI fail error
+  - code: -23
+    hex: 0xffffffe9
+    description: SPI Timeout error
+  - code: -24
+    hex: 0xffffffe8
+    description: Card ready timeout error
+  - code: -25
+    hex: 0xffffffe7
+    description: Board ready timeout error
+  - code: -26
+    hex: 0xffffffe6
+    description: Invalid Packet error
+  - code: -27
+    hex: 0xffffffe5
+    description: Firmware Upgrade timeout error
+  - code: -28
+    hex: 0xffffffe4
+    description: Firmware Load or Upgrade timeout error
+  - code: -29
+    hex: 0xffffffe3
+    description: GPIO wakeup timeout error
+  - code: -30
+    hex: 0xffffffe2
+    description: Response timeout error
+  - code: -31
+    hex: 0xffffffe1
+    description: BLE buffer full error
+  - code: -32
+    hex: 0xffffffe0
+    description: Network command in progress
+  - code: -33
+    hex: 0xffffffdf
+    description: Socket command in progress
+  - code: -34
+    hex: 0xffffffde
+    description: WLAN command in progress
+  - code: -35
+    hex: 0xffffffdd
+    description: Common command in progress
+  - code: -36
+    hex: 0xffffffdc
+    description: ANT Buffer full error
+  - code: -37
+    hex: 0xffffffdb
+    description: BT or BLE command in progress
+  - code: -38
+    hex: 0xffffffda
+    description: ANT command in progress
+  - code: -39
+    hex: 0xffffffd9
+    description: ATT command in progress
+  - code: -40
+    hex: 0xffffffd8
+    description: Memory not aligned error
+  - code: -41
+    hex: 0xffffffd7
+    description: Semaphore Creation Failed
+  - code: -42
+    hex: 0xffffffd6
+    description: Semaphore Destroy Failed
+  - code: -43
+    hex: 0xffffffd5
+    description: Error in WLAN command
+  - code: -44
+    hex: 0xffffffd4
+    description: RX Buffer Check
+  - code: -45
+    hex: 0xffffffd3
+    description: Parameter Length exceeds max length.
+  - code: -46
+    hex: 0xffffffd2
+    description: Error in common command.
+  - code: -47
+    hex: 0xffffffd1
+    description: TX Buffer Full.
+  - code: -48
+    hex: 0xffffffd0
+    description: SDIO Timeout
+  - code: -49
+    hex: 0xffffffcf
+    description: SDIO write fail
+  - code: -50
+    hex: 0xffffffce
+    description: Invalid config flag set
+  - code: -51
+    hex: 0xffffffcd
+    description: BLE Device buffer in progress
+
+Bluetooth_Generic_Error_Codes:
+  - code: 0x4E01
+    description: Unknown HCI command
+  - code: 0x4E02
+    description: Unknown Connection Identifier
+  - code: 0x4E03
+    description: Hardware failure
+  - code: 0x4E04
+    description: Page timeout
+  - code: 0x4E05
+    description: Authentication failure
+  - code: 0x4E06
+    description: Pin missing
+  - code: 0x4E07
+    description: Memory capacity exceeded
+  - code: 0x4E08
+    description: Connection timeout
+  - code: 0x4E09
+    description: Connection limit exceeded
+  - code: 0x4E0A
+    description: SCO limit exceeded
+  - code: 0x4E0B
+    description: ACL Connection already exists
+  - code: 0x4E0C
+    description: Command disallowed
+  - code: 0x4E0D
+    description: Connection rejected due to limited resources
+  - code: 0x4E0E
+    description: Connection rejected due to security reasons
+  - code: 0x4E0F
+    description: Connection rejected for BD address
+  - code: 0x4E10
+    description: Connection accept timeout
+  - code: 0x4E11
+    description: Unsupported feature or parameter
+  - code: 0x4E12
+    description: Invalid HCI command parameter
+  - code: 0x4E13
+    description: Remote user terminated connection
+  - code: 0x4E14
+    description: Remote device terminated connection due to low resources
+  - code: 0x4E15
+    description: Remote device terminated connection due to power off
+  - code: 0x4E16
+    description: Local device terminated connection
+  - code: 0x4E17
+    description: Repeated attempts
+  - code: 0x4E18
+    description: Pairing not allowed
+  - code: 0x4E19
+    description: Unknown LMP PDU
+  - code: 0x4E1A
+    description: Unsupported remote feature
+  - code: 0x4E1B
+    description: SCO offset rejected
+  - code: 0x4E1C
+    description: SCO interval rejected
+  - code: 0x4E1D
+    description: SCO Air mode rejected
+  - code: 0x4E1E
+    description: Invalid LMP parameters
+  - code: 0x4E1F
+    description: Unspecified
+  - code: 0x4E20
+    description: Unsupported LMP Parameter
+  - code: 0x4E21
+    description: Role change not allowed
+  - code: 0x4E22
+    description: LMP response timeout
+  - code: 0x4E23
+    description: LMP transaction collision
+  - code: 0x4E24
+    description: LMP PDU not allowed
+  - code: 0x4E25
+    description: Encryption mode not acceptable
+  - code: 0x4E26
+    description: Link key cannot change
+  - code: 0x4E27
+    description: Requested QOS not supported
+  - code: 0x4E28
+    description: Instant passed
+  - code: 0x4E29
+    description: Pairing with unit key not supported
+  - code: 0x4E2A
+    description: Different transaction collision
+  - code: 0x4E2B
+    description: Reserved 1
+  - code: 0x4E2C
+    description: QOS parameter not acceptable
+  - code: 0x4E2D
+    description: QOS rejected
+  - code: 0x4E2E
+    description: Channel classification not supported
+  - code: 0x4E2F
+    description: Insufficient security
+  - code: 0x4E30
+    description: Parameter out of mandatory range
+  - code: 0x4E31
+    description: Reserved 2
+  - code: 0x4E32
+    description: Role switch pending
+  - code: 0x4E33
+    description: Reserved 3
+  - code: 0x4E34
+    description: Reserved slot violation
+  - code: 0x4E35
+    description: Role switch failed
+  - code: 0x4E36
+    description: Extended Inquiry Response too large
+  - code: 0x4E37
+    description: Extended SSP not supported
+  - code: 0x4E38
+    description: Host busy pairing
+  - code: 0x4E39
+    description: Wrong BD Address
+  - code: 0x4E3E
+    description: Connection Failed to be Established
+  - code: 0x4FF8
+    description: BT Invalid Command
+  - code: 0x0101
+    description: Invalid args
+  - code: 0x0102
+    description: Unknown
+  - code: 0x0103
+    description: Firmware Timeout
+  - code: 0x0104
+    description: Memory alloc fail
+  - code: 0x0106
+    description: Io fail
+  - code: 0x0108
+    description: Unsupported
+  - code: 0x0109
+    description: Short buf
+  - code: 0x010A
+    description: Buf overflow
+  - code: 0x010B
+    description: Too large buf
+  - code: 0x010C
+    description: Io abort
+  - code: 0x010D
+    description: File open fail
+  - code: 0x1010
+    description: Os task invalid prio
+  - code: 0x1011
+    description: Os task prio exists
+  - code: 0x1012
+    description: Os task not stopped
+  - code: 0x1020
+    description: Os sem max value
+  - code: 0x1021
+    description: Os sem not available
+  - code: 0x1022
+    description: Os sem reset
+  - code: 0x1030
+    description: Os mutex not owner
+  - code: 0x1031
+    description: Os mutex not locked
+  - code: 0x1032
+    description: Os mutex lock failed
+  - code: 0x1033
+    description: Os mutex try lock failed
+  - code: 0x1040
+    description: Os msg queue full
+  - code: 0x1041
+    description: Os message queue empty
+  - code: 0x1050
+    description: Pipe empty
+  - code: 0x1051
+    description: Pipe full
+  - code: 0x1052
+    description: Invalid len
+  - code: 0x1053
+    description: Pipe read in use
+  - code: 0x1054
+    description: Pipe write in use
+  - code: 0x1060
+    description: Os timer expired
+  - code: 0x1061
+    description: Os timer state running
+  - code: 0x1070
+    description: Os can not wait
+  - code: 0x1080
+    description: Os mem pool empty
+  - code: 0x1081
+    description: Os mem pool size short
+
+BLE_Generic_Error_Codes:
+  - code: 0x4E3C
+    description: Directed Advertising Timeout
+  - code: 0x4E3D
+    description: Connection terminated due to MIC failure
+  - code: 0x4E60
+    description: Invalid Handle Range
+  - code: 0x4E61
+    description: Insufficient Memory
+  - code: 0x4E62
+    description: Invalid Parameters/Attribute Length
+  - code: 0x4E63
+    description: BLE Buffer Count Exceeded
+  - code: 0x4E64
+    description: BLE Buffer already in use
+  - code: 0x4E65
+    description: Invalid Attribute Length When Small Buffer Mode is Configured
+  - code: 0x4E66
+    description: Invalid Name length when set to more than 16 bytes
+
+BLE_Mode_Error_Codes:
+  - code: 0x4BFC
+    description: SMP failed for remote address.
+  - code: 0x4A01
+    description: Invalid Handle
+  - code: 0x4A02
+    description: Read not permitted
+  - code: 0x4A03
+    description: Write not permitted
+  - code: 0x4A04
+    description: Invalid PDU
+  - code: 0x4A05
+    description: Insufficient authentication
+  - code: 0x4A06
+    description: Request not supported
+  - code: 0x4A07
+    description: Invalid offset
+  - code: 0x4A08
+    description: Insufficient authorization
+  - code: 0x4A09
+    description: Prepare queue full
+  - code: 0x4A0A
+    description: Attribute not found
+  - code: 0x4A0B
+    description: Attribute not Long
+  - code: 0x4A0C
+    description: Insufficient encryption key size
+  - code: 0x4A0D
+    description: Invalid attribute value length
+  - code: 0x4A0E
+    description: Unlikely error
+  - code: 0x4A0F
+    description: Insufficient encryption
+  - code: 0x4A10
+    description: Unsupported group type
+  - code: 0x4A11
+    description: Insufficient resources
+  - code: 0x4A80
+    description: GATT Timeout
+  - code: 0x4AFF
+    description: Data Maintained in Host
+  - code: 0x4B01
+    description: SMP Passkey entry failed
+  - code: 0x4B02
+    description: SMP OOB not available
+  - code: 0x4B03
+    description: SMP Authentication Requirements
+  - code: 0x4B04
+    description: SMP confirm value failed
+  - code: 0x4B05
+    description: SMP Pairing not supported
+  - code: 0x4B06
+    description: SMP Encryption key size insufficient
+  - code: 0x4B07
+    description: SMP command not supported
+  - code: 0x4B08
+    description: SMP pairing failed
+  - code: 0x4B09
+    description: SMP repeated attempts
+  - code: 0x4B0A
+    description: SMP Invalid Params
+  - code: 0x4B0B
+    description: SMP DH Key Check Failed
+  - code: 0x4B0C
+    description: SMP Numeric Comparison Failed
+  - code: 0x4BFD
+    description: SMP Invalid Keys Generated
+  - code: 0x4BFE
+    description: SMP Identical Public Key
+  - code: 0x4C02
+    description: PSM Conn Failed
+  - code: 0x4D00
+    description: BLE Remote device found
+  - code: 0x4D01
+    description: BLE Remote device not found
+  - code: 0x4D02
+    description: BLE Remote device structure full
+  - code: 0x4D03
+    description: Unable to change state
+  - code: 0x4D04
+    description: BLE not Connected
+  - code: 0x4D05
+    description: BLE socket not available.
+  - code: 0x4D06
+    description: Attribute record not found
+  - code: 0x4D07
+    description: Attribute entry not found
+  - code: 0x4D08
+    description: Profile record full
+  - code: 0x4D09
+    description: Attribute record full
+  - code: 0x4D0A
+    description: BLE profile not found (profile handler invalid)
+  - code: 0x4D0B
+    description: BLE Attribute Buffer Full
+  - code: 0x4D0C
+    description: ATT MTU Exchange bit not set
+  - code: 0x4D10
+    description: BLE Connection Sock not Available
+  - code: 0x4D11
+    description: BLE Remote Credits not Available
+  - code: 0x4D14
+    description: BLE parameter out of mandatory range
