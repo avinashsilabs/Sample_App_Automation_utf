@@ -293,9 +293,10 @@ class WifiConnectionThread(ThreadBase):
             raise e
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise',
+                                               "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -311,7 +312,8 @@ class WifiConnectionThread(ThreadBase):
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp
                            | Si91xConfigFeatureBitMap.TLS_V1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
@@ -323,8 +325,9 @@ class WifiConnectionThread(ThreadBase):
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
-def test_wifi_sdk_2_4_tcp_rx_wpa2_ent_C34513(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
-                                         sniffer_filter, sl_collections, net_perf_client, protocol, radius_server):
+def test_wifi_sdk_2_4_tcp_rx_wpa2_ent_C34513(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                             wifi_client, sniffer_filter, sl_collections, net_perf_client, protocol,
+                                             radius_server):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
     test_name = request.node.name
@@ -344,7 +347,8 @@ def test_wifi_sdk_2_4_tcp_rx_wpa2_ent_C34513(wifi_sniffer, wifi_access_point, wi
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise',
+                                               "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
@@ -360,7 +364,8 @@ def test_wifi_sdk_2_4_tcp_rx_wpa2_ent_C34513(wifi_sniffer, wifi_access_point, wi
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp
                            | Si91xConfigFeatureBitMap.TLS_V1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
@@ -372,8 +377,9 @@ def test_wifi_sdk_2_4_tcp_rx_wpa2_ent_C34513(wifi_sniffer, wifi_access_point, wi
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
-def test_wifi_sdk_2_4_udp_rx_wpa2_ent_C34515(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
-                                         sniffer_filter, sl_collections, net_perf_client, protocol, radius_server):
+def test_wifi_sdk_2_4_udp_rx_wpa2_ent_C34515(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                             wifi_client, sniffer_filter, sl_collections, net_perf_client, protocol,
+                                             radius_server):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
     test_name = request.node.name
@@ -391,9 +397,10 @@ def test_wifi_sdk_2_4_udp_rx_wpa2_ent_C34515(wifi_sniffer, wifi_access_point, wi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise',
+                                               "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -409,7 +416,8 @@ def test_wifi_sdk_2_4_udp_rx_wpa2_ent_C34515(wifi_sniffer, wifi_access_point, wi
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp
                            | Si91xConfigFeatureBitMap.TLS_V1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
@@ -421,8 +429,9 @@ def test_wifi_sdk_2_4_udp_rx_wpa2_ent_C34515(wifi_sniffer, wifi_access_point, wi
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
-def test_wifi_sdk_2_4_tcp_tx_wpa2_ent_C34512(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
-                                         sniffer_filter, sl_collections, net_perf_client, protocol, radius_server):
+def test_wifi_sdk_2_4_tcp_tx_wpa2_ent_C34512(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                             wifi_client, sniffer_filter, sl_collections, net_perf_client, protocol,
+                                             radius_server):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
     test_name = request.node.name
@@ -440,9 +449,10 @@ def test_wifi_sdk_2_4_tcp_tx_wpa2_ent_C34512(wifi_sniffer, wifi_access_point, wi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise',
+                                               "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
@@ -458,7 +468,8 @@ def test_wifi_sdk_2_4_tcp_tx_wpa2_ent_C34512(wifi_sniffer, wifi_access_point, wi
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp
                            | Si91xConfigFeatureBitMap.TLS_V1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
@@ -471,8 +482,9 @@ def test_wifi_sdk_2_4_tcp_tx_wpa2_ent_C34512(wifi_sniffer, wifi_access_point, wi
         # "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-def test_wifi_sdk_2_4_udp_tx_wpa2_ent_C34514(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request, wifi_client,
-                                         sniffer_filter, sl_collections, net_perf_client, protocol, radius_server):
+def test_wifi_sdk_2_4_udp_tx_wpa2_ent_C34514(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+                                             wifi_client, sniffer_filter, sl_collections, net_perf_client, protocol,
+                                             radius_server):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
     test_name = request.node.name
@@ -490,9 +502,10 @@ def test_wifi_sdk_2_4_udp_tx_wpa2_ent_C34514(wifi_sniffer, wifi_access_point, wi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise',
+                                               "passphrase": '12345678'})
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -506,7 +519,8 @@ def test_wifi_sdk_2_4_udp_tx_wpa2_ent_C34514(wifi_sniffer, wifi_access_point, wi
                            | Si91xConfigFeatureBitMap.TLS_V2,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
@@ -538,9 +552,10 @@ def test_wifi_sdk_2_4_ssl_tx_wpa2_ent_C344512(wifi_sniffer, wifi_access_point, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise'})
+@pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2Enterprise',
+                                               "passphrase": '12345678'})
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -554,7 +569,8 @@ def test_wifi_sdk_2_4_ssl_tx_wpa2_ent_C344512(wifi_sniffer, wifi_access_point, w
                            | Si91xConfigFeatureBitMap.TLS_V1,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
                           Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
+                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
                                Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
