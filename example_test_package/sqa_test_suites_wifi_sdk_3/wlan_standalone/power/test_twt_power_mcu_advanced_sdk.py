@@ -550,7 +550,7 @@ def test_standby_power_twt_disable_without_ip_C129918(firmware_loader, power_met
      wlan_obj = WlanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, without_ip=True,
                          sl_collections=sl_collections)
      m4_obj = M4_Sleep_Thread(wifi_dut=wifi_dut, m4_sleep_time=220000)
-     pm_obj = Power_Measurement_Thread(power_meter=power_meter, capture_time=180)
+     pm_obj = Power_Measurement_Thread(power_meter=power_meter, capture_time=80)
 
      wlan_obj.start()
      wlan_obj.wait_for_exit()
