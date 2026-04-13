@@ -722,7 +722,7 @@ def test_co_ex_ofdma_with_ble_adv_rtt_tcp_tx_C401963(wifi_sniffer, wifi_access_p
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wifi_client.interfaces.tc.delete_delay(0)
+        wifi_client.interfaces.tc.delete_delay(5)
         time.sleep(2)
 
 
@@ -787,7 +787,7 @@ def test_co_ex_ofdma_with_ble_adv_rtt_udp_tx_C401964(wifi_sniffer, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.add_delay(0)
-        time.sleep(2)
+        time.sleep(5)
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -970,7 +970,7 @@ def test_co_ex_ofdma_with_ble_conn_rtt_tcp_tx_C401897(wifi_sniffer, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.delete_delay(0)
-        time.sleep(2)
+        time.sleep(5)
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1033,7 +1033,7 @@ def test_co_ex_ofdma_with_ble_conn_rtt_udp_tx_C401898(wifi_sniffer, wifi_access_
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
-        wifi_client.interfaces.tc.add_delay(0)
+        wifi_client.interfaces.tc.add_delay(5)
         time.sleep(2)
 
 
@@ -1158,7 +1158,7 @@ def test_co_ex_ofdma_with_ble_adv_rtt_ssl_tx_C401971(wifi_sniffer, wifi_access_p
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.delete_delay(0)
-        time.sleep(2)
+        time.sleep(5)
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1283,7 +1283,7 @@ def test_co_ex_ofdma_with_ble_conn_rtt_ssl_tx_C401973(wifi_sniffer, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.delete_delay(0)
-        time.sleep(2)
+        time.sleep(5)
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1466,7 +1466,7 @@ def test_co_ex_ofdma_with_ble_data_phy1_rtt_tcp_tx_C401976(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.delete_delay(0)
-        time.sleep(2)
+        time.sleep(5)
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1530,7 +1530,7 @@ def test_co_ex_ofdma_with_ble_data_phy1_rtt_udp_tx_C401977(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.add_delay(0)
-        time.sleep(2)
+        time.sleep(5)
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1713,7 +1713,7 @@ def test_co_ex_ofdma_with_ble_data_phy2_rtt_tcp_tx_C401980(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.delete_delay(0)
-        time.sleep(2)
+        time.sleep(5)
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1777,7 +1777,7 @@ def test_co_ex_ofdma_with_ble_data_phy2_rtt_udp_tx_C401981(wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.add_delay(0)
-        time.sleep(2)
+        time.sleep(5)
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -1902,7 +1902,7 @@ def test_co_ex_ofdma_ble_data_phy1_rtt_ssl_tx_C401983(wifi_sniffer, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.delete_delay(0)
-        time.sleep(2)
+        time.sleep(5)
 
 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
@@ -2027,4 +2027,4 @@ def test_co_ex_ofdma_ble_data_phy2_rtt_ssl_tx_C401985(wifi_sniffer, wifi_access_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_client.interfaces.tc.delete_delay(0)
-        time.sleep(2)
+        time.sleep(5)
