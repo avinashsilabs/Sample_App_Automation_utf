@@ -82,7 +82,7 @@ class WifiJoinThread(ThreadBase):
         ht_caps =1
         logger().info("********* configuring static ip to DUT *********")
         self.wifi_dut.interfaces.wifi.start_ip(static_ip="192.168.100.76", static_subnet='255.255.255.0',
-                                          static_gateway='192.168.100.76')
+                                          static_gateway='192.168.100.76', vid=1)
         logger().info(" ********** Starting DUT as an AP ********* ")
         self.wifi_dut.interfaces.wifi.start_ap(ssid="SILABS_AP_C19444", security="WPA2", psk="12345678", channel=self.channel,
                                           dtim_beacon_count=self.dtim_period, ht_caps=ht_caps,
