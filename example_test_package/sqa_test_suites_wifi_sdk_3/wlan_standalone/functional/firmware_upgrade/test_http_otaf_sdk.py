@@ -60,12 +60,13 @@ class WifiJoin(ThreadBase):
         self.rps_path = rps_path
 
     def get_firmware_status(self):
-        self.wifi_dut.interfaces.wifi.reset()
+        self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
         time.sleep(30)
-        logger().info("Initialising DUT after the reset....")
+        self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-        self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+        self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
         self.wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
         fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
         self.wifi_dut.interfaces.wifi.inited = False
@@ -106,6 +107,7 @@ class WifiJoin(ThreadBase):
                 return
 
             logger().info("join WIFI network...")
+            self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
                                                                      retry_count=3,
                                                                      associated=self.wifi_dut.interfaces.wifi.associated,
@@ -230,7 +232,7 @@ class WifiJoin(ThreadBase):
             raise e
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -276,7 +278,7 @@ def test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_c19780(http_serv
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -321,7 +323,7 @@ def test_sdk_http_fw_upgrade_in_sta_ble_mode_and_measure_time_c19782(http_server
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -365,7 +367,7 @@ def test_sdk_http_fw_upgrade_failure_with_empty_rps_c19800(http_server, wifi_sni
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -410,7 +412,7 @@ def test_sdk_http_fw_upgrade_failure_without_enabling_http_c19799(http_server, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -454,7 +456,7 @@ def test_sdk_fw_upgrade_failure_when_STA_is_not_connected_c19779(http_server, wi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 @pytest.mark.config(
     "wifi_dut",
@@ -493,7 +495,7 @@ def test_http_fw_upgrade_failure_with_junk_rps_c19797(http_server, wifi_sniffer,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -538,7 +540,7 @@ def test_sdk_http_fw_upgrade_failure_when_enabled_only_ble_c19796(http_server, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -587,6 +589,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_c19784(http_server, wifi_
         logger().info(f" ***** FW before upgrade: {fw_before_upgrade} *****")
 
         logger().info("join WIFI network...")
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         sl_collections.join_to_wifi_network(wifi_dut, wifi_access_point, retry_count=3,
                                             associated=wifi_dut.interfaces.wifi.associated,
                                             power_save=False, )
@@ -637,12 +640,13 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_c19784(http_server, wifi_
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        wifi_dut.interfaces.wifi.reset()
+        wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
         time.sleep(30)
-        logger().info("Initialising DUT after the reset....")
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = True
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-        wifi_dut.interfaces.wifi.init(load_certificate=False)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
         wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
         fw_after_upgrade = wifi_dut.interfaces.wifi.version()
         time.sleep(5)
@@ -659,7 +663,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_c19784(http_server, wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -705,7 +709,7 @@ def test_sdk_http_fw_upgrade_using_c19798(http_server, wifi_sniffer, wifi_access
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -752,7 +756,7 @@ def test_sdk_http_fw_upgrade_using_c498660(http_server, wifi_sniffer, wifi_acces
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.config(
     "wifi_dut",
     wifi={

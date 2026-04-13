@@ -101,6 +101,7 @@ class WifiJoin(ThreadBase):
 
     def run(self):
         try:
+            self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
             if self.test_case == '564244' or self.test_case == '564245':
                 logger().info("Loading certificates in DUT")
                 self.wifi_dut.interfaces.wifi.set_ssl_certificate(
@@ -221,14 +222,18 @@ class WifiJoin(ThreadBase):
 
                 logger().info("stop Sniffer capture...")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
-                self.wifi_dut.interfaces.wifi.reset()
-                time.sleep(30)
 
-                if self.test_case != '498661':
+                if self.test_case == '498661':
+                    self.wifi_dut.interfaces.wifi.reset()
+                else:
+                    self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+                    time.sleep(30)
+                    self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
                     self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                    self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+                    self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
                     self.wifi_dut.interfaces.wifi.initialize_thread()
                     self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+                    self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
                     self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
                     logger().info(f"*** dut fw version after upgrade = {self.fw_version_after_upgrade} ***")
                     assert self.fw_version_before_upgrade != self.fw_version_after_upgrade, \
@@ -240,7 +245,7 @@ class WifiJoin(ThreadBase):
             raise e
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -278,7 +283,7 @@ def test_wifi_sdk_fw_upgrade_failure_when_sta_is_not_connected_c19757(http_serve
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -319,7 +324,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c19758(htt
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -359,7 +364,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_ble_mode_and_measure_time_c19760(http_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -400,7 +405,7 @@ def test_wifi_sdk_https_fw_upgrade_after_rejoin_failure_and_measure_time_c19766(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -440,7 +445,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_when_enabled_ble_only_c19774(http_ser
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -480,7 +485,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_junk_rps_c19775(http_server, wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -520,7 +525,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_non_rps_c19776(http_server, wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -560,7 +565,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_without_enabling_http_c19777(http_ser
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -642,6 +647,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_empty_rps_c19778(http_server, wi
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     },
 )
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.wifi_clients(["raspi_wifi"])
 @pytest.mark.legacy_deployed
@@ -662,7 +668,7 @@ def test_wifi_sdk_https_fw_upgrade_in_concurrent_mode_and_measure_time_c19762(ht
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -703,7 +709,7 @@ def test_wifi_sdk_https_fw_upgrade_by_loading_cert_into_index_1_c564244(http_ser
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -744,7 +750,7 @@ def test_wifi_sdk_https_fw_upgrade_by_loading_cert_into_index_2_c564245(http_ser
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",
@@ -789,7 +795,7 @@ def test_wifi_sdk_m4_fw_upgrade_using_https_c498661(wifi_client, http_server,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config(
     "wifi_dut",

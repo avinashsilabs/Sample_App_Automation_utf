@@ -86,12 +86,13 @@ class WifiJoin(ThreadBase):
         self.fw_after_upgrade = None
 
     def get_firmware_status(self):
-        self.wifi_dut.interfaces.wifi.reset()
+        self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
         time.sleep(30)
-        logger().info("Initialising DUT after the reset....")
+        self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-        self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+        self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
         self.wifi_dut.interfaces.wifi.initialize_thread()
+        self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
         fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
         self.wifi_dut.interfaces.wifi.inited = False
@@ -100,6 +101,7 @@ class WifiJoin(ThreadBase):
 
     def run(self):
         try:
+            self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
             """ ******* SERVER CHECKS ******* """
             logger().info("checking server stats....")
             server_stat = self.http_server.interfaces.http.started
@@ -214,7 +216,7 @@ class WifiJoin(ThreadBase):
             raise e
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @wifi_dut_marker()
 @pytest.mark.http_server("raspi_lighttpd")
@@ -244,7 +246,7 @@ def test_http_fw_upgrade_downgrade_overnight_c19793(http_server, wifi_sniffer, w
         raise
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @wifi_dut_marker()
 @pytest.mark.http_server("raspi_lighttpd")
@@ -273,7 +275,7 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19794(http_server, wifi_sniff
         raise
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @wifi_dut_marker()
 @pytest.mark.http_server("raspi_lighttpd")
@@ -302,7 +304,7 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19795(http_server, wifi_sniff
         raise
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
@@ -332,7 +334,7 @@ def test_https_fw_upgrade_downgrade_overnight_file_c19771(http_server, wifi_snif
         raise
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
@@ -362,7 +364,7 @@ def test_https_fw_upgrade_overnight_corrupted_rps_file_c19772(http_server, wifi_
         raise
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])

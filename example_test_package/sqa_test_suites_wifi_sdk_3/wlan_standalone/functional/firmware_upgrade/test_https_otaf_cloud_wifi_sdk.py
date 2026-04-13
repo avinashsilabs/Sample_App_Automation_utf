@@ -224,6 +224,7 @@ class WifiJoin(ThreadBase):
 
     def run(self):
         try:
+            self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
 
             if self.test_case == '652416' or self.test_case == '498663':
                 logger().info("Downloading firmware from Azure server...")
@@ -417,12 +418,13 @@ class WifiJoin(ThreadBase):
                 time.sleep(30)
 
             if self.test_case != '498662' and self.test_case != '498663' and self.test_case != '510788':
-                # self.wifi_dut.interfaces.wifi.deinit()
-                self.wifi_dut.interfaces.wifi.reset()
+                self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
                 time.sleep(30)
+                self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
                 self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+                self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
                 self.wifi_dut.interfaces.wifi.initialize_thread()
+                self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
                 self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
 
                 logger().info("DUT firmware version after upgrade...")
@@ -456,7 +458,7 @@ class WifiJoin(ThreadBase):
             raise e
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
@@ -480,7 +482,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c19769(aws_s3, wifi_sniffer,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_ext_header_c652581(aws_s3, wifi_sniffer, wifi_access_point,
@@ -500,7 +502,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_ext_header_c652581(aws_s3, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
@@ -522,7 +524,7 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_c652416(azure_blob, wifi_s
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
@@ -544,7 +546,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c498662(aws_s3, wifi_sniffer
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
@@ -566,8 +568,7 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_498663(azure_blob, wifi_sn
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_fw_url_length_800_c500496(aws_s3, wifi_sniffer, wifi_access_point,
@@ -588,7 +589,7 @@ def test_wifi_sdk_https_fw_url_length_800_c500496(aws_s3, wifi_sniffer, wifi_acc
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_fw_url_length_1080_c500497(aws_s3, wifi_sniffer, wifi_access_point,
@@ -609,7 +610,7 @@ def test_wifi_sdk_https_fw_url_length_1080_c500497(aws_s3, wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
@@ -631,8 +632,7 @@ def test_wifi_sdk_https_M4_fw_url_length_1500_disable_http_url_c510789(aws_s3, w
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.deployed_25q4
@@ -654,7 +654,7 @@ def test_wifi_sdk_https_fw_url_length_2048_enable_http_url_c500498(aws_s3, wifi_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.deployed_25q4
@@ -704,7 +704,7 @@ def test_wifi_sdk_https_fw_url_length_2048_disable_http_url_c500499(aws_s3, wifi
         "ca_cert": ["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw", "clear_certs"])
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_combined_root_ca_c687580(aws_s3, wifi_sniffer, wifi_access_point,
@@ -754,7 +754,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_combined_root_ca_c687580(aws
         "ca_cert": ["intermediate-root-ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw","clear_certs"])
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_intermediate_root_ca_c687579(aws_s3, wifi_sniffer, wifi_access_point,
@@ -775,7 +775,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_intermediate_root_ca_c687579
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_30min_delay_after_connect_to_ap_c876840(aws_s3,
@@ -800,7 +800,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_30min_delay_after_connect_to
 
 
 @wifi_dut_marker_http_longer_url()
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.deployed_25q4
 def test_wifi_sdk_https_fw_url_length_1500_c501263(aws_s3,
@@ -822,7 +822,7 @@ def test_wifi_sdk_https_fw_url_length_1500_c501263(aws_s3,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_M4_fw_url_length_1080_enable_http_url_c510788(aws_s3, wifi_sniffer, wifi_access_point,
@@ -871,7 +871,7 @@ def test_wifi_sdk_https_M4_fw_url_length_1080_enable_http_url_c510788(aws_s3, wi
         "ca_cert": ["ca1-ca3_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw", "clear_certs"])
 @pytest.mark.config('aws_s3', s3={"use_accelerate_endpoint": True})
 def test_wifi_sdk_https_fw_upgrade_using_CA1_CA3_cert_c696374(aws_s3, wifi_sniffer, wifi_access_point,
@@ -902,7 +902,7 @@ def test_wifi_sdk_https_fw_upgrade_using_CA1_CA3_cert_c696374(aws_s3, wifi_sniff
                     | Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.HTTPLongerURL,
     },
 )
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 def test_wifi_sdk_https_fw_url_length_1024_c500495(aws_s3, wifi_sniffer, wifi_access_point,
                                                    wifi_dut, sl_collections, utf_constants):
@@ -922,7 +922,7 @@ def test_wifi_sdk_https_fw_url_length_1024_c500495(aws_s3, wifi_sniffer, wifi_ac
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})

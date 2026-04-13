@@ -191,13 +191,16 @@ class ThreadHttpOtaf(ThreadBase):
         else:
             self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                            host_name=self.host_ip, timeout=150)
-            self.wifi_dut.interfaces.wifi.reset()
-            time.sleep(30)
 
+            self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+            time.sleep(30)
+            self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
             self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-            self.wifi_dut.interfaces.wifi.init(load_certificate=False)
+            self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
             self.wifi_dut.interfaces.wifi.initialize_thread()
+            self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
             self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+
             self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
             logger().info(f"*** dut fw version after upgrade = {self.fw_version_after_upgrade} ***")
 
@@ -215,7 +218,7 @@ class ThreadHttpOtaf(ThreadBase):
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["clear_certs"])
@@ -226,6 +229,7 @@ def test_wifi_sdk_https_fw_upgrade_after_rejoin_failure_and_measure_time_c19766(
                                                                                 sl_collections):
     """This Test case is validating https Firmware update after rejoin failure"""
     try:
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         test_case = '19766'
         logger().info(" **** configuring the sniffer with access point channel **** ")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -249,11 +253,15 @@ def test_wifi_sdk_https_fw_upgrade_after_rejoin_failure_and_measure_time_c19766(
         ap_obj.start()
         ap_obj.wait_for_exit()
         fwup_obj.wait_for_exit()
-        wifi_dut.interfaces.wifi.reset()
+
+        wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = True
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-        wifi_dut.interfaces.wifi.init(load_certificate=True)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
         wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+
         logger().info("Again connecting and doing firmware upgrade after rejoin failure")
         fwup_obj.join_to_ap(set_rejoin=False)
         fwup_obj.http_server_start()
@@ -271,7 +279,7 @@ def test_wifi_sdk_https_fw_upgrade_after_rejoin_failure_and_measure_time_c19766(
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -282,6 +290,7 @@ def test_wifi_sdk_http_fw_upgrade_after_rejoin_failure_and_measure_time_c19788(h
                                                                                sl_collections):
     """This Test case is validating http Firmware update after rejoin failure"""
     try:
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         test_case = '19788'
         logger().info(" **** configuring the sniffer with access point channel **** ")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -305,11 +314,15 @@ def test_wifi_sdk_http_fw_upgrade_after_rejoin_failure_and_measure_time_c19788(h
         ap_obj.start()
         ap_obj.wait_for_exit()
         fwup_obj.wait_for_exit()
-        wifi_dut.interfaces.wifi.reset()
+
+        wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = True
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-        wifi_dut.interfaces.wifi.init(load_certificate=False)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
         wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+
         logger().info("Again connecting and doing firmware upgrade after rejoin failure")
         fwup_obj.join_to_ap(set_rejoin=False)
         fwup_obj.http_server_start()
@@ -327,7 +340,7 @@ def test_wifi_sdk_http_fw_upgrade_after_rejoin_failure_and_measure_time_c19788(h
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -339,6 +352,7 @@ def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584245(http_
     """Verify the HTTPS OTAF TA firmware upgrade functionality by loading
     certificate into index 2 after rejoin failure"""
     try:
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         test_case = '584245'
         logger().info(" **** configuring the sniffer with access point channel **** ")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -362,11 +376,15 @@ def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584245(http_
         ap_obj.start()
         ap_obj.wait_for_exit()
         fwup_obj.wait_for_exit()
-        wifi_dut.interfaces.wifi.reset()
+
+        wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = True
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-        wifi_dut.interfaces.wifi.init(load_certificate=False)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
         wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+
         logger().info("Again connecting and doing firmware upgrade after rejoin failure")
         fwup_obj.join_to_ap(set_rejoin=False)
         fwup_obj.http_server_start()
@@ -383,7 +401,7 @@ def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584245(http_
         switch.interfaces.pdu_switch.turn_on(delay=60)
 
 
-@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -395,6 +413,7 @@ def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584246(http_
     """Verify the HTTPS OTAF M4 firmware upgrade functionality by loading certificate into index 1 after rejoin
     failure"""
     try:
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         test_case = '584245'
         logger().info(" **** configuring the sniffer with access point channel **** ")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -418,11 +437,15 @@ def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584246(http_
         ap_obj.start()
         ap_obj.wait_for_exit()
         fwup_obj.wait_for_exit()
-        wifi_dut.interfaces.wifi.reset()
+
+        wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = True
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-        wifi_dut.interfaces.wifi.init(load_certificate=False)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
         wifi_dut.interfaces.wifi.initialize_thread()
+        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+
         logger().info("Again connecting and doing firmware upgrade after rejoin failure")
         fwup_obj.join_to_ap()
         fwup_obj.http_server_start()
