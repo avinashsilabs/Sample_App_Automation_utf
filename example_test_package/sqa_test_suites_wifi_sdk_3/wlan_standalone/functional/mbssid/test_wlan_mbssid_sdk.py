@@ -4708,6 +4708,7 @@ def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c219315(
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C535828')
 def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c535828(
         wifi_sniffer,
         wifi_access_point,
@@ -4834,6 +4835,7 @@ def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c535828(
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C535830')
 def test_wifi_sdk_mbssid_T_wpa2_psk_hidden_ssid_c535830(
         wifi_sniffer,
         wifi_access_point,
@@ -4934,6 +4936,7 @@ Check the connection with hidden MBSSID AP with WPA2 security enabled in AP"""
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C535831')
 def test_wifi_sdk_mbssid_T_NT_connect_disconnect_hidden_mode_c535831(
         wifi_sniffer,
         wifi_access_point,

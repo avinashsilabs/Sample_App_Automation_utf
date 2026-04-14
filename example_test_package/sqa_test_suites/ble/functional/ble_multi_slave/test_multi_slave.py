@@ -42,6 +42,7 @@ def logger():
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C19916')
 def test_ble_dual_role_3slaves_1master_conn_disconn_reconn_C19916(wifi_dut, ble_client, ble_clients, utf_constants):
     ble_client1 = ble_clients[0]
     ble_client2 = ble_clients[1]
@@ -160,6 +161,7 @@ def test_ble_dual_role_3slaves_1master_conn_disconn_reconn_C19916(wifi_dut, ble_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C19917')
 def test_ble_dual_role_1slave_1master_conn_disconn_reconn_C19917(ble_dut, ble_clients, bt_logs, utf_constants):
     remote_le_devices = 3
     assert len(ble_clients) >= remote_le_devices
@@ -266,6 +268,7 @@ def test_ble_dual_role_1slave_1master_conn_disconn_reconn_C19917(ble_dut, ble_cl
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.test_src_map_id('C19918')
 def test_ble_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_C19918(ble_dut, ble_clients, bt_logs):
     remote_le_devices = 3
     assert len(ble_clients) >= remote_le_devices
@@ -374,6 +377,7 @@ def test_ble_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_C19918(ble_
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.test_src_map_id('C19919')
 def test_ble_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_C19919(ble_dut, ble_clients, bt_logs):
     remote_le_devices = 3
     assert len(ble_clients) >= remote_le_devices
@@ -481,6 +485,7 @@ def test_ble_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_C19919(ble_
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.test_src_map_id('C19828')
 def test_ble_scan_in_busy_environment_C19827_C19828(ble_dut, ble_clients):
     remote_le_devices = 4
     assert len(ble_clients) >= remote_le_devices

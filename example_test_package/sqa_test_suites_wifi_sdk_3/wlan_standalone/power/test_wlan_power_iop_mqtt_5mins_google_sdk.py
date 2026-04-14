@@ -498,6 +498,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.wifi_access_point("static_ap")
+@pytest.mark.test_src_map_id('C402873')
 def test_wlan_standby_lis_int_1_with_mqtt_ka_5mins_C402873(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                           sl_collections, request, performance_data, mqtt_server,
                                                           custom_performance_fixture):
@@ -557,6 +558,7 @@ def test_wlan_standby_lis_int_1_with_mqtt_ka_5mins_C402873(firmware_loader, powe
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.wifi_access_point("static_ap")
+@pytest.mark.test_src_map_id('C402874')
 def test_wlan_standby_associated_listen_interval_C402874(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                sl_collections, dtim, request, performance_data,
                                                custom_performance_fixture):

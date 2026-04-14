@@ -623,6 +623,7 @@ class ULPing(ThreadBase):
 
     }
 )
+@pytest.mark.test_src_map_id('C401601')
 def test_wlan_ble_adv_128_twt_tcp_tx_c401601(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -665,6 +666,7 @@ def test_wlan_ble_adv_128_twt_tcp_tx_c401601(wifi_sniffer, wifi_access_point, wi
 
     }
 )
+@pytest.mark.test_src_map_id('C401602')
 def test_wlan_ble_adv_128_twt_tcp_rx_c401602(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -707,6 +709,7 @@ def test_wlan_ble_adv_128_twt_tcp_rx_c401602(wifi_sniffer, wifi_access_point, wi
 
     }
 )
+@pytest.mark.test_src_map_id('C401603')
 def test_wlan_ble_adv_128_twt_udp_tx_c401603(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -749,6 +752,7 @@ def test_wlan_ble_adv_128_twt_udp_tx_c401603(wifi_sniffer, wifi_access_point, wi
 
     }
 )
+@pytest.mark.test_src_map_id('C401604')
 def test_wlan_ble_adv_128_twt_udp_rx_c401604(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -790,6 +794,7 @@ def test_wlan_ble_adv_128_twt_udp_rx_c401604(wifi_sniffer, wifi_access_point, wi
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C401605')
 def test_wlan_ble_adv_128_twt_with_ssl_tx_ax_c401605(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, bt_dut,
                                                      utf_constants, request, sl_collections, ble_client, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -832,6 +837,7 @@ def test_wlan_ble_adv_128_twt_with_ssl_tx_ax_c401605(wifi_sniffer, wifi_access_p
 
     }
 )
+@pytest.mark.test_src_map_id('C401606')
 def test_wlan_ble_adv_128_twt_with_ssl_rx_ax_c401606(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, bt_dut,
                                                      utf_constants, request, sl_collections, ble_client, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -874,6 +880,7 @@ def test_wlan_ble_adv_128_twt_with_ssl_rx_ax_c401606(wifi_sniffer, wifi_access_p
 
     }
 )
+@pytest.mark.test_src_map_id('C401607')
 def test_wlan_ble_conn_128_twt_tcp_tx_c401607(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -916,6 +923,7 @@ def test_wlan_ble_conn_128_twt_tcp_tx_c401607(wifi_sniffer, wifi_access_point, w
 
     }
 )
+@pytest.mark.test_src_map_id('C401608')
 def test_wlan_ble_conn_128_twt_tcp_rx_c401608(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -958,6 +966,7 @@ def test_wlan_ble_conn_128_twt_tcp_rx_c401608(wifi_sniffer, wifi_access_point, w
 
     }
 )
+@pytest.mark.test_src_map_id('C401609')
 def test_wlan_ble_conn_128_twt_udp_tx_c401609(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1000,6 +1009,7 @@ def test_wlan_ble_conn_128_twt_udp_tx_c401609(wifi_sniffer, wifi_access_point, w
 
     }
 )
+@pytest.mark.test_src_map_id('C401610')
 def test_wlan_ble_conn_128_udp_twt_rx_c401610(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1041,6 +1051,7 @@ def test_wlan_ble_conn_128_udp_twt_rx_c401610(wifi_sniffer, wifi_access_point, w
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C401611')
 def test_wlan_ble_conn_128_twt_with_ssl_tx_ax_c401611(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, bt_dut,
                                                       utf_constants, request, sl_collections, ble_client, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -1083,6 +1094,7 @@ def test_wlan_ble_conn_128_twt_with_ssl_tx_ax_c401611(wifi_sniffer, wifi_access_
 
     }
 )
+@pytest.mark.test_src_map_id('C401612')
 def test_wlan_ble_conn_128_twt_with_ssl_rx_ax_c401612(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, bt_dut,
                                                       utf_constants, request, sl_collections, ble_client, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -1124,6 +1136,7 @@ def test_wlan_ble_conn_128_twt_with_ssl_rx_ax_c401612(wifi_sniffer, wifi_access_
 
     }
 )
+@pytest.mark.test_src_map_id('C401613')
 def test_wlan_ble_adv_128_tcp_tx_rx_c401613(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
                                            utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1193,6 +1206,7 @@ def test_wlan_ble_adv_128_tcp_tx_rx_c401613(wifi_sniffer, wifi_access_point, wif
 
     }
 )
+@pytest.mark.test_src_map_id('C401614')
 def test_wlan_ble_conn_128_tcp_tx_rx_c401614(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
                                            utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1263,6 +1277,7 @@ def test_wlan_ble_conn_128_tcp_tx_rx_c401614(wifi_sniffer, wifi_access_point, wi
 
     }
 )
+@pytest.mark.test_src_map_id('C401615')
 def test_wlan_ble_adv_128_udp_tx_rx_c401615(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
                                            utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1332,6 +1347,7 @@ def test_wlan_ble_adv_128_udp_tx_rx_c401615(wifi_sniffer, wifi_access_point, wif
 
     }
 )
+@pytest.mark.test_src_map_id('C401616')
 def test_wlan_ble_conn_128_udp_tx_rx_c401616(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients,
                                             utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1402,6 +1418,7 @@ def test_wlan_ble_conn_128_udp_tx_rx_c401616(wifi_sniffer, wifi_access_point, wi
 
     }
 )
+@pytest.mark.test_src_map_id('C401617')
 def test_wlan_ble_adv_128_with_ping_ul_dl_c401617(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
                                                  request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1454,6 +1471,7 @@ def test_wlan_ble_adv_128_with_ping_ul_dl_c401617(wifi_sniffer, wifi_access_poin
 
     }
 )
+@pytest.mark.test_src_map_id('C401618')
 def test_wlan_ble_conn_128_with_ping_ul_dl_c401618(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
                                                  request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1507,6 +1525,7 @@ def test_wlan_ble_conn_128_with_ping_ul_dl_c401618(wifi_sniffer, wifi_access_poi
 
     }
 )
+@pytest.mark.test_src_map_id('C401619')
 def test_wlan_ble_conn_data_tcp_tx_c401619(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                           protocol, utf_constants, request, sl_collections, ble_client, bt_dut, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1549,6 +1568,7 @@ def test_wlan_ble_conn_data_tcp_tx_c401619(wifi_sniffer, wifi_access_point, wifi
 
     }
 )
+@pytest.mark.test_src_map_id('C401620')
 def test_wlan_ble_conn_data_tcp_rx_c401620(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1591,6 +1611,7 @@ def test_wlan_ble_conn_data_tcp_rx_c401620(wifi_sniffer, wifi_access_point, wifi
 
     }
 )
+@pytest.mark.test_src_map_id('C401621')
 def test_wlan_ble_conn_data_udp_tx_c401621(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1633,6 +1654,7 @@ def test_wlan_ble_conn_data_udp_tx_c401621(wifi_sniffer, wifi_access_point, wifi
 
     }
 )
+@pytest.mark.test_src_map_id('C401622')
 def test_wlan_ble_conn_data_udp_rx_c401622(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1674,6 +1696,7 @@ def test_wlan_ble_conn_data_udp_rx_c401622(wifi_sniffer, wifi_access_point, wifi
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C401623')
 def test_wlan_ble_conn_data_with_ssl_tx_ax_c401623(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
                                                 request, sl_collections, ble_client, bt_dut, ssl_server, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1716,6 +1739,7 @@ def test_wlan_ble_conn_data_with_ssl_tx_ax_c401623(wifi_sniffer, wifi_access_poi
 
     }
 )
+@pytest.mark.test_src_map_id('C401624')
 def test_wlan_ble_conn_data_with_ssl_rx_ax_c401624(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
                                                 request, sl_collections, ble_client, bt_dut, ssl_server, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1758,6 +1782,7 @@ def test_wlan_ble_conn_data_with_ssl_rx_ax_c401624(wifi_sniffer, wifi_access_poi
 
     }
 )
+@pytest.mark.test_src_map_id('C401625')
 def test_wlan_ble_conn_data_phy2_tcp_tx_c401625(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                           protocol, utf_constants, request, sl_collections, ble_client, bt_dut, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1800,6 +1825,7 @@ def test_wlan_ble_conn_data_phy2_tcp_tx_c401625(wifi_sniffer, wifi_access_point,
 
     }
 )
+@pytest.mark.test_src_map_id('C401626')
 def test_wlan_ble_conn_data_phy2_tcp_rx_c401626(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1842,6 +1868,7 @@ def test_wlan_ble_conn_data_phy2_tcp_rx_c401626(wifi_sniffer, wifi_access_point,
 
     }
 )
+@pytest.mark.test_src_map_id('C401627')
 def test_wlan_ble_conn_data_phy2_udp_tx_c401627(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1884,6 +1911,7 @@ def test_wlan_ble_conn_data_phy2_udp_tx_c401627(wifi_sniffer, wifi_access_point,
 
     }
 )
+@pytest.mark.test_src_map_id('C401628')
 def test_wlan_ble_conn_data_phy2_udp_rx_c401628(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1925,6 +1953,7 @@ def test_wlan_ble_conn_data_phy2_udp_rx_c401628(wifi_sniffer, wifi_access_point,
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C401629')
 def test_wlan_ble_conn_data_phy2_ssl_tx_ax_c401629(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
                                                 request, sl_collections, ble_client, bt_dut, ssl_server, ble_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1967,6 +1996,7 @@ def test_wlan_ble_conn_data_phy2_ssl_tx_ax_c401629(wifi_sniffer, wifi_access_poi
 
     }
 )
+@pytest.mark.test_src_map_id('C401630')
 def test_wlan_ble_conn_data_phy2_ssl_rx_ax_c401630(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
                                                 request, sl_collections, ble_client, bt_dut, ssl_server, ble_dut):
     ping_count = utf_constants.get("ping_count")

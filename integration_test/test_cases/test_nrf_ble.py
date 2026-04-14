@@ -483,6 +483,7 @@ def test_peripheral_with_passcode_pairing(ble_client, nrf_ble_client):
         if connected:
             ble_client.interfaces.bluetooth.disconnect(ble_client_address)
 
+@pytest.mark.test_src_map_id('TC8552918573')
 def test_nrf_ble_client_adv_with_displayonly_and_ble_client_scan_connect_with_keyboardonly(ble_client, nrf_ble_client):
     nrf_ble_client.interfaces.bluetooth.set_security_params(passcode_pairing=True,
                                                             io_capabilities=NRFBLEIoCapabilities.DISPLAY_ONLY,
@@ -544,6 +545,7 @@ def test_nrf_ble_client_adv_with_displayonly_and_ble_client_scan_connect_with_ke
             ble_client.interfaces.bluetooth.disconnect(ble_client_address)
 
 
+@pytest.mark.test_src_map_id('TC4551785578')
 def test_nrf_ble_client_adv_with_keyboardonly_and_ble_client_scan_connect_with_displayonly(ble_client, nrf_ble_client):
     nrf_ble_client.interfaces.bluetooth.set_security_params(passcode_pairing=True,
                                                             io_capabilities=NRFBLEIoCapabilities.KEYBOARD_ONLY,
@@ -607,6 +609,7 @@ def test_nrf_ble_client_adv_with_keyboardonly_and_ble_client_scan_connect_with_d
 
 
 
+@pytest.mark.test_src_map_id('TC6749978584')
 def test_nrf_custom_service_and_characteristic_addition(
     ble_client, nrf_ble_client, logger
 ):

@@ -59,6 +59,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.test_src_map_id('C37543')
 def test_ble_set_local_name_more_than_16_bytes_c37543(ble_dut):
     """BLE set local name more than 16 bytes
     ble_dut:Fixture parameter to issue command in DUT
@@ -74,6 +75,7 @@ def test_ble_set_local_name_more_than_16_bytes_c37543(ble_dut):
                   f"{hex(SLStatus.SL_STATUS_BT_Invalid_NAME_LENGTH_WHEN_SET_TO_MORE_THAN_16_BYTES)}")
 
 
+@pytest.mark.test_src_map_id('C37544')
 def test_ble_set_local_name_5_8_10_11_13_16_bytes_c37544(ble_dut):
     """BLE set local name set 5,8,10,11,13, and 16 bytes.
     ble_dut:Fixture parameter to issue command in DUT
@@ -108,6 +110,7 @@ def test_ble_set_local_name_5_8_10_11_13_16_bytes_c37544(ble_dut):
 
 
 @pytest.mark.start_state("ble_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C37556')
 def test_ble_sdk_set_local_name_gt_16_special_characters_c37556(ble_dut, sl_collections):
     """
     Verify RSI_BLE is throwing error or not when we set local name more than 16 characters with only special characters.
@@ -123,6 +126,7 @@ def test_ble_sdk_set_local_name_gt_16_special_characters_c37556(ble_dut, sl_coll
 
 
 @pytest.mark.start_state("ble_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C37557')
 def test_ble_sdk_set_local_name_gt_16_chars_with_only_numbers_c37557(ble_dut, sl_collections):
     """
     Verify RSI_BLE is throwing error or not when we set local name more than 16 characters with only Numbers.
@@ -138,6 +142,7 @@ def test_ble_sdk_set_local_name_gt_16_chars_with_only_numbers_c37557(ble_dut, sl
 
 
 @pytest.mark.start_state("ble_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C37558')
 def test_ble_sdk_set_local_name_gt_16_chars_with_combination_of_alphanumeric_special_chars_c37558(ble_dut,
                                                                                                   sl_collections):
     """
@@ -155,6 +160,7 @@ def test_ble_sdk_set_local_name_gt_16_chars_with_combination_of_alphanumeric_spe
 
 
 @pytest.mark.start_state("ble_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C37559')
 def test_ble_sdk_set_local_name_with_combination_of_alphanumeric_special_chars_c37559(ble_dut, sl_collections):
     """
     Verify RSI_BLE is able to accept the local name when we set local name with combination of alphanumeric and special
@@ -173,6 +179,7 @@ def test_ble_sdk_set_local_name_with_combination_of_alphanumeric_special_chars_c
 
 
 @pytest.mark.start_state("ble_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C37560')
 def test_ble_sdk_set_local_name_with_only_special_chars_c37560(ble_dut, sl_collections):
     """
     Verify RSI_BLE is able to accept the local name when we set local name with ONLY special characters.
@@ -189,6 +196,7 @@ def test_ble_sdk_set_local_name_with_only_special_chars_c37560(ble_dut, sl_colle
         sl_collections.exception_handling(ble_dut, error)
 
 
+@pytest.mark.test_src_map_id('C147312')
 def test_ble_rejects_smp_pair_c147312(ble_dut, ble_client, sl_collections):
     logger().info("ble start in DUT")
     ble_dut_address = ble_dut.interfaces.wifi.ble_start(capability=0, set_smp=1, smp_pair=1)
@@ -242,6 +250,7 @@ def test_ble_rejects_smp_pair_c147312(ble_dut, ble_client, sl_collections):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.parametrize("Advertise_data", {"BLE_AUTOMATION", "BLE_ADVERTISE_DATA_C537625", "BLE_GAP", "BLE"})
+@pytest.mark.test_src_map_id('C537625')
 def test_ble_sdk_different_adv_data_C537625(ble_dut, ble_client, sl_collections, Advertise_data):
     try:
         set_local_name = "BLE_GAP_TESTPLAN"

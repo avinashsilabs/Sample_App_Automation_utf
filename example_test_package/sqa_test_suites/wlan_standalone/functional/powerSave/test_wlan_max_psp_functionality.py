@@ -1381,6 +1381,7 @@ class FilterPacket:
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40148')
 def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wifi_dut):
     listen_interval = 1100
     monitor_interval = 50
@@ -1481,6 +1482,7 @@ def test_maxpsp_listen_interval_12ms_c40148(wifi_sniffer, wifi_access_point, wif
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40149')
 def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     powersave_validation = True
@@ -1576,6 +1578,7 @@ def test_max_psp_dtim_3_c40149(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40150')
 def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     powersave_validation = True
@@ -1684,6 +1687,7 @@ def test_max_psp_dtim_4_c40150(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40152')
 def test_max_psp_lp_mode_c40152(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     listen_interval = 1200
     monitor_interval = 50
@@ -1787,6 +1791,7 @@ def test_max_psp_lp_mode_c40152(firmware_loader, wifi_sniffer, wifi_access_point
         Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
     },
 )
+@pytest.mark.test_src_map_id('C40153')
 def test_max_psp_ulp_c40153(wifi_sniffer, wifi_access_point, wifi_dut):
     time_delta_for_listen_interval = 1220
     ps_poll_time_delta_obj = FilterPacket()
@@ -1872,6 +1877,7 @@ def test_max_psp_ulp_c40153(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40154')
 def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wifi_dut):
     listen_interval = 1100
     ps_poll_time_delta_obj = FilterPacket()
@@ -1981,6 +1987,7 @@ def test_maxpsp_listen_interval_11ms_c40154(wifi_sniffer, wifi_access_point, wif
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40155')
 def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     powersave_validation = True
@@ -2080,6 +2087,7 @@ def test_max_psp_dtim_3_c40155(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40156')
 def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     powersave_validation = True
@@ -2187,6 +2195,7 @@ def test_max_psp_dtim_3_c40156(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40157')
 def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     ping_count = 60
@@ -2280,6 +2289,7 @@ def test_max_psp_enable_disable_c40157(wifi_sniffer, wifi_access_point, wifi_dut
 @pytest.mark.test_wlan_powersave_mode3_lp
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40160')
 def test_power_save3_c40160(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     ping_count = 60
@@ -2345,6 +2355,7 @@ def test_power_save3_c40160(firmware_loader, wifi_sniffer, wifi_access_point, wi
     },
 )
 @pytest.mark.test_wlan_powersave_mode3_ulp
+@pytest.mark.test_src_map_id('C40161')
 def test_power_save3_c40161(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     ping_count = 60
@@ -2413,6 +2424,7 @@ def test_power_save3_c40161(firmware_loader, wifi_sniffer, wifi_access_point, wi
 @pytest.mark.test_wlan_powersave_mode3_ulp
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40162')
 def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     listen_interval = 1100
     ps_poll_time_delta_obj = FilterPacket()
@@ -2520,6 +2532,7 @@ def test_power_save3_listen_interval_c40162(firmware_loader, wifi_sniffer, wifi_
 @pytest.mark.test_wlan_powersave_mode3_ulp
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40163')
 def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     powersave_validation = True
@@ -2614,6 +2627,7 @@ def test_power_save3_dtim_c40163(firmware_loader, wifi_sniffer, wifi_access_poin
 @pytest.mark.test_wlan_powersave_mode3_ulp
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40164')
 def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     powersave_validation = True
@@ -2722,6 +2736,7 @@ def test_power_save3_c40164(firmware_loader, wifi_sniffer, wifi_access_point, wi
 @pytest.mark.test_wlan_powersave_mode3_ulp
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C40165')
 def test_power_save3_enable_disable_c40165(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut):
     validation = True
     wifi_access_point.interfaces.wifi.config['beacon_interval'] = '100'

@@ -629,6 +629,7 @@ class BleThreadFunctionality(ThreadBase):
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C794051')
 def test_verify_ble_ae_adv_with_wlan_TCP_Tx_C794062_C794051(
         wifi_access_point,
         wifi_dut,
@@ -779,6 +780,7 @@ def test_verify_ble_ae_adv_with_wlan_TCP_Tx_C794062_C794051(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C794058')
 def test_verify_ae_adv_with_2_sets_wlan_TCP_Tx_C794069_C794058(
         wifi_access_point,
         wifi_dut,
@@ -922,6 +924,7 @@ def test_verify_ae_adv_with_2_sets_wlan_TCP_Tx_C794069_C794058(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C794055')
 def test_verify_ae_ble_conn_as_master_with_wlan_TCP_Tx_C794066_C794055(
         wifi_access_point,
         wifi_dut,

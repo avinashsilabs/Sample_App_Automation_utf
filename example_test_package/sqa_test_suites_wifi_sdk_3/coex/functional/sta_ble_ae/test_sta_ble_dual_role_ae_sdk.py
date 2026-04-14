@@ -926,6 +926,7 @@ class HTTPDownloadThread(WifiJoinThread, ThreadBase):
         },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C708887')
 def test_wifi_sdk_dual_role_and_ping_traffic_c708887(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter):
@@ -1092,6 +1093,7 @@ def test_wifi_sdk_dual_role_and_ping_traffic_c708887(
             },
         },
 )
+@pytest.mark.test_src_map_id('C708888')
 def test_wifi_sdk_dual_role_and_wlan_rejoin_c708888(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, switch):
@@ -1270,6 +1272,7 @@ def test_wifi_sdk_dual_role_and_wlan_rejoin_c708888(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768305')
 def test_wifi_sdk_dual_role_and_tcp_tx_traffic_c768305(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -1447,6 +1450,7 @@ def test_wifi_sdk_dual_role_and_tcp_tx_traffic_c768305(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
+@pytest.mark.test_src_map_id('C768306')
 def test_wifi_sdk_dual_role_and_http_download_c768306(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, http_server, index_path):
@@ -1618,6 +1622,7 @@ def test_wifi_sdk_dual_role_and_http_download_c768306(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768304')
 def test_wifi_sdk_two_peripheral_and_tcp_tx_traffic_c768304(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -1782,6 +1787,7 @@ def test_wifi_sdk_two_peripheral_and_tcp_tx_traffic_c768304(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768303')
 def test_wifi_sdk_two_central_and_tcp_tx_traffic_c768303(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -1949,6 +1955,7 @@ def test_wifi_sdk_two_central_and_tcp_tx_traffic_c768303(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768311')
 def test_wifi_sdk_dual_role_and_indication_and_tcp_tx_traffic_c768311(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -2122,6 +2129,7 @@ def test_wifi_sdk_dual_role_and_indication_and_tcp_tx_traffic_c768311(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768325')
 def test_wifi_sdk_dual_role_and_tcp_tx_traffic_c768325(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -2271,6 +2279,7 @@ def test_wifi_sdk_dual_role_and_tcp_tx_traffic_c768325(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768295')
 def test_wifi_sdk_two_central_and_tcp_tx_traffic_c768295(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -2420,6 +2429,7 @@ def test_wifi_sdk_two_central_and_tcp_tx_traffic_c768295(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768296')
 def test_wifi_sdk_two_peripheral_and_tcp_tx_traffic_c768296(
         ble_dut, remote_wiseconnect3s, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):

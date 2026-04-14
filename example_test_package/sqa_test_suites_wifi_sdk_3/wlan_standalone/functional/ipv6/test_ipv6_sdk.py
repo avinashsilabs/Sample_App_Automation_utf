@@ -768,6 +768,7 @@ def test_wifi_sdk_ping_to_DUT_linklocal_stateful_dhcpv6_configuration_C119403(fi
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C119361')
 def test_wifi_sdk_ping_of_dut_long_Hextet_stateful_dhcpv6_config_C119361(firmware_loader, wifi_dut, wifi_access_point,
                                                                          wifi_sniffer,
                                                                               sl_collections, request, sniffer_filter,
@@ -816,6 +817,7 @@ def test_wifi_sdk_ping_of_dut_long_Hextet_stateful_dhcpv6_config_C119361(firmwar
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C119360')
 def test_wifi_sdk_ping_of_dut_by_removing_the_lz_stateful_dhcpv6_C119360(firmware_loader, wifi_dut, wifi_access_point,
                                                                                        wifi_sniffer,
                                                                                        sl_collections, request,
@@ -865,6 +867,7 @@ def test_wifi_sdk_ping_of_dut_by_removing_the_lz_stateful_dhcpv6_C119360(firmwar
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537337')
 def test_wifi_sdk_ping_Dut_LLA_Static_IP_1s_stateful_C537337(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
                                                                               sl_collections, request, sniffer_filter,
                                                                               wifi_client):
@@ -914,6 +917,7 @@ def test_wifi_sdk_ping_Dut_LLA_Static_IP_1s_stateful_C537337(firmware_loader, wi
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537338')
 def test_wifi_sdk_ping_Dut_LLA_with_Static_IP_fs_statefl_DHCP_C537338(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
                                                                      sl_collections, request, sniffer_filter,
                                                                      wifi_client):
@@ -964,6 +968,7 @@ def test_wifi_sdk_ping_Dut_LLA_with_Static_IP_fs_statefl_DHCP_C537338(firmware_l
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C536194')
 def test_wifi_sdk_assigning_static_ipv6_all_0s_to_dut_C536194(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
                                                                 sl_collections, request, sniffer_filter,
                                                                 wifi_client):

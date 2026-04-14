@@ -484,6 +484,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510696')
 def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510696(firmware_loader, wifi_client, http_server,
                                                                               wifi_sniffer, wifi_access_point, wifi_dut,
                                                                               sl_collections, utf_constants):
@@ -509,6 +510,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510696(fi
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510697')
 def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510697(firmware_loader, wifi_client,
                                                                               http_server, wifi_sniffer,
                                                                               wifi_access_point, wifi_dut,
@@ -533,6 +535,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510697(fi
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @wifi_dut_marker(ca_cert=["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510698')
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_c510698(firmware_loader, aws_s3, wifi_sniffer, wifi_access_point,
                                                             wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server"""
@@ -555,6 +558,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c510698(firmware_loader, aws
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510699')
 def test_wifi_sdk_https_fw_upgrade_using_azure_server_c510699(firmware_loader, azure_blob, wifi_sniffer,
                                                               wifi_access_point, wifi_dut, sl_collections,
                                                               utf_constants):
@@ -579,6 +583,7 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_c510699(firmware_loader, a
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510701')
 def test_wifi_sdk_m4_fw_upgrade_in_sta_alone_mode_and_measure_time_c510701(firmware_loader, wifi_client, http_server,
                                                                            wifi_sniffer, wifi_access_point, wifi_dut,
                                                                            sl_collections, utf_constants):
@@ -604,6 +609,7 @@ def test_wifi_sdk_m4_fw_upgrade_in_sta_alone_mode_and_measure_time_c510701(firmw
 @wifi_dut_marker(ca_cert=["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510702')
 def test_wifi_sdk_m4_fw_upgrade_using_aws_server_c510702(firmware_loader, aws_s3, wifi_sniffer, wifi_access_point,
                                                          wifi_dut, sl_collections, utf_constants):
     """This Test case is validating m4 Firmware upgrade using aws server"""
@@ -626,6 +632,7 @@ def test_wifi_sdk_m4_fw_upgrade_using_aws_server_c510702(firmware_loader, aws_s3
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510708')
 def test_wifi_sdk_plain_fw_upgrade_negative_c510708(firmware_loader, wifi_client, http_server,
                                                     wifi_sniffer, wifi_access_point, wifi_dut,
                                                     sl_collections):
@@ -647,6 +654,7 @@ def test_wifi_sdk_plain_fw_upgrade_negative_c510708(firmware_loader, wifi_client
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510709')
 def test_wifi_sdk_corrupted_fw_upgrade_negative_c510709(firmware_loader, wifi_client, http_server,
                                                         wifi_sniffer, wifi_access_point, wifi_dut,
                                                         sl_collections):
@@ -669,6 +677,7 @@ def test_wifi_sdk_corrupted_fw_upgrade_negative_c510709(firmware_loader, wifi_cl
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510710')
 def test_wifi_sdk_fw_upgrade_negative_with_no_file_c510710(firmware_loader, wifi_client, http_server,
                                                            wifi_sniffer, wifi_access_point, wifi_dut,
                                                            sl_collections):
@@ -691,6 +700,7 @@ def test_wifi_sdk_fw_upgrade_negative_with_no_file_c510710(firmware_loader, wifi
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510711')
 def test_wifi_sdk_m4_plain_fw_upgrade_negative_c510711(firmware_loader, wifi_client,http_server,
                                                        wifi_sniffer, wifi_access_point, wifi_dut, sl_collections):
     """Verify the M4 firmware upgradation(HTTP OTAF) functionality Plain FW update application"""
@@ -712,6 +722,7 @@ def test_wifi_sdk_m4_plain_fw_upgrade_negative_c510711(firmware_loader, wifi_cli
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510712')
 def test_wifi_sdk_m4_corrupted_fw_upgrade_negative_c510712(firmware_loader, wifi_client, http_server,
                                                            wifi_sniffer, wifi_access_point, wifi_dut,
                                                            sl_collections):
@@ -734,6 +745,7 @@ def test_wifi_sdk_m4_corrupted_fw_upgrade_negative_c510712(firmware_loader, wifi
 @wifi_dut_marker()
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510713')
 def test_wifi_sdk_m4_fw_upgrade_negative_with_no_file_c510713(firmware_loader, wifi_client, http_server,
                                                               wifi_sniffer, wifi_access_point, wifi_dut,
                                                               sl_collections):
@@ -756,6 +768,7 @@ def test_wifi_sdk_m4_fw_upgrade_negative_with_no_file_c510713(firmware_loader, w
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510707')
 def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, http_server, wifi_sniffer, wifi_client, utf_constants,
                                                                wifi_access_point, wifi_dut, sl_collections):
     """This Test case is validating Firmware update overnight"""
@@ -777,6 +790,7 @@ def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, 
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510700')
 def test_wifi_sdk_tcp_fw_upgrade_with_full_security_mode_c510700(firmware_loader, wifi_client, sdk_server,
                                                                  wifi_access_point, wifi_dut, wifi_sniffer,
                                                                  sl_collections):
@@ -803,6 +817,7 @@ def test_wifi_sdk_tcp_fw_upgrade_with_full_security_mode_c510700(firmware_loader
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C510703')
 def test_wifi_sdk_tcp_fw_upgrade_with_full_security_mode_c510703(firmware_loader, wifi_client, sdk_server,
                                                                  wifi_access_point, wifi_dut, wifi_sniffer,
                                                                  sl_collections):
@@ -830,6 +845,7 @@ def test_wifi_sdk_tcp_fw_upgrade_with_full_security_mode_c510703(firmware_loader
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C510704')
 def test_wifi_sdk_http_combine_image_download_c510704(firmware_loader, wifi_client, http_server, wifi_sniffer,
                                                       wifi_access_point, wifi_dut, sl_collections, utf_constants):
     """Verify DUT functionality with combined image using OTA (HTTP OTAF example) with Full Security and sign enabled"""
@@ -854,6 +870,7 @@ def test_wifi_sdk_http_combine_image_download_c510704(firmware_loader, wifi_clie
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C510727')
 def test_wifi_sdk_tcp_combine_image_ta_secure_m4_plain_c510727(firmware_loader, wifi_client, sdk_server,
                                                                wifi_access_point, wifi_dut, wifi_sniffer,
                                                                sl_collections):
@@ -881,6 +898,7 @@ def test_wifi_sdk_tcp_combine_image_ta_secure_m4_plain_c510727(firmware_loader, 
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C540475')
 def test_wifi_sdk_tcp_fw_abort_with_full_security_mode_c540475(firmware_loader, wifi_client, sdk_server,
                                                                wifi_access_point, wifi_dut, wifi_sniffer,
                                                                sl_collections):
@@ -909,6 +927,7 @@ def test_wifi_sdk_tcp_fw_abort_with_full_security_mode_c540475(firmware_loader, 
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C540476')
 def test_wifi_sdk_tcp_fw_abort_m4_with_full_security_mode_c540476(firmware_loader, wifi_client, sdk_server,
                                                                   wifi_access_point, wifi_dut, wifi_sniffer,
                                                                   sl_collections, utf_constants):
@@ -937,6 +956,7 @@ def test_wifi_sdk_tcp_fw_abort_m4_with_full_security_mode_c540476(firmware_loade
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C540477')
 def test_wifi_sdk_tcp_fw_abort_with_combine_image_c540477(firmware_loader, wifi_client, sdk_server,
                                                           wifi_access_point, wifi_dut, wifi_sniffer,
                                                           sl_collections, utf_constants):
@@ -965,6 +985,7 @@ def test_wifi_sdk_tcp_fw_abort_with_combine_image_c540477(firmware_loader, wifi_
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C540495')
 def test_wifi_sdk_tcp_fw_upgrade_with_mic_encryption_sign_security_c540495(firmware_loader, wifi_client, sdk_server,
                                                                            wifi_access_point, wifi_dut, wifi_sniffer,
                                                                            sl_collections):
@@ -994,6 +1015,7 @@ def test_wifi_sdk_tcp_fw_upgrade_with_mic_encryption_sign_security_c540495(firmw
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C540496')
 def test_wifi_sdk_tcp_fw_upgrade_with_mic_only_security_mode_c540496(firmware_loader, wifi_client, sdk_server,
                                                                      wifi_access_point, wifi_dut, wifi_sniffer,
                                                                      sl_collections):
@@ -1021,6 +1043,7 @@ def test_wifi_sdk_tcp_fw_upgrade_with_mic_only_security_mode_c540496(firmware_lo
 @pytest.mark.config("wifi_access_point", wifi={"security": 'OPEN'})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C559884')
 def test_wifi_sdk_tcp_first_abort_then_upgrade_full_security_c559884(firmware_loader, wifi_client, sdk_server,
                                                                      wifi_access_point, wifi_dut, wifi_sniffer,
                                                                      sl_collections):
@@ -1048,6 +1071,7 @@ def test_wifi_sdk_tcp_first_abort_then_upgrade_full_security_c559884(firmware_lo
 @pytest.mark.config("sdk_server", server={"firmware_file_name": "combined_SiWG917-B.2.14.5.0.0.2_wrong_header.rps"})
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C510714')
 def test_wifi_sdk_tcp_combine_image_wrong_header_c510714(firmware_loader, wifi_client, sdk_server,
                                                          wifi_access_point, wifi_dut, wifi_sniffer,
                                                          sl_collections):

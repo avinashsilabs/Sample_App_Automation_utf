@@ -15,6 +15,7 @@ from utf.interfaces.wifi import WlanError
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC2117120739')
 def test_data_length_advertisement(wifi_dut, wifi_access_point, ble_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -93,6 +94,7 @@ def test_data_length_advertisement(wifi_dut, wifi_access_point, ble_client, logg
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC5000450744')
 def test_data_length_scanning(wifi_dut, wifi_access_point, ble_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(

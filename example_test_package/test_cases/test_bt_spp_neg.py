@@ -30,6 +30,7 @@ def logger():
     return get_logger(__name__)
 
 
+@pytest.mark.test_src_map_id('TC5107057783')
 def test_bt_spp_remote_spp_disconnect(wifi_dut, wifi_access_point, bt_client):
     send_text = "yAbdcUK0tAOSMhCT4d6U"
     recv_text = "9cDKpYOnOJeqYPsL987v"
@@ -99,6 +100,7 @@ def test_bt_spp_remote_spp_disconnect(wifi_dut, wifi_access_point, bt_client):
     logger().info(f"Scan in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC3841857788')
 def test_bt_spp_remote_unpair(wifi_dut, wifi_access_point, bt_client):
     send_text = "yAbdcUK0tAOSMhCT4d6U"
     recv_text = "9cDKpYOnOJeqYPsL987v"
@@ -176,6 +178,7 @@ def test_bt_spp_remote_unpair(wifi_dut, wifi_access_point, bt_client):
     logger().info(f"Scan in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC6443152793')
 def test_bt_spp_remote_reject(wifi_dut, wifi_access_point, bt_client):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point

@@ -209,6 +209,7 @@ class WifiJoinThread(ThreadBase):
 
     },
 )
+@pytest.mark.test_src_map_id('TC6886388147')
 def test_coex_ble_wlan_datatransfer(wifi_access_point, wifi_dut, wifi_client, ble_client, net_perf_client, protocol):
     monitor_interval = 50
 

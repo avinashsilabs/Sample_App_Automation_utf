@@ -270,6 +270,7 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_fe
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "channel": 8})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557348')
 def test_melco_sdk_scan_during_3rd_party_AP_off_c557348(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, wiseconnect_web, request):
     """
@@ -346,6 +347,7 @@ def test_melco_sdk_scan_during_3rd_party_AP_off_c557348(
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "channel": 8})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557349')
 def test_melco_sdk_scan_and_apmode_reconn_during_3rd_party_AP_off_c557349(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, wiseconnect_web, request):
     """
@@ -433,6 +435,7 @@ def test_melco_sdk_scan_and_apmode_reconn_during_3rd_party_AP_off_c557349(
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "channel": 8})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557350')
 def test_melco_sdk_scan_and_staut_conn_new_channel_c557350(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, wiseconnect_web, request):
     """
@@ -512,6 +515,7 @@ def test_melco_sdk_scan_and_staut_conn_new_channel_c557350(
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "channel": 8})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557351')
 def test_melco_sdk_scan_and_aput_restart_same_channel_c557351(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, wiseconnect_web, request):
     """

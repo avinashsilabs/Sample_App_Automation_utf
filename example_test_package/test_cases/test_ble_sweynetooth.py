@@ -21,6 +21,7 @@ from utf.utils.logger import get_logger
         "script": "Telink_key_size_overflow.py"
     },
 )
+@pytest.mark.test_src_map_id('TC6135181753')
 def test_ble_vulnerability_sniffer(
     wifi_dut, ble_client, wifi_access_point, ble_vulnerability_sniffer, logger
 ):

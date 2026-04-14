@@ -75,6 +75,7 @@ pytestmark = [
     )
 ]
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C19801')
 def test_wifi_sdk_ble_undirected_connectable_adv_c19801(wifi_dut, ble_client):
     """ Verify BLE Undirected Connectable advertisement """
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -118,6 +119,7 @@ def test_wifi_sdk_ble_undirected_connectable_adv_c19801(wifi_dut, ble_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19803')
 def test_wifi_sdk_ble_undirected_scannable_adv_c19803(wifi_dut, ble_client):
     """ Verify BLE Undirected Scannable advertisement"""
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -159,6 +161,7 @@ def test_wifi_sdk_ble_undirected_scannable_adv_c19803(wifi_dut, ble_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19804')
 def test_wifi_sdk_ble_undirected_non_connectable_adv_c19804(wifi_dut, ble_client):
     """ Verify BLE Undirected Non-Connectable Advertisement"""
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -202,6 +205,7 @@ def test_wifi_sdk_ble_undirected_non_connectable_adv_c19804(wifi_dut, ble_client
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C19850')
 def test_wifi_sdk_adv_with_name_of_length_16bytes_c19850(wifi_dut, ble_client):
     """Verify ble default set local name length 16-bytes"""
 
@@ -243,6 +247,7 @@ def test_wifi_sdk_adv_with_name_of_length_16bytes_c19850(wifi_dut, ble_client):
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+@pytest.mark.test_src_map_id('C71442')
 def test_wifi_sdk_set_localname_configured_with_17bytes_C71442(wifi_dut):
     """ Verify ble set local name configured with 17 bytes """
     try:
@@ -257,6 +262,7 @@ def test_wifi_sdk_set_localname_configured_with_17bytes_C71442(wifi_dut):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19849')
 def test_wifi_sdk_ble_init_deinit_for_multiple_iteration_C19849(wifi_dut, ble_client):
     """ Verify ble init, start advertise, powersave enable, powersave disable, stop advertise and ble deinit for 10
         iterations"""

@@ -89,6 +89,7 @@ def logger():
                     wifi={"dtim": 3, "beacon_interval": 100})
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19488')
 def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, net_perf_client, wifi_sniffer,
                                                                wifi_access_point, wifi_dut,
                                                                wifi_client,
@@ -156,6 +157,7 @@ def test_TCP_UDP_Tx_data_transfer_in_powersave_mode2_lp_C19488(firmware_loader, 
 @pytest.mark.test_wlan_powersave_lp
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19489')
 def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, net_perf_client, wifi_sniffer,
                                                                wifi_access_point, wifi_dut,
                                                                wifi_client,
@@ -230,6 +232,7 @@ def test_TCP_UDP_Rx_data_transfer_in_powersave_mode2_lp_C19489(firmware_loader, 
 @pytest.mark.test_wlan_powersave_lp
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19490')
 def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_C19490(firmware_loader, wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
                                                              number_of_pkts, test_run_time,
                                                              rs_helper, utf_constants):
@@ -370,6 +373,7 @@ def test_TCP_UDP_bidirectional_in_powersave_mode2_lp_C19490(firmware_loader, wif
 @pytest.mark.test_wlan_powersave_lp
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19502')
 def test_Pwrmode_8_with_LP_C19502(firmware_loader, wifi_sniffer, wifi_dut, wifi_access_point,
                                    utf_constants, rs_helper):
     testcase = "test_Pwrmode_8_with_ULP_C19502"
@@ -437,6 +441,7 @@ def test_Pwrmode_8_with_LP_C19502(firmware_loader, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.test_wlan_powersave_lp
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19499')
 def test_power_mode_switching_after_assoc_lp_C19499(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants):
 
         testcase = "test_power_mode_switching_after_assoc_lp_C19499"

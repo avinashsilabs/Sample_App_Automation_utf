@@ -8,7 +8,6 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xOperatingMode
 from utf.interfaces.wifi import WlanError
 from utf import UtfDatabaseProperties
 from utf_wiseconnect_3.tests.sl_status import SLStatus
-from utf_wiseconnect_3.tests.interfaces.sl_wifi_at_cli import SlNetInterfaceType, SlNetProfileId
 
 
 def logger():
@@ -39,6 +38,7 @@ def logger():
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778442')
 def test_at_wifi_sdk_all_channels_2_4ghz_with_channel_c778442(wifi_access_point, wifi_dut, wifi_sniffer, request,
                                                               sniffer_filter, sl_collections):
     '''Verify All Channels Scan in 2.4 Ghz by giving channel number as Zero'''
@@ -126,6 +126,7 @@ def test_at_wifi_sdk_all_channels_2_4ghz_with_channel_c778442(wifi_access_point,
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C778443')
 def test_at_wifi_sdk_all_chan_scan_with_channel_bitmap_c778443(wifi_access_point, wifi_dut, wifi_sniffer, request,
                                                                sniffer_filter, sl_collections):
     '''Verify All Channels Scan in 2.4 Ghz by setting all channels in channel bitmap field'''
@@ -206,6 +207,7 @@ def test_at_wifi_sdk_all_chan_scan_with_channel_bitmap_c778443(wifi_access_point
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C778444')
 def test_at_wifi_sdk_scan_selective_channel_1_3_6_11_c778444(wifi_access_point, wifi_dut, wifi_sniffer, request,
                                                              sniffer_filter, sl_collections):
     '''Verify Scan in selective channels (1, 3, 6, 11) by setting channel bitmap field'''
@@ -278,6 +280,7 @@ def test_at_wifi_sdk_scan_selective_channel_1_3_6_11_c778444(wifi_access_point, 
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C778445')
 def test_at_wifi_sdk_scan_check_rssi_c778445(wifi_dut, sl_collections):
     """This test case verifies that the scan results are sorted based on RSSI in descending order."""
     try:
@@ -316,6 +319,7 @@ def test_at_wifi_sdk_scan_check_rssi_c778445(wifi_dut, sl_collections):
     wifi={"oper_mode": Si91xOperatingMode.WiFiClient},
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C778446')
 def test_at_wifi_sdk_scan_max_aps_c778446(wifi_dut, sl_collections):
     """This test case verifies that the DUT can scan and return a maximum number of APs."""
     try:
@@ -351,6 +355,7 @@ def test_at_wifi_sdk_scan_max_aps_c778446(wifi_dut, sl_collections):
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config("wifi_access_point", wifi={"ssid": "test_ssid", "broadcast_ssid": False})
+@pytest.mark.test_src_map_id('C778447')
 def test_at_wifi_sdk_hidden_scan_all_channels_c778447(wifi_access_point, wifi_dut, wifi_sniffer, request,
                                                       sniffer_filter, sl_collections):
     """
@@ -425,6 +430,7 @@ def test_at_wifi_sdk_hidden_scan_all_channels_c778447(wifi_access_point, wifi_du
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config("wifi_access_point", wifi={"ssid": "test_ssid", "broadcast_ssid": False})
+@pytest.mark.test_src_map_id('C778448')
 def test_at_wifi_sdk_hidden_scan_selected_channels_1_5_9_c778448(wifi_access_point, wifi_dut, wifi_sniffer, request,
                                                                  sniffer_filter, sl_collections):
     """
@@ -497,6 +503,7 @@ def test_at_wifi_sdk_hidden_scan_selected_channels_1_5_9_c778448(wifi_access_poi
     wifi={"oper_mode": Si91xOperatingMode.WiFiClient},
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C778449')
 def test_at_wifi_sdk_scan_ssid_32bytes_c778449(wifi_access_point, wifi_dut, wifi_sniffer, request, sl_collections):
     """
     Verify scan with 32-byte SSID name.
@@ -550,6 +557,7 @@ def test_at_wifi_sdk_scan_ssid_32bytes_c778449(wifi_access_point, wifi_dut, wifi
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C778452')
 def test_at_wifi_sdk_scan_in_us_region_for_channel_12_13_14_c778452(wifi_dut, sl_collections):
     '''This test case verifies that the DUT does not scan channels 12, 13, and 14 in the US region.'''
     try:
@@ -596,6 +604,7 @@ def test_at_wifi_sdk_scan_in_us_region_for_channel_12_13_14_c778452(wifi_dut, sl
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778453')
 def test_at_wifi_sdk_scan_all_channels_in_europe_region_c778453(wifi_access_point, wifi_dut, wifi_sniffer, request,
                                                                 sniffer_filter, sl_collections):
     '''Verify scan functionality in all 2.4GHz channels in Europe region (1-13).'''
@@ -685,6 +694,7 @@ def test_at_wifi_sdk_scan_all_channels_in_europe_region_c778453(wifi_access_poin
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C778454')
 def test_at_wifi_sdk_scan_channel_14_in_europe_region_c778454(wifi_dut, sl_collections):
     '''This test case verifies that the DUT can scan channel 14 in the Europe region.'''
     try:
@@ -721,6 +731,7 @@ def test_at_wifi_sdk_scan_channel_14_in_europe_region_c778454(wifi_dut, sl_colle
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778455')
 def test_at_wifi_sdk_regional_scan_japan_2_4ghz_measure_time_c778455(wifi_dut, sl_collections):
     '''Verify regional scanning in Japan region in 2.4GHz band and measure scan time'''
     try:
@@ -768,6 +779,7 @@ def test_at_wifi_sdk_regional_scan_japan_2_4ghz_measure_time_c778455(wifi_dut, s
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778456')
 def test_at_wifi_sdk_scan_channels_12_13_14_japan_region_c778456(wifi_dut, sl_collections):
     """Do scan in channels 12,13,14 in JP region"""
     try:
@@ -801,6 +813,7 @@ def test_at_wifi_sdk_scan_channels_12_13_14_japan_region_c778456(wifi_dut, sl_co
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778457')
 def test_at_wifi_sdk_regional_scan_worldwide_2_4ghz_measure_time_c778457(wifi_dut, sl_collections):
     """Verify regional scanning in worldwide region in 2.4GHz band and measure scan time"""
     try:
@@ -848,6 +861,7 @@ def test_at_wifi_sdk_regional_scan_worldwide_2_4ghz_measure_time_c778457(wifi_du
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'Korea'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778458')
 def test_at_wifi_sdk_scan_all_channels_in_korea_region_c778458(wifi_access_point, wifi_dut, wifi_sniffer, request,
                                                                sniffer_filter, sl_collections):
     '''Verify scan functionality in all 2.4GHz channels in Korea region (1-14).'''
@@ -937,6 +951,7 @@ def test_at_wifi_sdk_scan_all_channels_in_korea_region_c778458(wifi_access_point
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778460')
 def test_at_wifi_sdk_scan_channel_14_in_korea_region_error_c778460(wifi_dut, sl_collections):
     """
     Verify DUT throws error or returns no results when scanning channel 14 in Korea region.
@@ -976,6 +991,7 @@ def test_at_wifi_sdk_scan_channel_14_in_korea_region_error_c778460(wifi_dut, sl_
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778462')
 def test_at_wifi_sdk_passive_scan_worldwide_2_4ghz_c778462(sl_collections, wifi_dut):
     """
     Verify passive scan in worldwide domain (channels 1-14).
@@ -1020,6 +1036,7 @@ def test_at_wifi_sdk_passive_scan_worldwide_2_4ghz_c778462(sl_collections, wifi_
     wifi={"oper_mode": Si91xOperatingMode.WiFiClient}
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778464')
 def test_at_wifi_sdk_scan_special_char_ssid_c778464(wifi_access_point, wifi_dut, wifi_sniffer, sniffer_filter,
                                                     sl_collections, request):
     """
@@ -1070,6 +1087,7 @@ def test_at_wifi_sdk_scan_special_char_ssid_c778464(wifi_access_point, wifi_dut,
     wifi={"oper_mode": Si91xOperatingMode.WiFiClient}
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C778465')
 def test_at_wifi_sdk_scan_with_high_beacon_length_c778465(wifi_access_point, wifi_dut, request, wifi_sniffer,
                                                           sniffer_filter, sl_collections):
     """Verify WLAN scan with a third-party AP configured with a high beacon length (max 512 bytes)."""
@@ -1141,6 +1159,7 @@ def test_at_wifi_sdk_scan_with_high_beacon_length_c778465(wifi_access_point, wif
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'US'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778466')
 def test_at_wifi_sdk_scan_extended_more_than_11_aps_c778466(wifi_sniffer, wifi_dut, request, sl_collections):
     """Verify whether DUT is able to scan more than 11 scan results when SL_WIFI_SCAN_TYPE_EXTENDED is enabled."""
     try:
@@ -1190,6 +1209,7 @@ def test_at_wifi_sdk_scan_extended_more_than_11_aps_c778466(wifi_sniffer, wifi_d
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778467')
 def test_at_wifi_sdk_connect_ap_after_11th_scan_result_extended_scan_c778467(sl_collections, wifi_dut, wifi_access_point):
     """
     Verify DUT can connect to the AP which comes after the 11th scan result
@@ -1242,6 +1262,7 @@ def test_at_wifi_sdk_connect_ap_after_11th_scan_result_extended_scan_c778467(sl_
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778468')
 def test_at_wifi_sdk_scan_all_channels_in_china_region_c778468(wifi_access_point, wifi_dut, wifi_sniffer, request,
                                                                sniffer_filter, sl_collections):
     '''Verify scan functionality in all 2.4GHz channels in China region (1-13).'''
@@ -1328,6 +1349,7 @@ def test_at_wifi_sdk_scan_all_channels_in_china_region_c778468(wifi_access_point
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778469')
 def test_at_wifi_sdk_scan_extended_more_than_11_aps_china_region_c778469(sl_collections, wifi_sniffer, wifi_dut,
                                                                          request):
     """
@@ -1380,6 +1402,7 @@ def test_at_wifi_sdk_scan_extended_more_than_11_aps_china_region_c778469(sl_coll
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778470')
 def test_at_wifi_sdk_connect_ap_after_11th_scan_result_extended_scan_china_region_c778470(sl_collections, wifi_dut, wifi_access_point):
     """
     Verify DUT can connect to the AP which comes after the 11th scan result
@@ -1432,6 +1455,7 @@ def test_at_wifi_sdk_connect_ap_after_11th_scan_result_extended_scan_china_regio
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'europe'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C778471')
 def test_at_wifi_sdk_verify_ds_param_on_channels_11_12_13_c778471(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                   sniffer_filter, request, sl_collections):
     """Verify DS parameter in probe request of DUT on channels 11, 12, 13."""

@@ -533,6 +533,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.test_src_map_id('C129918')
 def test_standby_power_twt_disable_without_ip_C129918(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -619,6 +620,7 @@ def test_standby_power_twt_disable_without_ip_C129918(firmware_loader, power_met
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.test_src_map_id('C129919')
 def test_standby_power_twt_disable_with_ip_C129919(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -704,6 +706,7 @@ def test_standby_power_twt_disable_with_ip_C129919(firmware_loader, power_meter,
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.test_src_map_id('C129920')
 def test_standby_power_twt_disable_tcp_ka_C129920(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -794,6 +797,7 @@ def test_standby_power_twt_disable_tcp_ka_C129920(firmware_loader, power_meter, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
 @pytest.mark.parametrize("keep_alive_time", [60])
+@pytest.mark.test_src_map_id('C129921')
 def test_standby_power_twt_disable_mqtt_ka_C129921(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, mqtt_server, keep_alive_time, wifi_sniffer, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -886,6 +890,7 @@ def test_standby_power_twt_disable_mqtt_ka_C129921(firmware_loader, power_meter,
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.test_src_map_id('C129922')
 def test_standby_power_twt_enable_without_ip_C129922(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -992,6 +997,7 @@ def test_standby_power_twt_enable_without_ip_C129922(firmware_loader, power_mete
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.test_src_map_id('C129923')
 def test_standby_power_twt_enable_with_ip_C129923(firmware_loader, power_meter, wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -1099,6 +1105,7 @@ def test_standby_power_twt_enable_with_ip_C129923(firmware_loader, power_meter, 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.test_src_map_id('C129924')
 def test_standby_power_twt_enable_tcp_ka_C129924(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -1208,6 +1215,7 @@ def test_standby_power_twt_enable_tcp_ka_C129924(firmware_loader, power_meter, w
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.test_src_map_id('C129927')
 def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -1314,6 +1322,7 @@ def test_standby_power_announced_twt_enable_without_ip_C129927(firmware_loader, 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.test_src_map_id('C129928')
 def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -1421,6 +1430,7 @@ def test_standby_power_announced_twt_enable_with_ip_C129928(firmware_loader, pow
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"] )
+@pytest.mark.test_src_map_id('C129929')
 def test_standby_power_announced_twt_enable_tcp_ka_C129929(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -1611,6 +1621,7 @@ def test_standby_power_twt_disable_mqtt_ka_C129921(firmware_loader, power_meter,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.parametrize("keep_alive_time", [60])
+@pytest.mark.test_src_map_id('C129925')
 def test_standby_power_twt_enable_mqtt_ka_C129925(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                   sl_collections, mqtt_server, keep_alive_time, wifi_sniffer, request):
     test_name = request.node.name
@@ -1704,6 +1715,7 @@ def test_standby_power_twt_enable_mqtt_ka_C129925(firmware_loader, power_meter, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.parametrize("keep_alive_time", [60])
+@pytest.mark.test_src_map_id('C129926')
 def test_standby_power_announced_twt_enable_mqtt_ka_C129926(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                             sl_collections, mqtt_server, keep_alive_time, wifi_sniffer,
                                                             request):
@@ -1808,6 +1820,7 @@ def test_standby_power_announced_twt_enable_mqtt_ka_C129926(firmware_loader, pow
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C129922')
 def test_standby_power_aws_pub_sub_with_twt_C129922(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                     sl_collections, wifi_sniffer, request, aws_iot_client,
                                                     utf_constants):
@@ -1919,6 +1932,7 @@ def test_standby_power_aws_pub_sub_with_twt_C129922(firmware_loader, power_meter
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C129950')
 def test_standby_power_twt_long_run_3_hours_C129950(firmware_loader, power_meter, wifi_dut, wifi_access_point,
                                                   wifi_sniffer, sl_collections, request, performance_data,
                                                   custom_performance_fixture, utf_constants):
@@ -2029,6 +2043,7 @@ def test_standby_power_twt_long_run_3_hours_C129950(firmware_loader, power_meter
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C129951')
 def test_standby_power_twt_long_run_with_udp_tx_C129951(firmware_loader, power_meter, wifi_dut, wifi_access_point,
                                                   sl_collections, request, performance_data, wifi_sniffer,
                                                   custom_performance_fixture, utf_constants, wifi_client,

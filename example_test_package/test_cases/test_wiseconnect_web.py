@@ -15,6 +15,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "disable_store_config"])
+@pytest.mark.test_src_map_id('TC1459377495')
 def test_wiseconnect_web(wifi_access_point, wifi_dut, wiseconnect_web, logger):
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()
@@ -36,6 +37,7 @@ def test_wiseconnect_web(wifi_access_point, wifi_dut, wiseconnect_web, logger):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "disable_store_config"])
+@pytest.mark.test_src_map_id('TC7059196502')
 def test_wiseconnect_web_firmware_upgrade(wifi_dut, wifi_access_point, wiseconnect_web, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -63,6 +65,7 @@ def test_wiseconnect_web_firmware_upgrade(wifi_dut, wifi_access_point, wiseconne
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "disable_store_config"])
+@pytest.mark.test_src_map_id('TC0769223507')
 def test_wiseconnect_web_with_screenshot(wifi_access_point, wifi_dut, wiseconnect_web, logger):
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
     wifi_dut.interfaces.wifi.start_ip()

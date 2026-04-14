@@ -174,6 +174,7 @@ pytestmark = [
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC19369')
 def test_wifi_sdk_receive_data_over_udp_socket_using_multicast_address_TC19369(
     wifi_sniffer,
     wifi_access_point,
@@ -307,6 +308,7 @@ def test_wifi_sdk_receive_data_over_udp_socket_using_multicast_address_TC19369(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC19370')
 def test_wifi_sdk_receive_data_over_multicast_address_which_is_removed_from_multicast_group_TC19370(
     wifi_sniffer,
     wifi_access_point,
@@ -449,6 +451,7 @@ def test_wifi_sdk_receive_data_over_multicast_address_which_is_removed_from_mult
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC19372')
 def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_SET_ALL_BIT_TC19372(
     wifi_sniffer,
     wifi_access_point,
@@ -595,6 +598,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_SET_ALL_BIT_
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC19373')
 def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_ALL_BIT_TC19373(
     wifi_sniffer,
     wifi_access_point,
@@ -741,6 +745,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_ALL_BI
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC19374')
 def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_BIT_TC19374(
     wifi_sniffer,
     wifi_access_point,
@@ -890,6 +895,7 @@ def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_CLEAR_BIT_TC
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC19375')
 def test_wifi_sdk_receive_data_using_multicast_filter_MULTICAST_MAC_ADD_BIT_TC19375(
     wifi_sniffer,
     wifi_access_point,

@@ -242,6 +242,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
+@pytest.mark.test_src_map_id('C19780')
 def test_zephyr_http_fw_upgrade_in_STA_alone_mode_secure_image_and_measure_time_c19780(firmware_loader, http_server,
                                                                                        wifi_sniffer,
                                                                                        wifi_access_point,
@@ -277,6 +278,7 @@ def test_zephyr_http_fw_upgrade_in_STA_alone_mode_secure_image_and_measure_time_
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C498660')
 def test_zephyr_http_m4_full_security_fw_upgrade_using_c498660(http_server, wifi_sniffer, wifi_access_point,
                                                                wifi_dut, request, wifi_client, zephyr_wifi_collections,
                                                                utf_constants):
@@ -311,6 +313,7 @@ def test_zephyr_http_m4_full_security_fw_upgrade_using_c498660(http_server, wifi
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
+@pytest.mark.test_src_map_id('C19780')
 def test_zephyr_http_otaf_neg_load_mic_only_image_when_full_sec_enabled_c19780(firmware_loader, http_server,
                                                                                wifi_sniffer,
                                                                                wifi_access_point,
@@ -352,6 +355,7 @@ def test_zephyr_http_otaf_neg_load_mic_only_image_when_full_sec_enabled_c19780(f
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
+@pytest.mark.test_src_map_id('C19780')
 def test_zephyr_non_secure_http_fw_upgrade_stress_c19780(firmware_loader, http_server,
                                                          wifi_sniffer,
                                                          wifi_access_point,

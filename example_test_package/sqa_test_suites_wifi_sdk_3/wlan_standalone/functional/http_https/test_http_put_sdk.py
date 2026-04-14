@@ -226,6 +226,7 @@ wan_gateway = "2001:db8:abcd:0012::1"
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19231')
 def test_wifi_sdk_http_put_functionality_c19231(http_server, wifi_dut, sniffer_filter,
                                                 wifi_sniffer, wifi_access_point, index_path,
                                                 sl_collections, http_client):
@@ -270,6 +271,7 @@ def test_wifi_sdk_http_put_functionality_c19231(http_server, wifi_dut, sniffer_f
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19232')
 def test_wifi_sdk_http_get_after_put_functionality_c19232(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
                                                           wifi_access_point, index_path, sl_collections, http_client):
     """verify whether DUT is sending error (0x0015) to host when we issue http get command after http put create
@@ -318,6 +320,7 @@ def test_wifi_sdk_http_get_after_put_functionality_c19232(http_server, wifi_dut,
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19233')
 def test_wifi_sdk_http_post_after_put_functionality_c19233(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
                                                            wifi_access_point, index_path, sl_collections, http_client):
     """verify whether DUT is sending error (0x10015) to host when we issue http post command after http put create
@@ -365,6 +368,7 @@ def test_wifi_sdk_http_post_after_put_functionality_c19233(http_server, wifi_dut
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19234')
 def test_wifi_sdk_http_put_functionality_with_exact_buffer_c19234(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
                                                                   wifi_access_point, index_path, sl_collections,
                                                                   http_client):
@@ -414,6 +418,7 @@ def test_wifi_sdk_http_put_functionality_with_exact_buffer_c19234(http_server, w
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C37541')
 def test_wifi_sdk_http_put_without_wlan_disconnect_c37541(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
                                                           wifi_access_point, index_path, http_client,
                                                           sl_collections):
@@ -447,6 +452,7 @@ def test_wifi_sdk_http_put_without_wlan_disconnect_c37541(http_server, wifi_dut,
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C37573')
 def test_wifi_sdk_http_put_without_extended_header_c37573(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
                                                           wifi_access_point, index_path, http_client,
                                                           sl_collections):
@@ -509,6 +515,7 @@ def test_wifi_sdk_http_put_without_extended_header_c37573(http_server, wifi_dut,
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537908')
 def test_wifi_sdk_http_put_with_ipv6_stateful_c537908(firmware_loader, http_server, wifi_dut, http_client,
                                                       wifi_access_point, wifi_sniffer, sl_collections, sniffer_filter,
                                                       wifi_client):
@@ -545,6 +552,7 @@ def test_wifi_sdk_http_put_with_ipv6_stateful_c537908(firmware_loader, http_serv
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C37576')
 def test_wifi_sdk_https_put_functionality_c37576(http_server, wifi_dut, http_client, wifi_access_point, wifi_sniffer,
                                                  sl_collections, sniffer_filter, wifi_client, index_path):
     """HTTPs PUT Functionality when the extended Header is not provided"""
@@ -579,6 +587,7 @@ def test_wifi_sdk_https_put_functionality_c37576(http_server, wifi_dut, http_cli
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476928')
 def test_wifi_sdk_https_put_without_wlan_disconnect_c476928(http_server, wifi_dut, sniffer_filter, wifi_sniffer,
                                                             wifi_access_point, index_path, http_client,
                                                             sl_collections):

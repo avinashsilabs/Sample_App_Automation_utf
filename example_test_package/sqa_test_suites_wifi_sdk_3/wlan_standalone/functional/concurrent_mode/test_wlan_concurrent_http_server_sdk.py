@@ -200,6 +200,7 @@ class AccessDUTAPage(ThreadBase):
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C547020')
 def test_wifi_sdk_verify_conc_http_server_c547020(sl_collections, wifi_dut, wifi_client, channel, wifi_sniffer,
                                                   sniffer_filter, http_client):
     """
@@ -272,6 +273,7 @@ def test_wifi_sdk_verify_conc_http_server_c547020(sl_collections, wifi_dut, wifi
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C547021')
 def test_wifi_sdk_verify_conc_http_webpage_c547021(sl_collections, wifi_dut, wifi_client, channel, wifi_sniffer,
                                                    sniffer_filter, wifi_access_point, wiseconnect_web):
     """
@@ -346,6 +348,7 @@ def test_wifi_sdk_verify_conc_http_webpage_c547021(sl_collections, wifi_dut, wif
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C547022')
 def test_wifi_sdk_verify_conc_http_webpage_incorrect_ssid_c547022(sl_collections, wifi_dut, wifi_client, channel,
                                                                   sniffer_filter, wifi_access_point, wiseconnect_web,
                                                                   wifi_sniffer):
@@ -432,6 +435,7 @@ def test_wifi_sdk_verify_conc_http_webpage_incorrect_ssid_c547022(sl_collections
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C547023')
 def test_wifi_sdk_verify_conc_http_webpage_with_tcp_tx_c547023(sl_collections, wifi_dut, wifi_client, channel,
                                                                remote_socket, sniffer_filter, wifi_access_point,
                                                                wiseconnect_web, wifi_sniffer):
@@ -529,6 +533,7 @@ def test_wifi_sdk_verify_conc_http_webpage_with_tcp_tx_c547023(sl_collections, w
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C547024')
 def test_wifi_sdk_verify_conc_http_webpage_with_sta_tcp_rx_c547024(sl_collections, wifi_dut, wifi_client, channel,
                                                                remote_socket, wifi_access_point, wiseconnect_web, wifi_sniffer, http_client):
 
@@ -621,6 +626,7 @@ def test_wifi_sdk_verify_conc_http_webpage_with_sta_tcp_rx_c547024(sl_collection
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C569445')
 def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_rx_interface_c569445(sl_collections, wifi_dut, wifi_client, channel,
                                                                             remote_socket, wifi_access_point, wiseconnect_web, wifi_sniffer, http_client):
     """
@@ -715,6 +721,7 @@ def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_rx_interface_c569445(sl_c
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C569448')
 def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_tx_c569448(sl_collections, wifi_dut, wifi_client, channel,
                                                                   remote_socket, sniffer_filter, wifi_access_point,
                                                                   wiseconnect_web, wifi_sniffer):
@@ -820,6 +827,7 @@ def test_wifi_sdk_verify_conc_http_webpage_with_ap_tcp_tx_c569448(sl_collections
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.check3
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC4543785969')
 def test_wifi_sdk_verify_conc_http_server_c547025_with_stop_start_ap(sl_collections, wifi_dut, wifi_client, channel,
                                                                      wifi_sniffer,
                                                                      sniffer_filter, http_client):

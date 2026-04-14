@@ -637,6 +637,7 @@ def remote_wiseconnect3_config():
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C557352')
 def test_wifi_melco_sdk_ipv4_ipv6_assignment_C557352(wifi_dut, wifi_access_point,
                                                      wifi_sniffer,
                                                      sl_collections, request,
@@ -706,6 +707,7 @@ def test_wifi_melco_sdk_ipv4_ipv6_assignment_C557352(wifi_dut, wifi_access_point
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C557353')
 def test_wifi_melco_sdk_ipv4_tcp_tx_C557353(wifi_dut, wifi_access_point,
                                             wifi_sniffer,
                                             sl_collections,
@@ -797,6 +799,7 @@ def test_wifi_melco_sdk_ipv4_tcp_tx_C557353(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C557359')
 def test_wifi_melco_sdk_ipv4_tcp_tx_C557359(wifi_dut, wifi_access_point,
                                             wifi_sniffer,
                                             sl_collections,
@@ -879,6 +882,7 @@ def test_wifi_melco_sdk_ipv4_tcp_tx_C557359(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.test_src_map_id('C557360')
 def test_wifi_melco_sdk_http_client_ipv4_ipv6_C557360(wifi_dut, wifi_access_point,
                                                       wifi_sniffer,
                                                       sl_collections, request,
@@ -978,6 +982,7 @@ def test_wifi_melco_sdk_http_client_ipv4_ipv6_C557360(wifi_dut, wifi_access_poin
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.test_src_map_id('C557361')
 def test_wifi_melco_sdk_https_client_ipv4_ipv6_C557361(wifi_dut, wifi_access_point,
                                                        wifi_sniffer,
                                                        sl_collections, request,
@@ -1077,6 +1082,7 @@ def test_wifi_melco_sdk_https_client_ipv4_ipv6_C557361(wifi_dut, wifi_access_poi
 @pytest.mark.config("secondary_net_perf_client", net_perf={"device": {"TCP": {"port": 5201, "data_len": 1460},
                                                                       "UDP": {"port": 5202, "data_len": 1460}}})
 
+@pytest.mark.test_src_map_id('C557363')
 def test_wifi_melco_sdk_embedded_mqtt_ssl_ipv4_ipv6_C557363(wifi_dut, wifi_access_point,
                                                       wifi_sniffer,
                                                       sl_collections, request,
@@ -1205,6 +1211,7 @@ def test_wifi_melco_sdk_embedded_mqtt_ssl_ipv4_ipv6_C557363(wifi_dut, wifi_acces
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C557367')
 def test_wifi_melco_sdk_ipv4_tcp_tx_5s_int_ipv6_ping_C557367(wifi_dut, wifi_access_point,
                                                              wifi_sniffer,
                                                              sl_collections, request,
@@ -1285,6 +1292,7 @@ def test_wifi_melco_sdk_ipv4_tcp_tx_5s_int_ipv6_ping_C557367(wifi_dut, wifi_acce
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C557368')
 def test_wifi_melco_sdk_ipv4_tcp_rx_5s_int_ipv6_ping_C557368(wifi_dut, wifi_access_point,
                                                              wifi_sniffer,
                                                              sl_collections, request,
@@ -1365,6 +1373,7 @@ def test_wifi_melco_sdk_ipv4_tcp_rx_5s_int_ipv6_ping_C557368(wifi_dut, wifi_acce
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C557369')
 def test_wifi_melco_sdk_ipv4_tcp_tx_ipv6_ping_C557369(wifi_dut, wifi_access_point,
                                                              wifi_sniffer,
                                                              sl_collections, request,
@@ -1442,6 +1451,7 @@ def test_wifi_melco_sdk_ipv4_tcp_tx_ipv6_ping_C557369(wifi_dut, wifi_access_poin
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C557370')
 def test_wifi_melco_sdk_static_ipv4_ipv6_C557370(wifi_dut, wifi_access_point,
                                                  wifi_sniffer,
                                                  sl_collections, request,
@@ -1519,6 +1529,7 @@ def test_wifi_melco_sdk_static_ipv4_ipv6_C557370(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C557364')
 def test_wifi_melco_sdk_ipv4_ipv6_ip_change_notificaton_C557364(wifi_dut, wifi_access_point,
                                                      wifi_sniffer,
                                                      sl_collections, request,

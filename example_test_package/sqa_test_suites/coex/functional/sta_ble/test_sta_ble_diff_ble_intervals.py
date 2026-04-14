@@ -431,6 +431,7 @@ class ScanThread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20164')
 def test_Wifi_scan_BLE_AI_20ms_C20164(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_Wifi_scan_BLE_AI_20ms_C20164"
     logger().info(f"testcase : test_Wifi_scan_BLE_AI_20ms_C20164")
@@ -472,6 +473,7 @@ def test_Wifi_scan_BLE_AI_20ms_C20164(wifi_sniffer, wifi_access_point, wifi_dut,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20165')
 def test_AP_connection_BLE_AI_20ms_C20165(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_AP_connection_BLE_AI_20ms_C20165"
     logger().info("testcase : test_AP_connection_BLE_AI_20ms_C20165")
@@ -514,6 +516,7 @@ def test_AP_connection_BLE_AI_20ms_C20165(wifi_sniffer, wifi_access_point, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20166')
 def test_Wifi_Data_BLE_AI_20ms_C20166(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                       net_perf_client, ble_client, protocol):
     testcase = "test_Wifi_Data_BLE_AI_20ms_C20166"
@@ -556,6 +559,7 @@ def test_Wifi_Data_BLE_AI_20ms_C20166(wifi_sniffer, wifi_access_point, wifi_dut,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20167')
 def test_Wifi_scan_BLE_AI_10240ms_C20167(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_Wifi_scan_BLE_AI_10240ms_C20167"
     logger().info("testcase : test_Wifi_scan_BLE_AI_10240ms_C20167")
@@ -597,6 +601,7 @@ def test_Wifi_scan_BLE_AI_10240ms_C20167(wifi_sniffer, wifi_access_point, wifi_d
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20168')
 def test_AP_connection_BLE_AI_10240ms_C20168(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_AP_connection_BLE_AI_10240ms_C20168"
     logger().info("testcase : test_AP_connection_BLE_AI_10240ms_C20168")
@@ -640,6 +645,7 @@ def test_AP_connection_BLE_AI_10240ms_C20168(wifi_sniffer, wifi_access_point, wi
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C20169')
 def test_Wifi_Data_BLE_AI_10240ms_C20169(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, \
                                          net_perf_client, protocol, ble_client):
     testcase = "test_Wifi_Data_BLE_AI_10240ms_C20169"
@@ -687,6 +693,7 @@ def test_Wifi_Data_BLE_AI_10240ms_C20169(wifi_sniffer, wifi_access_point, wifi_d
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20176')
 def test_Wifi_http_dwnld_BLE_AI_20ms_C20176(wifi_sniffer, http_server, wifi_access_point, wifi_dut, \
                                             ble_client, index_path):
     testcase = "test_Wifi_http_dwnld_BLE_AI_20ms_C20176"
@@ -734,6 +741,7 @@ def test_Wifi_http_dwnld_BLE_AI_20ms_C20176(wifi_sniffer, http_server, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20177')
 def test_Wifi_http_dwnld_BLE_AI_10240ms_C20177(wifi_sniffer, http_server, wifi_access_point, wifi_dut, ble_client,
                                                index_path):
     testcase = "test_Wifi_http_dwnld_BLE_AI_10240ms_C20177"
@@ -776,6 +784,7 @@ def test_Wifi_http_dwnld_BLE_AI_10240ms_C20177(wifi_sniffer, http_server, wifi_a
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20173')
 def test_Wifi_scan_BLE_SI_10240ms_SW_3440ms_C20173(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_Wifi_scan_BLE_SI_10240ms_SW_3440ms_C20173"
     logger().info("testcase : test_Wifi_scan_BLE_SI_10240ms_SW_3440ms_C20173")
@@ -816,6 +825,7 @@ def test_Wifi_scan_BLE_SI_10240ms_SW_3440ms_C20173(wifi_sniffer, wifi_access_poi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20174')
 def test_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174"
     logger().info("testcase : test_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174")
@@ -858,6 +868,7 @@ def test_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(wifi_sniffer, wifi_access_point
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20175')
 def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, \
                                                    net_perf_client, protocol, ble_client):
     testcase = "test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175"
@@ -903,6 +914,7 @@ def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(wifi_sniffer, wifi_access_poi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20179')
 def test_Wifi_http_dwnld_BLE_SI_10240ms_SW_3440ms_C20179(wifi_sniffer, http_server, wifi_access_point, wifi_dut,
                                                          ble_client, index_path):
     testcase = "test_Wifi_http_dwnld_BLE_SI_10240ms_SW_3440ms_C20179"
@@ -946,6 +958,7 @@ def test_Wifi_http_dwnld_BLE_SI_10240ms_SW_3440ms_C20179(wifi_sniffer, http_serv
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20170')
 def test_Wifi_scan_BLE_SI_7point5ms_SW_2point5ms_C20170(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_Wifi_scan_BLE_SI_7point5ms_SW_2point5ms_C20170"
     logger().info("testcase : test_Wifi_scan_BLE_SI_7point5ms_SW_2point5ms_C20170")
@@ -986,6 +999,7 @@ def test_Wifi_scan_BLE_SI_7point5ms_SW_2point5ms_C20170(wifi_sniffer, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20171')
 def test_AP_conn_BLE_SI_7point5ms_SW_2point5ms_C20171(wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_AP_conn_BLE_SI_7point5ms_SW_2point5ms_C20171"
     logger().info("testcase : test_AP_conn_BLE_SI_7point5ms_SW_2point5ms_C20171")
@@ -1028,6 +1042,7 @@ def test_AP_conn_BLE_SI_7point5ms_SW_2point5ms_C20171(wifi_sniffer, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20172')
 def test_Wifi_Data_BLE_SI_7point5ms_SW_2point5ms_C20172(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, \
                                                         net_perf_client, protocol, ble_client):
     testcase = "test_Wifi_Data_BLE_SI_7point5ms_SW_2point5ms_C20172"
@@ -1073,6 +1088,7 @@ def test_Wifi_Data_BLE_SI_7point5ms_SW_2point5ms_C20172(wifi_sniffer, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20178')
 def test_Wifi_http_dwnld_BLE_SI_7point5ms_SW_2point5ms_C20178(wifi_sniffer, http_server, wifi_access_point, wifi_dut,
                                                               ble_client, index_path):
     testcase = "test_Wifi_http_dwnld_BLE_SI_7point5ms_SW_2point5ms_C20178"
@@ -1118,6 +1134,7 @@ def test_Wifi_http_dwnld_BLE_SI_7point5ms_SW_2point5ms_C20178(wifi_sniffer, http
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_socket", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20180')
 def test_sta_ble_slave_latency_with_aggressive_anchorpoints_C20180(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                    ble_client, http_server, index_path):
     testcase = "test_sta_ble_slave_latency_with_aggressive_anchorpoints_C20180"
@@ -1163,6 +1180,7 @@ def test_sta_ble_slave_latency_with_aggressive_anchorpoints_C20180(wifi_sniffer,
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_socket", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20181')
 def test_sta_ble_slave_latency_with_relaxed_anchorpoints_C20181(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                 ble_client, index_path, http_server):
     testcase = "test_sta_ble_slave_latency_with_relaxed_anchorpoints_C20181"

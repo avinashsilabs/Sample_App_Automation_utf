@@ -120,6 +120,7 @@ pytestmark=[
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663355')
 def test_ble_sdk_undirected_non_connectable_adv_C663355(ble_sniffer, ble_dut, sl_collections):
     """
     Configure DUT in Slave and verify connectivity with Undirected non-connectable devices
@@ -137,6 +138,7 @@ def test_ble_sdk_undirected_non_connectable_adv_C663355(ble_sniffer, ble_dut, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663377')
 def test_ble_sdk_undirected_connectable_min_int_adv_C663377(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with Undirected connectable devices
@@ -155,6 +157,7 @@ def test_ble_sdk_undirected_connectable_min_int_adv_C663377(ble_dut, sl_collecti
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663378')
 def test_ble_sdk_directed_connectable_min_int_adv_C663378(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with directed connectable devices
@@ -173,6 +176,7 @@ def test_ble_sdk_directed_connectable_min_int_adv_C663378(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663379')
 def test_ble_sdk_undirected_scannable_min_int_adv_C663379(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with Undirected scannable devices
@@ -191,6 +195,7 @@ def test_ble_sdk_undirected_scannable_min_int_adv_C663379(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663380')
 def test_ble_sdk_undirected_non_connectable_min_int_adv_C663380(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with Undirected non-connectable devices
@@ -209,6 +214,7 @@ def test_ble_sdk_undirected_non_connectable_min_int_adv_C663380(ble_dut, sl_coll
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663381')
 def test_ble_sdk_undirected_connectable_max_int_adv_C663381(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with Undirected connectable devices
@@ -227,6 +233,7 @@ def test_ble_sdk_undirected_connectable_max_int_adv_C663381(ble_dut, sl_collecti
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663382')
 def test_ble_sdk_directed_connectable_max_int_adv_C663382(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with directed connectable devices
@@ -245,6 +252,7 @@ def test_ble_sdk_directed_connectable_max_int_adv_C663382(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663383')
 def test_ble_sdk_undirected_scannable_max_int_adv_C663383(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with undirected scannable devices
@@ -263,6 +271,7 @@ def test_ble_sdk_undirected_scannable_max_int_adv_C663383(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663384')
 def test_ble_sdk_undirected_non_connectable_max_int_adv_C663384(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with Undirected non connectable devices
@@ -281,6 +290,7 @@ def test_ble_sdk_undirected_non_connectable_max_int_adv_C663384(ble_dut, sl_coll
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663385')
 def test_ble_sdk_undirected_connectable_max_min_int_adv_C663385(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with Undirected connectable devices
@@ -299,6 +309,7 @@ def test_ble_sdk_undirected_connectable_max_min_int_adv_C663385(ble_dut, sl_coll
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663386')
 def test_ble_sdk_directed_connectable_max_min_int_adv_C663386(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with directed connectable devices
@@ -317,6 +328,7 @@ def test_ble_sdk_directed_connectable_max_min_int_adv_C663386(ble_dut, sl_collec
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663387')
 def test_ble_sdk_undirected_scannable_max_min_int_adv_C663387(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with undirected scannable devices
@@ -335,6 +347,7 @@ def test_ble_sdk_undirected_scannable_max_min_int_adv_C663387(ble_dut, sl_collec
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663388')
 def test_ble_sdk_undirected_non_connectable_max_min_int_adv_C663388(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with Undirected non-connectable devices
@@ -353,6 +366,7 @@ def test_ble_sdk_undirected_non_connectable_max_min_int_adv_C663388(ble_dut, sl_
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663389')
 def test_ble_sdk_undirected_connectable_random_addr_C663389(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with Undirected connectable devices
@@ -371,6 +385,7 @@ def test_ble_sdk_undirected_connectable_random_addr_C663389(ble_dut, sl_collecti
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663390')
 def test_ble_sdk_directed_connectable_random_addr_C663390(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with directed connectable devices
@@ -389,6 +404,7 @@ def test_ble_sdk_directed_connectable_random_addr_C663390(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663391')
 def test_ble_sdk_undirected_scannable_random_addr_C663391(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with undirected scannable devices
@@ -407,6 +423,7 @@ def test_ble_sdk_undirected_scannable_random_addr_C663391(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663392')
 def test_ble_sdk_undirected_non_connectable_random_addr_adv_C663392(ble_dut, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with Undirected non-connectable devices
@@ -424,6 +441,7 @@ def test_ble_sdk_undirected_non_connectable_random_addr_adv_C663392(ble_dut, sl_
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C219367')
 def test_start_stop_adv_clear_resolve_list_C219367(ble_dut, sl_collections):
     """ Verify the BLE start advertising, stop advertising and clear resolve list api in loop for 1 minutes"""
     logger().info("Initiate ble service in DUT")

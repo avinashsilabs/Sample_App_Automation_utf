@@ -359,6 +359,7 @@ class ble_notify(WLanThread):
                         "ble": {"count": 1, "stack_len": 2048, "priority": 8}, }
     }
 )
+@pytest.mark.test_src_map_id('C401901')
 def test_BLE_WLAN_IPV6_TCP_TX_C401901(
         firmware_loader,
         wifi_sniffer,
@@ -439,6 +440,7 @@ def test_BLE_WLAN_IPV6_TCP_TX_C401901(
 
     }
 )
+@pytest.mark.test_src_map_id('C401902')
 def test_BLE_WLAN_IPV6_TCP_RX_C401902(
         firmware_loader,
         wifi_sniffer,
@@ -519,6 +521,7 @@ def test_BLE_WLAN_IPV6_TCP_RX_C401902(
                         "ble": {"count": 1, "stack_len": 2048, "priority": 8}, }
     }
 )
+@pytest.mark.test_src_map_id('C401903')
 def test_BLE_WLAN_IPV6_UDP_TX_C401903(
         firmware_loader,
         wifi_sniffer,
@@ -599,6 +602,7 @@ def test_BLE_WLAN_IPV6_UDP_TX_C401903(
 
     }
 )
+@pytest.mark.test_src_map_id('C401904')
 def test_BLE_WLAN_IPV6_UDP_RX_C401904(
         firmware_loader,
         wifi_sniffer,
@@ -680,6 +684,7 @@ def test_BLE_WLAN_IPV6_UDP_RX_C401904(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C401905')
 def test_BLE_WLAN_IPV6_SSL_TX_C401905(
         firmware_loader,
         wifi_sniffer,
@@ -762,6 +767,7 @@ def test_BLE_WLAN_IPV6_SSL_TX_C401905(
 
     }
 )
+@pytest.mark.test_src_map_id('C401906')
 def test_BLE_WLAN_IPV6_SSL_RX_C401906(
         firmware_loader,
         wifi_sniffer,

@@ -37,6 +37,7 @@ def logger():
     return get_logger(__name__)
 
 
+@pytest.mark.test_src_map_id('C19981')
 def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client, utf_constants):
     inq_type = 1
     duration = 10000
@@ -101,6 +102,7 @@ def test_bt_inquiry_rssi_C19981(wifi_dut, bt_client, utf_constants):
     logger().info(f"Test case executed in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('C19982')
 def test_bt_extended_inquiry_C19982(wifi_dut, bt_client, utf_constants):  # T3561 in testrail
     inq_type = 2
     duration = 10000
@@ -172,6 +174,7 @@ def test_bt_extended_inquiry_C19982(wifi_dut, bt_client, utf_constants):  # T356
     logger().info(f"Test case executed in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('C19983')
 def test_bt_standard_inquiry_C19983(wifi_dut, bt_client, utf_constants):
     inq_type = 0
     duration = 10000
@@ -217,6 +220,7 @@ def test_bt_standard_inquiry_C19983(wifi_dut, bt_client, utf_constants):
     logger().info(f"Test case executed in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('C19984')
 def test_bt_inquiry_complete_C19984(wifi_dut, bt_client):
     inq_type = 1
     duration = 10000
@@ -255,6 +259,7 @@ def test_bt_inquiry_complete_C19984(wifi_dut, bt_client):
     logger().info(f"Test case executed in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('C19985')
 def test_bt_inq_complete_no_dev_C19985(wifi_dut, bt_client):
     inq_type = 1
     duration = 10000

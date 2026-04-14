@@ -460,6 +460,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C402861')
 def test_wlan_standby_beacon_miss_1_C402861(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections,
                                             request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -518,6 +519,7 @@ def test_wlan_standby_beacon_miss_1_C402861(firmware_loader, power_meter, wifi_a
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C402862')
 def test_wlan_standby_beacon_miss_2_C402862(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections,
                                             request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -576,6 +578,7 @@ def test_wlan_standby_beacon_miss_2_C402862(firmware_loader, power_meter, wifi_a
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C402863')
 def test_wlan_standby_beacon_miss_3_C402863(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections,
                                             request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -634,6 +637,7 @@ def test_wlan_standby_beacon_miss_3_C402863(firmware_loader, power_meter, wifi_a
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C402864')
 def test_wlan_standby_beacon_miss_4_C402864(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections,
                                             request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture

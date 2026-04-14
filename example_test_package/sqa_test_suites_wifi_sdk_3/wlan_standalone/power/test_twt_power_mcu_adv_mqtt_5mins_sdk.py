@@ -498,6 +498,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("keep_alive_time", [55])
+@pytest.mark.test_src_map_id('C402875')
 def test_standby_power_twt_mqtt_ka_5_mins_C402875(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                   sl_collections, mqtt_server, keep_alive_time, wifi_sniffer, request):
     test_name = request.node.name

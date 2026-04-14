@@ -846,6 +846,7 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
+@pytest.mark.test_src_map_id('C198619')
 def test_wifi_sdk_verify_ble_scan_adv_after_twt_c198619(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
@@ -877,6 +878,7 @@ def test_wifi_sdk_verify_ble_scan_adv_after_twt_c198619(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "ble_stop_adv",
                              "disable_twt"])
+@pytest.mark.test_src_map_id('C198620')
 def test_wifi_sdk_verify_ble_scan_adv_before_twt_c198620(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
     """Verify whether DUT is able to perform BLE Scan and advertising if we set the TWT Interval after WLAN Join"""
@@ -906,6 +908,7 @@ def test_wifi_sdk_verify_ble_scan_adv_before_twt_c198620(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C198621')
 def test_wifi_sdk_verify_ble_master_before_twt_c198621(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
     """Verify whether DUT is able setup the Suggested TWT with AP after the BLE Master connection."""
@@ -934,6 +937,7 @@ def test_wifi_sdk_verify_ble_master_before_twt_c198621(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C198622')
 def test_wifi_sdk_verify_ble_slave_before_twt_c198622(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
     """Verify whether DUT is able to set up the Requested TWT with AP Before WLAN Join command with BLE As slave"""
@@ -962,6 +966,7 @@ def test_wifi_sdk_verify_ble_slave_before_twt_c198622(
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C198623')
 def test_wifi_sdk_verify_twt_and_dut_wake_interval_before_ble_master_c198623(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
@@ -994,6 +999,7 @@ def test_wifi_sdk_verify_twt_and_dut_wake_interval_before_ble_master_c198623(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C198624')
 def test_wifi_sdk_verify_twt_and_dut_wake_interval_after_ble_slave_c198624(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
@@ -1026,6 +1032,7 @@ def test_wifi_sdk_verify_twt_and_dut_wake_interval_after_ble_slave_c198624(
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C198625')
 def test_wifi_sdk_verify_twt_with_ble_master_tx_data_transfer_c198625(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
@@ -1058,6 +1065,7 @@ def test_wifi_sdk_verify_twt_with_ble_master_tx_data_transfer_c198625(
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C198626')
 def test_wifi_sdk_verify_twt_announced_trigger_with_ble_master_tx_data_transfer_c198626(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
@@ -1090,6 +1098,7 @@ def test_wifi_sdk_verify_twt_announced_trigger_with_ble_master_tx_data_transfer_
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C198627')
 def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_slave_tx_data_transfer_c198627(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants):
@@ -1121,6 +1130,7 @@ def test_wifi_sdk_verify_twt_unannounced_trigger_with_ble_slave_tx_data_transfer
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C198628')
 def test_wifi_sdk_verify_twt_retry_frames_with_ble_master_c198628(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client,
         utf_constants, switch):
@@ -1152,6 +1162,7 @@ def test_wifi_sdk_verify_twt_retry_frames_with_ble_master_c198628(
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C198629')
 def test_wifi_sdk_verify_twt_conn_with_invalid_parameter_ble_master_c198629(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
     """Check DUT is able to create the TWT Connection to AP with invalid TWT Parameters when DUT is connected as
@@ -1180,6 +1191,7 @@ def test_wifi_sdk_verify_twt_conn_with_invalid_parameter_ble_master_c198629(
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C198630')
 def test_wifi_sdk_verify_twt_teardown_recreate_session_with_ble_master_c198630(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
     """Check whether DUT is able to teardown and recreate the TWT Session when DUT BLE as Master"""
@@ -1208,6 +1220,7 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_ble_master_c198630(
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt", "ble_stop_scan", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C198631')
 def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble_slave_c198631(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
     """Check whether DUT is able to teardown and recreate the TWT Session with another TWT type When DUT BLE as slave"""
@@ -1236,6 +1249,7 @@ def test_wifi_sdk_verify_twt_teardown_recreate_session_with_another_type_and_ble
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', 'twt': 1})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "disable_twt"])
+@pytest.mark.test_src_map_id('C198632')
 def test_wifi_sdk_verify_twt_with_ble_master_conn_reconn_c198632(
         wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, sniffer_filter, ble_dut, ble_client, utf_constants):
     """DUT is able to wake up at regular TWT Intervals when The DUT BLE is connecting, Sending the Data and

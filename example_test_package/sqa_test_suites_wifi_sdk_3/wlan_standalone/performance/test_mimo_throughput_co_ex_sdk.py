@@ -629,6 +629,7 @@ class ble_notify(WifiJoinThread):
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401860')
 def test_co_ex_mimo_with_ble_adv_tcp_rx_C401860(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, ble_client,
                                                 net_perf_clients, request, protocol, utf_constants, sl_collections,
                                                 remote_wiseconnect3, bt_dut):
@@ -688,6 +689,7 @@ def test_co_ex_mimo_with_ble_adv_tcp_rx_C401860(wifi_sniffer, wifi_access_point,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401861')
 def test_co_ex_mimo_with_ble_adv_udp_rx_C401861(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, sl_collections,
                                                 net_perf_clients, protocol, utf_constants, request, remote_wiseconnect3,
                                                 bt_dut, ble_client):
@@ -746,6 +748,7 @@ def test_co_ex_mimo_with_ble_adv_udp_rx_C401861(wifi_sniffer, wifi_access_point,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401863')
 def test_co_ex_mimo_with_ble_adv_rtt_tcp_rx_C401863(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
@@ -811,6 +814,7 @@ def test_co_ex_mimo_with_ble_adv_rtt_tcp_rx_C401863(wifi_sniffer, wifi_access_po
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401864')
 def test_co_ex_mimo_with_ble_adv_rtt_udp_rx_C401864(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
@@ -875,6 +879,7 @@ def test_co_ex_mimo_with_ble_adv_rtt_udp_rx_C401864(wifi_sniffer, wifi_access_po
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401865')
 def test_co_ex_mimo_with_ble_conn_tcp_rx_C401865(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, ble_client,
                                                 net_perf_clients, request, protocol, utf_constants, sl_collections,
                                                 remote_wiseconnect3, bt_dut):
@@ -935,6 +940,7 @@ def test_co_ex_mimo_with_ble_conn_tcp_rx_C401865(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401866')
 def test_co_ex_mimo_with_ble_conn_udp_rx_C401866(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, sl_collections,
                                                 net_perf_clients, protocol, utf_constants, request, remote_wiseconnect3,
                                                 bt_dut, ble_client):
@@ -994,6 +1000,7 @@ def test_co_ex_mimo_with_ble_conn_udp_rx_C401866(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401867')
 def test_co_ex_mimo_with_ble_conn_rtt_tcp_rx_C401867(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
@@ -1059,6 +1066,7 @@ def test_co_ex_mimo_with_ble_conn_rtt_tcp_rx_C401867(wifi_sniffer, wifi_access_p
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401868')
 def test_co_ex_mimo_with_ble_conn_rtt_udp_rx_C401868(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
@@ -1121,6 +1129,7 @@ def test_co_ex_mimo_with_ble_conn_rtt_udp_rx_C401868(wifi_sniffer, wifi_access_p
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401869')
 def test_co_ex_mimo_with_ble_adv_ssl_rx_C401869(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, ble_client,
                                                 ssl_server, request, utf_constants, sl_collections,
                                                 remote_wiseconnect3, bt_dut):
@@ -1178,6 +1187,7 @@ def test_co_ex_mimo_with_ble_adv_ssl_rx_C401869(wifi_sniffer, wifi_access_point,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401871')
 def test_co_ex_mimo_with_ble_adv_rtt_ssl_rx_C401871(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     ssl_server, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
@@ -1241,6 +1251,7 @@ def test_co_ex_mimo_with_ble_adv_rtt_ssl_rx_C401871(wifi_sniffer, wifi_access_po
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401872')
 def test_co_ex_mimo_with_ble_conn_ssl_rx_C401872(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, ble_client,
                                                 ssl_server, request, utf_constants, sl_collections,
                                                 remote_wiseconnect3, bt_dut):
@@ -1299,6 +1310,7 @@ def test_co_ex_mimo_with_ble_conn_ssl_rx_C401872(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401873')
 def test_co_ex_mimo_with_ble_conn_rtt_ssl_rx_C401873(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     ssl_server, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
@@ -1363,6 +1375,7 @@ def test_co_ex_mimo_with_ble_conn_rtt_ssl_rx_C401873(wifi_sniffer, wifi_access_p
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401874')
 def test_co_ex_mimo_ble_data_phy1_tcp_rx_C401874(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, ble_client,
                                                 net_perf_clients, request, protocol, utf_constants, sl_collections,
                                                 remote_wiseconnect3, bt_dut, ble_dut):
@@ -1423,6 +1436,7 @@ def test_co_ex_mimo_ble_data_phy1_tcp_rx_C401874(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401875')
 def test_co_ex_mimo_ble_data_phy1_udp_rx_C401875(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, sl_collections,
                                                 net_perf_clients, protocol, utf_constants, request, remote_wiseconnect3,
                                                 bt_dut, ble_client, ble_dut):
@@ -1482,6 +1496,7 @@ def test_co_ex_mimo_ble_data_phy1_udp_rx_C401875(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401876')
 def test_co_ex_mimo_ble_data_phy1_rtt_tcp_rx_C401876(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client, ble_dut):
@@ -1547,6 +1562,7 @@ def test_co_ex_mimo_ble_data_phy1_rtt_tcp_rx_C401876(wifi_sniffer, wifi_access_p
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401877')
 def test_co_ex_mimo_ble_data_phy1_rtt_udp_rx_C401877(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client, ble_dut):
@@ -1611,6 +1627,7 @@ def test_co_ex_mimo_ble_data_phy1_rtt_udp_rx_C401877(wifi_sniffer, wifi_access_p
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401878')
 def test_co_ex_mimo_ble_data_phy2_tcp_rx_C401878(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, ble_client,
                                                  net_perf_clients, request, protocol, utf_constants, sl_collections,
                                                  remote_wiseconnect3, bt_dut, ble_dut):
@@ -1671,6 +1688,7 @@ def test_co_ex_mimo_ble_data_phy2_tcp_rx_C401878(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401879')
 def test_co_ex_mimo_ble_data_phy2_udp_rx_C401879(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, sl_collections,
                                                  net_perf_clients, protocol, utf_constants, request, remote_wiseconnect3,
                                                  bt_dut, ble_client, ble_dut):
@@ -1730,6 +1748,7 @@ def test_co_ex_mimo_ble_data_phy2_udp_rx_C401879(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401880')
 def test_co_ex_mimo_ble_data_phy2_rtt_tcp_rx_C401880(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                      net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                      remote_wiseconnect3, bt_dut, ble_client, ble_dut):
@@ -1795,6 +1814,7 @@ def test_co_ex_mimo_ble_data_phy2_rtt_tcp_rx_C401880(wifi_sniffer, wifi_access_p
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401881')
 def test_co_ex_mimo_ble_data_phy2_rtt_udp_rx_C401881(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                      net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                      remote_wiseconnect3, bt_dut, ble_client, ble_dut):
@@ -1858,6 +1878,7 @@ def test_co_ex_mimo_ble_data_phy2_rtt_udp_rx_C401881(wifi_sniffer, wifi_access_p
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401882')
 def test_co_ex_mimo_ble_data_phy1_ssl_rx_C401882(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, ble_client,
                                                 ssl_server, request, utf_constants, sl_collections, ble_dut,
                                                 remote_wiseconnect3, bt_dut):
@@ -1916,6 +1937,7 @@ def test_co_ex_mimo_ble_data_phy1_ssl_rx_C401882(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401883')
 def test_co_ex_mimo_ble_data_phy1_rtt_ssl_rx_C401883(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     ssl_server, utf_constants, request, sl_collections, ble_dut,
                                                     remote_wiseconnect3, bt_dut, ble_client):
@@ -1979,6 +2001,7 @@ def test_co_ex_mimo_ble_data_phy1_rtt_ssl_rx_C401883(wifi_sniffer, wifi_access_p
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401884')
 def test_co_ex_mimo_ble_data_phy2_ssl_rx_C401884(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, ble_client,
                                                 ssl_server, request, utf_constants, sl_collections, ble_dut,
                                                 remote_wiseconnect3, bt_dut):
@@ -2037,6 +2060,7 @@ def test_co_ex_mimo_ble_data_phy2_ssl_rx_C401884(wifi_sniffer, wifi_access_point
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401885')
 def test_co_ex_mimo_ble_data_phy2_rtt_ssl_rx_C401885(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     ssl_server, utf_constants, request, sl_collections, ble_dut,
                                                     remote_wiseconnect3, bt_dut, ble_client):

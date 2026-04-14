@@ -118,6 +118,7 @@ class WifiJoinThread(ThreadBase):
 # This test case verifies All Channels Scan in 2.4 Ghz by giving channel number as Zero
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19056')
 def test_wifi_sdk_all_scan_channels_c19056(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                            sl_collections):
     try:
@@ -184,6 +185,7 @@ def test_wifi_sdk_all_scan_channels_c19056(wifi_sniffer, wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan Response Based on RSSI
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19060')
 def test_wifi_sdk_scan_check_rssi_c19060(wifi_dut, wifi_access_point, sl_collections):
     try:
         logger().info("Setting DUT in wlan power save...")
@@ -224,6 +226,7 @@ def test_wifi_sdk_scan_check_rssi_c19060(wifi_dut, wifi_access_point, sl_collect
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19064')
 def test_wifi_sdk_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                            sl_collections):
     try:
@@ -280,6 +283,7 @@ def test_wifi_sdk_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_p
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_ssid', "broadcast_ssid": False})
 # This case verifies the scan in hidden mode of AP for all channels
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19062')
 def test_wifi_sdk_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                                   sl_collections):
     try:
@@ -333,6 +337,7 @@ def test_wifi_sdk_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_a
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19067')
 def test_wifi_sdk_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                             sl_collections):
     try:
@@ -402,6 +407,7 @@ def test_wifi_sdk_scan_us_region_2_4_c19067(wifi_sniffer, wifi_dut, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality with max scan of dut
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19061')
 def test_wifi_sdk_scan_max_aps_c19061(wifi_dut, wifi_access_point, sl_collections):
     try:
         logger().info("Setting DUT in wlan power save...")
@@ -447,6 +453,7 @@ def test_wifi_sdk_scan_max_aps_c19061(wifi_dut, wifi_access_point, sl_collection
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality for channles 1-11
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19057')
 def test_wifi_sdk_all_chan_scan_with_channel_bitmap_c19057(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                            sl_collections, sniffer_filter):
     try:
@@ -524,6 +531,7 @@ def test_wifi_sdk_all_chan_scan_with_channel_bitmap_c19057(wifi_sniffer, wifi_du
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality with the channel 1,6,8
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19058')
 def test_wifi_sdk_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                                 sl_collections):
     try:
@@ -600,6 +608,7 @@ def test_wifi_sdk_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality with the channel 1,3,6,11
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19059')
 def test_wifi_sdk_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                                 sl_collections):
     try:
@@ -677,6 +686,7 @@ def test_wifi_sdk_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_acc
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19070')
 def test_wifi_sdk_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, wifi_client, request, sl_collections,
                                                         sniffer_filter):
     try:
@@ -747,6 +757,7 @@ def test_wifi_sdk_scan_all_channels_in_EU_region_c19070(wifi_dut, wifi_sniffer, 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19071')
 def test_wifi_sdk_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffer, wifi_client, request, sniffer_filter,
                                                            sl_collections):
     try:
@@ -821,6 +832,7 @@ def test_wifi_sdk_scan_all_channels_in_japan_region_c19071(wifi_dut, wifi_sniffe
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "hidden_ssid", "broadcast_ssid": False})
 # Verifies the scan in selected channels with the ap set in hidden mode
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19063')
 def test_wifi_sdk_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                               sl_collections):
     try:
@@ -903,6 +915,7 @@ def test_wifi_sdk_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148601')
 def test_wifi_sdk_scan_all_channels_in_worldwide_region_c148601(wifi_dut, wifi_sniffer, wifi_client, request,
                                                                 sniffer_filter, sl_collections):
     try:
@@ -975,6 +988,7 @@ def test_wifi_sdk_scan_all_channels_in_worldwide_region_c148601(wifi_dut, wifi_s
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan in us region with cahnnels 12,13,14
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19068')
 def test_wifi_sdk_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut, wifi_access_point, sl_collections):
     try:
         sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
@@ -1025,6 +1039,7 @@ def test_wifi_sdk_scan_in_US_region_for_channel_12_13_14_c19068(wifi_dut, wifi_a
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'Korea'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C477822')
 def test_wifi_sdk_scan_all_channels_in_korea_region_c477822(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                             sniffer_filter, sl_collections):
     """Verify Whether DUT is able to scan till 13 channels when it is configured in Korea Region"""
@@ -1094,6 +1109,7 @@ def test_wifi_sdk_scan_all_channels_in_korea_region_c477822(wifi_sniffer, wifi_d
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'Korea'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C477824')
 def test_wifi_sdk_scan_in_korea_region_for_channel_14_c477824(wifi_access_point, wifi_dut, wifi_sniffer, request,
                                                               sl_collections):
     """Verify Whether DUT is throwing error or not when scan in 14 channel and DUT is configured in Korea Region"""
@@ -1139,6 +1155,7 @@ def test_wifi_sdk_scan_in_korea_region_for_channel_14_c477824(wifi_access_point,
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C537999')
 def test_wifi_sdk_scan_with_deep_sleep_c537999(wifi_dut, request, wifi_sniffer, sniffer_filter, wifi_access_point,
                                                sl_collections):
     """Verify wlan scan with deep sleep(It should contain TA should go
@@ -1232,6 +1249,7 @@ def test_wifi_sdk_scan_with_deep_sleep_c537999(wifi_dut, request, wifi_sniffer, 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C538001')
 def test_wifi_sdk_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                                sniffer_filter, sl_collections):
     """Trigger scan command when configured access point
@@ -1288,6 +1306,7 @@ def test_wifi_sdk_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi_ac
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C538002')
 def test_wifi_sdk_verify_scan_possible_error_code_c538002(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                           sniffer_filter, sl_collections):
     """Verify WLAN scan possible error codes)))"""
@@ -1346,6 +1365,7 @@ def test_wifi_sdk_verify_scan_possible_error_code_c538002(wifi_dut, wifi_access_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "ssid": 'Explore@WiFi', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C538003')
 def test_wifi_sdk_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                                sniffer_filter, sl_collections):
     """Verify whether DUT is able to scan special characters SSID or not"""
@@ -1439,6 +1459,7 @@ def test_wifi_sdk_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi_ac
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C477823')
 def test_wifi_sdk_conn_to_AP_in_korea_reg_C477823(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, request,
                                                   sl_collections,
                                                   sniffer_filter, wifi_client, net_perf_client):
@@ -1483,6 +1504,7 @@ def test_wifi_sdk_conn_to_AP_in_korea_reg_C477823(wifi_dut, wifi_access_point, w
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China', "channel": 13})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C662088')
 def test_wifi_sdk_scan_all_channels_in_China_region_c662088(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                             sniffer_filter, sl_collections):
     """Verify Whether DUT is able to scan all channels
@@ -1530,6 +1552,7 @@ def test_wifi_sdk_scan_all_channels_in_China_region_c662088(wifi_sniffer, wifi_d
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C662089')
 def test_wifi_sdk_scan_type_extended_enabled_in_China_region_c662089(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                                      sniffer_filter, sl_collections):
     """ Verify whether DUT is able to scan more than 11 scan
@@ -1578,6 +1601,7 @@ def test_wifi_sdk_scan_type_extended_enabled_in_China_region_c662089(wifi_sniffe
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'China'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C662090')
 def test_wifi_sdk_scan_connect_type_extended_enabled_in_China_region_c662090(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                              request, sniffer_filter, sl_collections):
     """ Verify whether DUT is able connect to AP which comes
@@ -1624,6 +1648,7 @@ def test_wifi_sdk_scan_connect_type_extended_enabled_in_China_region_c662090(wif
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'US'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C653150')
 def test_wifi_sdk_scan_type_extended_enabled_c653150(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                      sniffer_filter, sl_collections):
     """ Verify whether DUT is able to scan more than 11 scan results
@@ -1670,6 +1695,7 @@ def test_wifi_sdk_scan_type_extended_enabled_c653150(wifi_sniffer, wifi_dut, wif
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'US'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C653151')
 def test_wifi_sdk_scan_connect_type_extended_enabled_c653151(wifi_sniffer, wifi_dut, wifi_access_point,
                                                              request, sniffer_filter, sl_collections):
     """ Verify whether DUT is able connect to AP which comes after
@@ -1722,6 +1748,7 @@ def test_wifi_sdk_scan_connect_type_extended_enabled_c653151(wifi_sniffer, wifi_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "ssid": 'My_Special!SSID@2023'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C538000')
 def test_wifi_sdk_passive_scan_in_worldwide_domain_c538000(wifi_sniffer, wifi_access_point, wifi_dut, request,
                                                            sniffer_filter, sl_collections):
     """Verify passive scan in the worldwide domain."""
@@ -1766,6 +1793,7 @@ def test_wifi_sdk_passive_scan_in_worldwide_domain_c538000(wifi_sniffer, wifi_ac
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C538006')
 def test_wifi_sdk_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_dut, request, wifi_sniffer,
                                                        sniffer_filter, sl_collections):
     """Verify WLAN scan with a third-party AP configured with a high beacon length (max 512 bytes)."""
@@ -1970,6 +1998,7 @@ def test_wifi_sdk_scan_with_mbssid_extended_scan_c653152(wifi_access_point, wifi
                     wifi={"security": 'WPA2', "region": 'Korea', "channel": 13, "ssid": 'Azeez456'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C477830')
 def test_wifi_sdk_setup_dut_sta_mode_korea_region_conn_ap_chan_13_c477830(wifi_access_point, wifi_dut, wifi_sniffer,
                                                                           request,
                                                                           sniffer_filter, sl_collections):
@@ -2023,6 +2052,7 @@ def test_wifi_sdk_setup_dut_sta_mode_korea_region_conn_ap_chan_13_c477830(wifi_a
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C687827')
 def test_wifi_sdk_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                          sniffer_filter, sl_collections):
     """Verify Wi-Fi scan results when there is no AP available in the envirnoment(Closed room))))"""
@@ -2098,6 +2128,7 @@ def test_wifi_sdk_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_access_p
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19072')
 def test_wifi_sdk_do_scan_in_channel_12_13_14_c19072(wifi_dut, remote_wiseconnect3, request, wifi_sniffer,
                                                      sl_collections):
     """ Do scan in channels 12,13,14 in JP region """
@@ -2166,6 +2197,7 @@ def test_wifi_sdk_do_scan_in_channel_12_13_14_c19072(wifi_dut, remote_wiseconnec
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C719887')
 def test_wifi_sdk_Verify_DS_param_in_EU_region_c719887(wifi_sniffer, wifi_dut, wifi_access_point, sniffer_filter,
                                                        request, sl_collections):
     """ Verify DS param in probe request of DUT in EU region"""
@@ -2227,6 +2259,7 @@ def test_wifi_sdk_Verify_DS_param_in_EU_region_c719887(wifi_sniffer, wifi_dut, w
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C789529')
 def test_wifi_sdk_all_scan_channels_c789529(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                             sl_collections):
     # This test case verifies All Channels Scan in 2.4 Ghz by giving channel number as Zero
@@ -2299,6 +2332,7 @@ def test_wifi_sdk_all_scan_channels_c789529(wifi_sniffer, wifi_dut, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+@pytest.mark.test_src_map_id('C925907')
 def test_wifi_sdk_scan_congested_channel_c925907(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
     """Verify the scan in the congested channel (channel 1)."""
     try:
@@ -2353,6 +2387,7 @@ def test_wifi_sdk_scan_congested_channel_c925907(wifi_sniffer, wifi_dut, wifi_ac
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+@pytest.mark.test_src_map_id('C919215')
 def test_PMU_good_time_Functionality_c919215(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
     """Verify PMU good time functionality using 'sl_si91x_set_nwp_config_request' API by configuring different values."""
 
@@ -2392,6 +2427,7 @@ def test_PMU_good_time_Functionality_c919215(wifi_sniffer, wifi_dut, wifi_access
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+@pytest.mark.test_src_map_id('C919214')
 def test_XTAL_good_time_Functionality_c919214(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
     """Verify XTAL good time functionality using 'sl_si91x_set_nwp_config_request' API by configuring different values."""
 
@@ -2432,6 +2468,7 @@ def test_XTAL_good_time_Functionality_c919214(wifi_sniffer, wifi_dut, wifi_acces
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+@pytest.mark.test_src_map_id('C919217')
 def test_configuring_wrong_config_values_PMU_c919217(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
     """API functionality by configuring wrong config values of PMU good time"""
 
@@ -2471,6 +2508,7 @@ def test_configuring_wrong_config_values_PMU_c919217(wifi_sniffer, wifi_dut, wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
+@pytest.mark.test_src_map_id('C919216')
 def test_configuring_wrong_config_values_XTAL_c919216(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter, sl_collections):
     """API functionality by configuring wrong config values of XTAL good time"""
 

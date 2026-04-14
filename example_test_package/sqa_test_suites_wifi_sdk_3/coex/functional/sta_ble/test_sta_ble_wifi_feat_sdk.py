@@ -168,6 +168,7 @@ def wifi_dut_marker(ext_custom_bit=0, tcp_feat_bit=0, ext_tcp_feat_bit=0, ca_cer
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133585')
 def test_Coex_sdk_WLAN_bgscan_BLE_slave_C133585(
     wifi_sniffer,
     wifi_access_point,
@@ -277,6 +278,7 @@ def test_Coex_sdk_WLAN_bgscan_BLE_slave_C133585(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133481')
 def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                                   utf_constants, wifi_sniffer, sl_collections, sniffer_filter,
                                                   ble_client, request):
@@ -377,6 +379,7 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_C133481(http_server, wifi_dut, http_cl
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C133482')
 def test_Coex_sdk_WLAN_http_post_BLE_slave_C133482(http_server, wifi_dut, wifi_access_point,
                                                    index_path, wifi_sniffer, sl_collections,
                                                    sniffer_filter, utf_constants, ble_client, request):
@@ -467,6 +470,7 @@ def test_Coex_sdk_WLAN_http_post_BLE_slave_C133482(http_server, wifi_dut, wifi_a
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C133483')
 def test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483(http_server, wifi_dut, wifi_access_point,
                                                    index_path, wifi_sniffer, sl_collections,
                                                    sniffer_filter, utf_constants, ble_client, request):
@@ -548,6 +552,7 @@ def test_Coex_sdk_WLAN_http_post_non_exist_ip_BLE_slave_C133483(http_server, wif
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C133480')
 def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_access_point,
                                                    wifi_sniffer, sl_collections,
                                                    sniffer_filter, utf_constants, ble_client, request):
@@ -628,6 +633,7 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_C133480(wifi_dut, wifi_acc
 @wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP)
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C133583')
 def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
                                                    wifi_sniffer, sl_collections,
                                                    sniffer_filter, utf_constants, ble_client, request):
@@ -714,6 +720,7 @@ def test_Coex_sdk_WLAN_DNS_Query_BLE_slave_C133583(wifi_dut, wifi_access_point,
                  )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C133477')
 def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
                                                 wifi_sniffer, sl_collections,
                                                 sniffer_filter, utf_constants,
@@ -822,6 +829,7 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_C133477(wifi_dut, wifi_access_point,
                  )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C133478')
 def test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478(wifi_dut, wifi_access_point,
                                                 wifi_sniffer, sl_collections,
                                                 sniffer_filter, utf_constants,
@@ -928,6 +936,7 @@ def test_Coex_sdk_WLAN_SSL_rx_BLE_slave_C133478(wifi_dut, wifi_access_point,
                  )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C133574')
 def test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574(wifi_dut, wifi_access_point,
                                               wifi_sniffer, sl_collections,
                                               sniffer_filter, utf_constants, ble_client,
@@ -1059,6 +1068,7 @@ def test_Coex_sdk_WLAN_MQTT_BLE_slave_C133574(wifi_dut, wifi_access_point,
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133566')
 def test_Coex_sdk_fun_ble_deinit_init_wlan_data_C133566(
     wifi_sniffer,
     wifi_access_point,
@@ -1160,6 +1170,7 @@ def test_Coex_sdk_fun_ble_deinit_init_wlan_data_C133566(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133473')
 def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
     wifi_sniffer,
     wifi_access_point,
@@ -1304,6 +1315,7 @@ def test_Coex_sdk_WLAN_multicast_TX_RX_ble_slave_C133473(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C133448')
 def test_Coex_sdk_WLAN_BLE_radio_ON_OFF_C133448(
     wifi_sniffer,
     wifi_access_point,
@@ -1362,6 +1374,7 @@ def test_Coex_sdk_WLAN_BLE_radio_ON_OFF_C133448(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C133564')
 def test_Coex_sdk_ble_bd_addr_wlan_TCP_TX_C133564(
     wifi_sniffer,
     wifi_access_point,
@@ -1456,6 +1469,7 @@ def test_Coex_sdk_ble_bd_addr_wlan_TCP_TX_C133564(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133559')
 def test_Coex_sdk_Disconnect_BLE_while_WLAN_TCP_RX_C133559(
     wifi_sniffer,
     wifi_access_point,
@@ -1557,6 +1571,7 @@ def test_Coex_sdk_Disconnect_BLE_while_WLAN_TCP_RX_C133559(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133484')
 def test_Coex_sdk_otaf_ble_slave_C133484(
     wifi_sniffer,
     wifi_access_point,
@@ -1697,6 +1712,7 @@ def test_Coex_sdk_otaf_ble_slave_C133484(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133563')
 def test_Coex_sdk_BLE_RSSI_WLAN_HTTP_download_C133563(
         wifi_sniffer,
         wifi_access_point,
@@ -1779,6 +1795,7 @@ def test_Coex_sdk_BLE_RSSI_WLAN_HTTP_download_C133563(
                               | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP)
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C133479')
 def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_access_point,
                                                    wifi_sniffer, sl_collections,
                                                    sniffer_filter, utf_constants, ble_client, request):
@@ -1866,6 +1883,7 @@ def test_Coex_sdk_WLAN_DNS_static_dns_server_BLE_slave_C133479(wifi_dut, wifi_ac
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C133485')
 def test_Coex_sdk_WLAN_mac_based_conn_BLE_slave_C133485(wifi_dut, wifi_access_point,
                                                         wifi_sniffer, sl_collections,
                                                         sniffer_filter, utf_constants,
@@ -1952,6 +1970,7 @@ def test_Coex_sdk_WLAN_mac_based_conn_BLE_slave_C133485(wifi_dut, wifi_access_po
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C551661')
 def test_Coex_sdk_http_otaf_ble_scan_C551661(
     wifi_sniffer,
     wifi_access_point,
@@ -2094,6 +2113,7 @@ def test_Coex_sdk_http_otaf_ble_scan_C551661(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C551662')
 def test_Coex_sdk_https_otaf_ble_slave_C551662(
     wifi_sniffer,
     wifi_access_point,
@@ -2265,6 +2285,7 @@ def test_Coex_sdk_https_otaf_ble_slave_C551662(
                          )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated", "clear_certs"])
+@pytest.mark.test_src_map_id('C133575')
 def test_coex_sdk_SSL_AWS_ble_slave_C133575(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, cert1, cert2,
                                   sl_collections, sniffer_filter, utf_constants, request, wifi_client, ble_client):
     """
@@ -2401,6 +2422,7 @@ def test_coex_sdk_SSL_AWS_ble_slave_C133575(wifi_sniffer, wifi_dut, wifi_access_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
+@pytest.mark.test_src_map_id('C133584')
 def test_azure_mqtt_subscribe_publish_ble_adv_scan_C133584(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer, azure_iot_client,
                                              sl_collections, wifi_client, request, utf_constants, sniffer_filter,
                                              ble_client):
@@ -2534,6 +2556,7 @@ def test_azure_mqtt_subscribe_publish_ble_adv_scan_C133584(firmware_loader, wifi
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C783412')
 def test_Coex_sdk_WLAN_http_get_BLE_slave_CI_30ms_C783412(http_server, wifi_dut, http_client, wifi_access_point,
                                                           index_path,
                                                           utf_constants, wifi_sniffer, sl_collections, sniffer_filter,
@@ -2642,6 +2665,7 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_CI_30ms_C783412(http_server, wifi_dut,
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C783413')
 def test_Coex_sdk_WLAN_http_get_BLE_slave_CI_80ms_C783413(http_server, wifi_dut, http_client, wifi_access_point,
                                                           index_path,
                                                           utf_constants, wifi_sniffer, sl_collections, sniffer_filter,
@@ -2750,6 +2774,7 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_CI_80ms_C783413(http_server, wifi_dut,
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C783414')
 def test_Coex_sdk_WLAN_http_get_BLE_slave_CI_150ms_C783414(http_server, wifi_dut, http_client, wifi_access_point,
                                                            index_path,
                                                            utf_constants, wifi_sniffer, sl_collections, sniffer_filter,
@@ -2852,6 +2877,7 @@ def test_Coex_sdk_WLAN_http_get_BLE_slave_CI_150ms_C783414(http_server, wifi_dut
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C783409')
 def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_CI_30ms_C783409(wifi_dut, wifi_access_point,
                                                                       wifi_sniffer, sl_collections,
                                                                       sniffer_filter, utf_constants, ble_client,
@@ -2936,6 +2962,7 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_CI_30ms_C783409(wifi_dut, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C783410')
 def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_CI_80ms_C783410(wifi_dut, wifi_access_point,
                                                                       wifi_sniffer, sl_collections,
                                                                       sniffer_filter, utf_constants, ble_client,
@@ -3020,6 +3047,7 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_CI_80ms_C783410(wifi_dut, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C783411')
 def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_CI_150ms_C783411(wifi_dut, wifi_access_point,
                                                                        wifi_sniffer, sl_collections,
                                                                        sniffer_filter, utf_constants, ble_client,
@@ -3107,6 +3135,7 @@ def test_Coex_sdk_WLAN_DNS_wrong_DNS_server_BLE_slave_CI_150ms_C783411(wifi_dut,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C783415')
 def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_CI_30ms_C783415(wifi_dut, wifi_access_point,
                                                         wifi_sniffer, sl_collections,
                                                         sniffer_filter, utf_constants,
@@ -3217,6 +3246,7 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_CI_30ms_C783415(wifi_dut, wifi_access_po
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C783416')
 def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_CI_80ms_C783416(wifi_dut, wifi_access_point,
                                                         wifi_sniffer, sl_collections,
                                                         sniffer_filter, utf_constants,
@@ -3327,6 +3357,7 @@ def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_CI_80ms_C783416(wifi_dut, wifi_access_po
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C783417')
 def test_Coex_sdk_WLAN_SSL_tx_BLE_slave_CI_150ms_C783417(wifi_dut, wifi_access_point,
                                                          wifi_sniffer, sl_collections,
                                                          sniffer_filter, utf_constants,

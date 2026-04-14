@@ -418,6 +418,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0):
              'channel': 1}
     }
 )
+@pytest.mark.test_src_map_id('C20150')
 def test_wifi_sdk_ble_conn_ap1_conn_ap2_conn_C20150(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_sniffer, request, utf_constants,
         wifi_access_points):
@@ -473,6 +474,7 @@ def test_wifi_sdk_ble_conn_ap1_conn_ap2_conn_C20150(
              'channel': 1}
     }
 )
+@pytest.mark.test_src_map_id('C20151')
 def test_wifi_sdk_ble_conn_ap1_conn_disconn_ap2_conn_C20151(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_points, wifi_sniffer, request, utf_constants):
     """Verify WLAN connection to the AP1 and AP2 while BLE is in connected state"""
@@ -564,6 +566,7 @@ def test_wifi_sdk_ble_conn_ap1_conn_disconn_ap2_conn_C20151(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C913668')
 def test_wps_pbc_lockout_with_ble_coex_C913668(
         wifi_dut,
         ble_client,

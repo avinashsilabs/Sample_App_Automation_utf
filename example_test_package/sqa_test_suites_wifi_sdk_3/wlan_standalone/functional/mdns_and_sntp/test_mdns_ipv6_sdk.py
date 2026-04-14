@@ -210,6 +210,7 @@ def _strict_prefix():
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C767019')
 def test_wifi_sdk_mdns_ipv6_stateless_with_avahi_loop_c767019(firmware_loader,
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
@@ -282,6 +283,7 @@ def test_wifi_sdk_mdns_ipv6_stateless_with_avahi_loop_c767019(firmware_loader,
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C767020')
 def test_wifi_sdk_mdns_ipv6_stateful_with_avahi_loop_c767020(firmware_loader,
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
@@ -358,6 +360,7 @@ def test_wifi_sdk_mdns_ipv6_stateful_with_avahi_loop_c767020(firmware_loader,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C767022')
 def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ipv6_c767022(firmware_loader,
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):
@@ -472,6 +475,7 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ipv6_c767022(firmware_
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C767026')
 def test_wifi_sdk_mdns_avahi_discover_1hr_loop_c767026(firmware_loader,
     wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, wifi_client, utf_constants, service_discovery
 ):

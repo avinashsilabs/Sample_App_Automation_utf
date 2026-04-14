@@ -115,6 +115,7 @@ class WifiJoin(ThreadBase):
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C19780')
 def test_zephyr_secure_http_fw_upgrade_overnight_c19780(http_server,
                                                         wifi_sniffer,
                                                         wifi_access_point,

@@ -443,6 +443,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C20637')
 def test_wlan_standby_associated_DTIM_10_C20637(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, wifi_sniffer, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -502,6 +503,7 @@ def test_wlan_standby_associated_DTIM_10_C20637(firmware_loader, power_meter, wi
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C20637')
 def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C20637(firmware_loader, power_meter, wifi_access_point, wifi_sniffer, request, wifi_dut, sl_collections, dtim, remote_socket, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -555,6 +557,7 @@ def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C20637(firmware_loader, pow
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.test_src_map_id('C20640')
 def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wifi_dut, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -637,6 +640,7 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C20642')
 def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, dtim, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -695,6 +699,7 @@ def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_a
     }
 )                           
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.test_src_map_id('C652608')
 def test_wlan_active_1mbps_tx_C652608(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -759,6 +764,7 @@ def test_wlan_active_1mbps_tx_C652608(firmware_loader, power_meter, wifi_dut, po
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.test_src_map_id('C652609')
 def test_wlan_active_tx_ht_mcs0_C652609(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -823,6 +829,7 @@ def test_wlan_active_tx_ht_mcs0_C652609(firmware_loader, power_meter, wifi_dut, 
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.test_src_map_id('C652610')
 def test_wlan_active_tx_ht_mcs7_C652610(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -887,6 +894,7 @@ def test_wlan_active_tx_ht_mcs7_C652610(firmware_loader, power_meter, wifi_dut, 
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.test_src_map_id('C652611')
 def test_wlan_active_tx_he_mcs0_C652611(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -951,6 +959,7 @@ def test_wlan_active_tx_he_mcs0_C652611(firmware_loader, power_meter, wifi_dut, 
     }
 )
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.test_src_map_id('C652612')
 def test_wlan_active_tx_he_mcs7_C652612(firmware_loader, power_meter, wifi_dut, power, rate, wifi_sniffer, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -1008,6 +1017,7 @@ def test_wlan_active_tx_he_mcs7_C652612(firmware_loader, power_meter, wifi_dut, 
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
+@pytest.mark.test_src_map_id('C20663')
 def test_ble_sdk_per_1mbps_tx_LP_CHAIN_0dBm_C20663(firmware_loader, power_meter, bt_dut, sl_collections, request, performance_data, custom_performance_fixture):
     "Verify BLE Active_2.4G 1Mbps Tx-0dBm_LP Chain"
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -1114,6 +1124,7 @@ def test_ble_sdk_per_1mbps_tx_LP_CHAIN_0dBm_C20663(firmware_loader, power_meter,
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
+@pytest.mark.test_src_map_id('C20665')
 def test_ble_sdk_per_1mbps_rx_LP_CHAIN_C20665(firmware_loader, power_meter, bt_dut, sl_collections, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -1215,6 +1226,7 @@ def test_ble_sdk_per_1mbps_rx_LP_CHAIN_C20665(firmware_loader, power_meter, bt_d
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
+@pytest.mark.test_src_map_id('C20664')
 def test_ble_sdk_per_1mbps_tx_7p5_dBm_C20664(firmware_loader, power_meter, bt_dut, sl_collections, request, performance_data, custom_performance_fixture):
     """Verify BLE Active_2.4G 1Mbps Tx-10dBm_LP Chain"""
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -1320,6 +1332,7 @@ def test_ble_sdk_per_1mbps_tx_7p5_dBm_C20664(firmware_loader, power_meter, bt_du
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
+@pytest.mark.test_src_map_id('C20657')
 def test_ble_sdk_advertise_non_connectable_power_0dBm_C20657(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections, request, performance_data, custom_performance_fixture):
     """ Verify BLE Undirected Non-Connectable Advertisement"""
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -1443,6 +1456,7 @@ def test_ble_sdk_advertise_non_connectable_power_0dBm_C20657(firmware_loader, po
             "power_index": 31,
         },
     )
+@pytest.mark.test_src_map_id('C20658')
 def test_ble_sdk_advertise_connectable_power_0_dBm_C20658(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections, request, performance_data, custom_performance_fixture):
     """ Verify BLE Undirected Connectable advertisement """
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -1562,6 +1576,7 @@ def test_ble_sdk_advertise_connectable_power_0_dBm_C20658(firmware_loader, power
         },
     )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC6060550521')
 def test_ble_sdk_connect_with_1_28ms_0dBm_20660(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections, request, performance_data, custom_performance_fixture):
     """Verify ble connection with 1.28ms """
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -1688,6 +1703,7 @@ def test_ble_sdk_connect_with_1_28ms_0dBm_20660(firmware_loader, power_meter, wi
             "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES  | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
         },
     )
+@pytest.mark.test_src_map_id('C20659')
 def test_ble_sdk_connect_with_200ms_0dBm_C20659(firmware_loader, power_meter, wifi_dut, ble_client, sl_collections, request, performance_data, custom_performance_fixture):
     """Verify ble connection with 200ms"""
     performance_file_root_dir, perf_file_name = custom_performance_fixture

@@ -1,6 +1,7 @@
 import pytest
 
 
+@pytest.mark.test_src_map_id('TC1420101517')
 def test_upload_file(azure_blob, logger):
     url = azure_blob.interfaces.blob.upload_file('/app/manifest/RS9116W.2.9.1.12.rps', "utf-test_azure")
     logger.info(f"azure url is {url}")

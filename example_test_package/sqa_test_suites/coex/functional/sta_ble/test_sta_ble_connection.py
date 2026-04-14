@@ -1092,6 +1092,7 @@ def packet_check(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133453')
 def test_scantime_all_channels_2_4g_ble_advertise_C133453(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
@@ -1153,6 +1154,7 @@ def test_scantime_all_channels_2_4g_ble_advertise_C133453(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133454')
 def test_threading_selective_channels_2_4_C133454(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
@@ -1218,6 +1220,7 @@ def test_threading_selective_channels_2_4_C133454(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133455')
 def test_scantime_selective_channels_5g_ble_advertise_bypass_C133455(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
@@ -1279,6 +1282,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C133455(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133456')
 def test_scantime_selective_channels_5g_ble_advertise_bypass_C133456(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
@@ -1349,6 +1353,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C133456(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133465')
 def test_sta_ble_rejoin_deauth_C133465(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants
 ):
@@ -1456,6 +1461,7 @@ def test_sta_ble_rejoin_deauth_C133465(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133466')
 def test_connect_disconnect_ap_after_ble_slave_connection_C133466(
         wifi_dut, wifi_access_point, utf_constants, wifi_sniffer, ble_client
 ):
@@ -1555,6 +1561,7 @@ def test_connect_disconnect_ap_after_ble_slave_connection_C133466(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi={"channel": 8})
+@pytest.mark.test_src_map_id('C133478')
 def test_sta_ssl_ble_slave_C133478(
         wifi_dut, ble_client, wifi_sniffer, wifi_access_point, ssl_server
 ):
@@ -1762,6 +1769,7 @@ def test_sta_ssl_ble_slave_C133478(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133482')
 def test_threading_http_post_functionality_ble_C133482(wifi_dut, wifi_access_point, http_server, index_path,
                                                       wifi_sniffer, ble_client, utf_constants, rs_helper):
     iteration_count = utf_constants.get("iter_count")
@@ -1880,6 +1888,7 @@ def test_threading_http_post_functionality_ble_C133482(wifi_dut, wifi_access_poi
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133481')
 def test_threading_http_get_functionality_ble_C133481(
         wifi_dut,
         wifi_access_point,
@@ -1944,6 +1953,7 @@ def test_threading_http_get_functionality_ble_C133481(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133489')
 def test_scantime_all_channels_2_4g_ble_advertise_bypass_C133489(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
@@ -2007,6 +2017,7 @@ def test_scantime_all_channels_2_4g_ble_advertise_bypass_C133489(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133490')
 def test_scantime_selective_channels_2_4g_ble_advertise_bypass_C133490(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
@@ -2071,6 +2082,7 @@ def test_scantime_selective_channels_2_4g_ble_advertise_bypass_C133490(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133491')
 def test_scantime_all_channels_5g_ble_advertise_bypass_C133491(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
@@ -2136,6 +2148,7 @@ def test_scantime_all_channels_5g_ble_advertise_bypass_C133491(
     ],
 )
 @pytest.mark.wifi_5g
+@pytest.mark.test_src_map_id('C133492')
 def test_scantime_selective_channels_5g_ble_advertise_bypass_C133492(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client
 ):
@@ -2201,6 +2214,7 @@ def test_scantime_selective_channels_5g_ble_advertise_bypass_C133492(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('TC1571402726')
 def test_sta_rejoin_maximum_retry_with_ble_C133500_case1(switch, wifi_dut, wifi_access_point, wifi_sniffer, ble_client,
                                                         utf_constants):
     try:
@@ -2318,6 +2332,7 @@ def test_sta_rejoin_maximum_retry_with_ble_C133500_case1(switch, wifi_dut, wifi_
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('TC5966608735')
 def test_sta_rejoin_maximum_retry_with_ble_C133500_case2(switch, wifi_dut, wifi_access_point, wifi_sniffer, ble_client,
                                                         utf_constants):
     try:
@@ -2431,6 +2446,7 @@ def test_sta_rejoin_maximum_retry_with_ble_C133500_case2(switch, wifi_dut, wifi_
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133501')
 def test_sta_ble_rejoin_deauth_C133501(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants
 ):
@@ -2524,6 +2540,7 @@ def test_sta_ble_rejoin_deauth_C133501(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133502')
 def test_wlan_disconnection_functionality_after_ble_connection_C133502(
         wifi_dut, wifi_access_point, utf_constants, wifi_sniffer, ble_client
 ):
@@ -2657,6 +2674,7 @@ def test_wlan_disconnection_functionality_after_ble_connection_C133502(
         "ble_stop_scan",
     ],
 )
+@pytest.mark.test_src_map_id('C133514')
 def test_threading_sta_deeppowersave_ble_C133514(
         wifi_dut, wifi_access_point, wifi_sniffer, ble_client, utf_constants
 ):

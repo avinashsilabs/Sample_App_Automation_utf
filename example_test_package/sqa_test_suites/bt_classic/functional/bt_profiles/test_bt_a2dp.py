@@ -47,6 +47,7 @@ timeout = 22
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
+@pytest.mark.test_src_map_id('C20054')
 def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_dut_simple_play_C20054.wav" + '_' + str(
@@ -112,6 +113,7 @@ def test_bt_a2dp_simple_play_C20054(wifi_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
+@pytest.mark.test_src_map_id('C20060')
 def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_avrcp_functional_C20060.wav" + '_' + str(
@@ -192,6 +194,7 @@ def test_a2dp_arvcp_functional_C20060(wifi_dut, bt_client):
     assert captured_audio_size != 0, "captured size is zero"
 
 
+@pytest.mark.test_src_map_id('C20059')
 def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_repair_functionality_C20059.wav" + '_' + str(
@@ -276,6 +279,7 @@ def test_bt_a2dp_repair_functionality_C20059(wifi_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["bt_disconnect"])
+@pytest.mark.test_src_map_id('C20057')
 def test_bt_a2dp_power_cycle_C20057(wifi_dut, bt_client):
     current_time = time.time()
     capture_file_path = "./reports/a2dp_capture_test_bt_a2dp_dut_power_play_C20057.wav" + '_' + str(

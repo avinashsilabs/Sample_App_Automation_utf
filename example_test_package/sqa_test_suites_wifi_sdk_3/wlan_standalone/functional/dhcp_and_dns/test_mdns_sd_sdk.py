@@ -94,6 +94,7 @@ class WifiThreadFunctionality(ThreadBase):
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880516')
 def test_wifi_sdk_verify_mdns_sd_functionality_with_hostname_c880516(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                      service_advertisement,
                                                                      sl_collections, request, utf_constants):
@@ -241,6 +242,7 @@ def test_wifi_sdk_verify_mdns_sd_functionality_with_hostname_c880516(wifi_sniffe
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880517')
 def test_wifi_sdk_verify_mdns_functionality_with_mdns_service_query_type_c880517(
         wifi_sniffer,
         wifi_access_point,
@@ -390,6 +392,7 @@ def test_wifi_sdk_verify_mdns_functionality_with_mdns_service_query_type_c880517
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880518')
 def test_wifi_sdk_verify_mdns_functionality_with_mdns_service_query_name_C880518(
         wifi_sniffer,
         wifi_access_point,
@@ -541,6 +544,7 @@ def test_wifi_sdk_verify_mdns_functionality_with_mdns_service_query_name_C880518
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880519')
 def test_wifi_sdk_verify_mdns_functionality_with_mdns_service_srv_query_type_c880519(
         wifi_sniffer,
         wifi_access_point,
@@ -692,6 +696,7 @@ def test_wifi_sdk_verify_mdns_functionality_with_mdns_service_srv_query_type_c88
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880521')
 def test_wifi_sdk_discover_mdns_service_with_ipv6_records_C880521(
         wifi_sniffer, wifi_access_point, wifi_dut,
         service_advertisement, sl_collections, request, utf_constants
@@ -860,6 +865,7 @@ def test_wifi_sdk_discover_mdns_service_with_ipv6_records_C880521(
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880522')
 def test_verify_the_MDNS_service_discovery_when_announce_2_or_more_services_c880522(
         wifi_sniffer, wifi_access_point, wifi_dut, service_advertisement,
         sl_collections, request, utf_constants):
@@ -1021,6 +1027,7 @@ def test_verify_the_MDNS_service_discovery_when_announce_2_or_more_services_c880
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880524')
 def test_verify_the_continue_mdns_sd_when_host_starts_and_stops_the_service_advertisement_c880524(
         wifi_sniffer, wifi_access_point, wifi_dut, service_advertisement, sl_collections, request, utf_constants
 ):
@@ -1199,6 +1206,7 @@ def test_verify_the_continue_mdns_sd_when_host_starts_and_stops_the_service_adve
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880525')
 def test_start_mdns_sd_with_tcp_udp_services_c880525(
         wifi_sniffer,
         wifi_access_point,
@@ -1424,6 +1432,7 @@ def test_start_mdns_sd_with_tcp_udp_services_c880525(
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880526')
 def test_wifi_sdk_verify_mdns_sd_functionality_start_stop_in_loop_c880526(
         wifi_sniffer,
         wifi_access_point,
@@ -1576,6 +1585,7 @@ def test_wifi_sdk_verify_mdns_sd_functionality_start_stop_in_loop_c880526(
 
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880528')
 def test_verify_the_mdns_sd_with_timeout_less_than_5_sec_c880528(
         wifi_sniffer,
         wifi_access_point,
@@ -1738,6 +1748,7 @@ def test_verify_the_mdns_sd_with_timeout_less_than_5_sec_c880528(
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880529')
 def test_verify_mdns_sd_using_wrong_service_name_c880529(
         wifi_sniffer, wifi_access_point, wifi_dut, service_advertisement,
         sl_collections, request, utf_constants
@@ -1843,6 +1854,7 @@ def test_verify_mdns_sd_using_wrong_service_name_c880529(
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880531')
 def test_mdns_feature_not_enabled_in_opermode_c880531(
         wifi_sniffer,
         wifi_access_point,
@@ -1947,6 +1959,7 @@ def test_mdns_feature_not_enabled_in_opermode_c880531(
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C880532')
 def test_verify_dut_allows_configuration_of_invalid_parameters_or_not_c880532(
         wifi_sniffer,
         wifi_access_point,

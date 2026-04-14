@@ -15,6 +15,7 @@ def logger():
         1: {"ssid": "Codecom123"},
     },
 )
+@pytest.mark.test_src_map_id('TC3848245431')
 def test_multiple_access_points_config_override(wifi_dut, wifi_access_points):
     for wifi_ap in wifi_access_points:
         result = wifi_dut.interfaces.wifi.join_ap(wifi_ap)
@@ -29,6 +30,7 @@ def test_multiple_access_points_config_override(wifi_dut, wifi_access_points):
         1: {"ssid": "Alia_2G"}
     },
 )
+@pytest.mark.test_src_map_id('TC2146783436')
 def test_multiple_access_points(wifi_dut, wifi_access_points):
     for wifi_ap in wifi_access_points:
         result = wifi_dut.interfaces.wifi.join_ap(wifi_ap)
@@ -37,6 +39,7 @@ def test_multiple_access_points(wifi_dut, wifi_access_points):
 
 
 @pytest.mark.config("wifi_dut", wifi={"oper_mode": RS9116OperatingMode.AccessPoint})
+@pytest.mark.test_src_map_id('TC6122154441')
 def test_multiple_wifi_clients(wifi_dut, wifi_clients):
     wifi_dut.interfaces.wifi.start_ap()
     for wifi_client in wifi_clients:

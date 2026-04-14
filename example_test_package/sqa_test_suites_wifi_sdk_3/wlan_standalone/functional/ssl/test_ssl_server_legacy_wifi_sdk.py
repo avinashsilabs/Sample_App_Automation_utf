@@ -69,6 +69,7 @@ def connect_to_server(client_socket, device_ip, logger, server_port=5001):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC19110')
 def test_wifi_sdk_ssl_server_testcase_TC19110(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_client, logger, sl_collections,
         ssl_server
@@ -692,6 +693,7 @@ def test_wifi_sdk_ssl_server_testcase_TC19110(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19113')
 def test_wifi_sdk_ssl_server_1_0version_client_1_0_testcase_c19113(
         wifi_sniffer, wifi_dut, wifi_access_point, openssl, logger, sl_collections,
         ssl_server, wifi_client, request

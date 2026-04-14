@@ -270,6 +270,7 @@ class WifiJoin(ThreadBase):
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19757')
 def test_wifi_sdk_fw_upgrade_failure_when_sta_is_not_connected_c19757(http_server, wifi_client, wifi_sniffer,
                                                                       wifi_access_point, wifi_dut, sl_collections):
     """This Test case is validating Firmware updation when STA is not connected with client"""
@@ -309,6 +310,7 @@ def test_wifi_sdk_fw_upgrade_failure_when_sta_is_not_connected_c19757(http_serve
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19758')
 def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c19758(http_server, wifi_client, wifi_sniffer,
                                                                              wifi_access_point, wifi_dut,
                                                                              sl_collections):
@@ -350,6 +352,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c19758(htt
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19760')
 def test_wifi_sdk_https_fw_upgrade_in_sta_ble_mode_and_measure_time_c19760(http_server, wifi_client, wifi_sniffer,
                                                                            wifi_access_point, wifi_dut, sl_collections):
     """This Test case is validating Firmware updation in STA+BLE mode"""
@@ -390,6 +393,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_ble_mode_and_measure_time_c19760(http_
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19766')
 def test_wifi_sdk_https_fw_upgrade_after_rejoin_failure_and_measure_time_c19766(http_server, wifi_client, wifi_sniffer,
                                                                                 wifi_access_point, wifi_dut, switch,
                                                                                 sl_collections):
@@ -430,6 +434,7 @@ def test_wifi_sdk_https_fw_upgrade_after_rejoin_failure_and_measure_time_c19766(
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19774')
 def test_wifi_sdk_https_fw_upgrade_failure_when_enabled_ble_only_c19774(http_server, wifi_client, wifi_sniffer,
                                                                         wifi_access_point, wifi_dut, sl_collections):
     """This Test case is validating Firmware updation failure with ble only mode"""
@@ -470,6 +475,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_when_enabled_ble_only_c19774(http_ser
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19775')
 def test_wifi_sdk_https_fw_upgrade_failure_with_junk_rps_c19775(http_server, wifi_client, wifi_sniffer,
                                                                 wifi_access_point, wifi_dut, sl_collections):
     """This Test case is validating Firmware updation failure with junk rps"""
@@ -510,6 +516,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_junk_rps_c19775(http_server, wif
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19776')
 def test_wifi_sdk_https_fw_upgrade_failure_with_non_rps_c19776(http_server, wifi_client, wifi_sniffer,
                                                                wifi_access_point, wifi_dut, sl_collections):
     """This Test case is validating Firmware updation failure with non rps"""
@@ -550,6 +557,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_non_rps_c19776(http_server, wifi
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19777')
 def test_wifi_sdk_https_fw_upgrade_failure_without_enabling_http_c19777(http_server, wifi_client, wifi_sniffer,
                                                                         wifi_access_point, wifi_dut, sl_collections):
     """This Test case is validating Firmware updation failure without enabling http-otaf"""
@@ -590,6 +598,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_without_enabling_http_c19777(http_ser
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19778')
 def test_wifi_sdk_https_fw_upgrade_failure_with_empty_rps_c19778(http_server, wifi_client, wifi_sniffer,
                                                                  wifi_access_point, wifi_dut, sl_collections):
     """This Test case is validating Firmware updation failure with empty rps"""
@@ -651,6 +660,7 @@ def test_wifi_sdk_https_fw_upgrade_failure_with_empty_rps_c19778(http_server, wi
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.wifi_clients(["raspi_wifi"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19762')
 def test_wifi_sdk_https_fw_upgrade_in_concurrent_mode_and_measure_time_c19762(http_server, wifi_client, wifi_sniffer,
                                                                               wifi_access_point, wifi_dut, wifi_clients,
                                                                               sl_collections):
@@ -694,6 +704,7 @@ def test_wifi_sdk_https_fw_upgrade_in_concurrent_mode_and_measure_time_c19762(ht
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C564244')
 def test_wifi_sdk_https_fw_upgrade_by_loading_cert_into_index_1_c564244(http_server, wifi_client, wifi_sniffer,
                                                                              wifi_access_point, wifi_dut,
                                                                              sl_collections):
@@ -735,6 +746,7 @@ def test_wifi_sdk_https_fw_upgrade_by_loading_cert_into_index_1_c564244(http_ser
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "clear_certs"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C564245')
 def test_wifi_sdk_https_fw_upgrade_by_loading_cert_into_index_2_c564245(http_server, wifi_client, wifi_sniffer,
                                                                              wifi_access_point, wifi_dut,
                                                                              sl_collections):
@@ -775,6 +787,7 @@ def test_wifi_sdk_https_fw_upgrade_by_loading_cert_into_index_2_c564245(http_ser
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C498661')
 def test_wifi_sdk_m4_fw_upgrade_using_https_c498661(wifi_client, http_server,
                                                                            wifi_sniffer, wifi_access_point, wifi_dut,
                                                                            sl_collections, utf_constants):
@@ -821,6 +834,7 @@ def test_wifi_sdk_m4_fw_upgrade_using_https_c498661(wifi_client, http_server,
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C996240')
 def test_wifi_sdk_m4_https_fw_upgrade_in_sta_alone_mode_local_apache_443_C996240(http_server, wifi_client, wifi_sniffer,
                                                                              wifi_access_point, wifi_dut,
                                                                              sl_collections, utf_constants):

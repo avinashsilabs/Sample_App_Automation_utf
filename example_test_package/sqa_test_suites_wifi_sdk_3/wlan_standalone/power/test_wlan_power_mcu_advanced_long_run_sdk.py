@@ -430,6 +430,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C223500')
 def test_wlan_standby_with_udp_tx_DTIM_3_C223500(firmware_loader, power_meter, wifi_access_point, wifi_dut, net_perf_client,
                                                 sl_collections, dtim, request, performance_data, wifi_client,
                                                 custom_performance_fixture, utf_constants, protocol, power_analyzer):
@@ -496,6 +497,7 @@ def test_wlan_standby_with_udp_tx_DTIM_3_C223500(firmware_loader, power_meter, w
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C223501')
 def test_wlan_standby_with_udp_tx_DTIM_6_C223501(firmware_loader, power_meter, wifi_access_point, wifi_dut, net_perf_client,
                                                 sl_collections, dtim, request, performance_data, wifi_client,
                                                 custom_performance_fixture, utf_constants, protocol, power_analyzer):
@@ -562,6 +564,7 @@ def test_wlan_standby_with_udp_tx_DTIM_6_C223501(firmware_loader, power_meter, w
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C223503')
 def test_wlan_standby_with_udp_tx_DTIM_10_C223503(firmware_loader, power_meter, wifi_access_point, wifi_dut, net_perf_client,
                                                 sl_collections, dtim, request, performance_data, wifi_client,
                                                 custom_performance_fixture, utf_constants, protocol, power_analyzer):
@@ -633,6 +636,7 @@ def test_wlan_standby_with_udp_tx_DTIM_10_C223503(firmware_loader, power_meter, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C223503')
 def test_wlan_with_ble_adv_udp_tx_DTIM_10_C223503(firmware_loader, power_meter, wifi_access_point, wifi_dut, bt_dut,
                                                   net_perf_client, sl_collections, dtim, request, performance_data,
                                                   wifi_client, custom_performance_fixture, utf_constants, protocol,

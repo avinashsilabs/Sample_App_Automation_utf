@@ -11,6 +11,7 @@ from utf_wiseconnect.devices.rs911x import RS9116FeatureBitMap
     ],
     indirect=True,
 )
+@pytest.mark.test_src_map_id('TC0160422225')
 def test_power_save(wifi_dut, wifi_networked_dut, logger):
 
     awake = wifi_networked_dut.interfaces.wifi.get_wake_gpio()

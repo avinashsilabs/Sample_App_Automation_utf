@@ -71,6 +71,7 @@ iter_count = 5
 
 # This test case is used to switch the Slave to Master Role
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19991')
 def test_bt_spp_dut_as_slave_roleswitch_C19991(wifi_dut, bt_client):
     duration = 20
     retry_count = 3
@@ -151,6 +152,7 @@ def test_bt_spp_dut_as_slave_roleswitch_C19991(wifi_dut, bt_client):
 
 # This test case is used to switch the Master to Slave Role
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19990')
 def test_bt_spp_dut_as_master_roleswitch_C19990(wifi_dut, bt_client):
     send_text = text_generator()
 

@@ -27,6 +27,7 @@ pytestmark = [
                                                        test_case_name='test_db_props',
                                                        test_case_id='test_db_props::1',
                                                        notes='test test_db_props'))
+@pytest.mark.test_src_map_id('TC7043410798')
 def test_db_props(wifi_dut):
     assert True
 
@@ -36,5 +37,6 @@ def test_db_props(wifi_dut):
                                                        test_case_id='test_block_db::1',
                                                        notes='test test_block_db'))
 @pytest.mark.skipif(True, reason='blocked')
+@pytest.mark.test_src_map_id('TC8484698802')
 def test_block_db():
     assert True

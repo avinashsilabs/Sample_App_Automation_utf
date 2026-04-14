@@ -207,6 +207,7 @@ class WPA2Enterprise(ThreadBase):
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113807')
 def test_sdk_WPA2_EAP_tls_tcp_bypass_V1_C113807(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method with version 1.o in tcp ip bypass mode"""
@@ -273,6 +274,7 @@ def test_sdk_WPA2_EAP_tls_tcp_bypass_V1_C113807(wifi_sniffer, wifi_access_point,
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113808')
 def test_sdk_WPA2_EAP_ttls_tcp_bypass_V1_C113808(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap ttls method with version 1.o in tcp ip bypass mode"""
@@ -338,6 +340,7 @@ def test_sdk_WPA2_EAP_ttls_tcp_bypass_V1_C113808(wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113809')
 def test_sdk_WPA2_EAP_peap_tcp_bypass_V1_C113809(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap peap method with version 1.o in tcp ip bypass mode"""
@@ -403,6 +406,7 @@ def test_sdk_WPA2_EAP_peap_tcp_bypass_V1_C113809(wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113811')
 def test_sdk_WPA2_EAP_tls_tcp_bypass_V12_C113811(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method with version 1.2 in tcp ip bypass mode"""
@@ -468,6 +472,7 @@ def test_sdk_WPA2_EAP_tls_tcp_bypass_V12_C113811(wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113812')
 def test_sdk_WPA2_EAP_ttls_tcp_bypass_V12_C113812(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap ttls method with version 1.2 in tcp ip bypass mode"""
@@ -530,6 +535,7 @@ def test_sdk_WPA2_EAP_ttls_tcp_bypass_V12_C113812(wifi_sniffer, wifi_access_poin
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113813')
 def test_sdk_WPA2_EAP_peap_tcp_bypass_V12_C113813(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap peap method with version 1.2 in tcp ip bypass mode"""
@@ -596,6 +602,7 @@ def test_sdk_WPA2_EAP_peap_tcp_bypass_V12_C113813(wifi_sniffer, wifi_access_poin
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113816')
 def test_sdk_WPA2_EAP_tls_tcp_bypass_pmf_C113816(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                             radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method with pmf in tcp ip bypass mode"""
@@ -671,6 +678,7 @@ def test_sdk_WPA2_EAP_tls_tcp_bypass_pmf_C113816(wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
 @pytest.mark.radius_server("raspi_radius_server_v2")
+@pytest.mark.test_src_map_id('C113810')
 def test_sdk_WPA2_EAP_fast_tcp_bypass_V1_C113810(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                              sl_collections, radius_server, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap fast method with version 1.0 in tcp ip bypass mode"""
@@ -732,6 +740,7 @@ def test_sdk_WPA2_EAP_fast_tcp_bypass_V1_C113810(wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_adv", "clear_certs"])
 @pytest.mark.radius_server("raspi_radius_server_v2")
+@pytest.mark.test_src_map_id('C113814')
 def test_sdk_WPA2_EAP_fast_tcp_bypass_V12_C113814(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sniffer_filter,
                                                   radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap fast method with version 1.2 in tcp ip bypass mode"""

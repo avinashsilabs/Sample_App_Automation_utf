@@ -300,6 +300,7 @@ pytestmark=[
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19811')
 def test_ble_sdk_scan_interval_30_and_window_20_C19811(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval different value
@@ -318,6 +319,7 @@ def test_ble_sdk_scan_interval_30_and_window_20_C19811(ble_dut, ble_client, sl_c
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19812')
 def test_ble_sdk_scan_interval_40_and_window_30_C19812(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval different value
@@ -336,6 +338,7 @@ def test_ble_sdk_scan_interval_40_and_window_30_C19812(ble_dut, ble_client, sl_c
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19813')
 def test_ble_sdk_scan_interval_100_and_window_50_C19813(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval different value
@@ -354,6 +357,7 @@ def test_ble_sdk_scan_interval_100_and_window_50_C19813(ble_dut, ble_client, sl_
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19814')
 def test_ble_sdk_scan_interval_200_and_window_100_C19814(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval different value
@@ -372,6 +376,7 @@ def test_ble_sdk_scan_interval_200_and_window_100_C19814(ble_dut, ble_client, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19815')
 def test_ble_sdk_scan_interval_500_and_window_300_C19815(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval different value
@@ -390,6 +395,7 @@ def test_ble_sdk_scan_interval_500_and_window_300_C19815(ble_dut, ble_client, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19816')
 def test_ble_sdk_scan_interval_600_and_window_400_C19816(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval different value
@@ -408,6 +414,7 @@ def test_ble_sdk_scan_interval_600_and_window_400_C19816(ble_dut, ble_client, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19817')
 def test_ble_sdk_scan_interval_800_and_window_500_C19817(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval different value
@@ -426,6 +433,7 @@ def test_ble_sdk_scan_interval_800_and_window_500_C19817(ble_dut, ble_client, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19818')
 def test_ble_sdk_scan_interval_10sec_and_window_5sec_C19818(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval different value
@@ -444,6 +452,7 @@ def test_ble_sdk_scan_interval_10sec_and_window_5sec_C19818(ble_dut, ble_client,
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19819')
 def test_ble_sdk_same_scan_interval_and_window_C19819(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval same value
@@ -463,6 +472,7 @@ def test_ble_sdk_same_scan_interval_and_window_C19819(ble_dut, ble_client, sl_co
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C537345')
 def test_ble_sdk_scan_interval_5ms_and_window_2ms_C537345(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval different value
@@ -481,6 +491,7 @@ def test_ble_sdk_scan_interval_5ms_and_window_2ms_C537345(ble_dut, ble_client, s
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C537346')
 def test_ble_sdk_same_scan_interval_and_window_C537346(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Verify BLE continuous Scanning by configuring scan window and scan interval same value
@@ -500,6 +511,7 @@ def test_ble_sdk_same_scan_interval_and_window_C537346(ble_dut, ble_client, sl_c
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable",
                                          "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C91337')
 def test_ble_sdk_undirected_connectable_C91337(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Master and verify connectivity with Undirected connectable devices
@@ -613,6 +625,7 @@ def test_ble_sdk_undirected_connectable_C91337(ble_dut, ble_client, sl_collectio
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C147312')
 def test_ble_BLE_rejects_SMP_pair_request_C147312(ble_dut, ble_client, sl_collections, ble_sniffer):
     try:
         with TimeMeasurer() as t:
@@ -685,6 +698,7 @@ def test_ble_BLE_rejects_SMP_pair_request_C147312(ble_dut, ble_client, sl_collec
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663401')
 def test_ble_sdk_passive_scan_set_by_interval_and_window_C663401(ble_sniffer, ble_dut, ble_client, sl_collections):
     """
     Configure DUT_BLE for Passive scan and verify its functionality
@@ -703,6 +717,7 @@ def test_ble_sdk_passive_scan_set_by_interval_and_window_C663401(ble_sniffer, bl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663402')
 def test_ble_sdk_passive_scan_set_by_interval_and_window_C663402(ble_sniffer, ble_dut, ble_client, sl_collections):
     """
     Configure DUT_BLE for Passive scan and verify its functionality
@@ -721,6 +736,7 @@ def test_ble_sdk_passive_scan_set_by_interval_and_window_C663402(ble_sniffer, bl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663403')
 def test_ble_sdk_passive_scan_set_by_interval_and_window_C663403(ble_sniffer, ble_dut, ble_client, sl_collections):
     """
     Configure DUT_BLE for Passive scan and verify its functionality
@@ -739,6 +755,7 @@ def test_ble_sdk_passive_scan_set_by_interval_and_window_C663403(ble_sniffer, bl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663404')
 def test_ble_sdk_passive_scan_set_by_same_interval_and_window_C663404(ble_sniffer, ble_dut, ble_client, sl_collections):
     """
     Configure DUT_BLE for Passive scan and verify its functionality
@@ -757,6 +774,7 @@ def test_ble_sdk_passive_scan_set_by_same_interval_and_window_C663404(ble_sniffe
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663405')
 def test_ble_sdk_active_scan_set_by_same_interval_and_window_C663405(ble_sniffer, ble_dut, ble_client, sl_collections):
     """
     Configure DUT_BLE for active scan and verify its functionality
@@ -775,6 +793,7 @@ def test_ble_sdk_active_scan_set_by_same_interval_and_window_C663405(ble_sniffer
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663354')
 def test_ble_sdk_undirected_non_connectable_passive_scan_C663354(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with passive scan undirected non connectable devices
@@ -793,6 +812,7 @@ def test_ble_sdk_undirected_non_connectable_passive_scan_C663354(ble_dut, ble_cl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663356')
 def test_ble_sdk_undirected_non_connectable_active_scan_C663356(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Slave and verify connectivity with active scan undirected non connectable devices
@@ -811,6 +831,7 @@ def test_ble_sdk_undirected_non_connectable_active_scan_C663356(ble_dut, ble_cli
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663357')
 def test_ble_sdk_passive_scan_connectable_undirected_C663357(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Master and verify connectivity with Undirected non connectable devices
@@ -837,6 +858,7 @@ def test_ble_sdk_passive_scan_connectable_undirected_C663357(ble_dut, ble_client
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663358')
 def test_ble_sdk_passive_scan_connectable_directed_C663358(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Master and verify connectivity with directed connectable devices
@@ -863,6 +885,7 @@ def test_ble_sdk_passive_scan_connectable_directed_C663358(ble_dut, ble_client, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663359')
 def test_ble_sdk_passive_scan_undirected_non_connectable_C663359(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Master and verify connectivity with Undirected non-connectable devices
@@ -889,6 +912,7 @@ def test_ble_sdk_passive_scan_undirected_non_connectable_C663359(ble_dut, ble_cl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663360')
 def test_ble_sdk_passive_scan_undirected_scannable_C663360(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Master and verify connectivity with undirected scannable devices
@@ -916,6 +940,7 @@ def test_ble_sdk_passive_scan_undirected_scannable_C663360(ble_dut, ble_client, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663362')
 def test_ble_sdk_directed_connectable_adv_passive_scan_C663362(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Master and verify connectivity with passive scan directed connectable devices
@@ -1008,6 +1033,7 @@ def test_ble_sdk_directed_connectable_adv_passive_scan_C663362(ble_dut, ble_clie
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663364')
 def test_ble_sdk_undirected_connectable_adv_passive_scan_C663364(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Master and verify connectivity with passive scan undirected connectable devices
@@ -1034,6 +1060,7 @@ def test_ble_sdk_undirected_connectable_adv_passive_scan_C663364(ble_dut, ble_cl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663365')
 def test_ble_sdk_directed_connectable_adv_passive_scan_C663365(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Master and verify connectivity with passive scan directed connectable devices
@@ -1059,6 +1086,7 @@ def test_ble_sdk_directed_connectable_adv_passive_scan_C663365(ble_dut, ble_clie
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C206387')
 def test_wrong_rssi_value_in_passive_scan_C206387(ble_dut, ble_client, sl_collections):
     """ Wrong RSSI value reported during passive Bluetooth scanning."""
     try:
@@ -1101,6 +1129,7 @@ def test_wrong_rssi_value_in_passive_scan_C206387(ble_dut, ble_client, sl_collec
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663361')
 def test_ble_sdk_passive_scan_when_multiple_devices_adv_C663361(ble_dut, ble_client, sl_collections, ble_sniffer):
     """
     Configure DUT in Master and verify multiple devices with different adv type in passive scan
@@ -1301,6 +1330,7 @@ def test_ble_sdk_passive_scan_when_multiple_devices_adv_C663361(ble_dut, ble_cli
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705944')
 def test_ble_sdk_Master_role_MTU_request_error_size_15bytes_C705944(ble_dut, ble_client, ble_sniffer, sl_collections):
     try:
         with TimeMeasurer() as t:
@@ -1366,6 +1396,7 @@ def test_ble_sdk_Master_role_MTU_request_error_size_15bytes_C705944(ble_dut, ble
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705945')
 def test_ble_sdk_Master_role_MTU_request_error_size_245bytes_C705945(ble_dut, ble_client, ble_sniffer, sl_collections):
     try:
         with TimeMeasurer() as t:

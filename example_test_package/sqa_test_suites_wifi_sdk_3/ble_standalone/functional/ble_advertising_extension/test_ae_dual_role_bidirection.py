@@ -555,6 +555,7 @@ class BLEThread:
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC2410629278')
 def test_ble_2_central_connection_20_and_230_bytes_tx_notify_with_1M_2M_LE_Coded_Phy_rates_C768412_to_CC768417(
         remote_wiseconnect3, remote_wiseconnect3s, ble_dut, ble_sniffer, sl_collections, pri_adv_phy,
         sec_adv_phy, test_case_id, k, char_uid, service_uid):

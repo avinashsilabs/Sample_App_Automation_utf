@@ -317,6 +317,7 @@ def dut_clean_up(wifi_dut):
 # The test case checks tcp close functionality
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19347')
 def test_wifi_tcp_close_c19347(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, number_of_pkts):
     try:
         capture_filename = "test_wifi_tcp_close_TC19347"
@@ -386,6 +387,7 @@ def test_wifi_tcp_close_c19347(wifi_sniffer, remote_socket, wifi_dut, wifi_acces
 # The test case checks udp socket close functionality
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19348')
 def test_wifi_udp_close_c19348(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, number_of_pkts):
     try:
         capture_filename = "test_wifi_udp_close_TC19348"
@@ -450,6 +452,7 @@ def test_wifi_udp_close_c19348(wifi_sniffer, remote_socket, wifi_dut, wifi_acces
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19349')
 def test_tcp_socket_dut_client_c19349(wifi_sniffer, wifi_access_point, wifi_dut, remote_socket):
     try:
         capture_filename = "test_socket_tcp_C19349"
@@ -539,6 +542,7 @@ def test_tcp_socket_dut_client_c19349(wifi_sniffer, wifi_access_point, wifi_dut,
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19350')
 def test_udp_socket_dut_client_c19350(wifi_access_point, wifi_dut, remote_socket, wifi_sniffer):
     try:
         capture_filename = "test_socket_tcp_C19350"
@@ -627,6 +631,7 @@ def test_udp_socket_dut_client_c19350(wifi_access_point, wifi_dut, remote_socket
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19351')
 def test_10_tcp_socket_dut_server_c19351(wifi_access_point, wifi_dut, remote_socket, wifi_sniffer,
                                          remote_socket_factory):
     try:
@@ -722,6 +727,7 @@ def test_10_tcp_socket_dut_server_c19351(wifi_access_point, wifi_dut, remote_soc
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19352')
 def test_5tcp_5udp_socket_c19352(wifi_access_point, wifi_dut, remote_socket, wifi_sniffer):
     try:
         capture_filename = "test_socket_c19352"
@@ -830,6 +836,7 @@ def test_5tcp_5udp_socket_c19352(wifi_access_point, wifi_dut, remote_socket, wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19353')
 def test_5tcp_5udp_dut_server_socket_c19353(wifi_access_point, wifi_dut, remote_socket_factory, wifi_sniffer):
     try:
         capture_filename = "test_socket_c19353"
@@ -978,6 +985,7 @@ def test_5tcp_5udp_dut_server_socket_c19353(wifi_access_point, wifi_dut, remote_
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19354')
 def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point, wifi_dut, switch):
     validation = True
     rejoin_value = 0
@@ -1105,6 +1113,7 @@ def test_socket_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_access_point,
         "client_socket_limit": 10,
     }
 )
+@pytest.mark.test_src_map_id('C19356')
 def test_socket_tcp_data_transfer_mss_c19356(wifi_access_point, wifi_dut, wifi_client, net_perf_client,
                                              protocol):
     try:
@@ -1162,6 +1171,7 @@ def test_socket_tcp_data_transfer_mss_c19356(wifi_access_point, wifi_dut, wifi_c
         "client_socket_limit": 10,
     }
 )
+@pytest.mark.test_src_map_id('C19357')
 def test_socket_tcp_data_transfer_mss_c19357(wifi_access_point, wifi_dut, wifi_client, net_perf_client,
                                              protocol):
     try:
@@ -1222,6 +1232,7 @@ def test_socket_tcp_data_transfer_mss_c19357(wifi_access_point, wifi_dut, wifi_c
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.skipped("Testcase Not Applicable")
+@pytest.mark.test_src_map_id('C19358')
 def test_http_socket_tcp_c19358(wifi_sniffer, wifi_dut, wifi_access_point):
     try:
         capture_filename = "test_http_socket_tcp_c19358"
@@ -1290,6 +1301,7 @@ def test_http_socket_tcp_c19358(wifi_sniffer, wifi_dut, wifi_access_point):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C71652')
 def test_https_socket_tcp_c71652(wifi_sniffer, wifi_dut, wifi_access_point):
     try:
         capture_filename = "test_https_socket_tcp_c19358"
@@ -1382,6 +1394,7 @@ def test_https_socket_tcp_c71652(wifi_sniffer, wifi_dut, wifi_access_point):
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19359')
 def test_wifi_socket_limit_c19359(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket):
     try:
         capture_filename = "test_socket_limit_c19359"
@@ -1485,6 +1498,7 @@ pytest.mark.config(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [60])
+@pytest.mark.test_src_map_id('C19360')
 def test_wifi_tcp_data_receive_check_c19360(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point,
                                             test_run_time):
     try:
@@ -1570,6 +1584,7 @@ pytest.mark.config(
 @pytest.mark.parametrize("test_run_time", [60])
 # The test case checks data receive functionality over udp socket
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C19361')
 def test_wifi_udp_receive_c19361(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point, test_run_time):
     try:
         capture_filename = "test_wifi_udp_receive_TC19361"
@@ -1642,6 +1657,7 @@ pytest.mark.config(
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19362')
 def test_wifi_tcp_remote_terminate_c19362(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point):
     try:
         capture_filename = "test_wifi_tcp_remote_terminate_TC19362"
@@ -1726,6 +1742,7 @@ def test_wifi_tcp_remote_terminate_c19362(wifi_sniffer, remote_socket, wifi_dut,
         "client_socket_limit": 10,
     }
 )
+@pytest.mark.test_src_map_id('C19363')
 def test_socket_verify_data_transfer_with_attenuator_c19363(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client,
                                                             net_perf_client, protocol, rf_attenuator):
     try:
@@ -1852,6 +1869,7 @@ def test_socket_verify_data_transfer_with_attenuator_c19363(wifi_sniffer, wifi_a
         "client_socket_limit": 10,
     }
 )
+@pytest.mark.test_src_map_id('C19364')
 def test_tcp_socket_max_limit_c19364(wifi_sniffer, wifi_access_point, wifi_dut, remote_socket, remote_socket_factory):
     try:
         validation = True
@@ -2020,6 +2038,7 @@ def test_tcp_socket_max_limit_c19364(wifi_sniffer, wifi_access_point, wifi_dut, 
         "client_socket_limit": 10,
     }
 )
+@pytest.mark.test_src_map_id('C19365')
 def test_tcp_udp_socket_data_transfer_tx_c19365(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, net_perf_client,
                                                 protocol):
     try:
@@ -2122,6 +2141,7 @@ def test_tcp_udp_socket_data_transfer_tx_c19365(wifi_sniffer, wifi_access_point,
         "client_socket_limit": 8,
     }
 )
+@pytest.mark.test_src_map_id('C19366')
 def test_tcp_tx_rx_8_high_performance_socket_c19366(wifi_sniffer, wifi_access_point, wifi_dut, remote_socket,
                                                     remote_socket_factory):
     validation = True
@@ -2291,6 +2311,7 @@ def test_tcp_tx_rx_8_high_performance_socket_c19366(wifi_sniffer, wifi_access_po
             Feature32KHzBypassClockOnUULP_GPIO_3 | RS9116ExtCustomFeatureBitMap.Feature384kBMemoryMode,
     }
 )
+@pytest.mark.test_src_map_id('C19367')
 def test_tcp_socket_windows_size7_c19367(wifi_sniffer, remote_socket, wifi_dut, wifi_access_point):
     test_run_time = 120
     capture_filename = "test_size7_c19367"
@@ -2388,6 +2409,7 @@ def test_tcp_socket_windows_size7_c19367(wifi_sniffer, remote_socket, wifi_dut, 
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C71653')
 def test_tcp_udp_socket_data_transfer_rx_c71653(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket_factory):
     """Verify TCP ,UDP data reception of STAUT in WPA-TKIP mode"""
     try:

@@ -52,6 +52,7 @@ def logger():
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C20844')
 def test_wlan_connected_standby_c20844(wifi_access_point,wifi_dut,wifi_sniffer,utf_constants):
 
     bcast_in_tim_next_cmd = 1
@@ -116,6 +117,7 @@ def test_wlan_connected_standby_c20844(wifi_access_point,wifi_dut,wifi_sniffer,u
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C20833')
 def test_wlan_continous_ping_c20833(wifi_access_point, wifi_dut,wifi_sniffer):
     ping_count = 1000
     logger().info(" ====== configuring the sniffer with access point channel ======")
@@ -160,6 +162,7 @@ def test_wlan_continous_ping_c20833(wifi_access_point, wifi_dut,wifi_sniffer):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C20849')
 def test_scan_func_after_successful_dut_conn_c20849(wifi_access_point, wifi_dut,wifi_sniffer):
     logger().info(" ====== configuring the sniffer with access point channel ======")
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -206,6 +209,7 @@ def test_scan_func_after_successful_dut_conn_c20849(wifi_access_point, wifi_dut,
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPAWPA2MixedMode'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C20851')
 def test_wpa_wpa2_mixed_mode_access_point_detected_as_wpa_c20851(wifi_access_point, wifi_dut, wifi_sniffer):
     logger().info("\n\n **** Some WPA/WPA2 mixed mode access points being detected as WPA only ***** \n\n")
     logger().info(" ====== configuring the sniffer with access point channel ======")
@@ -258,6 +262,7 @@ def test_wpa_wpa2_mixed_mode_access_point_detected_as_wpa_c20851(wifi_access_poi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C20847')
 def test_wifi_conn_by_providing_wrong_psk_c20847(wifi_access_point, wifi_dut, wifi_sniffer):
     logger().info("\n\n **** Verify Wi-Fi connection by providing the wrong PSK using rsi_wlan_connect_async API ***** \n\n")
     logger().info(" ====== configuring the sniffer with access point channel ======")

@@ -52,6 +52,7 @@ def logger():
 @pytest.mark.http_client("raspi_http_client")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test cases verifies the https get with the linux as server and client
+@pytest.mark.test_src_map_id('TC1467632792')
 def test_http_server_and_linux_client_get(http_server, http_client, logger):
     method = "GET"
     index_path = "index.html"
@@ -79,6 +80,7 @@ def test_http_server_and_linux_client_get(http_server, http_client, logger):
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19209')
 def test_https_get_functionality_C19209(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                         utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -149,6 +151,7 @@ def test_https_get_functionality_C19209(http_server, wifi_dut, http_client, wifi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19204')
 def test_https_get_functionality_feature_not_enabled_dut_C19204(http_server, wifi_dut, http_client, wifi_access_point,
                                                                 index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -216,6 +219,7 @@ def test_https_get_functionality_feature_not_enabled_dut_C19204(http_server, wif
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19203')
 def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut, http_client, wifi_access_point,
                                                          index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -282,6 +286,7 @@ def test_https_get_functionality_not_loading_cert_C19203(http_server, wifi_dut, 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19205')
 def test_https_get_functionality_different_urls_C19205(http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -352,6 +357,7 @@ def test_https_get_functionality_different_urls_C19205(http_server, wifi_dut, ht
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19206')
 def test_https_get_functionality_send_100mbfile_from_peer_C19206(http_server, wifi_dut, http_client, wifi_access_point,
                                                                  index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -420,6 +426,7 @@ def test_https_get_functionality_send_100mbfile_from_peer_C19206(http_server, wi
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # This test case verifies the Https Get functionality by comparing the data and, by issuing invalid IP
+@pytest.mark.test_src_map_id('TC5233254809')
 def test_https_get_functionality_invalid_ip(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                             utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -487,6 +494,7 @@ def test_https_get_functionality_invalid_ip(http_server, wifi_dut, http_client, 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19207')
 def test_https_get_functionality_port10_case1_c19207(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                                      utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -556,6 +564,7 @@ def test_https_get_functionality_port10_case1_c19207(http_server, wifi_dut, http
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19207')
 def test_https_get_functionality_port200_case2_c19207(http_server, wifi_dut, http_client, wifi_access_point,
                                                       index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -624,6 +633,7 @@ def test_https_get_functionality_port200_case2_c19207(http_server, wifi_dut, htt
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19207')
 def test_https_get_functionality_port2000_case3_c19207(http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -693,6 +703,7 @@ def test_https_get_functionality_port2000_case3_c19207(http_server, wifi_dut, ht
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19207')
 def test_https_get_functionality_port20000_case4_c19207(http_server, wifi_dut, http_client, wifi_access_point,
                                                         index_path, utf_constants, wifi_sniffer):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -763,6 +774,7 @@ def test_https_get_functionality_port20000_case4_c19207(http_server, wifi_dut, h
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19216')
 def test_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, wifi_dut, wifi_access_point,
                                         index_path):
     validation = True
@@ -847,6 +859,7 @@ def test_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19210')
 def test_http_get_when_httpserver_does_not_ssl_handshake_C19210(wifi_sniffer, http_server, http_client, wifi_dut,
                                                                 wifi_access_point, index_path):
     validation = True

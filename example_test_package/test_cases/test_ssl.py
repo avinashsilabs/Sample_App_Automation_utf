@@ -187,6 +187,7 @@ def dut_clean_up(wifi_dut):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC19110')
 def test_ssl_server_testcase_ipv6_TC19110(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_client, logger
 ):
@@ -260,6 +261,7 @@ def test_ssl_server_testcase_ipv6_TC19110(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC19110')
 def test_ssl_server_testcase_TC19110(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_client, logger
         ):

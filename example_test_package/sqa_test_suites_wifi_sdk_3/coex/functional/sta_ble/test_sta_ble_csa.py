@@ -917,6 +917,7 @@ class BleThread(ThreadBase):
     ],
 )
 
+@pytest.mark.test_src_map_id('C778124')
 def test_sta_ble_sdk_sta_ble_slave_dle_notifications_wlan_csa_c778124(
                 wifi_sniffer,
                 wifi_access_point,
@@ -1088,6 +1089,7 @@ def test_sta_ble_sdk_sta_ble_slave_dle_notifications_wlan_csa_c778124(
     ],
 )
 
+@pytest.mark.test_src_map_id('C778125')
 def test_sta_ble_sdk_sta_ble_central_ble_rx_notifications_with_csa_wpa3_security_c778125(
                 wifi_sniffer,
                 wifi_access_point,
@@ -1231,6 +1233,7 @@ def test_sta_ble_sdk_sta_ble_central_ble_rx_notifications_with_csa_wpa3_security
     ],
 )
 
+@pytest.mark.test_src_map_id('C778126')
 def test_sta_ble_with_csa_with_csa_count_1_ble_scan_with_si300ms_sw100ms_c778126(
                 wifi_sniffer,
                 wifi_access_point,
@@ -1362,6 +1365,7 @@ def test_sta_ble_with_csa_with_csa_count_1_ble_scan_with_si300ms_sw100ms_c778126
     ],
 )
 
+@pytest.mark.test_src_map_id('C778127')
 def test_sta_ble_csa_beacon_count_254_with_ble_connection_with_ci45ms_C778127(
                 wifi_sniffer,
                 wifi_access_point,
@@ -1507,6 +1511,7 @@ def test_sta_ble_csa_beacon_count_254_with_ble_connection_with_ci45ms_C778127(
     ],
 )
 
+@pytest.mark.test_src_map_id('C778128')
 def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c778128(
                 wifi_sniffer,
                 wifi_access_point,
@@ -1671,6 +1676,7 @@ def test_sta_ble_sdk_with_csa_unsupported_channel_wpa3_enterprise_security_c7781
     ],
 )
 
+@pytest.mark.test_src_map_id('C778129')
 def test_sta_ble_csa_with_ota_firmware_update_with_ble_conn_CI_30ms_C778129(
                 http_server,
                 wifi_sniffer,
@@ -1824,6 +1830,7 @@ def test_sta_ble_csa_with_ota_firmware_update_with_ble_conn_CI_30ms_C778129(
     ],
 )
 
+@pytest.mark.test_src_map_id('C778130')
 def test_sta_ble_csa_with_aws_mqtt_publish_with_ble_conn_C778130(
                 wifi_sniffer,
                 wifi_access_point,
@@ -1970,6 +1977,7 @@ def test_sta_ble_csa_with_aws_mqtt_publish_with_ble_conn_C778130(
     ],
 )
 
+@pytest.mark.test_src_map_id('C778131')
 def test_sta_ble_sdk_sta_ble_master_dle_notifications_with_2ble_wlan_csa_C778131(
                 wifi_sniffer,
                 wifi_access_point,
@@ -2112,6 +2120,7 @@ def test_sta_ble_sdk_sta_ble_master_dle_notifications_with_2ble_wlan_csa_C778131
     ],
 )
 
+@pytest.mark.test_src_map_id('C778132')
 def test_sta_ble_sdk_ble_central_conn_disconnection_with_csa_C778132(
                 wifi_sniffer,
                 wifi_access_point,
@@ -2251,6 +2260,7 @@ def test_sta_ble_sdk_ble_central_conn_disconnection_with_csa_C778132(
     ],
 )
 
+@pytest.mark.test_src_map_id('C778133')
 def test_sta_ble_sdk_ble_peripheral_conn_disconnection_with_csa_C778133(
                 wifi_sniffer,
                 wifi_access_point,

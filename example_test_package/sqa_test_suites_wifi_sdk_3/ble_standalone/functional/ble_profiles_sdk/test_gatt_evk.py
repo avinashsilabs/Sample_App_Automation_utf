@@ -68,6 +68,7 @@ def logger():
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667634')
 def test_ble_gatt_primary_services_by_dut_server_C667634(ble_dut, remote_wiseconnect3, sl_collections):
     try:
         logger().info("======== start ble in dut")

@@ -35,6 +35,7 @@ def logger():
     wifi={"oper_mode": Si91xOperatingMode.WiFiClient}
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778475')
 def test_at_wifi_sdk_passive_scan_all_channels_c778475(wifi_access_point, wifi_dut, wifi_sniffer, sniffer_filter, sl_collections, request):
     """
     Verify passive scan functionality by enabling passive scan.
@@ -104,6 +105,7 @@ def test_at_wifi_sdk_passive_scan_all_channels_c778475(wifi_access_point, wifi_d
 )
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C778482')
 def test_at_wifi_sdk_passive_scan_eu_specific_channels_lp_enabled_c778482(wifi_access_point, wifi_dut, wifi_sniffer, sniffer_filter, sl_collections, request):
     """
     Verify passive scan functionality on EU-specific channels (12, 13) with LP enabled.

@@ -35,6 +35,7 @@ def logger():
 @pytest.mark.power_msrmt_dut("per_wiseconnect")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20560')
 def test_wlan_active_rx_10dBm_20dBm_2_4Ghz_C20560(wifi_dut, power_msrmt_dut):
     rsi_antenna = 1
     antenna_gain_2g = 0

@@ -246,6 +246,7 @@ class MelcoConcurrentMode(ThreadBase):
         'channel': 11,
     }
 )
+@pytest.mark.test_src_map_id('C641368')
 def test_wifi_sdk_check_the_staut_tcp_tx_on_10_sockets_on_dut_concurrent_mode_C641368(wifi_dut, wifi_access_point,
                                                                                       sl_collections, wifi_sniffer,
                                                                                       sniffer_filter, wifi_clients,
@@ -321,6 +322,7 @@ def test_wifi_sdk_check_the_staut_tcp_tx_on_10_sockets_on_dut_concurrent_mode_C6
         'channel': 11,
     }
 )
+@pytest.mark.test_src_map_id('C641369')
 def test_wifi_sdk_check_the_staut_tcp_rx_on_10_sockets_on_dut_concurrent_mode_C641369(wifi_dut, wifi_access_point,
                                                                                       sl_collections, wifi_sniffer,
                                                                                       sniffer_filter, wifi_clients,
@@ -395,6 +397,7 @@ def test_wifi_sdk_check_the_staut_tcp_rx_on_10_sockets_on_dut_concurrent_mode_C6
         'channel': 11,
     }
 )
+@pytest.mark.test_src_map_id('C641370')
 def test_wifi_sdk_check_the_staut_udp_tx_on_10_sockets_on_dut_concurrent_mode_C641370(wifi_dut, wifi_access_point,
                                                                                       sl_collections, wifi_sniffer,
                                                                                       sniffer_filter, wifi_clients,
@@ -469,6 +472,7 @@ def test_wifi_sdk_check_the_staut_udp_tx_on_10_sockets_on_dut_concurrent_mode_C6
         'channel': 11,
     }
 )
+@pytest.mark.test_src_map_id('C641371')
 def test_wifi_sdk_check_the_staut_udp_rx_on_10_sockets_on_dut_concurrent_mode_C641371(wifi_dut, wifi_access_point,
                                                                                       sl_collections, wifi_sniffer,
                                                                                       sniffer_filter, wifi_clients,

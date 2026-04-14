@@ -328,6 +328,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C652922')
 def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_c652922(ble_dut, ble_client,
                                                                                      sl_collections):
     """
@@ -359,6 +360,7 @@ def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_c65
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C652923')
 def test_ble_sdk_verify_adv_types_resolvable_private_address_diff_adv_intervals_c652923(ble_dut, ble_client,
                                                                                         sl_collections):
     """
@@ -388,6 +390,7 @@ def test_ble_sdk_verify_adv_types_resolvable_private_address_diff_adv_intervals_
     except Exception as error:
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C652924')
 def test_ble_sdk_verify_address_resolution_enable_disable_c652924(ble_dut, ble_client, sl_collections):
     """
     Test Case 485439: Verify address resolution enable/disable functionality
@@ -419,6 +422,7 @@ def test_ble_sdk_verify_address_resolution_enable_disable_c652924(ble_dut, ble_c
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C652925')
 def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_with_UNDIR_CONN_c652925(ble_dut,
                                                                                                      ble_client,
                                                                                                      sl_collections):
@@ -451,6 +455,7 @@ def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_wit
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C652926')
 def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_with_UNDIR_SCAN_c652926(ble_dut,
                                                                                                      ble_client,
                                                                                                      sl_collections):
@@ -483,6 +488,7 @@ def test_ble_sdk_verify_advertising_start_stop_using_public_random_addresses_wit
         sl_collections.exception_handling(wifi_dut=ble_dut, exception=error)
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C652927')
 def test_ble_sdk_verify_address_resolution_enable_c652927(ble_dut, ble_client, sl_collections):
     """
         Test Case 477084: Verify address resolution enable functionality

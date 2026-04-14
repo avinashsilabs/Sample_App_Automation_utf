@@ -1066,6 +1066,7 @@ def calculate_offset(df):
 # )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708867')
 def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_scan_C708867(
         # wifi_sniffer,
         wifi_access_point,
@@ -1203,6 +1204,7 @@ def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_scan_C708867(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708868')
 def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_conn_C708868(
         # wifi_sniffer,
         wifi_access_point,
@@ -1345,6 +1347,7 @@ def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_conn_C708868(
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C708869')
 def test_verify_AE_Conn_as_Master_with_wlan_conn_C708869(
         # wifi_sniffer,
         wifi_access_point,
@@ -1482,6 +1485,7 @@ def test_verify_AE_Conn_as_Master_with_wlan_conn_C708869(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708870')
 def test_verify_AE_Conn_as_Slave_add_type_random_phy_1M_with_wlan_conn_C708870(
         # wifi_sniffer,
         wifi_access_point,
@@ -1628,6 +1632,7 @@ def test_verify_AE_Conn_as_Slave_add_type_random_phy_1M_with_wlan_conn_C708870(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708871')
 def test_verify_AE_Conn_as_Slave_add_type_random_phy_2M_with_wlan_Scan_C708871(
         # wifi_sniffer,
         wifi_access_point,
@@ -1773,6 +1778,7 @@ def test_verify_AE_Conn_as_Slave_add_type_random_phy_2M_with_wlan_Scan_C708871(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708872')
 def test_verify_AE_Conn_as_Slave_add_type_random_phy_2M_with_wlan_conn_C708872(
         # wifi_sniffer,
         wifi_access_point,
@@ -1924,6 +1930,7 @@ def test_verify_AE_Conn_as_Slave_add_type_random_phy_2M_with_wlan_conn_C708872(
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708874')
 def test_verify_AE_Conn_as_Master_add_type_conn_undirected_random_phy_2M_with_wlan_conn_C708873_C708874(
         # wifi_sniffer,
         wifi_access_point,
@@ -2108,6 +2115,7 @@ def test_verify_AE_Conn_as_Master_add_type_conn_undirected_random_phy_2M_with_wl
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708875')
 def test_verify_AE_Conn_as_Slave_add_type_random_phy_2M_with_wlan_conn_C708875(
         # wifi_sniffer,
         wifi_access_point,
@@ -2253,6 +2261,7 @@ def test_verify_AE_Conn_as_Slave_add_type_random_phy_2M_with_wlan_conn_C708875(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708878')
 def test_verify_AE_Conn_as_Master_addr_type_random_filter_policy_with_wlan_conn_C708878(
         # wifi_sniffer,
         wifi_access_point,
@@ -2411,6 +2420,7 @@ def test_verify_AE_Conn_as_Master_addr_type_random_filter_policy_with_wlan_conn_
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C708879')
 def test_verify_AE_Conn_as_Master_filter_policy_0x03_with_wlan_TCP_Tx_C708879(
         # wifi_sniffer,
         wifi_access_point,
@@ -2557,6 +2567,7 @@ def test_verify_AE_Conn_as_Master_filter_policy_0x03_with_wlan_TCP_Tx_C708879(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768270')
 def test_Verify_filter_policy_0x01_during_Wlan_TCP_Tx_C768270(
         # wifi_sniffer,
         wifi_access_point,
@@ -2679,6 +2690,7 @@ def test_Verify_filter_policy_0x01_during_Wlan_TCP_Tx_C768270(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768271')
 def test_Verify_filter_policy_0x03_during_Wlan_TCP_Tx_C768271(
         # wifi_sniffer,
         wifi_access_point,
@@ -2801,6 +2813,7 @@ def test_Verify_filter_policy_0x03_during_Wlan_TCP_Tx_C768271(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C768272')
 def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_TCP_Tx_C768272(
         # wifi_sniffer,
         wifi_access_point,
@@ -2947,6 +2960,7 @@ def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_TCP_Tx_C768272(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C768273')
 def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_UDP_Tx_C768273(
         # wifi_sniffer,
         wifi_access_point,
@@ -3092,6 +3106,7 @@ def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_UDP_Tx_C768273(
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 
+@pytest.mark.test_src_map_id('C768274')
 def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_HTTP_DL_C768274(
         # wifi_sniffer,
         wifi_access_point,
@@ -3243,6 +3258,7 @@ def test_verify_AE_Conn_as_Slave_filter_policy_0x02_with_wlan_HTTP_DL_C768274(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C768275')
 def test_verify_AE_Conn_as_Master_with_wlan_TCP_Tx_C768275(
         # wifi_sniffer,
         wifi_access_point,
@@ -3394,6 +3410,7 @@ def test_verify_AE_Conn_as_Master_with_wlan_TCP_Tx_C768275(
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C768276')
 def test_verify_AE_Conn_as_Master_with_wlan_HTTP_DL_C768276(
         # wifi_sniffer,
         wifi_access_point,
@@ -3546,6 +3563,7 @@ def test_verify_AE_Conn_as_Master_with_wlan_HTTP_DL_C768276(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C768307')
 def test_verify_BLE_two_sets_Conn_as_Central_1M_2M_with_wlan_TCP_Tx_C768307(
         # wifi_sniffer,
         wifi_access_point,
@@ -3677,6 +3695,7 @@ def test_verify_BLE_two_sets_Conn_as_Central_1M_2M_with_wlan_TCP_Tx_C768307(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C768308')
 def test_verify_BLE_two_sets_Conn_as_Central_coded_with_wlan_TCP_Tx_C768308(
         # wifi_sniffer,
         wifi_access_point,
@@ -3807,6 +3826,7 @@ def test_verify_BLE_two_sets_Conn_as_Central_coded_with_wlan_TCP_Tx_C768308(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C768313')
 def test_verify_AE_2SETS_Conn_as_peripheral_with_wlan_UDP_Tx_BLE_Conn_First_C768313(
         # wifi_sniffer,
         wifi_access_point,
@@ -3937,6 +3957,7 @@ def test_verify_AE_2SETS_Conn_as_peripheral_with_wlan_UDP_Tx_BLE_Conn_First_C768
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C768315')
 def test_verify_AE_2SETS_Conn_as_peripheral_with_wlan_TCP_Rx_BLE_Conn_First_C768315(
         # wifi_sniffer,
         wifi_access_point,

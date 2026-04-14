@@ -288,6 +288,7 @@ def find_error_codes_in_log(input_log):
 # Test function
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize_from_csv
+@pytest.mark.test_src_map_id('TC5665129921')
 def test_ble_scan_and_connect_from_csv(wifi_dut, ble_client, scan_params):
     """
     Run BLE passive scan with parameters from CSV, then initiate connection to

@@ -2124,6 +2124,7 @@ class BleThread(ThreadBase):
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767035')
 def test_sta_ble_dtls_ble_scan_adv_c767035(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -2220,6 +2221,7 @@ def test_sta_ble_dtls_ble_scan_adv_c767035(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767036')
 def test_sta_ble_dtls_ble_tx_c767036(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer,
@@ -2337,6 +2339,7 @@ def test_sta_ble_dtls_ble_tx_c767036(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767037')
 def test_sta_ble_dtls_ble_rx_c767037(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -2449,6 +2452,7 @@ def test_sta_ble_dtls_ble_rx_c767037(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767038')
 def test_sta_ble_dtls_ble_tx_indications_c767038(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -2556,6 +2560,7 @@ def test_sta_ble_dtls_ble_tx_indications_c767038(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767039')
 def test_sta_ble_dtls_ble_dual_role_wlan_sock_term_c767039(
     wifi_dut, wifi_access_point, wifi_client, ble_clients, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -2659,6 +2664,7 @@ def test_sta_ble_dtls_ble_dual_role_wlan_sock_term_c767039(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767040')
 def test_sta_ble_dtls_ble_reconn_central_c767040(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request, utf_constants
@@ -2754,6 +2760,7 @@ def test_sta_ble_dtls_ble_reconn_central_c767040(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767041')
 def test_sta_ble_dtls_ble_peripheral_reconn_c767041(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request, utf_constants
@@ -2853,6 +2860,7 @@ def test_sta_ble_dtls_ble_peripheral_reconn_c767041(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767047')
 def test_sta_ble_dtls_multiple_centrals_c767047(
         wifi_dut, wifi_access_point, wifi_client, ble_clients, openssl,
         wifi_sniffer, sl_collections, sniffer_filter, request
@@ -3009,6 +3017,7 @@ def test_sta_ble_dtls_multiple_centrals_c767047(
     "wifi_powersave_disable",
     "disassociated"
 ])
+@pytest.mark.test_src_map_id('C767048')
 def test_sta_ble_dtls_multi_peripherals_c767048(
         wifi_dut, wifi_access_point, wifi_client, ble_clients, openssl,
         wifi_sniffer, sl_collections, sniffer_filter, request
@@ -3141,6 +3150,7 @@ def test_sta_ble_dtls_multi_peripherals_c767048(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767042')
 def test_sta_ble_dtls_ble_wrtitewithresp_240_c767042(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -3255,6 +3265,7 @@ def test_sta_ble_dtls_ble_wrtitewithresp_240_c767042(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767043')
 def test_sta_ble_dtls_wlan_rejoin_ble_dualrole_c767043(
     wifi_dut, wifi_access_point, wifi_client, ble_clients, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -3380,6 +3391,7 @@ def test_sta_ble_dtls_wlan_rejoin_ble_dualrole_c767043(
     "wifi_powersave_disable",
     "disassociated",
 ])
+@pytest.mark.test_src_map_id('C767044')
 def test_sta_ble_dtls_wlan_rejoin_ble_rx_c767044(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request, switch
@@ -3496,6 +3508,7 @@ def test_sta_ble_dtls_wlan_rejoin_ble_rx_c767044(
     "wifi_powersave_disable",
     "disassociated"
 ])
+@pytest.mark.test_src_map_id('C767045')
 def test_sta_ble_dtls_ble_write_without_response_c767045(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -3585,6 +3598,7 @@ def test_sta_ble_dtls_ble_write_without_response_c767045(
     "wifi_powersave_disable",
     "disassociated"
 ])
+@pytest.mark.test_src_map_id('C767046')
 def test_sta_ble_dtls_tx_ble_reconn_c767046(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -3672,6 +3686,7 @@ def test_sta_ble_dtls_tx_ble_reconn_c767046(
     "wifi_powersave_disable",
     "disassociated"
 ])
+@pytest.mark.test_src_map_id('C767049')
 def test_sta_ble_dtls_multi_socket_ble_tx_c767049(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -3771,6 +3786,7 @@ def test_sta_ble_dtls_multi_socket_ble_tx_c767049(
     "wifi_powersave_disable",
     "disassociated"
 ])
+@pytest.mark.test_src_map_id('C767050')
 def test_sta_ble_dtls_dhcp_renewal_ble_tx_indications_c767050(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -3897,6 +3913,7 @@ def test_sta_ble_dtls_dhcp_renewal_ble_tx_indications_c767050(
     wifi={"security": "WPA2", "passphrase": "1234567890", "ipv6_state": "0"}
 )
 @pytest.mark.skip(reason="Don't have ipv6 support in openssl")
+@pytest.mark.test_src_map_id('C767051')
 def test_sta_ble_dtls_ipv6_ble_rx_c767051(firmware_loader,
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
@@ -4032,6 +4049,7 @@ def test_sta_ble_dtls_ipv6_ble_rx_c767051(firmware_loader,
     "disassociated"
 ])
 @pytest.mark.skip(reason="Don't have ipv6 support in openssl")
+@pytest.mark.test_src_map_id('C767052')
 def test_sta_ble_dtls_ipv6_peri_with_diff_conn_int_c767052(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter
@@ -4105,6 +4123,7 @@ def test_sta_ble_dtls_ipv6_peri_with_diff_conn_int_c767052(
     "wifi_powersave_disable",
     "disassociated"
 ])
+@pytest.mark.test_src_map_id('C767053')
 def test_sta_ble_dtls_grp_key_renw_ble_rx_c767053(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter
@@ -4181,6 +4200,7 @@ def test_sta_ble_dtls_grp_key_renw_ble_rx_c767053(
     "wifi_powersave_disable",
     "disassociated"
 ])
+@pytest.mark.test_src_map_id('C767054')
 def test_sta_ble_dtls_ble_provisioning_c767054(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, ble_dut, utf_constants
@@ -4247,6 +4267,7 @@ def test_sta_ble_dtls_ble_provisioning_c767054(
     "wifi_powersave_disable",
     "disassociated"
 ])
+@pytest.mark.test_src_map_id('C767055')
 def test_sta_ble_dtls_c767055(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter

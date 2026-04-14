@@ -31,6 +31,7 @@ def logger():
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC1059332646')
 def test_ble_ibeacon_adv_params(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -85,6 +86,7 @@ def test_ble_ibeacon_adv_params(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC4786902652')
 def test_ble_whitelist_adv_data(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -154,6 +156,7 @@ def test_ble_whitelist_adv_data(wifi_dut, ble_client):
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
 # https://github.com/bowdentheo/BLE-Beacon-Scanner/blob/master/BeaconScanner.py
+@pytest.mark.test_src_map_id('C19947')
 def test_ble_ibeacon_scanning_c19947(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -201,6 +204,7 @@ def test_ble_ibeacon_scanning_c19947(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC9563903660')
 def test_ble_scan_resp_adv_params(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -260,6 +264,7 @@ def test_ble_scan_resp_adv_params(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC4034189665')
 def test_ble_custom_adv_params(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -315,6 +320,7 @@ def test_ble_custom_adv_params(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC7630912673')
 def test_ble_conn_params(wifi_dut, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -410,6 +416,7 @@ def test_ble_conn_params(wifi_dut, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC2705840679')
 def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -474,6 +481,7 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     },
 )
 @pytest.mark.config("ble_client", bluetooth={"adapter_name": "hci1"})
+@pytest.mark.test_src_map_id('TC6335509685')
 def test_ble_advertisement_csr_dongle(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -537,6 +545,7 @@ def test_ble_advertisement_csr_dongle(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC6252627692')
 def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -590,6 +599,7 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC2550612698')
 def test_ble_dual_role(wifi_dut, ble_clients):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -662,6 +672,7 @@ def test_ble_dual_role(wifi_dut, ble_clients):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC2666429703')
 def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -811,6 +822,7 @@ def test_ble_gatt_server_slave(wifi_dut, wifi_access_point, ble_client):
     },
 )
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('TC5708317710')
 def test_ble_gatt_client_master(
     firmware_loader, wifi_dut, wifi_access_point, ble_client
 ):
@@ -916,6 +928,7 @@ def test_ble_gatt_client_master(
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC1302627716')
 def test_ble_multi_connect_disconnect(wifi_dut, ble_client):
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
     assert bt_dut_address is not None

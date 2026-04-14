@@ -1064,6 +1064,7 @@ class WLanJoinThread(ThreadBase):
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C1163604')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_c1163604(wifi_access_point, sniffer_filter, sl_collections,
                                                                  wifi_dut, ssl_server, utf_constants,
                                                                  wifi_sniffer, client_key, request):
@@ -1100,6 +1101,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_c1163604(wifi_access_poi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C1163603')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_c1163603(wifi_access_point, sniffer_filter, sl_collections,
                                                                  wifi_dut, ssl_server, utf_constants,
                                                                  wifi_sniffer, client_key, request):
@@ -1136,6 +1138,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_c1163603(wifi_access_poi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C1163606')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_in_ram_c1163606(wifi_access_point, sniffer_filter,
                                                                         sl_collections,
                                                                         wifi_dut, ssl_server, utf_constants,
@@ -1173,6 +1176,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_in_ram_c1163606(wifi_acc
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C1163605')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_in_ram_c1163605(wifi_access_point, sniffer_filter, sl_collections,
                                                                    wifi_dut, ssl_server, utf_constants,
                                                                    wifi_sniffer, client_key, request):
@@ -1211,6 +1215,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_in_ram_c1163605(wifi_access_p
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sta_mode_ssid', "passphrase": '12345678', "security": 'WPA3',
                                                "protected_management_frame": "Capable", })
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C1163613')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_wpa3_c1163613(wifi_access_point, sniffer_filter, sl_collections,
                                                                       wifi_dut, ssl_server, utf_constants,
                                                                       wifi_sniffer, client_key, request):
@@ -1250,6 +1255,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_wpa3_c1163613(wifi_acces
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C1163612')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_eap_c1163612(wifi_access_point, sniffer_filter, sl_collections,
                                                                      wifi_dut, ssl_server, radius_server, utf_constants,
                                                                      wifi_sniffer, client_key, request):
@@ -1292,6 +1298,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_eap_c1163612(wifi_access
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
+@pytest.mark.test_src_map_id('C1163608')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_c1163608(wifi_access_point, sniffer_filter,
                                                                              sl_collections,
                                                                              wifi_dut, ssl_server, utf_constants,
@@ -1334,6 +1341,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_c1163608(wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
+@pytest.mark.test_src_map_id('C1163607')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_c1163607(wifi_access_point, sniffer_filter,
                                                                              sl_collections,
                                                                              wifi_dut, ssl_server, utf_constants,
@@ -1376,6 +1384,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_c1163607(wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
+@pytest.mark.test_src_map_id('C1163614')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_in_ram_c1163614(wifi_access_point, sniffer_filter,
                                                                                     sl_collections,
                                                                                     wifi_dut, ssl_server, utf_constants,
@@ -1420,6 +1429,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_in_ram_c1163
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
+@pytest.mark.test_src_map_id('C1163615')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_eap_sec_c1163615(wifi_access_point, sniffer_filter,
                                                                                      sl_collections,
                                                                                      wifi_dut, ssl_server,
@@ -1463,6 +1473,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_eap_sec_c116
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
+@pytest.mark.test_src_map_id('C1163624')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_SL_SI91X_EXT_FEAT_352K_M4SS_320K_sta_alone_c1163624(
         wifi_access_point, sniffer_filter, sl_collections,
         wifi_dut, ssl_server, utf_constants,
@@ -1507,6 +1518,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_cbc_mode_three_certs_SL_SI91X_EXT
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key",
                          [['client_ecdsa_key_test1.pem', 'client_ecdsa_key_test2.pem', 'client_ecdsa_key_test3.pem']])
+@pytest.mark.test_src_map_id('C1163621')
 def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_ecdsa_c1163621(wifi_access_point, sniffer_filter,
                                                                                    sl_collections,
                                                                                    wifi_dut, ssl_server, utf_constants,
@@ -1544,6 +1556,7 @@ def test_wifi_sdk_ssl_load_private_wrap_key_iv_ecb_mode_three_certs_ecdsa_c11636
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C1163619')
 def test_wifi_sdk_ssl_neg_wrap_method_mismatch_c1163619(wifi_access_point, sniffer_filter, sl_collections,
                                                         wifi_dut, ssl_server, utf_constants,
                                                         wifi_sniffer, client_key, request):
@@ -1581,6 +1594,7 @@ def test_wifi_sdk_ssl_neg_wrap_method_mismatch_c1163619(wifi_access_point, sniff
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C719579')
 def test_wifi_sdk_ssl_neg_wrap_method_wrong_iv_c719579(wifi_access_point, sniffer_filter, sl_collections,
                                                        wifi_dut, ssl_server, utf_constants,
                                                        wifi_sniffer, client_key, request):
@@ -1618,6 +1632,7 @@ def test_wifi_sdk_ssl_neg_wrap_method_wrong_iv_c719579(wifi_access_point, sniffe
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test2.key'])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C719588')
 def test_wifi_sdk_ssl_neg_wrap_method_wrong_private_key_c719588(wifi_access_point, sniffer_filter, sl_collections,
                                                                 wifi_dut, ssl_server, utf_constants,
                                                                 wifi_sniffer, client_key, request):
@@ -1655,6 +1670,7 @@ def test_wifi_sdk_ssl_neg_wrap_method_wrong_private_key_c719588(wifi_access_poin
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C769668')
 def test_wifi_sdk_ssl_neg_without_loading_wrapped_private_key_c769668(wifi_access_point, sniffer_filter, sl_collections,
                                                                       wifi_dut, ssl_server, utf_constants,
                                                                       wifi_sniffer, client_key, request):
@@ -1692,6 +1708,7 @@ def test_wifi_sdk_ssl_neg_without_loading_wrapped_private_key_c769668(wifi_acces
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C769669')
 def test_wifi_sdk_ssl_load_wrapped_private_key_after_powersave_c769669(wifi_access_point, sniffer_filter,
                                                                        sl_collections,
                                                                        wifi_dut, ssl_server, utf_constants,
@@ -1730,6 +1747,7 @@ def test_wifi_sdk_ssl_load_wrapped_private_key_after_powersave_c769669(wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C719582')
 def test_wifi_sdk_ssl_rx_throughput_private_wrap_key_iv_ecb_mode_c719582(wifi_access_point,
                                                                          sniffer_filter, sl_collections, wifi_dut,
                                                                          ssl_server, utf_constants, wifi_sniffer,
@@ -1770,6 +1788,7 @@ def test_wifi_sdk_ssl_rx_throughput_private_wrap_key_iv_ecb_mode_c719582(wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C719581')
 def test_wifi_sdk_ssl_tx_throughput_private_wrap_key_iv_ecb_mode_c719581(wifi_access_point, sniffer_filter,
                                                                          sl_collections, wifi_dut, ssl_server,
                                                                          utf_constants, wifi_sniffer,
@@ -1830,6 +1849,7 @@ def test_wifi_sdk_ssl_tx_throughput_private_wrap_key_iv_ecb_mode_c719581(wifi_ac
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.parametrize("client_key", ['private-key.key'])
+@pytest.mark.test_src_map_id('C719570')
 def test_wifi_sdk_aws_mqtt_connection_private_wrap_key_iv_ecb_mode_c719570(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                            sniffer_filter, client_key, sl_collections,
                                                                            aws_iot_client, utf_constants,
@@ -1917,6 +1937,7 @@ def test_wifi_sdk_aws_mqtt_connection_private_wrap_key_iv_ecb_mode_c719570(wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C719574')
 def test_wifi_sdk_1ssl_1tcp_sockets_send_data_testcase_c719574(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server,
                                                               remote_socket_factory, sl_collections,
                                                               request, client_key, sniffer_filter):
@@ -2053,6 +2074,7 @@ def test_wifi_sdk_1ssl_1tcp_sockets_send_data_testcase_c719574(wifi_sniffer, wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", [['client_test1.key', 'client_test2.key', 'client_test3.key']])
+@pytest.mark.test_src_map_id('C719853')
 def test_wifi_sdk_three_ssl_load_private_wrap_key_iv_ecb_mode_connect_close_sequence_c719853(wifi_access_point,
                                                                                              sniffer_filter,
                                                                                              sl_collections,
@@ -2233,6 +2255,7 @@ def test_wifi_sdk_three_ssl_load_private_wrap_key_iv_ecb_mode_connect_close_sequ
 @pytest.mark.start_state("wifi_dut", wifi=["init", "ap_enabled"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C719577')
 def test_wifi_sdk_ssl_private_key_wrap_ecb_mode_data_transfer_in_concurrent_mode_c719577(sniffer_filter, wifi_dut,
                                                                                          wifi_access_point, wifi_client,
                                                                                          sl_collections, ssl_server,
@@ -2395,6 +2418,7 @@ def test_wifi_sdk_ssl_private_key_wrap_ecb_mode_data_transfer_in_concurrent_mode
                        wifi=["wifi_powersave_disable", "azure_iot_unsubscribe", "azure_iot_disconnect",
                              "disassociated"])
 @pytest.mark.parametrize("client_key", ['mydevkitkey.pem'])
+@pytest.mark.test_src_map_id('C719571')
 def test_wifi_sdk_azure_mqtt_ssl_private_wrap_key_ecb_mode_c719571(wifi_access_point, wifi_dut, wifi_sniffer,
                                                                    azure_iot_client, sl_collections, wifi_client,
                                                                    request, utf_constants, sniffer_filter,
@@ -2463,6 +2487,7 @@ def test_wifi_sdk_azure_mqtt_ssl_private_wrap_key_ecb_mode_c719571(wifi_access_p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C719565')
 def test_wifi_sdk_ssl_private_key_wrap_ecb_rx_while_rejoining_c719565(switch, wifi_dut, wifi_access_point,
                                                                       wifi_sniffer, ssl_server, sl_collections,
                                                                       sniffer_filter, client_key, request):

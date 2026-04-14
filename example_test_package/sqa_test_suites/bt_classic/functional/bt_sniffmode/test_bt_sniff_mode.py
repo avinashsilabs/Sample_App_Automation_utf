@@ -364,6 +364,7 @@ pytestmark = [
 
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(160, 160, 5, 3)])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20049')
 def test_bt_sniff_mode_act_as_slave_role_C20049(bt_dut, bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
 
     test_case = "***********sniff mode acts as slave role****************"
@@ -374,6 +375,7 @@ def test_bt_sniff_mode_act_as_slave_role_C20049(bt_dut, bt_client, sniff_max_int
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out"
 , [(840, 840, 10, 5), (500, 400, 5, 2), (192, 160, 4, 2)])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20050')
 def test_bt_sniff_mode_with_different_interval_act_as_slave_role_c20050(bt_dut,bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
 
     test_case = "********sniff mode with different intervals act as slave role**********"
@@ -383,6 +385,7 @@ def test_bt_sniff_mode_with_different_interval_act_as_slave_role_c20050(bt_dut,b
 
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(160, 160, 5, 3)])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20051')
 def test_bt_sniff_mode_act_as_master_role_c20051(bt_dut,bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
 
     test_case = "********sniff mode act as master role*************"
@@ -392,6 +395,7 @@ def test_bt_sniff_mode_act_as_master_role_c20051(bt_dut,bt_client, sniff_max_int
 
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(160, 160, 5, 3)])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20052')
 def test_bt_exit_sniff_mode_act_as_slave_role_c20052(bt_dut,bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out):
 
     test_case = "**********exit sniff mode act as slave role************"

@@ -29,6 +29,7 @@ from utf.utils.iperf.iperf_utils import ping
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19052')
 def test_get_rtc_deep_sleep_c19052(
         wifi_sniffer, wifi_access_point, wifi_dut, logger, tolerance_threshold
         ):
@@ -115,6 +116,7 @@ def test_get_rtc_deep_sleep_c19052(
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19049')
 def test_set_get_rtc_twice_c19049(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
@@ -251,6 +253,7 @@ def test_set_get_rtc_twice_c19049(
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19053')
 def test_get_rtc_multiple_times_c19053(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
@@ -435,6 +438,7 @@ def test_get_rtc_multiple_times_c19053(
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19055')
 def test_get_rtc_after_rejoin_c19055(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):
@@ -661,6 +665,7 @@ def test_get_rtc_after_rejoin_c19055(
 # Wireless initialization
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19048')
 def test_set_rtc_incorrect_state_c19048(wifi_dut, logger):
     set_seconds = 30
     set_minutes = 6
@@ -702,6 +707,7 @@ def test_set_rtc_incorrect_state_c19048(wifi_dut, logger):
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19054')
 def test_get_rtc_without_enabling_feature_c19054(
         wifi_sniffer, wifi_access_point, wifi_dut, tolerance_threshold, logger
         ):

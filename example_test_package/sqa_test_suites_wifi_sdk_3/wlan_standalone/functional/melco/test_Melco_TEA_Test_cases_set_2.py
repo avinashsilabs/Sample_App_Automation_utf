@@ -514,6 +514,7 @@ class AP11nParamsEnabled(ThreadBase):
         }
     }
 )
+@pytest.mark.test_src_map_id('C693684')
 def test_wifi_sdk_check_aput_beacons_with_hidden_ssid_enabled_c693684(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants, sniffer_filter
                                                                       ):
@@ -579,6 +580,7 @@ def test_wifi_sdk_check_aput_beacons_with_hidden_ssid_enabled_c693684(wifi_dut, 
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C693685')
 def test_wifi_sdk_check_hidden_ssid_in_concurrent_mode_with_sta_tx_traffic_c693685(wifi_dut, wifi_sniffer,
                                                                                    sl_collections, wifi_client,
                                                                                    wifi_clients, utf_constants,
@@ -637,6 +639,7 @@ def test_wifi_sdk_check_hidden_ssid_in_concurrent_mode_with_sta_tx_traffic_c6936
         }
     }
 )
+@pytest.mark.test_src_map_id('C693688')
 def test_wifi_sdk_check_aput_probe_response_with_hidden_ssid_enabled_c693688(wifi_dut, wifi_sniffer, sl_collections,
                                                                              wifi_clients, utf_constants, sniffer_filter
                                                                              ):
@@ -692,6 +695,7 @@ def test_wifi_sdk_check_aput_probe_response_with_hidden_ssid_enabled_c693688(wif
         }
     }
 )
+@pytest.mark.test_src_map_id('C693686')
 def test_wifi_sdk_check_beacon_stop_with_hidden_ssid_enabled_c693686(wifi_dut, wifi_sniffer, sl_collections,
                                                                      wifi_clients, utf_constants, sniffer_filter
                                                                      ):
@@ -760,6 +764,7 @@ def test_wifi_sdk_check_beacon_stop_with_hidden_ssid_enabled_c693686(wifi_dut, w
         }
     }
 )
+@pytest.mark.test_src_map_id('C693687')
 def test_wifi_sdk_check_hidden_ssid_in_concurrent_mode_with_sta_conn_c693687(wifi_dut, wifi_sniffer, sl_collections,
                                                                              wifi_clients, utf_constants,
                                                                              sniffer_filter,
@@ -828,6 +833,7 @@ def test_wifi_sdk_check_hidden_ssid_in_concurrent_mode_with_sta_conn_c693687(wif
         }
     }
 )
+@pytest.mark.test_src_map_id('C693689')
 def test_wifi_sdk_check_hidden_ssid_in_aput_prb_respnse_staut_prb_req_in_cncurnt_mode_c693689(wifi_dut, wifi_sniffer,
                                                                                               sl_collections,
                                                                                               wifi_client,
@@ -899,6 +905,7 @@ def test_wifi_sdk_check_hidden_ssid_in_aput_prb_respnse_staut_prb_req_in_cncurnt
         }
     }
 )
+@pytest.mark.test_src_map_id('C693669')
 def test_wifi_sdk_check_scan_in_staut_mode_lab_environment_c693669(wifi_dut, wifi_sniffer,
                                                                    sl_collections,
                                                                    wifi_clients,
@@ -962,6 +969,7 @@ def test_wifi_sdk_check_scan_in_staut_mode_lab_environment_c693669(wifi_dut, wif
         }
     }
 )
+@pytest.mark.test_src_map_id('C693673')
 def test_wifi_sdk_check_scan_in_staut_mode_with_3rd_part_sta_conn_with_aput_c693673(wifi_dut, wifi_sniffer,
                                                                                     sl_collections,
                                                                                     wifi_clients,
@@ -1027,6 +1035,7 @@ def test_wifi_sdk_check_scan_in_staut_mode_with_3rd_part_sta_conn_with_aput_c693
         }
     }
 )
+@pytest.mark.test_src_map_id('C693677')
 def test_wifi_sdk_check_disconnect_sta_from_3rdparty_ap_c693677(wifi_dut, wifi_sniffer,
                                                                 sl_collections,
                                                                 wifi_clients,
@@ -1087,6 +1096,7 @@ def test_wifi_sdk_check_disconnect_sta_from_3rdparty_ap_c693677(wifi_dut, wifi_s
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C693690')
 def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_c693690(wifi_dut, wifi_sniffer,
                                                                       sl_collections,
                                                                       wifi_clients,
@@ -1161,6 +1171,7 @@ def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_c693690(wifi_dut, 
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C693691')
 def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_with_beacon_stop_enabled_c693691(wifi_dut, wifi_sniffer,
                                                                                                sl_collections,
                                                                                                wifi_clients,
@@ -1229,6 +1240,7 @@ def test_wifi_sdk_check_aput_enabling_with_sl_net_init_deinit_with_beacon_stop_e
         }
     }
 )
+@pytest.mark.test_src_map_id('C693698')
 def test_wifi_sdk_check_ssid_in_beacons_with_3rd_party_sta_disconn_c693698(wifi_dut, wifi_sniffer,
                                                                            sl_collections,
                                                                            wifi_clients,
@@ -1299,6 +1311,7 @@ def test_wifi_sdk_check_ssid_in_beacons_with_3rd_party_sta_disconn_c693698(wifi_
         }
     }
 )
+@pytest.mark.test_src_map_id('C693696')
 def test_wifi_sdk_check_http_server_with_sl_net_init_denit_with_udp_tx_traffic_c693696(wifi_dut, wifi_sniffer,
                                                                                        sl_collections,
                                                                                        wifi_clients,

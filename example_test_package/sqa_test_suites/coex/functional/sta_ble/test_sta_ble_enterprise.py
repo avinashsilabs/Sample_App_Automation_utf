@@ -461,6 +461,7 @@ class BleThread_Connection(ThreadBase):
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
+@pytest.mark.test_src_map_id('C133461')
 def test_sta_ble_TLS_BLE_adv_C133461(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_sta_ble_TLS_BLE_adv_C133461"
     logger().info("testcase : test_sta_ble_TLS_BLE_adv_C133461")
@@ -510,6 +511,7 @@ def test_sta_ble_TLS_BLE_adv_C133461(radius_server, wifi_sniffer, wifi_access_po
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
+@pytest.mark.test_src_map_id('C133462')
 def test_sta_ble_TTLS_BLE_adv_C133462(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_sta_ble_TTLS_BLE_adv_C133462"
     logger().info("testcase : test_sta_ble_TTLS_BLE_adv_C133462")
@@ -559,6 +561,7 @@ def test_sta_ble_TTLS_BLE_adv_C133462(radius_server, wifi_sniffer, wifi_access_p
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
+@pytest.mark.test_src_map_id('C133463')
 def test_sta_ble_PEAP_BLE_adv_C133463(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, ble_client):
     testcase = "test_sta_ble_PEAP_BLE_adv_C133463"
     logger().info("testcase : test_sta_ble_PEAP_BLE_adv_C133463")
@@ -609,6 +612,7 @@ def test_sta_ble_PEAP_BLE_adv_C133463(radius_server, wifi_sniffer, wifi_access_p
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
+@pytest.mark.test_src_map_id('C133451')
 def test_sta_ble_TCP_UDP_TLS_C133451(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client,
                                      net_perf_client):
     testcase = "test_sta_ble_TCP_UDP_TLS_C133451"
@@ -664,6 +668,7 @@ def test_sta_ble_TCP_UDP_TLS_C133451(radius_server, wifi_sniffer, wifi_access_po
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_disconnect", "clear_certs"])
+@pytest.mark.test_src_map_id('C133452')
 def test_sta_ble_TCP_UDP_TTLS_C133452(radius_server, wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, ble_client,
                                       net_perf_client):
     testcase = "test_sta_ble_TCP_UDP_TTLS_C133452"
@@ -719,6 +724,7 @@ def test_sta_ble_TCP_UDP_TTLS_C133452(radius_server, wifi_sniffer, wifi_access_p
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
 @pytest.mark.radius_server("raspi_radius_server")
+@pytest.mark.test_src_map_id('C133497')
 def test_sta_connection_in_eap_tls_mode_when_ble_adv_in_tcpip_bypass_C133497(radius_server, wifi_sniffer,
                                                                              wifi_access_point,
                                                                              wifi_dut, ble_client):
@@ -768,6 +774,7 @@ def test_sta_connection_in_eap_tls_mode_when_ble_adv_in_tcpip_bypass_C133497(rad
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
 @pytest.mark.radius_server("raspi_radius_server")
+@pytest.mark.test_src_map_id('C133498')
 def test_sta_connection_in_eap_ttls_mode_when_ble_adv_in_tcpip_bypass_C133498(radius_server, wifi_sniffer,
                                                                               wifi_access_point,
                                                                               wifi_dut, ble_client):
@@ -817,6 +824,7 @@ def test_sta_connection_in_eap_ttls_mode_when_ble_adv_in_tcpip_bypass_C133498(ra
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "clear_certs"])
 @pytest.mark.radius_server("raspi_radius_server")
+@pytest.mark.test_src_map_id('C133499')
 def test_sta_connection_in_eap_peap_mode_when_ble_adv_in_tcpip_bypass_C133499(radius_server, wifi_sniffer,
                                                                               wifi_access_point,
                                                                               wifi_dut, ble_client):

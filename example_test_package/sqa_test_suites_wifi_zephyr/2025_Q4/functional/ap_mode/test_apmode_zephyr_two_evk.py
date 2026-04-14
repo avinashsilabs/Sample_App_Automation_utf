@@ -122,6 +122,7 @@ class IperfThraedSdk(ThreadBase):
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
+@pytest.mark.test_src_map_id('C551266')
 def test_wifi_sdk_sta_japan_region_aput_c551266(wifi_dut,
                                                 sl_collections, zephyr_wifi_collections, remote_wiseconnect3):
     """Verify APUT beacon with region JP, WPA2 security, Channel 14"""
@@ -201,6 +202,7 @@ def test_wifi_sdk_sta_japan_region_aput_c551266(wifi_dut,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
+@pytest.mark.test_src_map_id('C19460')
 def test_wifi_zephyr_AP_connect_ps_enabled_device_c19460(wifi_sniffer, wifi_dut,
                                                          zephyr_wifi_collections,
                                                          remote_wiseconnect3, sl_collections,
@@ -300,6 +302,7 @@ def test_wifi_zephyr_AP_connect_ps_enabled_device_c19460(wifi_sniffer, wifi_dut,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
+@pytest.mark.test_src_map_id('C551266')
 def test_wifi_sta_connectivity_in_wpa_c551266(wifi_dut,
                                               sl_collections, zephyr_wifi_collections, remote_wiseconnect3, request,
                                               wifi_sniffer):
@@ -384,6 +387,7 @@ def test_wifi_sta_connectivity_in_wpa_c551266(wifi_dut,
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C689597')
 def test_verify_ap_mode_zephyr_UDP_tx_two_clients_multithread_C689597(wifi_sniffer, wifi_dut,
                                                                       utf_constants, zephyr_wifi_collections,
                                                                       wifi_client,

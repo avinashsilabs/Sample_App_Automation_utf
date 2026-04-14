@@ -198,6 +198,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19235')
 def test_wifi_sdk_query_webpage_http_server_c19235(
         wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, request, sniffer_filter, sl_collections,
         utf_constants):
@@ -230,6 +231,7 @@ def test_wifi_sdk_query_webpage_http_server_c19235(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C528822')
 def test_wifi_sdk_query_webpage_http_server_c528822(
         wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, request, sniffer_filter, sl_collections,
         utf_constants):
@@ -263,6 +265,7 @@ def test_wifi_sdk_query_webpage_http_server_c528822(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C564051')
 def test_wifi_sdk_webpage_http_server_write_data_c564051(
         wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, request, sniffer_filter, sl_collections,
         utf_constants):
@@ -296,6 +299,7 @@ def test_wifi_sdk_webpage_http_server_write_data_c564051(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C641388')
 def test_wifi_sdk_query_webpage_http_server_c641388(
         wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, request, sniffer_filter, sl_collections,
         utf_constants):
@@ -348,6 +352,7 @@ def test_wifi_sdk_query_webpage_http_server_c641388(
     "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C641377')
 def test_Verify_http_server_with_GET_PUT_POST_using_3rd_party_curl_client_C641377(wifi_dut, wifi_client,
                                                                                   wifi_sniffer, wifi_access_point,
                                                                                   request, http_client,
@@ -390,6 +395,7 @@ def test_Verify_http_server_with_GET_PUT_POST_using_3rd_party_curl_client_C64137
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C708786')
 def test_wifi_sdk_query_webpage_every_5secs_http_server_c708786(
         wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, request, sniffer_filter, sl_collections,
         utf_constants):

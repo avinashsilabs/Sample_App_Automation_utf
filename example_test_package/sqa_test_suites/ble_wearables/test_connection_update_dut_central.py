@@ -386,6 +386,7 @@ def _force_clear_raspi_bonds(ble_client, dut_address):
 # Test function
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize_from_csv
+@pytest.mark.test_src_map_id('TC6343552899')
 def test_ble_conn_param_update_central_from_csv(wifi_dut, ble_client, conn_params):
     """
     DUT (Central) scans for a Raspberry Pi peripheral, connects, completes

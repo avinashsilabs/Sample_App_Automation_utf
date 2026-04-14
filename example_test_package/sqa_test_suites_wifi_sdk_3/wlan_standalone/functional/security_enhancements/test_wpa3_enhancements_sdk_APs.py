@@ -234,6 +234,7 @@ class Wlan_Conn_Thread(ThreadBase):
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113910')
 def test_wifi_sdk_behaviour_of_DUT_when_AP_without_H2E_C113910(wifi_sniffer, wifi_access_points, wifi_dut,
                                                                utf_constants, request, sniffer_filter, sl_collections):
     try:
@@ -332,6 +333,7 @@ def test_wifi_sdk_behaviour_of_DUT_when_AP_without_H2E_C113910(wifi_sniffer, wif
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113908')
 def test_wifi_sdk_DUT_reconnection_hunting_pecking_C113908(wifi_sniffer, wifi_access_points, wifi_dut,
                                                                utf_constants, request, sniffer_filter, sl_collections):
     try:
@@ -438,6 +440,7 @@ def test_wifi_sdk_DUT_reconnection_hunting_pecking_C113908(wifi_sniffer, wifi_ac
 
     }
 )
+@pytest.mark.test_src_map_id('C113916')
 def test_wifi_sdk_DUT_rejoin_AP1_H2E_AP2_hunting_pecking_C113916(wifi_sniffer, wifi_access_points, wifi_dut, switches,
                                                                utf_constants, request, sniffer_filter, sl_collections):
     try:
@@ -569,6 +572,7 @@ def test_wifi_sdk_DUT_rejoin_AP1_H2E_AP2_hunting_pecking_C113916(wifi_sniffer, w
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113915')
 def test_wifi_sdk_DUT_behavior_in_h2e_with_multi_aps_C113915(wifi_sniffer, wifi_access_points, wifi_dut,
                                                                utf_constants, request, sniffer_filter, sl_collections):
     '''Verify DUT behavior in H2E mode with multiple AP's'''
@@ -721,6 +725,7 @@ def test_wifi_sdk_DUT_behavior_in_h2e_with_multi_aps_C113915(wifi_sniffer, wifi_
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113914')
 def test_wifi_sdk_conn_when_issued_tdi_mode_C113914(wifi_sniffer, wifi_access_points, wifi_dut, utf_constants, request,
                                                   sniffer_filter, sl_collections):
     '''Verify DUT behavior when issued transition disable indication(TDI) mode'''

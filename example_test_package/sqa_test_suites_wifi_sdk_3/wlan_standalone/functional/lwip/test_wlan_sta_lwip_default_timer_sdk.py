@@ -730,6 +730,7 @@ class AwsConnection(ThreadBase):
         "dhcp_lease": "120",
     },
 )
+@pytest.mark.test_src_map_id('C919174')
 def test_wifi_sdk_dhcp_2_min_renewal_func_lwip_c919174(wifi_sniffer, wifi_access_point, wifi_dut,
                                                        request, sl_collections, sniffer_filter):
     """This test case verifies DHCP renewal time to 2 min renewal functionality in LWIP stack for 30 min duration using LWIP Stack"""
@@ -852,6 +853,7 @@ def test_wifi_sdk_dhcp_2_min_renewal_func_lwip_c919174(wifi_sniffer, wifi_access
     },
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C919180')
 def test_wifi_sdk_tcp_open_send_close_socket_c919180(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client, protocol):
@@ -947,6 +949,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c919180(
     },
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C919181')
 def test_wifi_sdk_verify_tcp_keep_alive_functionality_c919181(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client, protocol):
@@ -1039,6 +1042,7 @@ def test_wifi_sdk_verify_tcp_keep_alive_functionality_c919181(
     },
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C919183')
 def test_wifi_sdk_tcp_tx_rx_simultaneously_c919183(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client, protocol):
@@ -1136,6 +1140,7 @@ def test_wifi_sdk_tcp_tx_rx_simultaneously_c919183(
     },
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C919184')
 def test_wifi_sdk_2_tcp_client_data_transfer_using_1_socket_c919184(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client, protocol):
@@ -1232,6 +1237,7 @@ def test_wifi_sdk_2_tcp_client_data_transfer_using_1_socket_c919184(
         "channel": 6,
     },
 )
+@pytest.mark.test_src_map_id('C919194')
 def test_wifi_sdk_dhcp_garp_verification_c919194(sniffer_filter, wifi_access_point, wifi_dut, sl_collections,
                                                  wifi_sniffer, request, wifi_client):
     """this test case verifies DHCP ACD no conflict GARP functionality using LWIP Stack"""
@@ -1296,6 +1302,7 @@ def test_wifi_sdk_dhcp_garp_verification_c919194(sniffer_filter, wifi_access_poi
         "channel": 6,
     },
 )
+@pytest.mark.test_src_map_id('C919223')
 def test_wifi_sdk_dhcp_discon_connect_garp_verification_c919223(sniffer_filter, wifi_access_point, wifi_dut,
                                                                 sl_collections, wifi_sniffer, request, wifi_client):
     """this test case verifies DHCP ACD no conflict GARP functionality upon disconnect and connect cycle, using LWIP Stack"""
@@ -1369,6 +1376,7 @@ def test_wifi_sdk_dhcp_discon_connect_garp_verification_c919223(sniffer_filter, 
         "channel": 6,
     },
 )
+@pytest.mark.test_src_map_id('C919225')
 def test_wifi_sdk_dhcp_deinit_init_cycle_garp_verification_c919225(sniffer_filter, wifi_access_point, wifi_dut,
                                                                    sl_collections, wifi_sniffer, request, wifi_client):
     """this test case verifies DHCP ACD no conflict GARP functionality upon deinit and init cycle, using LWIP Stack"""
@@ -1450,6 +1458,7 @@ def test_wifi_sdk_dhcp_deinit_init_cycle_garp_verification_c919225(sniffer_filte
         "dhcp_lease": "120",
     },
 )
+@pytest.mark.test_src_map_id('C919228')
 def test_wifi_sdk_dhcp_renewal_LWIP_congestion_env_c919228(wifi_sniffer, wifi_access_point, wifi_dut,
                                                            request, sl_collections, sniffer_filter):
     """This test case verifies DHCP renewal functionality in LWIP stack under congestion environment using LWIP Stack"""
@@ -1523,6 +1532,7 @@ def test_wifi_sdk_dhcp_renewal_LWIP_congestion_env_c919228(wifi_sniffer, wifi_ac
         "dhcp_lease": "120",
     },
 )
+@pytest.mark.test_src_map_id('C919227')
 def test_wifi_sdk_dhcp_renewal_LWIP_after_AP_reboot_c919227(wifi_sniffer, wifi_access_point, wifi_dut,
                                                             request, sl_collections, sniffer_filter, switch):
     """This test case verifies DHCP renewal functionality in LWIP stack after AP reboot using LWIP Stack"""
@@ -1616,6 +1626,7 @@ def test_wifi_sdk_dhcp_renewal_LWIP_after_AP_reboot_c919227(wifi_sniffer, wifi_a
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C919195')
 def test_wifi_sdk_udp_tx_lwip_c919195(sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         net_perf_client, wifi_client, protocol):
     """This test case Verifies the udp client socket is open, send data,close functionality using LWIP Stack"""
@@ -1689,6 +1700,7 @@ def test_wifi_sdk_udp_tx_lwip_c919195(sniffer_filter, wifi_access_point, wifi_du
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_client", wifi={"interface": "wlan0"})
+@pytest.mark.test_src_map_id('C919190')
 def test_wifi_sdk_ipv6_functionality_lwip_c919190(sniffer_filter, wifi_access_point, wifi_dut, sl_collections,
                                                   wifi_sniffer, request,
                                                   net_perf_client, wifi_client, protocol):
@@ -1766,6 +1778,7 @@ def test_wifi_sdk_ipv6_functionality_lwip_c919190(sniffer_filter, wifi_access_po
         "dhcp_lease": "120",
     },
 )
+@pytest.mark.test_src_map_id('C919176')
 def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """This test case verifies the DHCP discover functionality in LWIP stack with default timer"""
     capture_filename = request.node.name
@@ -1908,6 +1921,7 @@ def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_p
         "dhcp_lease": "120",
     },
 )
+@pytest.mark.test_src_map_id('C919177')
 def test_wifi_sdk_dhcp_request_failure_lwip_c919177(wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """This test case verifies DHCP request failure scenario  using LWIP Stack with default timer"""
     capture_filename = request.node.name
@@ -1994,6 +2008,7 @@ def test_wifi_sdk_dhcp_request_failure_lwip_c919177(wifi_sniffer, wifi_access_po
         "channel": 6,
     },
 )
+@pytest.mark.test_src_map_id('C919224')
 def test_wifi_sdk_dhcp_start_stop_c919224(wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
     """This test case verifies the DHCP start and stop functionality in LWIP stack using LWIP Stack with default timer"""
     capture_filename = request.node.name
@@ -2087,6 +2102,7 @@ def test_wifi_sdk_dhcp_start_stop_c919224(wifi_sniffer, wifi_access_point, wifi_
     },
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C919193')
 def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919193(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer, sniffer_filter, utf_constants, sl_collections, request, remote_wiseconnect3):
     """ To verify DHCP DORA process after DHCP conflict scenario in LWIP stack with default timer"""
     capture_filename = request.node.name
@@ -2203,6 +2219,7 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919193(wifi_access_point, wif
     },
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C919226')
 def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919226(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer, sniffer_filter, utf_constants, sl_collections, request, remote_wiseconnect3):
     """ To verify DHCP DORA process after DHCP conflict scenario in loop in LWIP stack with default timer"""
     capture_filename = request.node.name
@@ -2323,6 +2340,7 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919226(wifi_access_point
         "channel": 6,
     },
 )
+@pytest.mark.test_src_map_id('C919185')
 def test_wifi_sdk_aws_tcp_shutdown_C919185(wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, sl_collections,
                                            sniffer_filter, utf_constants, request):
     """
@@ -2426,6 +2444,7 @@ def test_wifi_sdk_aws_tcp_shutdown_C919185(wifi_sniffer, wifi_access_point, wifi
         "channel": 6,
     },
 )
+@pytest.mark.test_src_map_id('C919188')
 def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_diff_len_C919188(wifi_sniffer, wifi_access_point,
                                                                                wifi_dut, aws_iot_client, sl_collections,
                                                                                sniffer_filter, utf_constants, request):
@@ -2526,6 +2545,7 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_diff_len_C919188(w
         "channel": 6,
     },
 )
+@pytest.mark.test_src_map_id('C919187')
 def test_wifi_sdk_aws_publish_data_with_different_length_C919187(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                  aws_iot_client, sl_collections, sniffer_filter,
                                                                  request):
@@ -2635,6 +2655,7 @@ def test_wifi_sdk_aws_publish_data_with_different_length_C919187(wifi_sniffer, w
     },
 )
 @pytest.mark.parametrize("keep_alive", [60])
+@pytest.mark.test_src_map_id('C919186')
 def test_wifi_sdk_aws_mqtt_keep_alive_C919186(wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, sl_collections,
                                               sniffer_filter, utf_constants, request, keep_alive):
     """

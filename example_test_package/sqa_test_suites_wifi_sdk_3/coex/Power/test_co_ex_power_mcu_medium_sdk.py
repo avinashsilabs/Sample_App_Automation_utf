@@ -474,6 +474,7 @@ pytestmark = [pytest.mark.firmware_app("test_416K_M4SS_256K")]
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C20649')
 def test_wlan_conn_with_DTIM_10_ble_adv_C20649(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                sl_collections, dtim, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -542,6 +543,7 @@ def test_wlan_conn_with_DTIM_10_ble_adv_C20649(firmware_loader, power_meter, wif
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C20650')
 def test_wlan_conn_with_DTIM_10_ble_conn_C20650(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                 sl_collections, dtim, ble_client, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -611,6 +613,7 @@ def test_wlan_conn_with_DTIM_10_ble_conn_C20650(firmware_loader, power_meter, wi
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C537358')
 def test_wlan_conn_with_DTIM_10_ble_conn_rc_clock_C537358(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                           sl_collections, dtim, ble_client, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -683,6 +686,7 @@ def test_wlan_conn_with_DTIM_10_ble_conn_rc_clock_C537358(firmware_loader, power
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C206503')
 def test_wlan_conn_DTIM_10_with_ble_conn_long_run_C206503(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                 sl_collections, dtim, ble_client, request, performance_data,
                                                 custom_performance_fixture, utf_constants):

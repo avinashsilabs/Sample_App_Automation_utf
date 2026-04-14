@@ -497,6 +497,7 @@ class Start_stop(ThreadBase):
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463706')
 def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463706(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     '''Verify WLAN Connectivity to STAUT with Configured 3rd Party AP and 3rd party STA's connectivity
@@ -580,6 +581,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463706(wifi_sniffer, wifi_access
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463710')
 def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463710(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     '''Check wlan connectivity of STAUT with WPA2 Security to 3rd party AP and 3rd party STA
@@ -647,6 +649,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463710(wifi_sniffer, wifi_access
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463711')
 def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463711(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     '''Check wlan connectivity of STAUT with OPEN securty to 3rd party AP and 3rd party STA
@@ -713,6 +716,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463711(wifi_sniffer, wifi_access
         "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
+@pytest.mark.test_src_map_id('C463723')
 def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463723(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     '''Check whether APUT is able to bringup with WPA3 Security with No encryption in
@@ -794,6 +798,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463723(wifi_sniffer, wifi_access
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463707')
 def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_point, wifi_dut, protocol, wifi_client,
                                         net_perf_client, request, sl_collections, remote_wiseconnect3, sniffer_filter):
     '''Check 3rd party STA connectivity to APUT when STAUT is doing UDP Tx to AP Backend Machine'''
@@ -905,6 +910,7 @@ def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_p
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C468528')
 def test_wifi_sdk_wpa3_in_conc_mode_with_tdi_enable_C468528(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     """Enable TDI functionality in concurrent mode with WPA3 transition mode,configure third party AP with same SSID as
@@ -1023,6 +1029,7 @@ APUT but security in WPA2 after STA gets connected with APUT stop AP and check w
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C468529')
 def test_wifi_sdk_wpa3_in_conc_mode_with_tdi_disable_C468529(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     """Disable TDI functionality in concurrent mode with WPA3 transition mode , configure third party AP with same SSID
@@ -1141,6 +1148,7 @@ def test_wifi_sdk_wpa3_in_conc_mode_with_tdi_disable_C468529(wifi_sniffer, wifi_
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C468633')
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468633(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1225,6 +1233,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468633(wifi_sniffer, wifi_
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C468634')
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468634(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1309,6 +1318,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C468634(wifi_sniffer, wifi_
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463720')
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463720(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1393,6 +1403,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463720(wifi_sniffer, wifi_
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463721')
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463721(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1477,6 +1488,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463721(wifi_sniffer, wifi_
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463722')
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463722(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1565,6 +1577,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_on_off_C463722(wifi_sniffer, wifi_
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463714')
 def test_wifi_sdk_wpa3_conc_listen_based_ps_enabled_C463714(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client, protocol, net_perf_client):
@@ -1689,6 +1702,7 @@ def test_wifi_sdk_wpa3_conc_listen_based_ps_enabled_C463714(wifi_sniffer, wifi_a
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463715')
 def test_wifi_sdk_wpa3_conc_dtim_based_ps_enabled_C463715(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client, protocol, net_perf_client):
@@ -1811,6 +1825,7 @@ def test_wifi_sdk_wpa3_conc_dtim_based_ps_enabled_C463715(wifi_sniffer, wifi_acc
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C463719')
 def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_restart_C463719(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -1913,6 +1928,7 @@ def test_wifi_sdk_wpa3_conc_while_ping_dut_ap_restart_C463719(wifi_sniffer, wifi
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C468633')
 def test_wifi_sdk_wpa3_conc_mode_12_hour_ping_C468633(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                       sl_collections, remote_wiseconnect3, sniffer_filter, wifi_client):
     """Longrun : Verify WLAN Connectivity to STAUT with Configured 3rd Party AP and 3rd party STA's connectivity to APUT
@@ -1999,6 +2015,7 @@ def test_wifi_sdk_wpa3_conc_mode_12_hour_ping_C468633(wifi_sniffer, wifi_access_
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C463713')
 def test_wifi_sdk_wpa3_conc_LI_based_ps_enabled_11n_mode_C463713(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client, protocol, net_perf_client):
@@ -2190,6 +2207,7 @@ def test_wifi_sdk_wpa3_conc_LI_based_ps_enabled_11n_mode_C463713(wifi_sniffer, w
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C463724')
 def test_wifi_sdk_wpa3_conc_with_11n_mode_tcp_rx_C463724(wifi_sniffer, wifi_access_point, wifi_dut,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client, protocol, net_perf_client):
@@ -2340,6 +2358,7 @@ def test_wifi_sdk_wpa3_conc_with_11n_mode_tcp_rx_C463724(wifi_sniffer, wifi_acce
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C537925')
 def test_wifi_sdk_wpa3_conc_mode_12_hour_ping_disable_11ax_mode_C537925(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                       sl_collections, remote_wiseconnect3, wifi_client):
     """
@@ -2438,6 +2457,7 @@ def test_wifi_sdk_wpa3_conc_mode_12_hour_ping_disable_11ax_mode_C537925(wifi_sni
 )
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C468607')
 def test_wifi_sdk_wpa3_transition_conc_start_stop_ap_C468607(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter,
                                                              wifi_client):
@@ -2582,6 +2602,7 @@ def test_wifi_sdk_wpa3_transition_conc_start_stop_ap_C468607(wifi_sniffer, wifi_
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C468611')
 def test_wifi_sdk_conn_wpa3_in_concurrent_mode_11n_full_sae_C468611(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request, sl_collections, remote_wiseconnect3, sniffer_filter):
     try:

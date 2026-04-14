@@ -298,6 +298,7 @@ class data_tx_rx_thread(ThreadBase):
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_disconnect", "clear_certs"])
+@pytest.mark.test_src_map_id('C19656')
 def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sniffer, wifi_dut, sniffer_filter, cert1,
                                                                          ble_client, ssl_server, logger, request, cert2,
                                                                          sl_collections, wifi_access_point):
@@ -401,6 +402,7 @@ def test_wifi_sdk_error_code_check_when_cert_loaded_in_same_index_c19656(wifi_sn
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_disconnect", "clear_certs"])
+@pytest.mark.test_src_map_id('C19651')
 def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_with_ps_c19651(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                             ble_client, request, ssl_server, logger,
                                                                             sniffer_filter, cert1, sl_collections):
@@ -480,6 +482,7 @@ def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_with_ps_c19651(wifi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_disconnect", "clear_certs"])
+@pytest.mark.test_src_map_id('C19652')
 def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_without_ps_c19652(wifi_sniffer, wifi_dut, sniffer_filter,
                                                                                sl_collections, wifi_access_point, cert1,
                                                                                ble_client, request, ssl_server, logger):
@@ -560,6 +563,7 @@ def test_wifi_sdk_load_cert_with_wlan_ble_in_connected_state_without_ps_c19652(w
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_disconnect", "clear_certs"])
+@pytest.mark.test_src_map_id('C19653')
 def test_wifi_sdk_ble_connectivity_data_tx_after_load_cert_c19653(wifi_sniffer, wifi_dut, wifi_access_point, ble_client,
                                                                   ssl_server, sniffer_filter, logger, cert1, request,
                                                                   sl_collections):
@@ -642,6 +646,7 @@ def test_wifi_sdk_ble_connectivity_data_tx_after_load_cert_c19653(wifi_sniffer, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_disconnect", "clear_certs"])
+@pytest.mark.test_src_map_id('C19654')
 def test_wifi_sdk_ble_connection_data_tx_after_loading_cert0_cert1_c19654(sl_collections, sniffer_filter, cert1, cert2,
                                                                           wifi_sniffer, wifi_dut, wifi_access_point,
                                                                           ssl_server, request, logger, ble_client):
@@ -727,6 +732,7 @@ def test_wifi_sdk_ble_connection_data_tx_after_loading_cert0_cert1_c19654(sl_col
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_disconnect", "clear_certs"])
+@pytest.mark.test_src_map_id('C19655')
 def test_wifi_sdk_ble_connectivity_data_tx_after_load_cert0_c19655(wifi_sniffer, wifi_dut, wifi_access_point, logger,
                                                                    ble_client, ssl_server, request, sniffer_filter,
                                                                    cert1, cert2, sl_collections):
@@ -816,6 +822,7 @@ def test_wifi_sdk_ble_connectivity_data_tx_after_load_cert0_c19655(wifi_sniffer,
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_disconnect", "clear_certs"])
+@pytest.mark.test_src_map_id('C19657')
 def test_wifi_sdk_wlan_ble_connection_load_cert_time_gt_200ms_c19657(wifi_sniffer, wifi_dut, wifi_access_point, logger,
                                                                      ble_client, ssl_server, request, sniffer_filter,
                                                                      cert1, sl_collections):

@@ -297,6 +297,7 @@ class Ssl_connection:
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [["TLS_CHACHA20_POLY1305_SHA256"]])
+@pytest.mark.test_src_map_id('C37609')
 def test_ssl_connection_powersave_chacha20poly1305_C37609(wifi_dut,wifi_sniffer, wifi_access_point, rs_helper,utf_constants,
                                                          cipher_list, ssl_server, logger):
     try:
@@ -392,6 +393,7 @@ def test_ssl_connection_powersave_chacha20poly1305_C37609(wifi_dut,wifi_sniffer,
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [["TLS_CHACHA20_POLY1305_SHA256"]])
+@pytest.mark.test_src_map_id('C37611')
 def test_ssl_connection_with_three_sockets_C37611(wifi_dut,wifi_sniffer, wifi_access_point, rs_helper,utf_constants,
                                                          cipher_list, ssl_server, logger, cert1, cert2, cert3):
     try:
@@ -472,6 +474,7 @@ def test_ssl_connection_with_three_sockets_C37611(wifi_dut,wifi_sniffer, wifi_ac
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [["TLS_CHACHA20_POLY1305_SHA256"]])
+@pytest.mark.test_src_map_id('C37610')
 def test_ssl_connection_with_two_sockets_C37610(wifi_dut,wifi_sniffer, wifi_access_point, rs_helper,utf_constants,
                                                          cipher_list, ssl_server, logger, cert1, cert2):
     try:
@@ -545,6 +548,7 @@ def test_ssl_connection_with_two_sockets_C37610(wifi_dut,wifi_sniffer, wifi_acce
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "disable_cipher"])
 @pytest.mark.parametrize("cipher_list", [["TLS_CHACHA20_POLY1305_SHA256"]])
+@pytest.mark.test_src_map_id('C37608')
 def test_ssl_tx_rx_throughput_with_Cipher_Chacha20_Poly1305_C37608(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants, logger, ssl_server, cipher_list):
     capture_filename = "test_ssl_tx_rx_throughput_with_Cipher_Chacha20_Poly1305_C37608"
     logger.info(f"Test Case Name : {capture_filename}")

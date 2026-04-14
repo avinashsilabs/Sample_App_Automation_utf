@@ -268,6 +268,7 @@ pytestmark = [
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C148543')
 def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_adv_C148543(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, wifi_client, sniffer_filter):
     """Run wlan connect ,disconnect ,reconnect and Ble advertising test for 5 minutes"""
@@ -311,6 +312,7 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_adv_C148543(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",wifi=["wifi_powersave_disable", "unassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C148544')
 def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_conn_C148544(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, wifi_client, sniffer_filter):
     """Run wlan connect ,disconnect ,reconnect and Ble connection test for 30 minutes"""
@@ -355,6 +357,7 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_Ble_conn_C148544(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C148547')
 def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_ble_scanning_C148547(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, wifi_client, sniffer_filter):
     """Run wlan connect ,disconnect ,reconnect and Ble scanning test for 5 minutes"""
@@ -393,6 +396,7 @@ def test_wifi_sdk_wlan_connect_disconnect_reconnect_and_ble_scanning_C148547(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+@pytest.mark.test_src_map_id('C148545')
 def test_wifi_sdk_ble_adv_20ms_and_wlan_scanning_C148545(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client):
     """Run ble advertising with 20ms and wlan scanning test for 30 minutes"""
@@ -445,6 +449,7 @@ def test_wifi_sdk_ble_adv_20ms_and_wlan_scanning_C148545(
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C148524')
 def test_wifi_sdk_wlan_scan_ble_radio_init_deinit_c148524(wifi_access_point, wifi_dut, wifi_sniffer, sl_collections):
 
     """Run ble radio init deinit with wlan scan"""
@@ -480,6 +485,7 @@ def test_wifi_sdk_wlan_scan_ble_radio_init_deinit_c148524(wifi_access_point, wif
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C148525')
 def test_wifi_sdk_wlan_connect_ble_radio_init_deinit_c148525(wifi_access_point, wifi_dut, wifi_sniffer, sl_collections):
     """Run ble radio init deinit with wlan connect"""
     try:

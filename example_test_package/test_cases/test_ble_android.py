@@ -22,6 +22,7 @@ def logger():
     },
 )
 @pytest.mark.ble_client("nrf_ble_client")
+@pytest.mark.test_src_map_id('TC2789713721')
 def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -85,6 +86,7 @@ def test_ble_advertisement(wifi_dut, wifi_access_point, ble_client):
     },
 )
 @pytest.mark.ble_client("nrf_ble_client")
+@pytest.mark.test_src_map_id('TC1476031727')
 def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -147,6 +149,7 @@ def test_ble_scanning(wifi_dut, wifi_access_point, ble_client):
 
     }
 )
+@pytest.mark.test_src_map_id('TC7104187733')
 def test_ble_data_transfer(wifi_dut, ble_client):
         logger().info(f"BLE Data Transfer going to start")
         service_uid = "0000006e-0000-1000-8000-00805f9b34fb"

@@ -73,6 +73,7 @@ class power_number_output():
 @pytest.mark.parametrize("rate", [139, 775])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20560')
 def test_wlan_active_rx_10dBm_20dBm_2_4Ghz_C20560(wifi_dut, power_msrmt, power_meter, rate):
     rsi_antenna = 1
     antenna_gain_2g = 0
@@ -120,6 +121,7 @@ def test_wlan_active_rx_10dBm_20dBm_2_4Ghz_C20560(wifi_dut, power_msrmt, power_m
 @pytest.mark.power_msrmt("per_wiseconnect")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20560')
 def test_wlan_active_rx_LP_2_4Ghz_C20560(wifi_dut, power_msrmt, power_meter):
     rsi_antenna = 1
     antenna_gain_2g = 0
@@ -170,6 +172,7 @@ def test_wlan_active_rx_LP_2_4Ghz_C20560(wifi_dut, power_msrmt, power_meter):
 @pytest.mark.parametrize("rate", [139, 775])
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20626')
 def test_wlan_active_rx_5Ghz_C20626(utf_constants, wifi_dut, power_msrmt, power_meter, rate):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")

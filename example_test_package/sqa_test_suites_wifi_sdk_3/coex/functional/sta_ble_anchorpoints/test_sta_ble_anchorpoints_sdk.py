@@ -339,6 +339,7 @@ pytestmark = [
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20122')
 def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
         wifi_sniffer,
         wifi_access_point,
@@ -476,6 +477,7 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_5_LSTO_4s_C20122(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20123')
 def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
         wifi_sniffer,
         wifi_access_point,
@@ -614,6 +616,7 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_240ms_latency_5_LSTO_4s_C20123(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20124')
 def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
         wifi_sniffer,
         wifi_access_point,
@@ -754,6 +757,7 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_2_LSTO_32s_C20124(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20125')
 def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
         wifi_sniffer,
         wifi_access_point,
@@ -892,6 +896,7 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_15ms_latency_0_LSTO_4s_C20125(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20126')
 def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
         wifi_sniffer,
         wifi_access_point,
@@ -1031,6 +1036,7 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_250ms_latency_0_LSTO_32s_C20126(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20180')
 def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
         wifi_sniffer,
         wifi_access_point,
@@ -1169,6 +1175,7 @@ def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_5_LSTO_16s_C20180(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20181')
 def test_WiFi_sdk_wifi_http_download_BLE_CI_50ms_latency_0_LSTO_10s_C20181(
         wifi_sniffer,
         wifi_access_point,

@@ -1,3 +1,4 @@
+import pytest
 from utf.utils.iperf.ping_utils import ping
 from utf.utils.logger import get_logger
 import time
@@ -6,6 +7,7 @@ def logger():
     return get_logger(__name__)
 
 
+@pytest.mark.test_src_map_id('TC5942564306')
 def test_round_trip_time(wifi_dut, wifi_client, wifi_access_point):
     if wifi_access_point != wifi_client:
         wifi_client.interfaces.wifi.join_ap(wifi_access_point)

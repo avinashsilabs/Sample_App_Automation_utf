@@ -96,6 +96,7 @@ class IopTcpIpSockets:
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19658')
 def test_mgmt_pmf_capable_connection_C19658(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -176,6 +177,7 @@ def test_mgmt_pmf_capable_connection_C19658(wifi_sniffer, wifi_access_point, wif
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19659')
 def test_mgmt_pmf_required_connection_C19659(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -258,6 +260,7 @@ def test_mgmt_pmf_required_connection_C19659(wifi_sniffer, wifi_access_point, wi
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19661')
 def test_mgmt_pmfrequiredAP_pmfcapableDUT_connection_C19661(wifi_sniffer, wifi_access_point, wifi_dut):
     """ Verify the Connection between AP(PMF required) and DUT(PMF capable)"""
     tcp_socket_obj = IopTcpIpSockets()
@@ -339,6 +342,7 @@ def test_mgmt_pmfrequiredAP_pmfcapableDUT_connection_C19661(wifi_sniffer, wifi_a
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19670')
 def test_mgmt_pmfrequiredAP_pmfreqireandcapableDUT_connection_C19670(wifi_sniffer, wifi_access_point, wifi_dut):
     """ Verify the Connection between AP(PMF required) and DUT(PMF capable+required)"""
     tcp_socket_obj = IopTcpIpSockets()
@@ -422,6 +426,7 @@ def test_mgmt_pmfrequiredAP_pmfreqireandcapableDUT_connection_C19670(wifi_sniffe
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19664')
 def test_mgmt_pmf_required_connection_fail_C19664(wifi_access_point, wifi_dut):
     """ Verify the Connection between AP(PMF required) and DUT(PMF disable)"""
     '''	Check whether the device is not connecting to PMF Required AP when the device is not configured with PMF'''
@@ -458,6 +463,7 @@ def test_mgmt_pmf_required_connection_fail_C19664(wifi_access_point, wifi_dut):
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19663')
 def test_mgmt_pmfcapableAP_pmfreqireandcapableDUT_connection_C19663(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -545,6 +551,7 @@ def test_mgmt_pmfcapableAP_pmfreqireandcapableDUT_connection_C19663(wifi_sniffer
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19665')
 def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_point, wifi_dut):
     '''Verify that after association only unicast mgmt packet transmission with protection bit enable '''
     tcp_socket_obj = IopTcpIpSockets()
@@ -644,6 +651,7 @@ def test_mgmt_unicast_frame_protection_bit_C19665(wifi_sniffer, wifi_access_poin
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19667')
 def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wifi_access_point, wifi_dut):
     '''Validate encrypted mgmt action frame after association with protection bit enable'''
     tcp_socket_obj = IopTcpIpSockets()
@@ -741,6 +749,7 @@ def test_mgmt_action_frame_with_protection_bit_encyption_C19667(wifi_sniffer, wi
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19672')
 def test_disconnection_with_pmf_C19672(wifi_sniffer, wifi_access_point, wifi_dut):
     '''Validate disassoc mgmt frame after association with protection bit enable'''
     tcp_socket_obj = IopTcpIpSockets()
@@ -838,6 +847,7 @@ def test_disconnection_with_pmf_C19672(wifi_sniffer, wifi_access_point, wifi_dut
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19671')
 def test_mgmt_pmf_enable_recieve_data_C19671(wifi_dut, wifi_access_point, wifi_sniffer, remote_socket):
     # Check whether the data transfer(receiver) is happening with PMF enable mode
     validation = True

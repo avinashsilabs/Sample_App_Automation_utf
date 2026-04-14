@@ -90,6 +90,7 @@ pytestmark = [
 @pytest.mark.parametrize("test_run_time", [100])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19618')
 def test_advertise_all_ciphers_ssl_regression_c19618(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                       cipher_list, logger, test_run_time):
     try:
@@ -110,6 +111,7 @@ def test_advertise_all_ciphers_ssl_regression_c19618(wifi_sniffer, wifi_access_p
 @pytest.mark.parametrize("test_run_time", [100])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19619')
 def test_advertise_all_ciphers_wlan_regression_c19619(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                        cipher_list, logger, test_run_time):
     try:
@@ -138,6 +140,7 @@ def test_advertise_all_ciphers_wlan_regression_c19619(wifi_sniffer, wifi_access_
 @pytest.mark.parametrize("test_run_time", [100])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19620')
 def test_advertise_specific_ciphers_ssl_regression_c19620(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                            cipher_list, logger, test_run_time):
     try:
@@ -165,6 +168,7 @@ def test_advertise_specific_ciphers_ssl_regression_c19620(wifi_sniffer, wifi_acc
 @pytest.mark.parametrize("test_run_time", [100])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19621')
 def test_advertise_specific_ciphers_wlan_ssl_regression_c19621(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server,
                                                                 cipher_list, logger, test_run_time):
     try:

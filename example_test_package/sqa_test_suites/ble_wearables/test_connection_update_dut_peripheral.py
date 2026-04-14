@@ -409,6 +409,7 @@ DEFAULT_ADV_INT_MAX = 338    # ~211.25 ms
 # Test function
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize_from_csv
+@pytest.mark.test_src_map_id('TC2853243912')
 def test_ble_conn_param_update_peripheral_from_csv(wifi_dut, ble_client, conn_params):
     """
     DUT (Peripheral) advertises, Raspi (Central) scans and connects,

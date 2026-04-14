@@ -1008,6 +1008,7 @@ class WifiJoinThread(ThreadBase):
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689554')
 def test_wifi_sdk_verify_one_tcp_tx_and_udp_tx_multi_thread_socket_functionality_c689554(
     wifi_dut,
     wifi_sniffer,
@@ -1087,6 +1088,7 @@ def test_wifi_sdk_verify_one_tcp_tx_and_udp_tx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689555')
 def test_wifi_sdk_verify_one_tcp_tx_and_udp_rx_multi_thread_socket_functionality_c689555(
     wifi_dut,
     wifi_sniffer,
@@ -1166,6 +1168,7 @@ def test_wifi_sdk_verify_one_tcp_tx_and_udp_rx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689556')
 def test_wifi_sdk_verify_one_tcp_tx_and_tcp_rx_multi_thread_socket_functionality_c689556(
     wifi_dut,
     wifi_sniffer,
@@ -1245,6 +1248,7 @@ def test_wifi_sdk_verify_one_tcp_tx_and_tcp_rx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689557')
 def test_wifi_sdk_verify_one_tcp_rx_and_udp_tx_multi_thread_socket_functionality_c689557(
     wifi_dut,
     wifi_sniffer,
@@ -1324,6 +1328,7 @@ def test_wifi_sdk_verify_one_tcp_rx_and_udp_tx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689558')
 def test_wifi_sdk_verify_one_tcp_rx_and_udp_rx_multi_thread_socket_functionality_c689558(
     wifi_dut,
     wifi_sniffer,
@@ -1403,6 +1408,7 @@ def test_wifi_sdk_verify_one_tcp_rx_and_udp_rx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689559')
 def test_wifi_sdk_verify_one_udp_rx_and_udp_tx_multi_thread_socket_functionality_c689559(
     wifi_dut,
     wifi_sniffer,
@@ -1482,6 +1488,7 @@ def test_wifi_sdk_verify_one_udp_rx_and_udp_tx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689560')
 def test_wifi_sdk_verify_one_udp_rx_and_tcp_rx_multi_thread_socket_functionality_c689560(
     wifi_dut,
     wifi_sniffer,
@@ -1562,6 +1569,7 @@ def test_wifi_sdk_verify_one_udp_rx_and_tcp_rx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689561')
 def test_wifi_sdk_verify_one_udp_tx_and_udp_rx_multi_thread_socket_functionality_c689561(
     wifi_dut,
     wifi_sniffer,
@@ -1642,6 +1650,7 @@ def test_wifi_sdk_verify_one_udp_tx_and_udp_rx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689562')
 def test_wifi_sdk_verify_two_tcp_tx_and_tcp_rx_multi_thread_socket_functionality_c689562(
     wifi_dut,
     wifi_sniffer,
@@ -1722,6 +1731,7 @@ def test_wifi_sdk_verify_two_tcp_tx_and_tcp_rx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689563')
 def test_wifi_sdk_verify_two_udp_tx_and_udp_rx_multi_thread_socket_functionality_c689563(
     wifi_dut,
     wifi_sniffer,
@@ -1809,6 +1819,7 @@ def test_wifi_sdk_verify_two_udp_tx_and_udp_rx_multi_thread_socket_functionality
     ],
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689564')
 def test_wifi_sdk_verify_one_tls_tx_and_tls_rx_multi_thread_socket_functionality_c689564(
     wifi_dut,
     wifi_sniffer,
@@ -1887,6 +1898,7 @@ def test_wifi_sdk_verify_one_tls_tx_and_tls_rx_multi_thread_socket_functionality
         "close_sockets",
     ],
 )
+@pytest.mark.test_src_map_id('C689565')
 def test_wifi_sdk_verify_udp_tx_and_udp_rx_tcp_tx_and_tcp_rx_tls_tx_and_tls_rx_c689565(
     wifi_dut,
     wifi_sniffer,
@@ -1997,6 +2009,7 @@ def test_wifi_sdk_verify_udp_tx_and_udp_rx_tcp_tx_and_tcp_rx_tls_tx_and_tls_rx_c
         "close_sockets",
     ],
 )
+@pytest.mark.test_src_map_id('C689720')
 def test_wifi_sdk_verify_sl_si91x_recv_with_maximum_buffer_length_and_returns_error_after_RCV_timeout_elapses_c689720(
     wifi_dut,
     wifi_sniffer,

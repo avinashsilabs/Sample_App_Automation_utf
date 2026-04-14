@@ -1,3 +1,5 @@
+import pytest
+@pytest.mark.test_src_map_id('TC0284147561')
 def test_dtls_client_server(dtls_server, dtls_client, logger):
     logger.info("Starting DTLS server...")
     server = dtls_server.interfaces.dtls_server

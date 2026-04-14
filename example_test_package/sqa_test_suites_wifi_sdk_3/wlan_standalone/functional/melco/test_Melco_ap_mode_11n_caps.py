@@ -306,6 +306,7 @@ class AP11nParamsEnabled(ThreadBase):
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557308')
 def test_wifi_sdk_check_3rd_party_sta_assoc_with_11n_enabled_TC557308(
         wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants,sniffer_filter):
 
@@ -360,6 +361,7 @@ def test_wifi_sdk_check_3rd_party_sta_assoc_with_11n_enabled_TC557308(
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557309')
 def test_wifi_sdk_check_3rd_party_sta_assoc_with_11n_enabled_with_swap_stop_restart_TC557309(
         wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants,sniffer_filter):
 
@@ -421,6 +423,7 @@ def test_wifi_sdk_check_3rd_party_sta_assoc_with_11n_enabled_with_swap_stop_rest
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557312')
 def test_wifi_sdk_check_3rd_party_sta_conn_disconn_with11n_params_TC557312(
         wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants,sniffer_filter):
 
@@ -491,6 +494,7 @@ def test_wifi_sdk_check_3rd_party_sta_conn_disconn_with11n_params_TC557312(
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557313')
 def test_wifi_sdk_check_3rd_party_sta_assoc_with_11n_enabled_in_concurrent_Mode_TC557313(
         wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, wifi_client,
         sniffer_filter):
@@ -564,6 +568,7 @@ def test_wifi_sdk_check_3rd_party_sta_assoc_with_11n_enabled_in_concurrent_Mode_
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557314')
 def test_wifi_sdk_check_3rdparty_sta_conn_with_11n_params_DUT_STA_with_11ax_disabled_TC557314(
         wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, wifi_client,
         sniffer_filter):
@@ -635,6 +640,7 @@ def test_wifi_sdk_check_3rdparty_sta_conn_with_11n_params_DUT_STA_with_11ax_disa
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557315')
 def test_wifi_sdk_check_3rdparty_sta_reconn_with_11n_params_DUT_STA_with_11ax_disabled_tc557315(
         wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, wifi_client,
         sniffer_filter):
@@ -713,6 +719,7 @@ def test_wifi_sdk_check_3rdparty_sta_reconn_with_11n_params_DUT_STA_with_11ax_di
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557316')
 def test_wifi_sdk_check_11n_params_in_aput_beacon_in_concurrent_mode_tc557316(
         wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, wifi_client,
         sniffer_filter):
@@ -784,6 +791,7 @@ def test_wifi_sdk_check_11n_params_in_aput_beacon_in_concurrent_mode_tc557316(
     }
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('TC557310')
 def test_wifi_sdk_check_aggregation_during_traffic_bet_two_clients_apmode_TC557310(
         wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, sniffer_filter, net_perf_client,
         net_perf_server, protocol):
@@ -853,6 +861,7 @@ def test_wifi_sdk_check_aggregation_during_traffic_bet_two_clients_apmode_TC5573
     }
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('TC557311')
 def test_wifi_sdk_check_data_rate_and_ping_traffic_bet_two_clients_apmode_TC557311(
         wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, sniffer_filter, net_perf_client,
         net_perf_server, protocol):
@@ -936,6 +945,7 @@ def test_wifi_sdk_check_data_rate_and_ping_traffic_bet_two_clients_apmode_TC5573
                 'lan_lease_time': 86400, "use_ipv6_web": True, "channel": 11, "standard": 'gnbax', "security": "WPA2",
                 "passphrase": "12345678"})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('TC557317')
 def test_wifi_sdk_check_data_rate_and_aggregation_traffic_bet_two_clients_conmode_TC557317(
         wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, sniffer_filter, net_perf_client,
         net_perf_server, protocol, wifi_access_point, wifi_client):

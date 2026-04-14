@@ -143,6 +143,7 @@ def ApWirelessOff(switch, wait_time, logger):
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19258')
 def test_mqtt_authentication_ssl_c19258(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -245,6 +246,7 @@ def test_mqtt_authentication_ssl_c19258(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19271')
 def test_mqtt_rx_after_rejoin_ssl_c19271(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes,
         pkt_delay, switch
@@ -363,6 +365,7 @@ def test_mqtt_rx_after_rejoin_ssl_c19271(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19274')
 def test_mqtt_publish_while_rejoin_ssl_c19274(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes,
         pkt_delay, switch
@@ -492,6 +495,7 @@ def test_mqtt_publish_while_rejoin_ssl_c19274(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19285')
 def test_mqtt_rx_ssl_c19285(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
@@ -597,6 +601,7 @@ def test_mqtt_rx_ssl_c19285(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19286')
 def test_mqtt_publish_1mb_file_ssl_c19286(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
@@ -704,6 +709,7 @@ def test_mqtt_publish_1mb_file_ssl_c19286(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19287')
 def test_mqtt_publish_max_len_ssl_c19287(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
@@ -811,6 +817,7 @@ def test_mqtt_publish_max_len_ssl_c19287(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19290')
 def test_mqtt_publish_max_len_ssl_ecdsa_c19290(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
@@ -1012,6 +1019,7 @@ def test_mqtt_publish_max_len_ssl_ecdsa_c19290(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ecdsa")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19291')
 def test_mqtt_rx_ssl_ecdsa_c19291(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):

@@ -31,6 +31,7 @@ import re
 @pytest.mark.end_state(
     "wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('TC8280960329')
 def test_socket_command_with_regular_expression(
     wifi_dut, wifi_access_point, ssl_client, logger
 ):

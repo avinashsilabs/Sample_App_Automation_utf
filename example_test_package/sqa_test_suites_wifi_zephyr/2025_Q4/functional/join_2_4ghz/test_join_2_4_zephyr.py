@@ -154,6 +154,7 @@ class WLanJoinThread(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19707')
 def test_wifi_zephyr_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                        zephyr_wifi_collections, sniffer_filter, request):
     """
@@ -195,6 +196,7 @@ def test_wifi_zephyr_connectivity_with_11n_mode_c19707(wifi_dut, wifi_access_poi
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19708')
 def test_wifi_zephyr_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_access_point, wifi_sniffer,
                                                              utf_constants, zephyr_wifi_collections, sniffer_filter,
                                                              request):
@@ -247,6 +249,7 @@ def test_wifi_zephyr_connectivity_with_hidden_mode_ap_c19708(wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19719')
 def test_wifi_zephyr_psk_with_64_different_characters_c19719(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper,
                                                              utf_constants, request, zephyr_wifi_collections,
                                                              sniffer_filter):
@@ -289,6 +292,7 @@ def test_wifi_zephyr_psk_with_64_different_characters_c19719(wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19710')
 def test_wifi_zephyr_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper,
                                                             utf_constants, request, zephyr_wifi_collections,
                                                             sniffer_filter):
@@ -333,6 +337,7 @@ def test_wifi_zephyr_Init_Scan_Join_Disconnect_30min_C19710(wifi_dut, wifi_acces
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sta_mode_ssid', "passphrase": 'test12345678', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C694554')
 def test_wifi_zephyr_verify_connectivity_with_correct_psk_after_wrong_psk_c694554(wifi_dut, wifi_access_point,
                                                                                   wifi_sniffer,
                                                                                   utf_constants, request,
@@ -395,6 +400,7 @@ def test_wifi_zephyr_verify_connectivity_with_correct_psk_after_wrong_psk_c69455
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sta_mode_ssid', "passphrase": 'test12345678', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C79234')
 def test_wifi_zephyr_connectivity_neg_psk_7_bytes_or_64_bytes_c79234(wifi_dut, wifi_access_point,
                                                                      wifi_sniffer,
                                                                      utf_constants, request, zephyr_wifi_collections,
@@ -446,6 +452,7 @@ def test_wifi_zephyr_connectivity_neg_psk_7_bytes_or_64_bytes_c79234(wifi_dut, w
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'TESTTEST-WPA2', "security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19175')
 def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
                                                     request,
                                                     utf_constants, sniffer_filter):
@@ -500,6 +507,7 @@ def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point,
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'TESTTEST-ASUS-OPEN', "security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C29175')
 def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_access_point, wifi_sniffer,
                                                              zephyr_wifi_collections,
                                                              request,
@@ -554,6 +562,7 @@ def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_acce
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C39175')
 def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                           request,
                                                           sniffer_filter, zephyr_wifi_collections):

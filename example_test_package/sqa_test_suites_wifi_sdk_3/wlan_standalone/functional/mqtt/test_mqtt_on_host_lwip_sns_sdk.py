@@ -287,6 +287,7 @@ class MQTTConnectionThread(ThreadBase):
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876788')
 def test_mqtts_subscribe_publish_disconnect_for_30min_C876788(
     wifi_dut,
     wifi_access_point,
@@ -362,6 +363,7 @@ def test_mqtts_subscribe_publish_disconnect_for_30min_C876788(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876789')
 def test_mqtts_subscribe_publish_disconnect_over_wifi_for_30min_C876789(
     wifi_dut,
     wifi_access_point,
@@ -439,6 +441,7 @@ def test_mqtts_subscribe_publish_disconnect_over_wifi_for_30min_C876789(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876790')
 def test_mqtts_subscribe_publish_disconnect_deinit_for_30min_C876790(
     wifi_dut,
     wifi_access_point,
@@ -518,6 +521,7 @@ def test_mqtts_subscribe_publish_disconnect_deinit_for_30min_C876790(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876807')
 def test_mqtts_subscribe_publish_every_30_min_C876807(
     wifi_dut,
     wifi_access_point,

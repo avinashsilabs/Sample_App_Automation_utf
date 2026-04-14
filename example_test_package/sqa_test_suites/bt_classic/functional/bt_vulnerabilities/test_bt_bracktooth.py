@@ -27,6 +27,7 @@ Setup requirement:
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101986')
 def test_bt_vulnerability_invalid_feature_page_execution_C101986(bt_dut, bt_vulnerability_sniffer, bt_client):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -66,6 +67,7 @@ def test_bt_vulnerability_invalid_feature_page_execution_C101986(bt_dut, bt_vuln
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101987')
 def test_bt_vulnerability_truncated_sco_link_request_C101987(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -104,6 +106,7 @@ def test_bt_vulnerability_truncated_sco_link_request_C101987(bt_dut, bt_client, 
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101988')
 def test_bt_vulnerability_duplicated_iocap_C101988(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -139,6 +142,7 @@ def test_bt_vulnerability_duplicated_iocap_C101988(bt_dut, bt_client, bt_vulnera
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101989')
 def test_bt_vulnerability_feature_response_flooding_C101989(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -174,6 +178,7 @@ def test_bt_vulnerability_feature_response_flooding_C101989(bt_dut, bt_client, b
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101990')
 def test_bt_vulnerability_lmp_auto_rate_overflow_C101990(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -209,6 +214,7 @@ def test_bt_vulnerability_lmp_auto_rate_overflow_C101990(bt_dut, bt_client, bt_v
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101991')
 def test_bt_vulnerability_lmp_2_DH1_Overflow_C101991(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -244,6 +250,7 @@ def test_bt_vulnerability_lmp_2_DH1_Overflow_C101991(bt_dut, bt_client, bt_vulne
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101992')
 def test_bt_vulnerability_lmp_Dm1_Overflow_C101992(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -280,6 +287,7 @@ def test_bt_vulnerability_lmp_Dm1_Overflow_C101992(bt_dut, bt_client, bt_vulnera
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101993')
 def test_bt_vulnerability_truncated_lmp_accepted_C101993(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -315,6 +323,7 @@ def test_bt_vulnerability_truncated_lmp_accepted_C101993(bt_dut, bt_client, bt_v
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101995')
 def test_bt_vulnerability_same_host_connected_C101995(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -350,6 +359,7 @@ def test_bt_vulnerability_same_host_connected_C101995(bt_dut, bt_client, bt_vuln
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101996')
 def test_bt_vulnerability_lmp_au_rand_C101996(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -385,6 +395,7 @@ def test_bt_vulnerability_lmp_au_rand_C101996(bt_dut, bt_client, bt_vulnerabilit
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101997')
 def test_bt_vulnerability_lmp_invalid_max_slot_C101997(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -420,6 +431,7 @@ def test_bt_vulnerability_lmp_invalid_max_slot_C101997(bt_dut, bt_client, bt_vul
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101998')
 def test_bt_vulnerability_lmp_max_slot_length_C101998(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -455,6 +467,7 @@ def test_bt_vulnerability_lmp_max_slot_length_C101998(bt_dut, bt_client, bt_vuln
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C101999')
 def test_bt_vulnerability_invalid_timing_accuracy_C101999(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()
@@ -490,6 +503,7 @@ def test_bt_vulnerability_invalid_timing_accuracy_C101999(bt_dut, bt_client, bt_
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('C1012000')
 def test_bt_vulnerability_paging_scan_disable_C1012000(bt_dut, bt_client, bt_vulnerability_sniffer):
     logger().info("======= start bt advertisement in dut")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_spp()

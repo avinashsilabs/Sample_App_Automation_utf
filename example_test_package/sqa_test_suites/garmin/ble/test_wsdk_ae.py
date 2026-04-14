@@ -48,6 +48,7 @@ pytestmark = [
         * bt_sniffer: To capture OTA logs through Ellysis.
 """
 
+@pytest.mark.test_src_map_id('C163693')
 def test_EXT_ADV_pkt_and_aux_ptr_C163693(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer):
     """ 
     Test case          : This test case will verify Advertising Extention packets for undirected connecable and scannable adv type and aux pointer
@@ -59,6 +60,7 @@ def test_EXT_ADV_pkt_and_aux_ptr_C163693(ble_dut, rs_helper_ble, ble_sniffer, wi
                                     adv_handle=0, ble_dut_address=ble_dut_address, bt_sniffer=bt_sniffer,
                                     wifi_sniffer=wifi_sniffer, ble_sniffer=ble_sniffer, packet_filter1={packet_filter1:"Positive"})
     
+@pytest.mark.test_src_map_id('C193694')
 def test_verify_lowest_highest_adv_handle_C193694(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer):
     """
     Test case          : This test case will verify Advertising Extention with lowest and highest adv_handle
@@ -76,6 +78,7 @@ def test_verify_lowest_highest_adv_handle_C193694(ble_dut, rs_helper_ble, ble_sn
                                     adv_handle=239, ble_dut_address=ble_dut_address, bt_sniffer=bt_sniffer,
                                     wifi_sniffer=wifi_sniffer, ble_sniffer=ble_sniffer, packet_filter1={packet_filter1:"Positive"})
     
+@pytest.mark.test_src_map_id('C193695')
 def test_verify_adv_on_channel_37_38_39_C193695(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer):
     """
     Test case category : BLE Advertising Extension 
@@ -91,6 +94,7 @@ def test_verify_adv_on_channel_37_38_39_C193695(ble_dut, rs_helper_ble, ble_snif
                                     wifi_sniffer=wifi_sniffer, ble_sniffer=ble_sniffer, packet_filter1={packet_filter1:"Positive"}, 
                                     packet_filter2={packet_filter2:"Negative"})
 
+@pytest.mark.test_src_map_id('C163696')
 def test_verify_AE_ADV_for_infinite_time_C163696(ble_dut, rs_helper_ble, bt_sniffer):
     """
     Test case category : BLE Advertising Extension 
@@ -101,6 +105,7 @@ def test_verify_AE_ADV_for_infinite_time_C163696(ble_dut, rs_helper_ble, bt_snif
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, ble_dut_address=ble_dut_address, bt_sniffer=bt_sniffer,
                                     adv_handle=0, duration=0, test_case_id="C193696")
     
+@pytest.mark.test_src_map_id('C163697')
 def test_verify_AE_ADV_for_2560ms_C163697(ble_dut, rs_helper_ble, bt_sniffer):
     """
     Test case category : BLE Advertising Extension 
@@ -111,6 +116,7 @@ def test_verify_AE_ADV_for_2560ms_C163697(ble_dut, rs_helper_ble, bt_sniffer):
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, ble_dut_address=ble_dut_address, bt_sniffer=bt_sniffer,
                                     adv_handle=0, duration=256, adv_async_required=1, test_case_id="C193697")
 
+@pytest.mark.test_src_map_id('C163698')
 def test_verify_AE_ADV_for_200_max_event_C163698(ble_dut, rs_helper_ble, bt_sniffer):
     """
     Test case category : BLE Advertising Extension 
@@ -121,6 +127,7 @@ def test_verify_AE_ADV_for_200_max_event_C163698(ble_dut, rs_helper_ble, bt_snif
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, adv_handle=0, ble_dut_address=ble_dut_address, bt_sniffer=bt_sniffer,
                                     max_ae_events=200, adv_async_required=1, test_case_id="C193698")
     
+@pytest.mark.test_src_map_id('C163701')
 def test_verify_AE_ADV_with_randomm_address_C163701(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer):
     """
     Test case category : BLE Advertising Extension 
@@ -145,6 +152,7 @@ def test_verify_AE_ADV_with_randomm_address_C163701(ble_dut, rs_helper_ble, ble_
 """
 
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163702')
 def test_verify_AE_non_conn_non_scan_ADV_C163702(ble_dut, ble_client, ble_sniffer, wifi_sniffer, rs_helper_ble, bt_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -158,6 +166,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163702(ble_dut, ble_client, ble_sniffe
                                     pri_adv_phy=1, sec_adv_phy=1, data_len=1,  ble_sniffer=ble_sniffer, wifi_sniffer=wifi_sniffer,
                                     packet_filter1={packet_filter1:"Positive"}, adv_data="AE_PERIPHERAL_DATA", central=ble_client)
     
+@pytest.mark.test_src_map_id('C163703')
 def test_verify_AE_non_conn_non_scan_ADV_C163703(ble_dut, ble_sniffer, wifi_sniffer, rs_helper_ble, bt_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -173,6 +182,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163703(ble_dut, ble_sniffer, wifi_snif
                                     packet_filter1={packet_filter1:"Positive"})
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163704')
 def test_verify_AE_non_conn_non_scan_ADV_C163704(ble_dut, ble_client, ble_sniffer, wifi_sniffer, rs_helper_ble, bt_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -186,6 +196,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163704(ble_dut, ble_client, ble_sniffe
                                     data_len=31, ble_sniffer=ble_sniffer, wifi_sniffer=wifi_sniffer, packet_filter1={packet_filter1:"Positive"}, 
                                     adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@", central=ble_client)
     
+@pytest.mark.test_src_map_id('C163705')
 def test_verify_AE_non_conn_non_scan_ADV_C163705(ble_dut, rs_helper_ble, bt_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -199,6 +210,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163705(ble_dut, rs_helper_ble, bt_snif
                                     adv_data="AE_PERIPHERAL_DATA", duration=500, adv_async_required=1, 
                                     )
     
+@pytest.mark.test_src_map_id('C163706')
 def test_verify_AE_non_conn_non_scan_ADV_C163706(ble_dut, bt_sniffer, rs_helper_ble):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -211,6 +223,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163706(ble_dut, bt_sniffer, rs_helper_
                                     data_len=31, test_case_id="C163706",
                                     adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")
     
+@pytest.mark.test_src_map_id('C163707')
 def test_verify_AE_non_conn_non_scan_ADV_C163707(ble_dut, rs_helper_ble, bt_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -223,6 +236,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163707(ble_dut, rs_helper_ble, bt_snif
                                     pri_adv_phy=3, sec_adv_phy=3, data_len=0, test_case_id="C163707",
                                     adv_data="AE_PERIPHERAL_DATA", max_ae_events=50, adv_async_required=1)
     
+@pytest.mark.test_src_map_id('C163708')
 def test_verify_AE_non_conn_non_scan_ADV_C163708(ble_dut, rs_helper_ble, bt_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -235,6 +249,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163708(ble_dut, rs_helper_ble, bt_snif
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, adv_handle=1, ble_dut_address=ble_dut_address, bt_sniffer=bt_sniffer,
                                       pri_adv_phy=3, sec_adv_phy=3, data_len=1, test_case_id="C163708", adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")
     
+@pytest.mark.test_src_map_id('C163709')
 def test_verify_AE_non_conn_non_scan_ADV_C163709(ble_dut, rs_helper_ble, bt_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -248,6 +263,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163709(ble_dut, rs_helper_ble, bt_snif
                                     adv_data="AE_PERIPHERAL_DATA", duration=500, adv_async_required=1)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163710')
 def test_verify_AE_non_conn_non_scan_ADV_C163710(ble_dut, ble_client, rs_helper_ble, bt_sniffer, ble_sniffer, wifi_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -262,6 +278,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163710(ble_dut, ble_client, rs_helper_
                                       pri_adv_phy=1, sec_adv_phy=2, data_len=1, test_case_id="C163710", adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")
 
 
+@pytest.mark.test_src_map_id('C163711')
 def test_verify_AE_non_conn_non_scan_ADV_C163711(ble_dut, rs_helper_ble, bt_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -275,6 +292,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163711(ble_dut, rs_helper_ble, bt_snif
                                     adv_data="AE_PERIPHERAL_DATA", max_ae_events=50, adv_async_required=1)
 
 @pytest.mark.ble_client("bt_wiseconnect")    
+@pytest.mark.test_src_map_id('C163712')
 def test_verify_AE_non_conn_non_scan_ADV_C163712(ble_dut, ble_client, rs_helper_ble, bt_sniffer, ble_sniffer, wifi_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -289,6 +307,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163712(ble_dut, ble_client, rs_helper_
                                       pri_adv_phy=1, sec_adv_phy=2, data_len=31, test_case_id="C163712", adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")
 
 @pytest.mark.ble_client("bt_wiseconnect") 
+@pytest.mark.test_src_map_id('C163713')
 def test_verify_AE_non_conn_non_scan_ADV_C163713(ble_dut, ble_client, rs_helper_ble, bt_sniffer, ble_sniffer, wifi_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -303,6 +322,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163713(ble_dut, ble_client, rs_helper_
                                       pri_adv_phy=1, sec_adv_phy=2, data_len=474, test_case_id="C163713", adv_data="AE_PERIPHERAL_DATA_1_2_3_4_5_6@")
 
 
+@pytest.mark.test_src_map_id('C163714')
 def test_verify_AE_non_conn_non_scan_ADV_C163714(ble_dut, rs_helper_ble, bt_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv 
@@ -331,6 +351,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C163714(ble_dut, rs_helper_ble, bt_snif
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163720')
 def test_verify_AE_Scannable_non_conn_ADV_C163715_C163720(ble_dut, rs_helper_ble, bt_sniffer, ble_client, ble_sniffer, wifi_sniffer,
                                         adv_type, test_case_id, data_len, scan_req_notify_enable):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
@@ -356,6 +377,7 @@ def test_verify_AE_Scannable_non_conn_ADV_C163715_C163720(ble_dut, rs_helper_ble
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163722')
 def test_verify_AE_Scannable_undirected_ADV_C163719_C163722(ble_dut, rs_helper_ble, bt_sniffer,
                                         adv_type, test_case_id, data_len, scan_req_notify_enable):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
@@ -378,6 +400,7 @@ def test_verify_AE_Scannable_undirected_ADV_C163719_C163722(ble_dut, rs_helper_b
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163724')
 def test_verify_AE_Scannable_directed_ADV_C163723_C163724(ble_dut, rs_helper_ble, bt_sniffer,
                                         adv_type, test_case_id, data_len):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
@@ -400,6 +423,7 @@ def test_verify_AE_Scannable_directed_ADV_C163723_C163724(ble_dut, rs_helper_ble
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163813')
 def test_verify_AE_Scannable_filter_policy_C163811_C163813(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer,
                                         adv_type, test_case_id, adv_filter_policy, event_type):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
@@ -426,6 +450,7 @@ def test_verify_AE_Scannable_filter_policy_C163811_C163813(ble_dut, rs_helper_bl
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163820')
 def test_verify_AE_Secondary_adv_with_max_skip_1_C163814_C163820(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer,
                                         adv_type, test_case_id, sec_adv_max_skip, event_type):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
@@ -455,6 +480,7 @@ def test_verify_AE_Secondary_adv_with_max_skip_1_C163814_C163820(ble_dut, rs_hel
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163826')
 def test_verify_2ADV_sets_PHY_1M_2M_C163820_to_C163826(ble_dut, ble_client, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer,
                                         adv_type, adv_type_s2, data_len, data_len_s2, pri_adv_phy, 
                                         sec_adv_phy, test_case_id, adv_handle, adv_handle_s2, event_type_1, event_type_2):
@@ -485,6 +511,7 @@ def test_verify_2ADV_sets_PHY_1M_2M_C163820_to_C163826(ble_dut, ble_client, rs_h
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163833')
 def test_verify_2ADV_sets_PHY_LECoded_C163827_to_C163833(ble_dut, rs_helper_ble, bt_sniffer,
                                         adv_type, adv_type_s2, data_len, data_len_s2, pri_adv_phy, 
                                         sec_adv_phy, test_case_id, adv_handle, adv_handle_s2):
@@ -513,6 +540,7 @@ def test_verify_2ADV_sets_PHY_LECoded_C163827_to_C163833(ble_dut, rs_helper_ble,
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163840')
 def test_verify_2ADV_sets_Legacy_Extended_C1638234_to_C163840(ble_dut, ble_client, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer,
                                         adv_type, adv_type_s2, data_len, data_len_s2, test_case_id, adv_handle, adv_handle_s2, 
                                         event_type_1, event_type_2):
@@ -542,6 +570,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C1638234_to_C163840(ble_dut, ble_clien
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163847')
 def test_verify_2ADV_sets_Legacy_Extended_C1638241_to_C163847(ble_dut, ble_client, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer,
                                         adv_type, adv_type_s2, data_len, data_len_s2, test_case_id, adv_handle, adv_handle_s2, 
                                         event_type_1, event_type_2):
@@ -574,6 +603,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C1638241_to_C163847(ble_dut, ble_clien
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C1638454')
 def test_verify_2ADV_sets_Legacy_Extended_C1638248_to_C1638454(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer,
                                         adv_type, adv_type_s2, data_len, data_len_s2, test_case_id, adv_handle, adv_handle_s2, 
                                         event_type_1, event_type_2):
@@ -606,6 +636,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C1638248_to_C1638454(ble_dut, rs_helpe
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C1638461')
 def test_verify_2ADV_sets_Legacy_Extended_C1638255_to_C1638461(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer,
                                         adv_type, adv_type_s2, data_len, data_len_s2, test_case_id, adv_handle, adv_handle_s2, 
                                         event_type_1, event_type_2):
@@ -638,6 +669,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C1638255_to_C1638461(ble_dut, rs_helpe
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C1638468')
 def test_verify_2ADV_sets_Legacy_Extended_C1638262_to_C1638468(ble_dut, rs_helper_ble, bt_sniffer,
                                         adv_type, adv_type_s2, data_len, data_len_s2, test_case_id, adv_handle, adv_handle_s2, 
                                         ):
@@ -678,6 +710,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C1638262_to_C1638468(ble_dut, rs_helpe
     ],
 )
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163886')
 def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C163869_C163886(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer, bt_sniffer,
                                         adv_type, min_interval, max_interval, test_case_id, pri_adv_phy, sec_adv_phy, event_type_1, random_address):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
@@ -691,6 +724,7 @@ def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C163869_C163886(ble_
 ## Negative Test scenarios
 
 """ Test case : This test case will verify 0x04c error, when legacy and ext adv started together with single adv set"""
+@pytest.mark.test_src_map_id('C163735')
 def test_verify_Negative_case_C163735(ble_dut, rs_helper_ble):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=0, ble_dut_address=ble_dut_address,
@@ -702,6 +736,7 @@ def test_verify_Negative_case_C163735(ble_dut, rs_helper_ble):
     
 """Test case : This test case will verify invalid adv handle"""
 @pytest.mark.skip ("test case is not failing with invalid adv handle")
+@pytest.mark.test_src_map_id('C163736')
 def test_verify_Negative_case_C163736(ble_dut, rs_helper_ble, ble_sniffer, wifi_sniffer):
     packet_filter1 = f"(btle.extended_advertising_header.mode == 0x0)"
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
@@ -710,6 +745,7 @@ def test_verify_Negative_case_C163736(ble_dut, rs_helper_ble, ble_sniffer, wifi_
                                     adv_handle=300000, packet_filter1={packet_filter1:"Positive"}, ble_sniffer=ble_sniffer, wifi_sniffer=wifi_sniffer)
     
 """Test case: This test case will verify terminated callback event with error 60, wit duration value 256ms"""   
+@pytest.mark.test_src_map_id('C163737')
 def test_verify_Negative_case_C163737(ble_dut, rs_helper_ble):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
@@ -717,6 +753,7 @@ def test_verify_Negative_case_C163737(ble_dut, rs_helper_ble):
                                     duration=256, adv_async_required=True)
     
 """Test case: This test case will verify terminated callback event with error 67, with max ae events value 0x5"""  
+@pytest.mark.test_src_map_id('C163738')
 def test_verify_Negative_case_C163738(ble_dut, rs_helper_ble):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
@@ -724,6 +761,7 @@ def test_verify_Negative_case_C163738(ble_dut, rs_helper_ble):
                                     max_ae_events=5, adv_async_required=True)
     
 """Test case: This test case will verify invalid adv handle error 0x4e42 for set_adv_data command"""
+@pytest.mark.test_src_map_id('C163739')
 def test_verify_Negative_case_C163739(ble_dut, rs_helper_ble):
     ble_dut_address=rs_helper_ble.ble_start(ble_dut=ble_dut)
     rs_helper_ble.BLE_AE().verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
@@ -731,23 +769,28 @@ def test_verify_Negative_case_C163739(ble_dut, rs_helper_ble):
                                     invalid_data_hdl=99, dont_cleanup=True, error_expected= "0x4e42")
 
 """Test case: This test case will verify error 0x4e12 after setting filter_duplicates =2 and duraion/period =0 during scan enable""" 
+@pytest.mark.test_src_map_id('C163740')
 def test_verify_Negative_case_C163740(ble_dut, rs_helper_ble):
     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, filter_duplicates=2, error_expected="0x4e12", dont_cleanup=True)
 
 """Test case: This test case will verify error 0x4e12 after setting duraion is greater or equal to period during scan enable"""
+@pytest.mark.test_src_map_id('C163741')
 def test_verify_Negative_case_C163741(ble_dut, rs_helper_ble):
     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, duration=500, period=500, error_expected="0x4e12", dont_cleanup=True)
 
 """Test case: This test case will verify error 0x4e12 after setting scan enable with own add type as random and not setting random add prior"""
+@pytest.mark.test_src_map_id('C163742')
 def test_verify_Negative_case_C163742(ble_dut, rs_helper_ble):
     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, own_addr_type=1, error_expected="0x4e12", dont_cleanup=True)
 
 """Test case: This test case will verify error 0x4e12 not come after setting scan enable with own add type as random and setting random add prior"""
 @pytest.mark.skip ("set random address is failing")
+@pytest.mark.test_src_map_id('C163743')
 def test_verify_Negative_case_C163743(ble_dut, rs_helper_ble):
     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, own_addr_type=1, random_address="AA:BB:CC:11:23:33")
 
 """Test case: This test case will verify error 0x4e12 not come after setting scan enable with own add type as random and setting random add prior"""
 @pytest.mark.skip ("Expected error is not observed")
+@pytest.mark.test_src_map_id('C163744')
 def test_verify_Negative_case_C163744(ble_dut, rs_helper_ble):
     rs_helper_ble.BLE_AE().verify_ae_scan(central=ble_dut, interval=48, window=49)

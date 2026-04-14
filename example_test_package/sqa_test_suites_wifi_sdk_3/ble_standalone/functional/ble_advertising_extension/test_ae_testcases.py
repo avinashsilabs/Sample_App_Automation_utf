@@ -919,6 +919,7 @@ class RxNotificationFunctionality:
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C538064')
 def test_ble_ae_simultaneous_scanning_and_advertising_C538064(ble_dut, ble_sniffer, sl_collections,  remote_wiseconnect3, periodic_data_len, adv_handle,test_case_id, pri_adv_phy, adv_type,
                                                                                sec_adv_phy ):
     try:
@@ -1161,6 +1162,7 @@ def test_ble_ae_simultaneous_scanning_and_advertising_C538064(ble_dut, ble_sniff
     }
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C768359')
 def test_verify_BLE_advertising_and_scanning_with_two_sets_enabled_C768359(ble_dut, ble_sniffer,
                                                                                sl_collections,
                                                                                remote_wiseconnect3,remote_wiseconnect3s, adv_type,
@@ -1453,6 +1455,7 @@ def test_verify_BLE_advertising_and_scanning_with_two_sets_enabled_C768359(ble_d
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C626222')
 def test_verify_ae_scanning_with_enable_disable_two_sets_loop_C626222(ble_dut, ble_sniffer,
                                                                                sl_collections,
                                                                                remote_wiseconnect3, remote_wiseconnect3s, adv_type,
@@ -1778,6 +1781,7 @@ def test_verify_ae_scanning_with_enable_disable_two_sets_loop_C626222(ble_dut, b
     }
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C538063')
 def test_verify_ble_ae_dual_role_adv_and_scan_interval_C538063(ble_dut, ble_sniffer,
                                                                                sl_collections,
                                                                                remote_wiseconnect3, remote_wiseconnect3s, adv_type,
@@ -2102,6 +2106,7 @@ def test_verify_ble_ae_dual_role_adv_and_scan_interval_C538063(ble_dut, ble_snif
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('TC5739181305')
 def test_ble_ext_master_connection_disconnection_loop_528645(ble_dut, ble_sniffer, sl_collections,
                                                              remote_wiseconnect3, adv_type,
                                                              periodic_data_len, adv_handle,
@@ -2309,6 +2314,7 @@ def test_ble_ext_master_connection_disconnection_loop_528645(ble_dut, ble_sniffe
     }
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C19877')
 def test_ble_connection_stability_with_two_centrals_C19877(ble_dut, ble_sniffer,
                                                                                sl_collections,
                                                                                remote_wiseconnect3,remote_wiseconnect3s, adv_type,
@@ -2641,6 +2647,7 @@ def test_ble_connection_stability_with_two_centrals_C19877(ble_dut, ble_sniffer,
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768360')
 def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_secure_mode_C768360(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """
@@ -2843,6 +2850,7 @@ def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_sec
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768361')
 def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_secure_mode_C768361(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """
@@ -3032,6 +3040,7 @@ def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_sec
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768362')
 def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_secure_mode_C768362(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """
@@ -3272,6 +3281,7 @@ def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_sec
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768363')
 def test_verify_ble_ae_advertising_2sets_scanning_with_peripheral_connection_secure_mode_C768363(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """

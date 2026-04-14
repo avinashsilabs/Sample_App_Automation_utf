@@ -144,6 +144,7 @@ class MasterSlaveConnection:
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705954')
 def test_ble_gap_slave_role_power_index_45_C705954(ble_dut, ble_client, sl_collections):
     """
     :param ble_dut:  Fixture parameter to issue command in DUT.
@@ -189,6 +190,7 @@ def test_ble_gap_slave_role_power_index_45_C705954(ble_dut, ble_client, sl_colle
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705955')
 def test_ble_gap_master_role_power_index_45_C705955(ble_dut, ble_client, sl_collections):
     """
     :param ble_dut:  Fixture parameter to issue command in DUT.
@@ -234,6 +236,7 @@ def test_ble_gap_master_role_power_index_45_C705955(ble_dut, ble_client, sl_coll
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705956')
 def test_ble_gap_slave_role_power_index_63_C705956(ble_dut, ble_client, sl_collections):
     """
     :param ble_dut:  Fixture parameter to issue command in DUT.
@@ -279,6 +282,7 @@ def test_ble_gap_slave_role_power_index_63_C705956(ble_dut, ble_client, sl_colle
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705957')
 def test_ble_gap_master_role_power_index_63_C705957(ble_dut, ble_client, sl_collections):
     """
     :param ble_dut:  Fixture parameter to issue command in DUT.
@@ -324,6 +328,7 @@ def test_ble_gap_master_role_power_index_63_C705957(ble_dut, ble_client, sl_coll
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705958')
 def test_ble_gap_slave_role_power_index_64_C705958(ble_dut, ble_client, sl_collections):
     """
     :param ble_dut:  Fixture parameter to issue command in DUT.
@@ -369,6 +374,7 @@ def test_ble_gap_slave_role_power_index_64_C705958(ble_dut, ble_client, sl_colle
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705959')
 def test_ble_gap_master_role_power_index_64_C705959(ble_dut, ble_client, sl_collections):
     """
     :param ble_dut:  Fixture parameter to issue command in DUT.
@@ -414,6 +420,7 @@ def test_ble_gap_master_role_power_index_64_C705959(ble_dut, ble_client, sl_coll
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705960')
 def test_ble_gap_slave_role_power_index_75_C705960(ble_dut, ble_client, sl_collections):
     """
     :param ble_dut:  Fixture parameter to issue command in DUT.
@@ -459,6 +466,7 @@ def test_ble_gap_slave_role_power_index_75_C705960(ble_dut, ble_client, sl_colle
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C705961')
 def test_ble_gap_master_role_power_index_75_C705961(ble_dut, ble_client, sl_collections):
     """
     :param ble_dut:  Fixture parameter to issue command in DUT.
@@ -506,6 +514,7 @@ def test_ble_gap_master_role_power_index_75_C705961(ble_dut, ble_client, sl_coll
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C725807')
 def test_read_tx_power_in_us_region_C725807(ble_dut):
     logger().info(f"******Region set to US region in opermodes**********")
     data = ble_dut.interfaces.bluetooth.ble_read_transmit_power()
@@ -550,6 +559,7 @@ def test_read_tx_power_in_us_region_C725807(ble_dut):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C725808')
 def test_read_tx_power_in_EU_region_C725808(ble_dut):
     logger().info(f"******Region set to EU region in opermodes**********")
     data = ble_dut.interfaces.bluetooth.ble_read_transmit_power()
@@ -590,6 +600,7 @@ def test_read_tx_power_in_EU_region_C725808(ble_dut):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C725809')
 def test_read_tx_power_in_japan_region_C725809(ble_dut):
     logger().info(f"******Region set to japan region in opermodes**********")
     data = ble_dut.interfaces.bluetooth.ble_read_transmit_power()
@@ -630,6 +641,7 @@ def test_read_tx_power_in_japan_region_C725809(ble_dut):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C725810')
 def test_read_tx_power_in_worldwide_region_C725810(ble_dut):
     logger().info(f"******Region set to worldwide region in opermodes**********")
     data = ble_dut.interfaces.bluetooth.ble_read_transmit_power()
@@ -671,6 +683,7 @@ def test_read_tx_power_in_worldwide_region_C725810(ble_dut):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C725811')
 def test_read_tx_power_in_korean_region_C725811(ble_dut):
     logger().info(f"******Region set to korea region in opermodes**********")
     data = ble_dut.interfaces.bluetooth.ble_read_transmit_power()
@@ -711,6 +724,7 @@ def test_read_tx_power_in_korean_region_C725811(ble_dut):
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C725812')
 def test_read_tx_power_in_china_region_C725812(ble_dut):
     logger().info(f"******Region set to china region in opermodes**********")
     data = ble_dut.interfaces.bluetooth.ble_read_transmit_power()

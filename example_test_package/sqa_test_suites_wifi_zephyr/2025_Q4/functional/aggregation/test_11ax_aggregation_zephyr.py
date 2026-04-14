@@ -208,6 +208,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0xc8', 6, "qos_voice_tx")])
+@pytest.mark.test_src_map_id('C148311')
 def test_wifi_zephyr_tcp_data_tx_with_VO_c148311(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                  wifi_client,
                                                  protocol, zephyr_wifi_collections, sniffer_filter, traffic, qos,
@@ -246,6 +247,7 @@ def test_wifi_zephyr_tcp_data_tx_with_VO_c148311(wifi_sniffer, net_perf_client, 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x80', 4, "qos_video_tx")])
+@pytest.mark.test_src_map_id('C148313')
 def test_wifi_zephyr_tcp_data_tx_with_VI_c148313(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                  wifi_client,
                                                  protocol, zephyr_wifi_collections, sniffer_filter, traffic, qos,
@@ -284,6 +286,7 @@ def test_wifi_zephyr_tcp_data_tx_with_VI_c148313(wifi_sniffer, net_perf_client, 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x20', 1, "qos_back_ground_tx")])
+@pytest.mark.test_src_map_id('C148314')
 def test_wifi_zephyr_tcp_data_tx_with_BK_c148314(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                  wifi_client,
                                                  protocol, zephyr_wifi_collections, sniffer_filter, traffic, qos,
@@ -322,6 +325,7 @@ def test_wifi_zephyr_tcp_data_tx_with_BK_c148314(wifi_sniffer, net_perf_client, 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x00', 0, "qos_best_effort_tx")])
+@pytest.mark.test_src_map_id('C148315')
 def test_wifi_zephyr_tcp_data_tx_with_BE_c148315(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                  wifi_client,
                                                  protocol, zephyr_wifi_collections, sniffer_filter, traffic, qos,
@@ -357,6 +361,7 @@ def test_wifi_zephyr_tcp_data_tx_with_BE_c148315(wifi_sniffer, net_perf_client, 
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
+@pytest.mark.test_src_map_id('C148312')
 def test_wifi_zephyr_send_SMPDU_c148312(wifi_sniffer, wifi_access_point, wifi_dut, request, wifi_client,
                                         zephyr_wifi_collections, sniffer_filter):
     """ Verify whether DUT is able to send SMPDU when we do only single packet from remote PC """
@@ -421,6 +426,7 @@ def test_wifi_zephyr_send_SMPDU_c148312(wifi_sniffer, wifi_access_point, wifi_du
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0xc8', 6, "qos_voice_tx")])
+@pytest.mark.test_src_map_id('C148316')
 def test_wifi_zephyr_udp_data_tx_with_VO_c148316(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                  wifi_client,
                                                  protocol, zephyr_wifi_collections, sniffer_filter, traffic, qos,
@@ -459,6 +465,7 @@ def test_wifi_zephyr_udp_data_tx_with_VO_c148316(wifi_sniffer, net_perf_client, 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x80', 4, "qos_video_tx")])
+@pytest.mark.test_src_map_id('C148317')
 def test_wifi_zephyr_udp_data_tx_with_VI_c148317(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                  wifi_client,
                                                  protocol, zephyr_wifi_collections, sniffer_filter, traffic, qos,
@@ -496,6 +503,7 @@ def test_wifi_zephyr_udp_data_tx_with_VI_c148317(wifi_sniffer, net_perf_client, 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x00', 0, "qos_best_effort_tx")])
+@pytest.mark.test_src_map_id('C148318')
 def test_wifi_zephyr_udp_data_tx_with_BE_c148318(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                  wifi_client,
                                                  protocol, zephyr_wifi_collections, sniffer_filter, traffic, qos,
@@ -533,6 +541,7 @@ def test_wifi_zephyr_udp_data_tx_with_BE_c148318(wifi_sniffer, net_perf_client, 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x20', 1, "qos_back_ground_tx")])
+@pytest.mark.test_src_map_id('C148319')
 def test_wifi_zephyr_udp_data_tx_with_BK_c148319(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                  wifi_client,
                                                  protocol, zephyr_wifi_collections, sniffer_filter, traffic, qos,
@@ -569,6 +578,7 @@ def test_wifi_zephyr_udp_data_tx_with_BK_c148319(wifi_sniffer, net_perf_client, 
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C148320')
 def test_wifi_zephyr_udp_rx_check_block_ack_for_aggregated_frame_c148320(wifi_sniffer, net_perf_client,
                                                                          wifi_access_point, wifi_dut,
                                                                          request, wifi_client, protocol,
@@ -648,6 +658,7 @@ def test_wifi_zephyr_udp_rx_check_block_ack_for_aggregated_frame_c148320(wifi_sn
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
+@pytest.mark.test_src_map_id('C148323')
 def test_wifi_zephyr_dut_sending_mpdu_same_qos_cateqory_c148323(wifi_sniffer, wifi_access_point, wifi_dut, request,
                                                                 wifi_client,
                                                                 zephyr_wifi_collections, sniffer_filter):
@@ -721,6 +732,7 @@ def test_wifi_zephyr_dut_sending_mpdu_same_qos_cateqory_c148323(wifi_sniffer, wi
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
+@pytest.mark.test_src_map_id('C148326')
 def test_wifi_zephyr_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, wifi_access_point, wifi_dut, request,
                                                                   wifi_client,
                                                                   zephyr_wifi_collections, sniffer_filter):
@@ -798,6 +810,7 @@ def test_wifi_zephyr_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0x20', 1)])
+@pytest.mark.test_src_map_id('C148322')
 def test_wifi_zephyr_dut_send_mpdu_with_same_receiver_addr_c148322(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client, protocol,
         zephyr_wifi_collections,
@@ -869,6 +882,7 @@ def test_wifi_zephyr_dut_send_mpdu_with_same_receiver_addr_c148322(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0x00', 0)])
+@pytest.mark.test_src_map_id('C148324')
 def test_wifi_zephyr_dut_receive_block_ack_after_ampdu_frames_c148324(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client, protocol,
         zephyr_wifi_collections,
@@ -939,6 +953,7 @@ def test_wifi_zephyr_dut_receive_block_ack_after_ampdu_frames_c148324(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0x80', 4)])
+@pytest.mark.test_src_map_id('C148325')
 def test_wifi_zephyr_dut_duration_id_carrying_same_value_c148325(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client, protocol,
         zephyr_wifi_collections,

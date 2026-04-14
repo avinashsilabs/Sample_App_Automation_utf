@@ -100,6 +100,7 @@ class WifiJoinThread(ThreadBase):
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19293')
 def test_wifi_zephyr_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, wifi_access_point, wifi_client,
                                                                     wifi_dut,
                                                                     utf_constants, request, zephyr_wifi_collections,
@@ -187,6 +188,7 @@ def test_wifi_zephyr_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19293')
 def test_wifi_zephyr_dhcp_ip_change_notification_c19293(wifi_sniffer, wifi_access_point, wifi_client,
                                                         wifi_dut,
                                                         utf_constants, request, zephyr_wifi_collections,

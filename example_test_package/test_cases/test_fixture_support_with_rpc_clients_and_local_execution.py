@@ -47,6 +47,7 @@ def __print_throughput(throughput: dict):
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.http_client("raspi_http_client")
+@pytest.mark.test_src_map_id('TC7113418812')
 def test_http_server_and_linux_client_post(http_server, http_client, logger):
     method = "POST"
     index_path = "cgi-bin/cgi_example.py"
@@ -61,6 +62,7 @@ def test_http_server_and_linux_client_post(http_server, http_client, logger):
 # @pytest.mark.skip(reason="Uses pytest marker for http_server, needs to be adapted for RPC")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config("http_server", auto_start=False)
+@pytest.mark.test_src_map_id('TC6925350818')
 def test_http_server_and_linux_client_get_with_config_ports(
     http_server, http_client, logger
 ):
@@ -80,6 +82,7 @@ def test_http_server_and_linux_client_get_with_config_ports(
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.http_client("raspi_http_client")
+@pytest.mark.test_src_map_id('TC0637520825')
 def test_websocket_server_and_linux_client(http_server, http_client, logger):
     # Note: Callback registration doesn't work over RPC because Python methods
     # cannot be serialized. For RPC scenarios, server-side events are not observable
@@ -127,6 +130,7 @@ def test_websocket_server_and_linux_client(http_server, http_client, logger):
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.http_client("local_http_client")
+@pytest.mark.test_src_map_id('TC4704784832')
 def test_http_server_and_linux_client_post_with_local_http_client(
     http_server, http_client, logger
 ):
@@ -151,6 +155,7 @@ def test_http_server_and_linux_client_post_with_local_http_client(
         ("index.html", "GET", ""),
     ],
 )
+@pytest.mark.test_src_map_id('TC1743841841')
 def test_python_http_server(
     http_server, index_path, http_client, method, content, logger
 ):
@@ -162,6 +167,7 @@ def test_python_http_server(
 
 
 @pytest.mark.mqtt_server("raspi_mosquitto")
+@pytest.mark.test_src_map_id('TC8268589848')
 def test_mqtt_server_and_linux_client(
     mqtt_server,
     mqtt_client,
@@ -198,6 +204,7 @@ def test_mqtt_server_and_linux_client(
 
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.mqtt_client("local_mqtt_client")
+@pytest.mark.test_src_map_id('TC8433343855')
 def test_mqtt_server_and_linux_client_with_local_mqtt_client(
     mqtt_server,
     mqtt_client,
@@ -267,6 +274,7 @@ def test_mqtt_server_and_linux_client_with_local_mqtt_client(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.config("wifi_access_point", wifi={"standard": "gnbax"})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('TC2110073862')
 def test_simple_ssl_server_dut_tx(
     wifi_access_point, sl_collections, wifi_dut, ssl_server
 ):
@@ -367,6 +375,7 @@ def test_simple_ssl_server_dut_tx(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('TC8952202869')
 def test_simple_ssl_server_dut_rx(
     wifi_access_point, sl_collections, wifi_dut, ssl_server
 ):
@@ -487,6 +496,7 @@ def test_simple_ssl_server_dut_rx(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('TC3110820877')
 def test_simple_ssl_client(wifi_access_point, wifi_dut, ssl_client, sl_collections):
     """
     SSL Server Socket functionality of DUT, while connecting from a remote SSL enabled client socket
@@ -539,6 +549,7 @@ def test_simple_ssl_client(wifi_access_point, wifi_dut, ssl_client, sl_collectio
     ), "data length sent and received is not matching"
 
 
+@pytest.mark.test_src_map_id('TC0767188885')
 def test_power_meter_keysight_benchvue_win_wcf(power_meter):
     # Init power meter by specifying module name as datalogger or scope
     power_meter.interfaces.power_meter.init_power_meter(
@@ -600,6 +611,7 @@ def test_power_meter_keysight_benchvue_win_wcf(power_meter):
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
     },
 )
+@pytest.mark.test_src_map_id('TC8439594892')
 def test_simple_iperf_dut_as_client_tcp_tx(
     wifi_sniffer,
     wifi_access_point,
@@ -727,6 +739,7 @@ def test_simple_iperf_dut_as_client_tcp_tx(
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
     },
 )
+@pytest.mark.test_src_map_id('TC2579254900')
 def test_simple_iperf_dut_as_server_tcp_rx(
     wifi_sniffer,
     wifi_access_point,
@@ -859,6 +872,7 @@ def test_simple_iperf_dut_as_server_tcp_rx(
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19721')
 def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, utf_constants, request):
     """Stop rejoin process by issuing Disconnect command and then do scan and join to the network If Module stops rejoin
     process and gives success message to host AND If Module join to network after disconnect then PASS else FAIL
@@ -900,6 +914,7 @@ def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, utf_constants, request):
 @pytest.mark.end_state(
     "wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('TC6304264909')
 def test_rpc_remote_socket_factory(
     wifi_dut, wifi_access_point, remote_socket_factory, logger, sl_collections
 ):
@@ -1031,6 +1046,7 @@ def test_rpc_remote_socket_factory(
     "wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"]
 )
 @pytest.mark.parametrize("repeat_count", [10])
+@pytest.mark.test_src_map_id('TC4057851916')
 def test_remote_socket_rpc(
     wifi_dut,
     wifi_access_point,
@@ -1093,6 +1109,7 @@ def test_remote_socket_rpc(
         wifi_dut.interfaces.wifi.leave()
 
 
+@pytest.mark.test_src_map_id('TC8752116923')
 def test_sniffer_rpc(wifi_sniffer, wifi_access_point):
     with wifi_sniffer.interfaces.live_capture as live_capture:
         live_capture.configure_interface(
@@ -1195,6 +1212,7 @@ def test_sniffer_icmp_inspection(
 
 
 # NOTE : AZURE AND AWS TESTCASES MIGHT NOT WORK PROPERLY OVER VPN CONNECTIONS
+@pytest.mark.test_src_map_id('TC8001075930')
 def test_azure_c2d_and_d2c(azure_iot_client, logger):
     device = azure_iot_client.interfaces.device
     hub = azure_iot_client.interfaces.hub
@@ -1251,6 +1269,7 @@ def test_azure_c2d_and_d2c(azure_iot_client, logger):
     assert received
 
 
+@pytest.mark.test_src_map_id('TC4966806936')
 def test_upload_file(azure_blob, logger):
     # Use a relative, generic path
     manifest_path = os.path.join("manifest", "manifest.yaml")
@@ -1261,6 +1280,7 @@ def test_upload_file(azure_blob, logger):
     assert url is not None
 
 
+@pytest.mark.test_src_map_id('TC1800207942')
 def test_s3_upload_url_delete(aws_s3):
     local_file = os.path.join("manifest", "manifest.yaml")
 
@@ -1277,6 +1297,7 @@ def test_s3_upload_url_delete(aws_s3):
     assert delete_status is True
 
 
+@pytest.mark.test_src_map_id('TC1407246948')
 def test_aws_iot_client(aws_iot_client):
     topic_1 = "sdk/test/Python"
     topic_2 = "sdk/test/java"
@@ -1300,6 +1321,7 @@ def test_aws_iot_client(aws_iot_client):
     aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
 
 
+@pytest.mark.test_src_map_id('TC4781036955')
 def test_openssl(openssl):
     openssl.interfaces.server.start()
     time.sleep(1)
@@ -1324,14 +1346,17 @@ def test_openssl(openssl):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.config("radius_server",
                     radius_server={ "password": '1234', "private_key_password": '1234'})
+@pytest.mark.test_src_map_id('TC9692339962')
 def test_radius_server_with_mark_config(radius_server):
     logger().info("Starting RADIUS server...")
 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
+@pytest.mark.test_src_map_id('TC7608411969')
 def test_radius_server(radius_server):
     logger().info("Starting RADIUS server...")
 
 
+@pytest.mark.test_src_map_id('TC9980073975')
 def test_ble_client_for_ble_logs(ble_client):
     logger().info("Starting BLE client to collect BLE logs...")
     with BleLogs(
@@ -1344,6 +1369,7 @@ def test_ble_client_for_ble_logs(ble_client):
     bt_logs.device_characteristics(bt_client_address)
 
 
+@pytest.mark.test_src_map_id('TC2976853982')
 def test_dtls_client_server(dtls_server, dtls_client, logger):
     logger.info("Starting DTLS server...")
     server = dtls_server.interfaces.dtls_server
@@ -1391,6 +1417,7 @@ def test_dtls_client_server(dtls_server, dtls_client, logger):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unsassociated"])
 @pytest.mark.config("wifi_access_point", wifi={"security": "OPEN"})
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC2868056988')
 def test_wifi_sdk_multicast_interface_rpc(
     wifi_access_point,
     wifi_dut,
@@ -1474,6 +1501,7 @@ def test_wifi_sdk_multicast_interface_rpc(
 
 
 
+@pytest.mark.test_src_map_id('TC8204753995')
 def test_ftp_server(ftp_server, ftp_client):
     ftp_client.interfaces.ftp_client.login()
     assert (
@@ -1503,6 +1531,7 @@ def test_ftp_server(ftp_server, ftp_client):
 
 @pytest.mark.ftp_server("raspi_ftp_server_tls")
 @pytest.mark.ftp_client("raspi_ftp_client_tls")
+@pytest.mark.test_src_map_id('TC0876647002')
 def test_ftp_server_tls(ftp_server, ftp_client):
     ftp_client.interfaces.ftp_client.login()
     assert (
@@ -1561,6 +1590,7 @@ def test_ftp_server_tls(ftp_server, ftp_client):
 )
 @pytest.mark.end_state("wifi_dut", ["close_sockets"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC8251085009')
 def test_remote_multi_socket_rpc(
     wifi_dut,
     remote_socket,

@@ -131,6 +131,7 @@ class BLEMasterSNS(ThreadBase):
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C148512')
 def test_wifi_sdk_ble_start_and_stop_scan_30_minutes_c148512(sl_collections, wifi_dut, ble_client):
     """This Test Case verifies BLE start scan and stop scan functionality for 30 minutes"""
 
@@ -161,6 +162,7 @@ def test_wifi_sdk_ble_start_and_stop_scan_30_minutes_c148512(sl_collections, wif
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=['ble_stop_scan', "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C148511')
 def test_wifi_sdk_ble_scan_30_minutes_c148511(sl_collections, wifi_dut, ble_client):
     """This Test Case verifies BLE scan functionality for 30 minutes"""
     test_case = '148511'
@@ -190,6 +192,7 @@ def test_wifi_sdk_ble_scan_30_minutes_c148511(sl_collections, wifi_dut, ble_clie
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C148509')
 def test_wifi_sdk_ble_connect_disconnect_30_minutes_c148509(sl_collections, wifi_dut, ble_client):
     """This Test Case verifies BLE device connection and device disconnection functionality for 30 minutes"""
     test_case = '148509'
@@ -218,6 +221,7 @@ def test_wifi_sdk_ble_connect_disconnect_30_minutes_c148509(sl_collections, wifi
         "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C148508')
 def test_wifi_sdk_ble_radio_init_deinit_30_min_c148508(sl_collections, wifi_dut, ble_client):
     """This Test Case verifies BLE init radio and de-init radio functionality for 30 minutes"""
     test_case = '148508'
@@ -246,6 +250,7 @@ def test_wifi_sdk_ble_radio_init_deinit_30_min_c148508(sl_collections, wifi_dut,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C148515')
 def test_ble_slave_data_length_20_bytes_C148515(wifi_dut, ble_client, sl_collections, utf_constants):
     """Connect BLE as Slave mode and Run 20 bytes of TX data for 30 minutes"""
     try:
@@ -352,6 +357,7 @@ def test_ble_slave_data_length_20_bytes_C148515(wifi_dut, ble_client, sl_collect
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C148516')
 def test_ble_slave_data_length_230_bytes_C148516(wifi_dut, ble_client, sl_collections, utf_constants):
     """Connect BLE as Slave mode and Run 230 bytes of TX data for 30 minutes"""
     try:
@@ -458,6 +464,7 @@ def test_ble_slave_data_length_230_bytes_C148516(wifi_dut, ble_client, sl_collec
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C148513')
 def test_ble_master_data_length_20_bytes_C148513(ble_dut, ble_client, sl_collections, wifi_dut, utf_constants):
 
     """Connect BLE as Master mode and Run 20 bytes of RX data for 30 minutes"""
@@ -595,6 +602,7 @@ def test_ble_master_data_length_20_bytes_C148513(ble_dut, ble_client, sl_collect
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C148514')
 def test_ble_master_data_length_230_bytes_C148514(wifi_dut, ble_client, sl_collections, utf_constants):
     """Connect BLE as Master mode and Run 230 bytes of TX data for 30 minutes"""
     try:

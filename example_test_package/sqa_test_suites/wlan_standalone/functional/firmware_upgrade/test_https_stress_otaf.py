@@ -101,6 +101,7 @@ def otaf_firm_upgrade(http_server, wifi_dut, wifi_access_point, wifi_client, utf
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
+@pytest.mark.test_src_map_id('C19771')
 def test_https_fw_upgrade_over_night_C19771(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                             wifi_client, utf_constants):
     time_duration = utf_constants.get("time_duration")
@@ -212,6 +213,7 @@ def test_https_fw_upgrade_over_night_C19771(http_server, wifi_sniffer, wifi_acce
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19772')
 def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                           utf_constants):
     time_duration = utf_constants.get("time_duration")
@@ -300,6 +302,7 @@ def test_https_fw_upgrade_corrupted_rps_over_night_C19772(http_server, wifi_dut,
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19773')
 def test_https_fw_upgrade_non_rps_over_night_C19773(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                     utf_constants):
     time_duration = utf_constants.get("time_duration")

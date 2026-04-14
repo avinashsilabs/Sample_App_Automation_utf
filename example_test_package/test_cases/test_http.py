@@ -4,6 +4,7 @@ import pytest
 @pytest.mark.wifi_access_point("raspi_wifi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.http_client("raspi_http_client")
+@pytest.mark.test_src_map_id('TC0785223024')
 def test_http_server_and_linux_client_post(
     http_server, http_client, wifi_access_point, logger
 ):
@@ -20,6 +21,7 @@ def test_http_server_and_linux_client_post(
 @pytest.mark.wifi_access_point("raspi_wifi")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.http_client("raspi_http_client")
+@pytest.mark.test_src_map_id('TC2305918029')
 def test_http_server_and_linux_client_put(
     http_server, http_client, wifi_access_point, logger
 ):
@@ -34,6 +36,7 @@ def test_http_server_and_linux_client_put(
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.config("http_server", auto_start=False)
+@pytest.mark.test_src_map_id('TC4280379034')
 def test_http_server_and_linux_client_get_with_config_ports(http_server, http_client, logger):
     ports = (200, 201, 202, 203)
     for index in range(3):
@@ -56,6 +59,7 @@ def test_http_server_and_linux_client_get_with_config_ports(http_server, http_cl
     ("index.html", "PUT", {"key": "test"}),
     ("index.html", "GET", "")
 ])
+@pytest.mark.test_src_map_id('TC0388413040')
 def test_python_http_server(http_server,index_path,http_client, method, content, logger):
     status, content = http_client.interfaces.http.http_request(
         http_server.interfaces.http, method, index_path, content

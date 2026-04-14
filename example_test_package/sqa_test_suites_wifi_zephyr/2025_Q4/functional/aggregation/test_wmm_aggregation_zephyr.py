@@ -75,6 +75,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C19031')
 def test_wifi_zephyr_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                            request,
                                                            wifi_client, protocol, zephyr_wifi_collections,
@@ -176,6 +177,7 @@ def test_wifi_zephyr_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_per
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                          request,
                                                          wifi_client, protocol, zephyr_wifi_collections,
@@ -276,6 +278,7 @@ def test_wifi_zephyr_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C19032')
 def test_wifi_zephyr_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                            request,
                                                            wifi_client, protocol, zephyr_wifi_collections,
@@ -374,6 +377,7 @@ def test_wifi_zephyr_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_per
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C19034')
 def test_wifi_zephyr_udp_rx_aggregation_open_mode_c19034(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                          request,
                                                          wifi_client, protocol, zephyr_wifi_collections,

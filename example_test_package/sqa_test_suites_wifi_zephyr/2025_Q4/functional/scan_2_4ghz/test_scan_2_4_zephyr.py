@@ -35,6 +35,7 @@ def logger():
 )
 # This test case verifies All Channels Scan in 2.4 Ghz by giving channel number as Zero
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19056')
 def test_wifi_zephyr_all_scan_channels_c19056(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                               zephyr_wifi_collections):
     """ Verify Scan functionality when channel is set to 0 in scan API """
@@ -88,6 +89,7 @@ def test_wifi_zephyr_all_scan_channels_c19056(wifi_sniffer, wifi_dut, wifi_acces
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan Response Based on RSSI
+@pytest.mark.test_src_map_id('C19060')
 def test_wifi_zephyr_scan_check_rssi_c19060(wifi_dut, wifi_access_point, zephyr_wifi_collections):
     """ The test case verifies whether the RSSI of the scanned APs are in ascending order or not """
     try:
@@ -116,6 +118,7 @@ def test_wifi_zephyr_scan_check_rssi_c19060(wifi_dut, wifi_access_point, zephyr_
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19064')
 def test_wifi_zephyr_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                               zephyr_wifi_collections):
     """ The test case verifies whether DUT is able to scan AP ssid when ssid length is 32 bytes """
@@ -159,6 +162,7 @@ def test_wifi_zephyr_scan_ssid_32bytes_c19064(wifi_sniffer, wifi_dut, wifi_acces
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'test_ssid', "broadcast_ssid": False})
 # This case verifies the scan in hidden mode of AP for all channels
+@pytest.mark.test_src_map_id('C19062')
 def test_wifi_zephyr_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                                      zephyr_wifi_collections):
     """ This case verifies the scan in hidden mode of AP for all channels """
@@ -197,6 +201,7 @@ def test_wifi_zephyr_hidden_scan_all_channels_c19062(wifi_sniffer, wifi_dut, wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality with max scan of dut
+@pytest.mark.test_src_map_id('C19061')
 def test_wifi_zephyr_scan_max_aps_c19061(wifi_dut, wifi_access_point, zephyr_wifi_collections):
     """This test case verifies whether DUT is able to scan 11 APs """
     try:
@@ -224,6 +229,7 @@ def test_wifi_zephyr_scan_max_aps_c19061(wifi_dut, wifi_access_point, zephyr_wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # This test case verifies the scan functionality for channles 1-11
+@pytest.mark.test_src_map_id('C19057')
 def test_wifi_zephyr_all_chan_scan_with_channel_bitmap_c19057(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                               zephyr_wifi_collections, sniffer_filter):
     """ This test case verifies the scan functionality for channles 1-11 """
@@ -288,6 +294,7 @@ def test_wifi_zephyr_all_chan_scan_with_channel_bitmap_c19057(wifi_sniffer, wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality with the channel 1,6,8
+@pytest.mark.test_src_map_id('C19058')
 def test_wifi_zephyr_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                                    zephyr_wifi_collections):
     """ Verifies the scan functionality with the channel 1,6,8 """
@@ -351,6 +358,7 @@ def test_wifi_zephyr_scan_selective_channel_c19058(wifi_sniffer, wifi_dut, wifi_
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality with the channel 1,3,6,11
+@pytest.mark.test_src_map_id('C19059')
 def test_wifi_zephyr_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                                    zephyr_wifi_collections):
     """  Verifies the scan functionality with the channel 1,3,6,11 """
@@ -415,6 +423,7 @@ def test_wifi_zephyr_scan_selective_channel_c19059(wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "hidden_ssid", "broadcast_ssid": False})
 # Verifies the scan in selected channels with the ap set in hidden mode
+@pytest.mark.test_src_map_id('C19063')
 def test_wifi_zephyr_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                                  zephyr_wifi_collections):
     """ Verifies the scan in selected channels when the AP is set in hidden mode """
@@ -479,6 +488,7 @@ def test_wifi_zephyr_hidden_scan_sel_chan_c19063(wifi_sniffer, wifi_dut, wifi_ac
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C538001')
 def test_wifi_zephyr_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                                   sniffer_filter, zephyr_wifi_collections):
     """Trigger scan command when configured access point
@@ -518,6 +528,7 @@ def test_wifi_zephyr_scan_when_config_ap_is_not_available_c538001(wifi_dut, wifi
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "ssid": 'Explore@WiFi', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C538003')
 def test_wifi_zephyr_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                                   sniffer_filter, zephyr_wifi_collections):
     """Verify whether DUT is able to scan special characters SSID or not"""
@@ -572,6 +583,7 @@ def test_wifi_zephyr_verify_dut_scan_spe_char_ssid_or_not_c538003(wifi_dut, wifi
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C538006')
 def test_wifi_zephyr_scan_with_high_beacon_length_c538006(wifi_access_point, wifi_dut, request, wifi_sniffer,
                                                           sniffer_filter, zephyr_wifi_collections):
     """Verify WLAN scan with a third-party AP configured with a high beacon length (max 512 bytes)."""
@@ -638,6 +650,7 @@ def test_wifi_zephyr_scan_with_high_beacon_length_c538006(wifi_access_point, wif
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C687827')
 def test_wifi_zephyr_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                             sniffer_filter, zephyr_wifi_collections):
     """Verify Wi-Fi scan results when there is no AP available in the envirnoment(Closed room))))"""
@@ -676,6 +689,7 @@ def test_wifi_zephyr_wifi_scan_no_ap_in_closed_room_c687827(wifi_dut, wifi_acces
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19071')
 def test_wifi_zephyr_active_channel_scan_dwell_time_50msec_c19071(wifi_dut, wifi_access_point, zephyr_wifi_collections):
     """ The test case verifies the scan functionality in all channels when dwell time is set to 50msec """
     try:
@@ -713,6 +727,7 @@ def test_wifi_zephyr_active_channel_scan_dwell_time_50msec_c19071(wifi_dut, wifi
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19072')
 def test_wifi_zephyr_scan_bss_count_one_c19072(wifi_dut, wifi_access_point, zephyr_wifi_collections):
     """ The test case verifies scan functionality when the max bss count is set to 1"""
     try:
@@ -742,6 +757,7 @@ def test_wifi_zephyr_scan_bss_count_one_c19072(wifi_dut, wifi_access_point, zeph
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "region": 'europe'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19073')
 def test_wifi_zephyr_neg_scan_channel_12_c19073(wifi_dut, wifi_access_point, request, wifi_sniffer,
                                                 sniffer_filter, zephyr_wifi_collections):
     """The test case verifies scan functionality in channel 12 in default region"""
@@ -775,6 +791,7 @@ def test_wifi_zephyr_neg_scan_channel_12_c19073(wifi_dut, wifi_access_point, req
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19074')
 def test_wifi_zephyr_active_channel_scan_dwell_time_default_c19074(wifi_dut, wifi_access_point,
                                                                    zephyr_wifi_collections):
     """ The test case measures the time taken in each channel when dwell time is set to 0"""
@@ -813,6 +830,7 @@ def test_wifi_zephyr_active_channel_scan_dwell_time_default_c19074(wifi_dut, wif
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19075')
 def test_wifi_zephyr_scan_for_10_min_c19075(wifi_dut, wifi_access_point, zephyr_wifi_collections):
     """ The test case verifies scan functionality in loop for 10 minutes"""
     try:
@@ -843,6 +861,7 @@ def test_wifi_zephyr_scan_for_10_min_c19075(wifi_dut, wifi_access_point, zephyr_
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C751134')
 def test_wifi_zephyr_scan_neg_band_5ghz_c751134(wifi_dut, zephyr_wifi_collections):
     """
     Negative Case : The test case verifies whether the scan API failed with error when 5ghz band selected

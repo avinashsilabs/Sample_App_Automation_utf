@@ -482,6 +482,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0):
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887610')
 def test_wifi_sdk_ble_provision_path_c887610(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -562,6 +563,7 @@ def test_wifi_sdk_ble_provision_path_c887610(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887611')
 def test_wifi_sdk_ble_provision_path_conn_45ms_c887611(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -641,6 +643,7 @@ def test_wifi_sdk_ble_provision_path_conn_45ms_c887611(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887612')
 def test_wifi_sdk_ble_provision_path_adv_30ms_c887612(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -722,6 +725,7 @@ def test_wifi_sdk_ble_provision_path_adv_30ms_c887612(
                  memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887613')
 def test_wifi_sdk_ble_provision_path_adv_45ms_c887613(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -804,6 +808,7 @@ def test_wifi_sdk_ble_provision_path_adv_45ms_c887613(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887614')
 def test_wifi_sdk_ble_provision_path_adv_120ms_c887614(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -883,6 +888,7 @@ def test_wifi_sdk_ble_provision_path_adv_120ms_c887614(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887615')
 def test_wifi_sdk_ble_provision_path_adv_500ms_c887615(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -962,6 +968,7 @@ def test_wifi_sdk_ble_provision_path_adv_500ms_c887615(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887640')
 def test_wifi_sdk_ble_provision_path_adv_conn_95ms_c887640(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1041,6 +1048,7 @@ def test_wifi_sdk_ble_provision_path_adv_conn_95ms_c887640(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887641')
 def test_wifi_sdk_ble_provision_path_adv_conn_110ms_c887641(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1120,6 +1128,7 @@ def test_wifi_sdk_ble_provision_path_adv_conn_110ms_c887641(
 @wifi_dut_marker()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887616')
 def test_wifi_sdk_ble_provision_path_adv_250ms_c887616(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1199,6 +1208,7 @@ def test_wifi_sdk_ble_provision_path_adv_250ms_c887616(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'thisisableprovisioningtestplannn', "security": 'WPA2'})
+@pytest.mark.test_src_map_id('C887617')
 def test_wifi_sdk_ble_provision_path_ssid_32bytes_c887617(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1280,6 +1290,7 @@ def test_wifi_sdk_ble_provision_path_ssid_32bytes_c887617(
 @pytest.mark.config('wifi_access_point',
                     wifi={"passphrase": 'thisiswifibleprovisioningtestplanthisisableprovisioningtestplan',
                           "security": 'WPA2'})
+@pytest.mark.test_src_map_id('C887618')
 def test_wifi_sdk_ble_provision_path_passphrase_63bytes_c887618(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1359,6 +1370,7 @@ def test_wifi_sdk_ble_provision_path_passphrase_63bytes_c887618(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887619')
 def test_wifi_sdk_ble_provision_path_wrong_passphrase_c887619(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1439,6 +1451,7 @@ def test_wifi_sdk_ble_provision_path_wrong_passphrase_c887619(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887620')
 def test_wifi_sdk_ble_provision_path_multiple_iter_loop_c887620(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1502,6 +1515,7 @@ def test_wifi_sdk_ble_provision_path_multiple_iter_loop_c887620(
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPAWPA2MixedMode', "cipher": "TKIP_AES", "passphrase": '123456789'})
+@pytest.mark.test_src_map_id('C887621')
 def test_wifi_sdk_ble_provision_path_mixed_mode_security_c887621(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1581,6 +1595,7 @@ def test_wifi_sdk_ble_provision_path_mixed_mode_security_c887621(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887622')
 def test_wifi_sdk_ble_provision_path_conn_30ms_c887622(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1660,6 +1675,7 @@ def test_wifi_sdk_ble_provision_path_conn_30ms_c887622(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887623')
 def test_wifi_sdk_ble_provision_path_max_conn_int_c887623(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -1740,6 +1756,7 @@ def test_wifi_sdk_ble_provision_path_max_conn_int_c887623(
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C887624')
 def test_wifi_sdk_ble_provision_path_with_power_save_and_ping_c887624(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):

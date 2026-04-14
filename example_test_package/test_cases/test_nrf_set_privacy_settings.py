@@ -25,6 +25,7 @@ def logger():
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC9013145166')
 def test_nrf_set_privacy_settings(ble_dut, nrf_ble_client):
     # Start DUT
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()

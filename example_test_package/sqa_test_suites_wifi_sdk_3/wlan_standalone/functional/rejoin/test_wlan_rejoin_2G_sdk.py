@@ -844,6 +844,7 @@ class WLanThread(ThreadBase):
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19721')
 def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                 sl_collections, sniffer_filter):
     """Stop rejoin process by issuing Disconnect command and then do scan and join to the network If Module stops rejoin
@@ -912,6 +913,7 @@ def test_wifi_sdk_rejoin_c19721(switch, wifi_sniffer, wifi_access_point, wifi_du
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19722')
 def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                   request,
                                                   sl_collections, sniffer_filter):
@@ -978,6 +980,7 @@ def test_wifi_sdk_rejoin_max_retry_failure_c19722(switch, wifi_sniffer, wifi_acc
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19723')
 def test_wifi_sdk_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_point, wifi_dut, switch,
                                                   request, sl_collections, sniffer_filter):
     test_name = request.node.name
@@ -1078,6 +1081,7 @@ def test_wifi_sdk_rejoin_scan_all_channels_c19723(wifi_sniffer, wifi_access_poin
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19725')
 def test_wifi_sdk_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point, wifi_dut, switch,
                                                  request, sl_collections, sniffer_filter):
     test_name = request.node.name
@@ -1178,6 +1182,7 @@ def test_wifi_sdk_rejoin_selected_channel_c19725(wifi_sniffer, wifi_access_point
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19729')
 def test_wifi_sdk_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                             switch, utf_constants, request,
                                                                             sl_collections, sniffer_filter):
@@ -1250,6 +1255,7 @@ def test_wifi_sdk_rejoin_max_retry_failure_with_security_mode_change_c19729(wifi
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19733')
 def test_wifi_sdk_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                         sl_collections, sniffer_filter):
     test_name = request.node.name
@@ -1322,6 +1328,7 @@ def test_wifi_sdk_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_du
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19734')
 def test_wifi_sdk_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                            sl_collections, sniffer_filter):
     test_name = request.node.name
@@ -1388,6 +1395,7 @@ def test_wifi_sdk_rejoin_psk_change_c19734(switch, wifi_sniffer, wifi_access_poi
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19735')
 def test_wifi_sdk_rejoin_with_disconnect_c19735(switch, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                 request,
                                                 sl_collections, sniffer_filter):
@@ -1451,6 +1459,7 @@ def test_wifi_sdk_rejoin_with_disconnect_c19735(switch, wifi_sniffer, wifi_acces
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19736')
 def test_wifi_sdk_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants,
                                                     request, sl_collections, sniffer_filter):
     test_name = request.node.name
@@ -1534,6 +1543,7 @@ def test_wifi_sdk_rejoin_beacon_miss_counter_c19736(wifi_sniffer, wifi_access_po
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19737')
 def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants,
                                                    request, sl_collections, sniffer_filter):
     test_name = request.node.name
@@ -1634,6 +1644,7 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19738')
 def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_dut, wifi_access_point, wifi_sniffer, request,
                                                sl_collections, switch, wifi_client, sniffer_filter, utf_constants):
     test_name = request.node.name
@@ -1678,6 +1689,7 @@ def test_wifi_sdk_rejoin_infinite_retry_c19738(wifi_dut, wifi_access_point, wifi
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19739')
 def test_wifi_sdk_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                             sl_collections, sniffer_filter):
     test_name = request.node.name
@@ -1748,6 +1760,7 @@ def test_wifi_sdk_rejoin_with_bgscan_c19739(wifi_sniffer, wifi_access_point, wif
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19740')
 def test_wifi_sdk_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants,
                                                  request, sl_collections, sniffer_filter):
     """Verify first time retry functionality when AP sends de-auth frame while connecting"""
@@ -1807,6 +1820,7 @@ def test_wifi_sdk_rejoin_first_time_retry_c19740(wifi_sniffer, wifi_access_point
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19741')
 def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                             sl_collections, sniffer_filter):
     """Rejoin functionality with hidden mode AP"""
@@ -1884,6 +1898,7 @@ def test_wifi_sdk_rejoin_hidden_ssid_c19741(wifi_sniffer, wifi_access_point, wif
 @pytest.mark.config('wifi_access_point', wifi={"region": "US", "channel": 11})
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C19742')
 def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                              sl_collections, sniffer_filter, net_perf_client, protocol, wifi_client):
     """ Verify Rejoin Functionality with US region enabled in 2.4GHZ band"""
@@ -1944,6 +1959,7 @@ def test_wifi_sdk_rejoin_in_us_region_c19742(wifi_sniffer, wifi_access_point, wi
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 11})
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C19743')
 def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                              sl_collections, sniffer_filter):
     """Verify Rejoin Functionality with EU region enabled in 2.4GHZ band"""
@@ -2027,6 +2043,7 @@ def test_wifi_sdk_rejoin_in_eu_region_c19743(wifi_sniffer, wifi_access_point, wi
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 13})
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C19744')
 def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer, wifi_dut, switch, utf_constants,
                                                 request, sl_collections, sniffer_filter, net_perf_client, protocol,
                                                 wifi_client):
@@ -2097,6 +2114,7 @@ def test_wifi_sdk_rejoin_in_japan_region_c19744(wifi_access_point, wifi_sniffer,
 @pytest.mark.config('wifi_access_point', wifi={"region": "Asia", "channel": 11})
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C19745')
 def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants,
                                                     request, sl_collections, sniffer_filter):
     """ Verify Rejoin Functionality with world mode region enabled in 2.4GHZ band"""
@@ -2179,6 +2197,7 @@ def test_wifi_sdk_rejoin_in_worldwide_region_c19745(wifi_sniffer, wifi_access_po
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19730')
 def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request,
                                         sl_collections, switch, wifi_client, net_perf_client, protocol, sniffer_filter):
     """Verify rejoin functionality in EAP-TLS mode"""
@@ -2232,6 +2251,7 @@ def test_wifi_sdk_rejoin_eap_tls_c19730(wifi_dut, wifi_access_point, wifi_sniffe
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19731')
 def test_wifi_sdk_rejoin_eap_ttls_c19731(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request,
                                          sl_collections, switch, wifi_client, net_perf_client, protocol,
                                          sniffer_filter):
@@ -2287,6 +2307,7 @@ def test_wifi_sdk_rejoin_eap_ttls_c19731(wifi_dut, wifi_access_point, wifi_sniff
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19732')
 def test_wifi_sdk_rejoin_eap_peap_c19732(wifi_dut, wifi_access_point, wifi_sniffer, radius_server, request,
                                          sl_collections, switch, wifi_client, net_perf_client, protocol,
                                          sniffer_filter):
@@ -2342,6 +2363,7 @@ def test_wifi_sdk_rejoin_eap_peap_c19732(wifi_dut, wifi_access_point, wifi_sniff
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19728')
 def test_wifi_sdk_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, wifi_sniffer, utf_constants, request):
     test_name = request.node.name
     max_retry_attempts = 0
@@ -2555,6 +2577,7 @@ def test_wifi_sdk_rejoin_roaming_c19728(wifi_access_points, wifi_dut, switches, 
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19726')
 def test_wifi_sdk_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, wifi_sniffer, request):
     test_name = request.node.name
     validation = True
@@ -2755,6 +2778,7 @@ def test_wifi_sdk_rejoin_roaming_c19726(wifi_access_points, wifi_dut, switches, 
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19177')
 def test_wifi_sdk_wlan_stats_c19177(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants, request,
                                     sl_collections, sniffer_filter, net_perf_client, protocol, wifi_client):
     """
@@ -2817,6 +2841,7 @@ def test_wifi_sdk_wlan_stats_c19177(wifi_sniffer, wifi_access_point, wifi_dut, s
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C641349')
 def test_wifi_sdk_beacon_miss_count_stats_20_c641349(wifi_sniffer, wifi_access_point, wifi_dut, switch,
                                                      request, sl_collections,
                                                      sniffer_filter):
@@ -2888,6 +2913,7 @@ def test_wifi_sdk_beacon_miss_count_stats_20_c641349(wifi_sniffer, wifi_access_p
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C641350')
 def test_wifi_sdk_beacon_miss_count_stats_90_c641350(wifi_sniffer, wifi_access_point, wifi_dut, switch,
                                                      request, sl_collections,
                                                      sniffer_filter):
@@ -2970,6 +2996,7 @@ def test_wifi_sdk_beacon_miss_count_stats_90_c641350(wifi_sniffer, wifi_access_p
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C680006')
 def test_wifi_sdk_wpa3_rejoin_eap_security_with_pmf_c680006(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                             sl_collections, request, radius_server, switch,
                                                             net_perf_client,
@@ -3034,6 +3061,7 @@ def test_wifi_sdk_wpa3_rejoin_eap_security_with_pmf_c680006(wifi_dut, wifi_acces
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C680007')
 def test_wifi_sdk_wpa3_rejoin_transition_eap_security_with_pmf_c680007(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                        sniffer_filter, sl_collections, request,
                                                                        radius_server, switch, net_perf_client,
@@ -3083,6 +3111,7 @@ def test_wifi_sdk_wpa3_rejoin_transition_eap_security_with_pmf_c680007(wifi_dut,
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.test_src_map_id('C779704')
 def test_wifi_sdk_rejoin_first_time_retry_enable_c779704(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                          request,
                                                          sl_collections):
@@ -3122,6 +3151,7 @@ def test_wifi_sdk_rejoin_first_time_retry_enable_c779704(wifi_sniffer, wifi_acce
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.test_src_map_id('C782337')
 def test_wifi_sdk_rejoin_with_rpi4_after_deauth_frame_c782337(wifi_dut, wifi_client, wifi_sniffer,
                                                               sl_collections, sniffer_filter,
                                                               request):
@@ -3285,6 +3315,7 @@ def test_wifi_sdk_rejoin_with_rpi4_after_deauth_frame_c782337(wifi_dut, wifi_cli
     }
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C877263')
 def test_wifi_sdk_join_failure_with_max_retry_1_rejoin_disable_c877263(switch, wifi_sniffer, wifi_access_point,
                                                                        wifi_dut, utf_constants,
                                                                        request,
@@ -3354,6 +3385,7 @@ def test_wifi_sdk_join_failure_with_max_retry_1_rejoin_disable_c877263(switch, w
 )
 @pytest.mark.legacy_deployed
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C19727')
 def test_wifi_sdk_Rejoin_functionality_RSSI_value_80dbm_c19727(switch, wifi_sniffer, wifi_access_point, wifi_dut,
                                                                utf_constants, request,
                                                                sl_collections, rf_attenuator):

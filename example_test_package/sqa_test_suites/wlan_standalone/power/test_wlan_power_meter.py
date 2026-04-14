@@ -162,6 +162,7 @@ class WifiSockthread(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC9598646141')
 def test_wlan_standby_dtim_2g(power_meter, wifi_access_point, wifi_dut, dtim):
 
     bcast_in_tim_next_cmd = 1
@@ -216,6 +217,7 @@ def test_wlan_standby_dtim_2g(power_meter, wifi_access_point, wifi_dut, dtim):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC3686101146')
 def test_wlan_standby_dtim_5g(power_meter, utf_constants, wifi_dut, wifi_access_point, dtim):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
@@ -272,6 +274,7 @@ def test_wlan_standby_dtim_5g(power_meter, utf_constants, wifi_dut, wifi_access_
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC3279716151')
 def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(power_meter, wifi_dut, power):
     antenna = 1
     gain_2g = 0
@@ -315,6 +318,7 @@ def test_wlan_active_tx_10dBm_20dBm_2_4Ghz(power_meter, wifi_dut, power):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC1002500157')
 def test_wlan_active_tx_10dBm_20dBm_5Ghz(power_meter, utf_constants, wifi_dut, power):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
@@ -367,6 +371,7 @@ def test_wlan_active_tx_10dBm_20dBm_5Ghz(power_meter, utf_constants, wifi_dut, p
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1, "dtim":10})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20563')
 def test_bgscan_with_periodicity_2_10_30_C20563(power_meter, wifi_dut, wifi_access_point, bg_scan_periodicity):
     bcast_in_tim_next_cmd = 1
     beacon_drop = 5000
@@ -438,6 +443,7 @@ def test_bgscan_with_periodicity_2_10_30_C20563(power_meter, wifi_dut, wifi_acce
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C20554')
 def test_standby_assoc_novus_li10_c20554(power_meter, wifi_access_point, wifi_dut, remote_socket, net_perf_client,
                                          protocol, wifi_client):
     with TimeMeasurer() as t:
@@ -507,6 +513,7 @@ def test_standby_assoc_novus_li10_c20554(power_meter, wifi_access_point, wifi_du
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20555')
 def test_wlan_power_save_without_ram_ret_C20555(power_meter, wifi_dut):
 
     # Enables the wifi power save in DUT
@@ -545,6 +552,7 @@ def test_wlan_power_save_without_ram_ret_C20555(power_meter, wifi_dut):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC1756852170')
 def test_wlan_power_save_withou_ram_ret_C20555_5g(power_meter, wifi_dut):
 
     # Enables the wifi power save in DUT
@@ -581,6 +589,7 @@ def test_wlan_power_save_withou_ram_ret_C20555_5g(power_meter, wifi_dut):
                                                "beacon_interval": 300})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20553')
 def test_wlan_standby_sleep_2_4Ghz_C20553(power_meter, wifi_access_point, wifi_dut):
 
     bcast_in_tim_next_cmd = 1
@@ -636,6 +645,7 @@ def test_wlan_standby_sleep_2_4Ghz_C20553(power_meter, wifi_access_point, wifi_d
                                                "beacon_interval": 300})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20633')
 def test_wlan_standby_sleep_5Ghz_C20633(power_meter, utf_constants, wifi_access_point, wifi_dut):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
@@ -700,6 +710,7 @@ def test_wlan_standby_sleep_5Ghz_C20633(power_meter, utf_constants, wifi_access_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 149, "dtim":10})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20635')
 def test_bgscan_with_periodicity_5g_2_10_30_C20635(power_meter, utf_constants, wifi_dut, wifi_access_point, bg_scan_periodicity):
     board_ver = utf_constants.get("board_version")
     logger().info(f"board version is : {board_ver}")
@@ -783,6 +794,7 @@ def test_bgscan_with_periodicity_5g_2_10_30_C20635(power_meter, utf_constants, w
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20642')
 def test_wlan_1mbps_listen_rx_2_4_c20641_c20642(power_meter, wifi_access_point, wifi_dut, dtim):
 
     bcast_in_tim_next_cmd = 1

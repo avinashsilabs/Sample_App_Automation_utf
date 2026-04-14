@@ -618,6 +618,7 @@ def run_tcp_traffic(wifi_dut, wifi_client, remote_socket, dut_ip, data_len=1461)
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20088')
 def test_bt_coex_mode_C20088(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     bt_client_address = None
     try:
@@ -694,6 +695,7 @@ def test_bt_coex_mode_C20088(wifi_sniffer, wifi_dut, wifi_access_point, bt_clien
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20089')
 def test_bt_coex_mode_as_slave_C20089(wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "bt_slave"
     bt_client_address = None
@@ -738,6 +740,7 @@ def test_bt_coex_mode_as_slave_C20089(wifi_dut, wifi_access_point, bt_client, ut
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20090')
 def test_bt_coex_mode_C20090(wifi_dut, bt_client, wifi_access_point, utf_constants, rs_helper):
     bt_client_address = None
     mode = "master_to_slave"
@@ -779,6 +782,7 @@ def test_bt_coex_mode_C20090(wifi_dut, bt_client, wifi_access_point, utf_constan
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20091')
 def test_bt_coex_mode_C20091(wifi_dut, bt_client, wifi_access_point, utf_constants, rs_helper):
     bt_client_address = None
     mode = "slave_to_master"
@@ -820,6 +824,7 @@ def test_bt_coex_mode_C20091(wifi_dut, bt_client, wifi_access_point, utf_constan
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20092')
 def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
                                               rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
@@ -919,6 +924,7 @@ def test_bt_spp_data_transfer_RX_slave_C20092(wifi_sniffer, wifi_dut, wifi_acces
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20093')
 def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
                                               rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
@@ -1015,6 +1021,7 @@ def test_bt_spp_data_transfer_TX_slave_C20093(wifi_sniffer, wifi_dut, wifi_acces
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20094')
 def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
                                                rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
@@ -1104,6 +1111,7 @@ def test_bt_spp_data_transfer_TX_master_C20094(wifi_sniffer, wifi_dut, wifi_acce
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20095')
 def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
                                                rs_helper, tx_rx_duration=60):
     send_text = text_generator(size=20)
@@ -1200,6 +1208,7 @@ def test_bt_spp_data_transfer_RX_master_C20095(wifi_sniffer, wifi_dut, wifi_acce
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20096')
 def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper,
                             rf_attenuator):
     send_text = text_generator(size=20)
@@ -1319,6 +1328,7 @@ def test_bt_coex_OOR_C20096(wifi_sniffer, wifi_dut, wifi_access_point, bt_client
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20097')
 def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer, wifi_dut, wifi_access_point, bt_client,
                                                            utf_constants, rs_helper):
     send_text = text_generator(size=20)
@@ -1437,6 +1447,7 @@ def test_SPP_data_transfer_by_disconnecting_from_RD_C20097(wifi_sniffer, wifi_du
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20098')
 def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
                                             rs_helper):
     send_text = text_generator(size=20)
@@ -1544,6 +1555,7 @@ def test_bt_spp_init_deinit_in_slave_C20098(wifi_sniffer, wifi_dut, wifi_access_
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20099')
 def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
                                              rs_helper):
     send_text = text_generator(size=20)
@@ -1647,6 +1659,7 @@ def test_bt_spp_init_deinit_in_master_C20099(wifi_sniffer, wifi_dut, wifi_access
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "clear_certs"])
+@pytest.mark.test_src_map_id('C20100')
 def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_point, bt_client, net_perf_client,
                             wifi_client,
                             protocol, utf_constants, rs_helper, tx_rx_duration=30):
@@ -1764,6 +1777,7 @@ def test_bt_coex_eap_C20100(radius_server, wifi_sniffer, wifi_dut, wifi_access_p
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20101')
 def test_bt_coex_inquiry_C20101(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper,
                                 tx_rx_duration=60):
     bt_client_address = None
@@ -1837,6 +1851,7 @@ def test_bt_coex_inquiry_C20101(wifi_sniffer, wifi_dut, wifi_access_point, bt_cl
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20102')
 def test_bt_coex_noremote_C20102(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     bt_client_address = None
     try:
@@ -1926,6 +1941,7 @@ def test_bt_coex_noremote_C20102(wifi_sniffer, wifi_dut, wifi_access_point, bt_c
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20103')
 def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     bt_client_address = None
     try:
@@ -1988,6 +2004,7 @@ def test_bt_coex_cancel_inquiry_C20103(wifi_sniffer, wifi_dut, wifi_access_point
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20104')
 def test_bt_coex_wrong_pin_C20104(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     bt_client_address = None
     try:
@@ -2074,6 +2091,7 @@ def test_bt_coex_wrong_pin_C20104(wifi_sniffer, wifi_dut, wifi_access_point, bt_
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20105')
 def test_bt_coex_without_pin_C20105(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     bt_client_address = None
     try:
@@ -2174,6 +2192,7 @@ def test_bt_coex_without_pin_C20105(wifi_sniffer, wifi_dut, wifi_access_point, b
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20106')
 def test_bt_coex_without_pin_C20106(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     bt_client_address = None
     try:
@@ -2277,6 +2296,7 @@ def test_bt_coex_without_pin_C20106(wifi_sniffer, wifi_dut, wifi_access_point, b
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20107')
 def test_bt_spp_remote_unpair_C20107(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, bt_dut):
     bt_client_address = None
     try:
@@ -2388,6 +2408,7 @@ def test_bt_spp_remote_unpair_C20107(wifi_sniffer, wifi_dut, wifi_access_point, 
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20108')
 def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     bt_client_address = None
     try:
@@ -2479,6 +2500,7 @@ def test_bt_coex_unbond_C20108(wifi_sniffer, wifi_dut, wifi_access_point, bt_cli
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20109')
 def test_bt_coex_rssi_C20109(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     bt_client_address = None
     try:
@@ -2563,6 +2585,7 @@ def test_bt_coex_rssi_C20109(wifi_sniffer, wifi_dut, wifi_access_point, bt_clien
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20110')
 def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     send_text = text_generator(size=20)
     recv_text = send_text
@@ -2668,6 +2691,7 @@ def test_bt_coex_BD_C20110(wifi_sniffer, wifi_dut, wifi_access_point, bt_client,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20111')
 def test_sta_bt_C20111(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "single"
     testcase = "test_sta_bt_C20111"
@@ -2716,6 +2740,7 @@ def test_sta_bt_C20111(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20112')
 def test_sta_bt_C20112(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "numbers"
     testcase = "test_sta_bt_C20112"
@@ -2763,6 +2788,7 @@ def test_sta_bt_C20112(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20113')
 def test_sta_bt_C20113(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "paragraph"
     testcase = "test_sta_bt_C20113"
@@ -2810,6 +2836,7 @@ def test_sta_bt_C20113(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20114')
 def test_sta_bt_C20114(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "special_characters"
     testcase = "test_sta_bt_C20114"
@@ -2857,6 +2884,7 @@ def test_sta_bt_C20114(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20115')
 def test_sta_bt_C20115(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper):
     mode = "different_language"
     testcase = "test_sta_bt_C20115"
@@ -2903,6 +2931,7 @@ def test_sta_bt_C20115(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20116')
 def test_sta_bt_C20116(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants, rs_helper,
                        tx_rx_duration=60):
     send_text = text_generator(size=20)
@@ -3028,6 +3057,7 @@ def test_sta_bt_C20116(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20117')
 def test_sta_bt_C20117(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, utf_constants, rs_helper):
     send_text = "支那支那支那支那支那支那"
     recv_text = send_text
@@ -3142,6 +3172,7 @@ def test_sta_bt_C20117(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, utf
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20118')
 def test_bt_coex_data_transfer_max_slots_C20118(wifi_sniffer, wifi_dut, wifi_access_point, bt_client, utf_constants,
                                                 rs_helper, wifi_networked_dut, remote_socket_factory, num_sockets):
     send_text = text_generator(size=20)
@@ -3257,6 +3288,7 @@ def test_bt_coex_data_transfer_max_slots_C20118(wifi_sniffer, wifi_dut, wifi_acc
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20119')
 def test_bt_coex_buffer_tcp_C20119(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client,
                                    remote_socket, utf_constants, rs_helper):
     send_text = text_generator(size=20)
@@ -3363,6 +3395,7 @@ def test_bt_coex_buffer_tcp_C20119(wifi_sniffer, wifi_dut, wifi_access_point, wi
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20120')
 def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client,
                                           remote_socket,
                                           remote_socket_factory, net_perf_client, protocol, utf_constants, rs_helper):
@@ -3518,6 +3551,7 @@ def test_bt_coex_buffer_tcp_rejoin_C20120(wifi_sniffer, wifi_dut, wifi_access_po
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20121')
 def test_bt_coex_different_rssi_values_C20121(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, bt_client,
                                               protocol, utf_constants,
                                               rs_helper, rf_attenuator, remote_socket_factory, remote_socket,

@@ -241,6 +241,7 @@ class WifiJoin(ThreadBase):
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C19780')
 def test_zephyr_http_fw_upgrade_in_STA_alone_mode_and_measure_time_c19780(http_server, wifi_sniffer, wifi_access_point,
                                                                           wifi_dut, request, wifi_client,
                                                                           zephyr_wifi_collections,
@@ -272,6 +273,7 @@ def test_zephyr_http_fw_upgrade_in_STA_alone_mode_and_measure_time_c19780(http_s
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C29780')
 def test_zephyr_http_fw_upgrade_in_STA_alone_mode_after_idle_for_10_min_c29780(http_server, wifi_sniffer,
                                                                                wifi_access_point,
                                                                                wifi_dut, request, wifi_client,
@@ -305,6 +307,7 @@ def test_zephyr_http_fw_upgrade_in_STA_alone_mode_after_idle_for_10_min_c29780(h
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C498660')
 def test_zephyr_http_fw_upgrade_m4_c498660(http_server, wifi_sniffer, wifi_access_point,
                                            wifi_dut, request, wifi_client, zephyr_wifi_collections,
                                            utf_constants):
@@ -338,6 +341,7 @@ def test_zephyr_http_fw_upgrade_m4_c498660(http_server, wifi_sniffer, wifi_acces
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('TC1464145236')
 def test_zephyr_http_fw_upgrade_m4_valid_firmware_with_non_rps_format(http_server, wifi_sniffer, wifi_access_point,
                                                                       wifi_dut, request, wifi_client,
                                                                       zephyr_wifi_collections,
@@ -371,6 +375,7 @@ def test_zephyr_http_fw_upgrade_m4_valid_firmware_with_non_rps_format(http_serve
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19800')
 def test_zephyr_http_fw_upgrade_failure_with_empty_rps_c19800(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                               request, wifi_client, zephyr_wifi_collections,
                                                               sniffer_filter):
@@ -403,6 +408,7 @@ def test_zephyr_http_fw_upgrade_failure_with_empty_rps_c19800(http_server, wifi_
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C19797')
 def test_zephyr_http_fw_upgrade_failure_with_junk_rps_c19797(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                              request, wifi_client, zephyr_wifi_collections,
                                                              sniffer_filter):
@@ -436,6 +442,7 @@ def test_zephyr_http_fw_upgrade_failure_with_junk_rps_c19797(http_server, wifi_s
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C19798')
 def test_zephyr_http_fw_upgrade_using_c19798(http_server, wifi_sniffer, wifi_access_point,
                                              wifi_dut, request, wifi_client, zephyr_wifi_collections
                                              ):
@@ -469,6 +476,7 @@ def test_zephyr_http_fw_upgrade_using_c19798(http_server, wifi_sniffer, wifi_acc
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.test_src_map_id('C19780')
 def test_zephyr_http_otaf_when_file_not_found_c19780(http_server,
                                                      wifi_sniffer,
                                                      wifi_access_point,
@@ -511,6 +519,7 @@ def test_zephyr_http_otaf_when_file_not_found_c19780(http_server,
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C19780')
 def test_zephyr_close_connection_while_firmware_upgrade_c19780(http_server,
                                                                wifi_sniffer,
                                                                wifi_access_point,

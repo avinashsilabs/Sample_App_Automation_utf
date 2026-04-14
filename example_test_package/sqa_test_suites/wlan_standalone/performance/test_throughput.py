@@ -385,6 +385,7 @@ class Ble_Data_Transfer(ThreadBase):
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC7381483857')
 def test_throughput_wifi_alone_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       bt_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.CLIENT_MODE):
@@ -406,6 +407,7 @@ def test_throughput_wifi_alone_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC5801797862')
 def test_throughput_wifi_alone_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       bt_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE):
@@ -427,6 +429,7 @@ def test_throughput_wifi_alone_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC4709835867')
 def test_throughput_wifi_alone_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       bt_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client,IperfConstants.CLIENT_MODE ):
@@ -448,6 +451,7 @@ def test_throughput_wifi_alone_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC5392040873')
 def test_throughput_wifi_alone_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       bt_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE ):
@@ -470,6 +474,7 @@ def test_throughput_wifi_alone_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC7550352877')
 def test_throughput_wifi_bt_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client, bt_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.CLIENT_MODE ), \
             BtSppConnectThread(wifi_dut, bt_client):
@@ -491,6 +496,7 @@ def test_throughput_wifi_bt_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_poi
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC8387496882')
 def test_throughput_wifi_bt_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client, bt_client):
     with BtSppConnectThread(
             wifi_dut, bt_client), wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE):
@@ -512,6 +518,7 @@ def test_throughput_wifi_bt_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_poi
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC3694051887')
 def test_throughput_wifi_bt_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client, bt_client):
     with BtSppConnectThread(
             wifi_dut, bt_client), wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE):
@@ -533,6 +540,7 @@ def test_throughput_wifi_bt_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_poi
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC5920430892')
 def test_throughput_wifi_bt_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client, bt_client):
     with BtSppConnectThread(
             wifi_dut, bt_client), wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.CLIENT_MODE):
@@ -556,6 +564,7 @@ def test_throughput_wifi_bt_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_poi
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC7733442896')
 def test_throughput_wifi_bt_data_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                         bt_client):
     mode = "bt_slave"
@@ -579,6 +588,7 @@ def test_throughput_wifi_bt_data_tcp_rx(wifi_dut, wifi_networked_dut, wifi_acces
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC4933691901')
 def test_throughput_wifi_bt_data_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                         bt_client):
     mode = "bt_slave"
@@ -602,6 +612,7 @@ def test_throughput_wifi_bt_data_udp_tx(wifi_dut, wifi_networked_dut, wifi_acces
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC5614900905')
 def test_throughput_wifi_bt_data_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                         bt_client):
     mode = "bt_slave"
@@ -625,6 +636,7 @@ def test_throughput_wifi_bt_data_tcp_tx(wifi_dut, wifi_networked_dut, wifi_acces
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC6825888911')
 def test_throughput_wifi_bt_data_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                         bt_client):
     mode = "bt_slave"
@@ -649,6 +661,7 @@ def test_throughput_wifi_bt_data_udp_rx(wifi_dut, wifi_networked_dut, wifi_acces
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC8454997916')
 def test_threading_sta_ble_dut_tcp_rx(ble_client, wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
                                       net_perf_client):
     mode = "ble_slave"
@@ -673,6 +686,7 @@ def test_threading_sta_ble_dut_tcp_rx(ble_client, wifi_dut, wifi_networked_dut, 
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC1752206921')
 def test_threading_sta_ble_dut_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       ble_client):
     mode = "ble_slave"
@@ -697,6 +711,7 @@ def test_threading_sta_ble_dut_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC0217843926')
 def test_threading_sta_ble_dut_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       ble_client):
     mode = "ble_slave"
@@ -721,6 +736,7 @@ def test_threading_sta_ble_dut_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC5400458931')
 def test_threading_sta_ble_dut_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                       ble_client):
     mode = "ble_slave"
@@ -746,6 +762,7 @@ def test_threading_sta_ble_dut_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC6322352936')
 def test_threading_sta_ble_data_udp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                        ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE), \
@@ -768,6 +785,7 @@ def test_threading_sta_ble_data_udp_tx(wifi_dut, wifi_networked_dut, wifi_access
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC7180682941')
 def test_threading_sta_ble_data_udp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                        ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.CLIENT_MODE), \
@@ -790,6 +808,7 @@ def test_threading_sta_ble_data_udp_rx(wifi_dut, wifi_networked_dut, wifi_access
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC5290473947')
 def test_threading_sta_ble_data_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                        ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.SERVER_MODE), \
@@ -812,6 +831,7 @@ def test_threading_sta_ble_data_tcp_tx(wifi_dut, wifi_networked_dut, wifi_access
         "band": 2
     }
 )
+@pytest.mark.test_src_map_id('TC5400661952')
 def test_threading_sta_ble_data_tcp_rx(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, net_perf_client,
                                        ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, net_perf_client, IperfConstants.CLIENT_MODE), \

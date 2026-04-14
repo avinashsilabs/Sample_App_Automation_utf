@@ -40,6 +40,7 @@ from utf.utils.iperf.iperf_utils import ping
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos1
+@pytest.mark.test_src_map_id('TC2887104999')
 def test_mqtt_qos1_connect_sub_publish_testcase_15(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
         ):

@@ -144,6 +144,7 @@ class Shut_Down_Method(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20529')
 def test_wlan_standby_state_withoutpowersave_c20529(wifi_access_point, wifi_dut):
         bcast_in_tim_next_cmd = 1
         beacon_drop = 5000
@@ -189,6 +190,7 @@ def test_wlan_standby_state_withoutpowersave_c20529(wifi_access_point, wifi_dut)
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20530')
 def test_wlan_bgscan_state_withoutpowersave_c20530(wifi_access_point, wifi_dut, rs_helper, utf_constants):
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
     device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
@@ -220,6 +222,7 @@ def test_wlan_bgscan_state_withoutpowersave_c20530(wifi_access_point, wifi_dut, 
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C113936')
 def test_wlan_bg_scan_withpowersave_c113936(wifi_access_point, wifi_dut,rs_helper, utf_constants ):
     wifi_dut.interfaces.wifi.set_bgscan(1, 0, 10, 4, 10, 15, 20, 0)
     device_ip, dut_mac_address = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point,
@@ -250,6 +253,7 @@ def test_wlan_bg_scan_withpowersave_c113936(wifi_access_point, wifi_dut,rs_helpe
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C113935')
 def test_wlan_standby_state_withpowersave_c113935(wifi_access_point, wifi_dut):
 
     bcast_in_tim_next_cmd = 1
@@ -303,6 +307,7 @@ def test_wlan_standby_state_withpowersave_c113935(wifi_access_point, wifi_dut):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C20527')
 def test_ssl_tx_c20527(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, utf_constants):
     try:
         validation = True
@@ -418,6 +423,7 @@ def test_ssl_tx_c20527(wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, ut
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20531')
 def test_ssl_connect_discon_c20531(wifi_sniffer, rs_helper, wifi_dut, wifi_access_point, ssl_server, utf_constants, request):
     try:
         logger().info("Verify Wi-Fi and SSL socket connect, disconnect and reconnect functionality")
@@ -486,6 +492,7 @@ def test_ssl_connect_discon_c20531(wifi_sniffer, rs_helper, wifi_dut, wifi_acces
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C20540')
 def test_tcp_tx_data_tran_with_dns_ping_c20540(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
                                                wifi_client, rs_helper, utf_constants, request):
     try:
@@ -552,6 +559,7 @@ def test_tcp_tx_data_tran_with_dns_ping_c20540(net_perf_client, wifi_sniffer, wi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C20528')
 def test_tcp_rx_data_tran_c20528(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
                                  wifi_client, rs_helper, utf_constants, request):
     try:
@@ -618,6 +626,7 @@ def test_tcp_rx_data_tran_c20528(net_perf_client, wifi_sniffer, wifi_access_poin
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C20541')
 def test_tcp_tx_data_tran_with_firm_version_c20541(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
                                                    wifi_client, rs_helper, utf_constants, request):
     try:
@@ -682,6 +691,7 @@ def test_tcp_tx_data_tran_with_firm_version_c20541(net_perf_client, wifi_sniffer
         "ca_cert": "ca-chain.cert.pem",
     },
 )
+@pytest.mark.test_src_map_id('C20525')
 def test_ssl_data_transfer_rx_c20525(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, rs_helper, utf_constants, request):
     try:
@@ -773,6 +783,7 @@ def test_ssl_data_transfer_rx_c20525(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C20532')
 def test_TCP_TX_data_transfer_C20532(switch, net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
                                      wifi_client, rs_helper, utf_constants):
     try:
@@ -828,6 +839,7 @@ def test_TCP_TX_data_transfer_C20532(switch, net_perf_client, wifi_sniffer, wifi
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20548')
 def test_wifi_sync_conn_disc_c20548(wifi_access_point, wifi_dut, utf_constants):
     logger().info(f"DUT will connect and disconnect to AP in sync mode for iterations")
     iter_count = utf_constants.get('iter_count')
@@ -871,6 +883,7 @@ def test_wifi_sync_conn_disc_c20548(wifi_access_point, wifi_dut, utf_constants):
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C127835')
 def test_wifi_sync_conn_disc_withpowersave_c127835(wifi_access_point, wifi_dut, utf_constants):
     logger().info(f"DUT will connect and disconnect to AP in sync mode for iterations")
     iter_count = utf_constants.get('iter_count')
@@ -927,6 +940,7 @@ def test_wifi_sync_conn_disc_withpowersave_c127835(wifi_access_point, wifi_dut, 
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C20542')
 def test_tcp_tx_with_different_data_length_C20542(net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut, rs_helper,
                                                   wifi_client, protocol, utf_constants, request):
     timeout = 30

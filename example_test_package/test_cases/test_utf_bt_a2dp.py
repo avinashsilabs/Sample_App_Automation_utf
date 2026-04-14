@@ -24,6 +24,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
+@pytest.mark.test_src_map_id('TC6369883349')
 def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -78,6 +79,7 @@ def test_bt_a2dp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
+@pytest.mark.test_src_map_id('TC2576295354')
 def test_bt_avrcp_dut_as_src(wifi_dut, wifi_access_point, bt_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(

@@ -163,6 +163,7 @@ pytestmark = [
                              "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19369')
 def test_wifi_multicast_receive_c19369(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
     capture_filename = "test_wifi_multicast_receive_c19369"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -213,6 +214,7 @@ def test_wifi_multicast_receive_c19369(wifi_sniffer, wifi_access_point, wifi_dut
                              "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19370')
 def test_wifi_multicast_group_leave_c19370(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
     capture_filename = "test_wifi_multicast_group_leave_c19370"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -275,6 +277,7 @@ def test_wifi_multicast_group_leave_c19370(wifi_sniffer, wifi_access_point, wifi
                              "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19372')
 def test_wifi_multicast_filter_select_all_c19372(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
     capture_filename = "test_wifi_multicast_filter_select_all_c19372"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -327,6 +330,7 @@ def test_wifi_multicast_filter_select_all_c19372(wifi_sniffer, wifi_access_point
                              "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19373')
 def test_wifi_multicast_filter_clear_all_c19373(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client, logger):
     capture_filename = "test_wifi_multicast_filter_clear_all_c19373"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_access_point, wifi_dut, capture_filename, logger)
@@ -376,6 +380,7 @@ def test_wifi_multicast_filter_clear_all_c19373(wifi_sniffer, wifi_access_point,
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated"])
+@pytest.mark.test_src_map_id('C19374')
 def test_wifi_multicast_filter_clear_specific_c19374(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client,
                                                      logger):
     capture_filename = "test_wifi_multicast_filter_clear_specific_c19374"
@@ -435,6 +440,7 @@ def test_wifi_multicast_filter_clear_specific_c19374(wifi_sniffer, wifi_access_p
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated"])
+@pytest.mark.test_src_map_id('C19375')
 def test_wifi_multicast_filter_add_specific_c19375(wifi_sniffer, wifi_access_point, wifi_dut, multicast_client,
                                                    logger):
     capture_filename = "test_wifi_multicast_filter_add_specific_c19375"

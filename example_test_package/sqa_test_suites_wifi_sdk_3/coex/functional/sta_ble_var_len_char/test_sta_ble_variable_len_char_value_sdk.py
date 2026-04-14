@@ -397,6 +397,7 @@ class HTTPThread(WifiThreadFunctionality, ThreadBase):
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C777941')
 def test_wifi_sdk_wlan_ssl_tx_with_gatt_write_read_operation_c777941(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, ssl_server):
@@ -475,6 +476,7 @@ def test_wifi_sdk_wlan_ssl_tx_with_gatt_write_read_operation_c777941(
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C777943')
 def test_wifi_sdk_wlan_ssl_rx_with_gatt_write_read_operation_c777943(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, ssl_server):
@@ -552,6 +554,7 @@ def test_wifi_sdk_wlan_ssl_rx_with_gatt_write_read_operation_c777943(
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C777945')
 def test_wifi_sdk_wlan_http_file_download_with_gatt_write_read_operation_c777945(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, http_server, index_path):
@@ -628,6 +631,7 @@ def test_wifi_sdk_wlan_http_file_download_with_gatt_write_read_operation_c777945
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C777942')
 def test_wifi_sdk_wlan_https_file_download_with_gatt_write_read_operation_c777942(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, http_server, index_path):
@@ -704,6 +708,7 @@ def test_wifi_sdk_wlan_https_file_download_with_gatt_write_read_operation_c77794
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C777946')
 def test_wifi_sdk_wlan_tcp_rx_with_gatt_write_read_operation_c777946(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, protocol, net_perf_client, traffic, qos):
@@ -777,6 +782,7 @@ def test_wifi_sdk_wlan_tcp_rx_with_gatt_write_read_operation_c777946(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ipv6_state": "0"})
+@pytest.mark.test_src_map_id('C777944')
 def test_wifi_sdk_wlan_conn_reconn_stateless_with_gatt_write_read_operation_c777944(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut):

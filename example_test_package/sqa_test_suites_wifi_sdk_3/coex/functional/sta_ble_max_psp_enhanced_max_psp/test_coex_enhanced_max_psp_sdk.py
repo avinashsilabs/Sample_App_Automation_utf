@@ -975,6 +975,7 @@ class FilterPacket:
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C34469')
 def test_wifi_sdk_wlan_ble_mode_c34469(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol,
                                        sniffer_filter, sl_collections):
     '''Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
@@ -1090,6 +1091,7 @@ def test_wifi_sdk_wlan_ble_mode_c34469(wifi_sniffer, wifi_access_point, wifi_dut
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C34488')
 def test_wifi_sdk_ble_connect_disconnect_wlan_datatransfer_c34488(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                                   net_perf_client, protocol, sl_collections,
                                                                   sniffer_filter):

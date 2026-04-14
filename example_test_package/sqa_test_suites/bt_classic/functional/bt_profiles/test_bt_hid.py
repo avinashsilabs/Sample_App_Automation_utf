@@ -74,6 +74,7 @@ test_data = ["9,01,00,00,04,00,00,00,00,00", "9,01,00,00,00,00,00,00,00,00",
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20017')
 def test_hid_conn_in_device_role_c20017(bt_dut, bt_client):
     with TimeMeasurer() as t:
 
@@ -133,6 +134,7 @@ def test_hid_conn_in_device_role_c20017(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20021')
 def test_interrupt_data_after_hid_conn_c20021(bt_dut, bt_client):
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(enable_ssp=False)
@@ -199,6 +201,7 @@ def test_interrupt_data_after_hid_conn_c20021(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C109698')
 def test_set_local_cod_class_002560_c109698(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='REDPINE_HID_KEYBOARD')
@@ -265,6 +268,7 @@ def test_set_local_cod_class_002560_c109698(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C109697')
 def test_set_local_cod_class_002540_c109697(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         cod="002540", bt_local_name='REDPINE_HID_KEYBOARD')
@@ -330,6 +334,7 @@ def test_set_local_cod_class_002540_c109697(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20023')
 def test_set_local_cod_class_002580_c20023(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         cod="002580", bt_local_name='REDPINE_HID_KEYBOARD')
@@ -395,6 +400,7 @@ def test_set_local_cod_class_002580_c20023(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20025')
 def test_hid_connectivity_ssp_with_io_capa_display_only_c20025(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='bt_hid_io_capability', pair_mode=1, capability=0)
@@ -460,6 +466,7 @@ def test_hid_connectivity_ssp_with_io_capa_display_only_c20025(bt_dut, bt_client
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20026')
 def test_hid_connectivity_ssp_with_io_capa_display_yes_no_c20026(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='bt_local_name', pair_mode=1, capability=1)
@@ -525,6 +532,7 @@ def test_hid_connectivity_ssp_with_io_capa_display_yes_no_c20026(bt_dut, bt_clie
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20028')
 def test_hid_connectivity_ssp_with_io_capa_no_input_output_c20028(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='bt_local_name', pair_mode=1, capability=3)
@@ -590,6 +598,7 @@ def test_hid_connectivity_ssp_with_io_capa_no_input_output_c20028(bt_dut, bt_cli
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20031')
 def test_hid_conn_send_interrupt_data_in_ps_3_ulp_mode_c20031(bt_dut, bt_client):
     # Set the device's local name
     logger().info("setting local name....")
@@ -698,6 +707,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_ulp_mode_c20031(bt_dut, bt_client)
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20019')
 def test_hid_conn_and_disconn_c20019(bt_dut, bt_client):
     # Set the device's local name
     logger().info("setting local name....")
@@ -809,6 +819,7 @@ def test_hid_conn_and_disconn_c20019(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20018')
 def test_hid_disconn_in_device_role_c20018(bt_dut, bt_client):
     logger().info("configuring dut for hid slave role with sdp config data....")
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_slave_hid(enable_ssp=True)
@@ -868,6 +879,7 @@ def test_hid_disconn_in_device_role_c20018(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20027')
 def test_hid_connectivity_ssp_with_io_capa_keyboard_only_c20027(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='bt_local_name', pair_mode=1, capability=2, bt_pin_code="123456")
@@ -933,6 +945,7 @@ def test_hid_connectivity_ssp_with_io_capa_keyboard_only_c20027(bt_dut, bt_clien
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20035')
 def test_hid_conn_send_interrupt_data_in_ps_3_ulp_mode_c20035(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(pair_mode=1, capability=0)
     logger().info("configuring dut local name....")
@@ -1011,6 +1024,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_ulp_mode_c20035(bt_dut, bt_client)
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20034')
 def test_hid_conn_send_interrupt_data_in_ps_3_lp_mode_c20034(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='bt_local_name', pair_mode=1, capability=0)
@@ -1088,6 +1102,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_lp_mode_c20034(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20037')
 def test_bt_hid_functionality_in_sniff_mode_c20037(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='REDPINE_HID_KEYBOARD', pair_mode=1, capability=3)
@@ -1168,6 +1183,7 @@ def test_bt_hid_functionality_in_sniff_mode_c20037(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20038')
 def test_bt_hid_send_continuous_hid_interrupt_data_c20038(bt_dut, bt_client):
     try:
         bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
@@ -1252,6 +1268,7 @@ def test_bt_hid_send_continuous_hid_interrupt_data_c20038(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20030')
 def test_hid_conn_send_interrupt_data_in_ps_3_lp_mode_c20030(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         enable_ssp=True, pair_mode=1, capability=1)
@@ -1330,6 +1347,7 @@ def test_hid_conn_send_interrupt_data_in_ps_3_lp_mode_c20030(bt_dut, bt_client):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     }
 )
+@pytest.mark.test_src_map_id('C20036')
 def test_bt_hid_disabling_sniff_feature_c20036(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='REDPINE_HID_KEYBOARD', pair_mode=1, capability=3)
@@ -1402,6 +1420,7 @@ def test_bt_hid_disabling_sniff_feature_c20036(bt_dut, bt_client):
         "rejoin_enable": False,
     }
 )
+@pytest.mark.test_src_map_id('C20029')
 def test_bt_hid_sniff_mode_send_hid_interrupt_data_c20029(bt_dut, bt_client):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_hid_slave_config(
         bt_local_name='REDPINE_HID_KEYBOARD', pair_mode=1, capability=3)

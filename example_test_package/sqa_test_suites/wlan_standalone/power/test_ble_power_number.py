@@ -145,6 +145,7 @@ class ppk_power_number_output():
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20571')
 def test_ble_advertise_connectable_power_0dBm_C20571(power_meter, wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
@@ -218,6 +219,7 @@ def test_ble_advertise_connectable_power_0dBm_C20571(power_meter, wifi_dut, ble_
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20572')
 def test_ble_advertise_non_connectable_power_0dBm_C20572(power_meter, wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
@@ -293,6 +295,7 @@ def test_ble_advertise_non_connectable_power_0dBm_C20572(power_meter, wifi_dut, 
         "ble_features": RS9116BLEFeatureBitMap.Default,
     },
 )
+@pytest.mark.test_src_map_id('C20574')
 def test_ble_connect_with_200ms_0dBm_C20574(power_meter, wifi_dut, ble_client):
     device_found=None
     logger().info("Initializing BLE")
@@ -363,6 +366,7 @@ def test_ble_connect_with_200ms_0dBm_C20574(power_meter, wifi_dut, ble_client):
         "ble_features": RS9116BLEFeatureBitMap.Default,
     },
 )
+@pytest.mark.test_src_map_id('C20575')
 def test_ble_connect_with_1_28ms_0dBm_C20575(power_meter, wifi_dut, ble_client):
     device_found=None
     logger().info("Initializing BLE")
@@ -438,6 +442,7 @@ def test_ble_connect_with_1_28ms_0dBm_C20575(power_meter, wifi_dut, ble_client):
         "power_index": 63,
        },
 )
+@pytest.mark.test_src_map_id('C20576')
 def test_ble_connect_with_200ms_4dBm_C20576(power_meter, wifi_dut, ble_client):
     device_found=None
     logger().info("Initializing BLE")
@@ -513,6 +518,7 @@ def test_ble_connect_with_200ms_4dBm_C20576(power_meter, wifi_dut, ble_client):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20569')
 def test_ble_advertise_non_connectable_power_1065ms_C20569(power_meter, wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
@@ -590,6 +596,7 @@ def test_ble_advertise_non_connectable_power_1065ms_C20569(power_meter, wifi_dut
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20568')
 def test_ble_advertise_connectable_power_20ms_C20568(power_meter, wifi_dut, ble_client):
 
     with BleLogs(
@@ -673,6 +680,7 @@ def test_ble_advertise_connectable_power_20ms_C20568(power_meter, wifi_dut, ble_
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+@pytest.mark.test_src_map_id('C20573')
 def test_ble_advertise_connectable_power_4dBm_c20573(power_meter, wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
@@ -751,6 +759,7 @@ def test_ble_advertise_connectable_power_4dBm_c20573(power_meter, wifi_dut, ble_
         "power_index": 63,
        },
 )
+@pytest.mark.test_src_map_id('C20577')
 def test_ble_connect_with_1_28ms_4dBm_C20577(power_meter, wifi_dut, ble_client):
     device_found=None
     logger().info("Initializing BLE")
@@ -826,6 +835,7 @@ def test_ble_connect_with_1_28ms_4dBm_C20577(power_meter, wifi_dut, ble_client):
         "bt_features": RS9116BTFeatureBitMap.BLEFeatureBitmapValid | RS9116BTFeatureBitMap.RFTypeSelection,
        },
 )
+@pytest.mark.test_src_map_id('C20578')
 def test_ble_per_1mbps_tx_0dBm_C20578(power_meter, bt_dut, bt_client):
     cmd_ix = 0x13
     access_addr = 1903575337
@@ -893,6 +903,7 @@ def test_ble_per_1mbps_tx_0dBm_C20578(power_meter, bt_dut, bt_client):
         "bt_features": RS9116BTFeatureBitMap.BLEFeatureBitmapValid | RS9116BTFeatureBitMap.RFTypeSelection,
     },
 )
+@pytest.mark.test_src_map_id('C20579')
 def test_ble_per_1mbps_tx_10dBm_C20579(power_meter, bt_dut, bt_client):
     cmd_ix = 19
     access_addr = 1903575337
@@ -962,6 +973,7 @@ def test_ble_per_1mbps_tx_10dBm_C20579(power_meter, bt_dut, bt_client):
         "ble_features": RS9116BLEFeatureBitMap.Default,
     },
 )
+@pytest.mark.test_src_map_id('C20570')
 def test_ble_connect_with_idlelink_200ms_C20570(power_meter, wifi_dut, ble_client):
     device_found=None
 

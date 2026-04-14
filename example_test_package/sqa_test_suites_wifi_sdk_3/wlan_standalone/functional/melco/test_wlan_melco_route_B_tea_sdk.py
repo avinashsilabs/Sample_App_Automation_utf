@@ -480,6 +480,7 @@ class iperf_udp_rx(WifiThread):
     }
 )
 @pytest.mark.config("wifi_access_point", wifi={"channel": 8})
+@pytest.mark.test_src_map_id('C690734')
 def test_wifi_sdk_disconn_3rd_party_sta_from_aput_interface_c690734(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -546,6 +547,7 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_interface_c690734(
     }
 )
 @pytest.mark.config("wifi_access_point", wifi={"channel": 8})
+@pytest.mark.test_src_map_id('C690735')
 def test_wifi_sdk_check_ssid_parameter_after_disconn_from_apmode_c690735(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -631,6 +633,7 @@ def test_wifi_sdk_check_ssid_parameter_after_disconn_from_apmode_c690735(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C690736')
 def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_pinging_stamode_c690736(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -710,6 +713,7 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_pinging_stamode_c690736(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C690737')
 def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_pinging_stamode_c690737(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -798,6 +802,7 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_pinging_stamode_c690737(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C700498')
 def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_sta_with_wpa3_c700498(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -871,6 +876,7 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_sta_with_wpa3_c700498(
     }
 )
 @pytest.mark.config("wifi_access_point", wifi={"channel": 8})
+@pytest.mark.test_src_map_id('C693697')
 def test_wifi_sdk_disconn_3rd_party_sta_from_aput_interface_c693697(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -940,6 +946,7 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_interface_c693697(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C693699')
 def test_wifi_sdk_disconn_sta_from_aput_when_pinging_stamode_link_addr_c693699(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -1025,6 +1032,7 @@ def test_wifi_sdk_disconn_sta_from_aput_when_pinging_stamode_link_addr_c693699(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C693678')
 def test_wifi_sdk_disconn_stamode_when_runn_traffic_between_connected_apmode_clients_c693678(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients, net_perf_client, net_perf_server, protocol):
@@ -1112,6 +1120,7 @@ def test_wifi_sdk_disconn_stamode_when_runn_traffic_between_connected_apmode_cli
 )
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
+@pytest.mark.test_src_map_id('C693702')
 def test_wifi_sdk_staut_and_aput_conn_diss_c693702(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -1192,6 +1201,7 @@ def test_wifi_sdk_staut_and_aput_conn_diss_c693702(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C693700')
 def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_pinging_stamode_c693700(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients, net_perf_client, protocol):
@@ -1272,6 +1282,7 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_when_pinging_stamode_c693700(
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
+@pytest.mark.test_src_map_id('C693695')
 def test_wifi_sdk_check_ping_during_http_server_deinit_c693695(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients, http_client, wiseconnect_web):
@@ -1356,6 +1367,7 @@ def test_wifi_sdk_check_ping_during_http_server_deinit_c693695(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C693540')
 def test_wifi_sdk_disconn_3rd_party_sta_from_aput_during_udp_tx_rx_c693540(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients, net_perf_client, protocol):
@@ -1423,6 +1435,7 @@ def test_wifi_sdk_disconn_3rd_party_sta_from_aput_during_udp_tx_rx_c693540(
         "ble_custom_ext_features": 0
     }
 )
+@pytest.mark.test_src_map_id('C693672')
 def test_wifi_sdk_scan_with_no_ap_present_c693672(
         wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, wifi_client):
     """Scan in STA Mode with No AP Presented"""
@@ -1484,6 +1497,7 @@ def test_wifi_sdk_scan_with_no_ap_present_c693672(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C693679')
 def test_wifi_sdk_power_off_when_runn_traffic_between_connected_apmode_clients_c693679(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients, net_perf_client, net_perf_server, protocol):
@@ -1571,6 +1585,7 @@ def test_wifi_sdk_power_off_when_runn_traffic_between_connected_apmode_clients_c
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C693681')
 def test_wifi_sdk_check_beacon_stop_after_power_off_ap_c693681(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):

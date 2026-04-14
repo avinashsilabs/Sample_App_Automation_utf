@@ -414,6 +414,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", ["ble_stop_adv"]])
+@pytest.mark.test_src_map_id('C19876')
 def test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876(ble_dut, ble_clients, sl_collections):
     try:
         with BleLogs(start_collecting_logs=True,

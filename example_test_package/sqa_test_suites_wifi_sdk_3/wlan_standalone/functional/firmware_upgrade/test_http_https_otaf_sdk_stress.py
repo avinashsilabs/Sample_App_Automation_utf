@@ -221,6 +221,7 @@ class WifiJoin(ThreadBase):
 @wifi_dut_marker()
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19793')
 def test_http_fw_upgrade_downgrade_overnight_c19793(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                     request, wifi_client, sl_collections, utf_constants):
     """Verify continuous firmware upgrade and downgrade works seamlessly overnight and measure the up-gradation time"""
@@ -251,6 +252,7 @@ def test_http_fw_upgrade_downgrade_overnight_c19793(http_server, wifi_sniffer, w
 @wifi_dut_marker()
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19794')
 def test_http_fw_upgrade_overnight_corrupted_file_c19794(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                          request, wifi_client, sl_collections, utf_constants):
     """Verify continuous firmware upgrade and downgrade unsuccessful with corrupted firmware overnight"""
@@ -280,6 +282,7 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19794(http_server, wifi_sniff
 @wifi_dut_marker()
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19795')
 def test_http_fw_upgrade_overnight_corrupted_file_c19795(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                          request, wifi_client, sl_collections, utf_constants):
     """Verify continuous firmware upgrade unsuccessful with non RPS file"""
@@ -309,6 +312,7 @@ def test_http_fw_upgrade_overnight_corrupted_file_c19795(http_server, wifi_sniff
 @wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19771')
 def test_https_fw_upgrade_downgrade_overnight_file_c19771(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                           request, wifi_client, sl_collections, utf_constants):
     """Verify continuous firmware upgrade and downgrade works seamlessly overnight and measure the upgradation time"""
@@ -339,6 +343,7 @@ def test_https_fw_upgrade_downgrade_overnight_file_c19771(http_server, wifi_snif
 @wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19772')
 def test_https_fw_upgrade_overnight_corrupted_rps_file_c19772(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                               request, wifi_client, sl_collections, utf_constants):
     """Verify continuous firmware upgrade and downgrade unsuccessful with corrupted firmware overnight"""
@@ -369,6 +374,7 @@ def test_https_fw_upgrade_overnight_corrupted_rps_file_c19772(http_server, wifi_
 @wifi_dut_marker(ca_cert=["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19773')
 def test_https_fw_upgrade_overnight_corrupted_text_file_c19773(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                                request, wifi_client, sl_collections, utf_constants):
     """Verify continuous firmware upgrade successful with non RPS file(text format)"""

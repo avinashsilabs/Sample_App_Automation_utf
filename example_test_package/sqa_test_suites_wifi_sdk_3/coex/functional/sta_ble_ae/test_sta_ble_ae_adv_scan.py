@@ -1011,6 +1011,7 @@ def calculate_offset(df):
     },
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708839')
 def test_verify_legacy_adv_conn_dir_with_wlan_Scan_C708839(
         wifi_sniffer,
         wifi_access_point,
@@ -1147,6 +1148,7 @@ def test_verify_legacy_adv_conn_dir_with_wlan_Scan_C708839(
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708842')
 def test_verify_legacy_adv_conn_scannable_undir_adv_with_adv_data_len_1byte_and_31bytes_with_wlan_Conn_C708840_C708842(
         # wifi_sniffer,
         wifi_access_point,
@@ -1278,6 +1280,7 @@ def test_verify_legacy_adv_conn_scannable_undir_adv_with_adv_data_len_1byte_and_
     ],
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708843')
 def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708843(
         # wifi_sniffer,
         wifi_access_point,
@@ -1436,6 +1439,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708843(
     ],
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708844')
 def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708844(
         # wifi_sniffer,
         wifi_access_point,
@@ -1575,6 +1579,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708844(
     ],
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708845')
 def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708845(
         # wifi_sniffer,
         wifi_access_point,
@@ -1712,6 +1717,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708845(
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 
+@pytest.mark.test_src_map_id('C708846')
 def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708846(
         # wifi_sniffer,
         wifi_access_point,
@@ -1829,6 +1835,7 @@ def test_verify_AE_non_conn_non_scan_ADV_with_wlan_conn_C708846(
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 # @pytest.mark.skip("Debug is required for this test case")
+@pytest.mark.test_src_map_id('C708847')
 def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708847(
         # wifi_sniffer,
         wifi_access_point,
@@ -2006,6 +2013,7 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708847(
     ],
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708848')
 def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708848(
         # wifi_sniffer,
         wifi_access_point,
@@ -2166,6 +2174,7 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708848(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708849')
 def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708849(
         # wifi_sniffer,
         wifi_access_point,
@@ -2338,6 +2347,7 @@ def test_verify_AE_Scannable_undirected_ADV_with_wlan_conn_C708849(
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708850')
 def test_verify_AE_Scannable_filter_policy_with_wlan_conn_C708850(
         # wifi_sniffer,
         wifi_access_point,
@@ -2501,6 +2511,7 @@ def test_verify_AE_Scannable_filter_policy_with_wlan_conn_C708850(
     ],
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708853')
 def test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_with_wlan_conn_C708851_C708853(
         # wifi_sniffer,
         wifi_access_point,
@@ -2661,6 +2672,7 @@ def test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_with_wlan_conn_C7
     ],
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708856')
 def test_verify_periodic_Adv_Sync_directed_non_conn_non_scan_with_wlan_conn_C708854_C708856(
         # wifi_sniffer,
         wifi_access_point,
@@ -2851,6 +2863,7 @@ def test_verify_periodic_Adv_Sync_directed_non_conn_non_scan_with_wlan_conn_C708
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 # @pytest.mark.skip("Debug is required for this test case")
+@pytest.mark.test_src_map_id('C708858')
 def test_verify_AE_scan_with_wlan_conn_C708857_C708858(
         # wifi_sniffer,
         wifi_access_point,
@@ -2981,6 +2994,7 @@ def test_verify_AE_scan_with_wlan_conn_C708857_C708858(
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708859')
 def test_verify_ext_scan_filter_policy_0x01_with_wlan_scan_C708859(
         # wifi_sniffer,
         wifi_access_point,
@@ -3102,6 +3116,7 @@ def test_verify_ext_scan_filter_policy_0x01_with_wlan_scan_C708859(
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708860')
 def test_Verify_filter_policy_0x03_during_Wlan_Conn_C708860(
         # wifi_sniffer,
         wifi_access_point,
@@ -3230,6 +3245,7 @@ def test_Verify_filter_policy_0x03_during_Wlan_Conn_C708860(
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 # @pytest.mark.Skip("Debug is required for this test case")
+@pytest.mark.test_src_map_id('C708862')
 def test_verify_AE_passive_ext_scan_with_wlan_conn_C708861_C708862(
         # wifi_sniffer,
         wifi_access_point,
@@ -3366,6 +3382,7 @@ def test_verify_AE_passive_ext_scan_with_wlan_conn_C708861_C708862(
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 # @pytest.mark.Skip("Debug is required for this test case")
+@pytest.mark.test_src_map_id('C708864')
 def test_verify_AE_active_ext_scan_diff_duty_cycle_with_wlan_conn_C708863_C708864(
         # wifi_sniffer,
         wifi_access_point,
@@ -3495,6 +3512,7 @@ def test_verify_AE_active_ext_scan_diff_duty_cycle_with_wlan_conn_C708863_C70886
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 # @pytest.mark.Skip("Debug is required for this test case")
+@pytest.mark.test_src_map_id('C708865')
 def test_verify_AE_passive_ext_scan_adv_two_sets_with_wlan_conn_C708865(
         # wifi_sniffer,
         wifi_access_point,
@@ -3620,6 +3638,7 @@ def test_verify_AE_passive_ext_scan_adv_two_sets_with_wlan_conn_C708865(
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
 # @pytest.mark.Skip("Debug is required for this test case")
+@pytest.mark.test_src_map_id('C708866')
 def test_verify_AE_Active_ext_scan_adv_two_sets_with_wlan_conn_C708866(
         # wifi_sniffer,
         wifi_access_point,
@@ -3725,6 +3744,7 @@ def test_verify_AE_Active_ext_scan_adv_two_sets_with_wlan_conn_C708866(
     },
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C708886')
 def test_verify_AE_adv_scan_with_wlan_conn_C708886(
         wifi_sniffer,
         wifi_access_point,
@@ -3834,6 +3854,7 @@ def test_verify_AE_adv_scan_with_wlan_conn_C708886(
     },
 )
 # @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C779565')
 def test_verify_AE_adv_scan_with_wlan_scan_C779565(
         wifi_sniffer,
         wifi_access_point,

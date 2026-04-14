@@ -426,6 +426,7 @@ def join_to_wifi_network_via_wps(wifi_dut=None, wifi_access_point=None, power_sa
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913649')
 def test_coex_sdk_wps_pbc_ble_dual_tx_rx_tcp_auto_connect_enabled_C913649(
         wifi_dut,
         ble_clients,
@@ -642,6 +643,7 @@ def test_coex_sdk_wps_pbc_ble_dual_tx_rx_tcp_auto_connect_enabled_C913649(
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913650')
 def test_coex_sdk_wps_pbc_ble_dual_tx_rx_udp_auto_connect_disabled_C913650(
         wifi_dut,
         ble_clients,
@@ -846,6 +848,7 @@ def test_coex_sdk_wps_pbc_ble_dual_tx_rx_udp_auto_connect_disabled_C913650(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913651')
 def test_coex_sdk_wps_pbc_ble_central_rx_http_auto_connect_enabled_C913651(
         wifi_dut,
         ble_client,
@@ -980,6 +983,7 @@ def test_coex_sdk_wps_pbc_ble_central_rx_http_auto_connect_enabled_C913651(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913652')
 def test_coex_sdk_wps_pbc_ble_dual_role_tx_rx_https_auto_connect_disabled_C913652(
         wifi_dut,
         ble_clients,
@@ -1183,6 +1187,7 @@ def test_coex_sdk_wps_pbc_ble_dual_role_tx_rx_https_auto_connect_disabled_C91365
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913655')
 def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_enabled_C913655(
         wifi_dut,
         ble_client,
@@ -1327,6 +1332,7 @@ def test_coex_sdk_wps_pbc_ipv6_stateful_ble_peripheral_tx_https_auto_connect_ena
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913656')
 def test_coex_sdk_wps_pbc_ipv6_stateless_ble_dual_tx_rx_https_auto_connect_disabled_C913656(
         wifi_dut,
         ble_clients,
@@ -1520,6 +1526,7 @@ def test_coex_sdk_wps_pbc_ipv6_stateless_ble_dual_tx_rx_https_auto_connect_disab
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913665')
 def test_coex_sdk_wps_pbc_timeout_ble_peripheral_tx_C913665(
         wifi_dut,
         ble_client,
@@ -1660,6 +1667,7 @@ def test_coex_sdk_wps_pbc_timeout_ble_peripheral_tx_C913665(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913667')
 def test_coex_sdk_wps_pbc_connection_reconnection_ble_central_tx_indications_C913667(
 wifi_dut, ble_client, wifi_access_point, request, utf_constants, sl_collections, ):
     """
@@ -1757,6 +1765,7 @@ wifi_dut, ble_client, wifi_access_point, request, utf_constants, sl_collections,
 
 # Skip
 @pytest.mark.skip(reason="Is in the file - test_sta_ble_provisioning_2ap_sdk.py as there is a dependency of the setup (2APs)")
+@pytest.mark.test_src_map_id('C913668')
 def test_wps_pbc_lockout_with_ble_coex_C913668():
         pass
 
@@ -1765,6 +1774,7 @@ def test_wps_pbc_lockout_with_ble_coex_C913668():
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913669')
 def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
         switch,
         wifi_dut,
@@ -1932,6 +1942,7 @@ def test_coex_sdk_wps_pbc_ap_reboot_ble_peripheral_tx_C913669(
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C913670')
 def test_coex_sdk_wps_pbc_ap_rejoin_ble_central_rx_C913670(
         switch,
         wifi_dut,

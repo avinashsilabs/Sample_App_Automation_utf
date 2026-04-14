@@ -1,3 +1,4 @@
+import pytest
 from utf.utils.logger import get_logger
 import time
 
@@ -5,6 +6,7 @@ def logger():
     return get_logger(__name__)
 
 
+@pytest.mark.test_src_map_id('TC6941263599')
 def test_service_advertisement(service_advertisement):
     status = service_advertisement.interfaces.sa.get_status()
     logger().info(f"Status {status}")

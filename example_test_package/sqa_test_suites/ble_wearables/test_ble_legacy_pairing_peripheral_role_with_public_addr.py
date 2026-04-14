@@ -1,3 +1,4 @@
+import pytest
 """
 BLE SMP Legacy Pairing IO Capability Test Suite
 
@@ -470,6 +471,7 @@ class BLESMPPairingTest:
         self.ble_client.interfaces.bluetooth.close()
         time.sleep(5)
 # Just works, Raspi: 0x00 (Display) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1700047')
 def test_ble_smp_just_works_with_io_capability_dut_0x00_raspi_0x00_C1700047(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -483,6 +485,7 @@ def test_ble_smp_just_works_with_io_capability_dut_0x00_raspi_0x00_C1700047(wifi
     ble_test.run()
 
 # Just works, Raspi: 0x01 (Display Yes/No) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1700048')
 def test_ble_smp_just_works_with_io_capability_dut_0x00_raspi_0x01_C1700048(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -496,6 +499,7 @@ def test_ble_smp_just_works_with_io_capability_dut_0x00_raspi_0x01_C1700048(wifi
     ble_test.run()
 
 # Passkey, Raspi: 0x02 (Keyboard Only) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1700049')
 def test_ble_smp_passkeyentry_with_io_capability_dut_0x00_raspi_0x02_C1700049(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -508,6 +512,7 @@ def test_ble_smp_passkeyentry_with_io_capability_dut_0x00_raspi_0x02_C1700049(wi
     )
     ble_test.run()
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1700050')
 def test_ble_smp_just_works_with_io_capability_dut_0x00_raspi_0x03_C1700050(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -521,6 +526,7 @@ def test_ble_smp_just_works_with_io_capability_dut_0x00_raspi_0x03_C1700050(wifi
     ble_test.run()
 
 # Passkey, Raspi: 0x04 (Keyboard Display) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1700051')
 def test_ble_smp_passkeyentry_with_io_capability_dut_0x00_raspi_0x04_C1700051(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -534,6 +540,7 @@ def test_ble_smp_passkeyentry_with_io_capability_dut_0x00_raspi_0x04_C1700051(wi
     ble_test.run()
 
 # JustWorks, Raspi: 0x00 (DisplayOnly) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1700052')
 def test_ble_smp_just_works_with_io_capability_dut_0x01_raspi_0x00_C1700052(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -547,6 +554,7 @@ def test_ble_smp_just_works_with_io_capability_dut_0x01_raspi_0x00_C1700052(wifi
     ble_test.run()
 
 # just work, Raspi: 0x01 (DisplayYesNo) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1700053')
 def test_ble_smp_just_works_with_io_capability_dut_0x01_raspi_0x01_C1700053(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)   
@@ -560,6 +568,7 @@ def test_ble_smp_just_works_with_io_capability_dut_0x01_raspi_0x01_C1700053(wifi
     ble_test.run()
 
 # Passkey, Raspi: 0x02 (KeyboardOnly) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1700054')
 def test_ble_smp_passkeyentry_with_io_capability_dut_0x01_raspi_0x02_C1700054(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -573,6 +582,7 @@ def test_ble_smp_passkeyentry_with_io_capability_dut_0x01_raspi_0x02_C1700054(wi
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1700055')
 def test_ble_smp_just_works_with_io_capability_dut_0x01_raspi_0x03_C1700055(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -586,6 +596,7 @@ def test_ble_smp_just_works_with_io_capability_dut_0x01_raspi_0x03_C1700055(wifi
     ble_test.run()
 
 # NumericComparison, Raspi: 0x04 (KeyboardDisplay) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1700056')
 def test_ble_smp_passkeyentry_with_io_capability_dut_0x01_raspi_0x04_C1700056(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -599,6 +610,7 @@ def test_ble_smp_passkeyentry_with_io_capability_dut_0x01_raspi_0x04_C1700056(wi
     ble_test.run()
 
 # Passkey, Raspi: 0x00 (DisplayOnly) DUT: 0x02 (KeyboardOnly)
+@pytest.mark.test_src_map_id('C1700057')
 def test_ble_connects_to_dut_02_raspi_00_C1700057(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -612,6 +624,7 @@ def test_ble_connects_to_dut_02_raspi_00_C1700057(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x01 (DisplayYesNo) DUT: 0x02 (KeyboardOnly)
+@pytest.mark.test_src_map_id('C1700058')
 def test_ble_connects_to_dut_02_raspi_01_C1700058(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -625,6 +638,7 @@ def test_ble_connects_to_dut_02_raspi_01_C1700058(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x02 (KeyboardOnly) DUT: 0x02 (KeyboardOnly)
+@pytest.mark.test_src_map_id('C1700059')
 def test_ble_connects_to_dut_02_raspi_02_C1700059(wifi_dut, ble_client):
     time.sleep(20)
     fixed_passkey = "123456"
@@ -732,6 +746,7 @@ def test_ble_connects_to_dut_02_raspi_02_C1700059(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x03 (NoInputNoOutput) DUT: 0x02 (KeyboardOnly)
+@pytest.mark.test_src_map_id('C1700060')
 def test_ble_connects_to_dut_02_raspi_03_C1700060(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -745,6 +760,7 @@ def test_ble_connects_to_dut_02_raspi_03_C1700060(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x04 (KeyboardDisplay) DUT: 0x02 (KeyboardOnly)
+@pytest.mark.test_src_map_id('C1700061')
 def test_ble_connects_to_dut_02_raspi_04_C1700061(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -758,6 +774,7 @@ def test_ble_connects_to_dut_02_raspi_04_C1700061(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x00 (DisplayOnly) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1700062')
 def test_ble_connects_to_dut_03_raspi_00_C1700062(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -771,6 +788,7 @@ def test_ble_connects_to_dut_03_raspi_00_C1700062(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x01 (DisplayYesNo) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1700063')
 def test_ble_connects_to_dut_03_raspi_01_C1700063(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -784,6 +802,7 @@ def test_ble_connects_to_dut_03_raspi_01_C1700063(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x02 (KeyboardOnly) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1700064')
 def test_ble_connects_to_dut_03_raspi_02_C1700064(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -797,6 +816,7 @@ def test_ble_connects_to_dut_03_raspi_02_C1700064(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1700065')
 def test_ble_connects_to_dut_03_raspi_03_C1700065(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -810,6 +830,7 @@ def test_ble_connects_to_dut_03_raspi_03_C1700065(wifi_dut, ble_client):
     ble_test.run()  
 
 # JustWorks, Raspi: 0x04 (KeyboardDisplay) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1700066')
 def test_ble_connects_to_dut_03_raspi_04_C1700066(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -823,6 +844,7 @@ def test_ble_connects_to_dut_03_raspi_04_C1700066(wifi_dut, ble_client):
     ble_test.run() 
 
 # Passkey, Raspi: 0x00 (DisplayOnly) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1700067')
 def test_ble_connects_to_dut_04_raspi_00_C1700067(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -836,6 +858,7 @@ def test_ble_connects_to_dut_04_raspi_00_C1700067(wifi_dut, ble_client):
     ble_test.run() 
 
 # passkey entry, Raspi: 0x01 (DisplayYesNo) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1700068')
 def test_ble_connects_to_dut_04_raspi_01_C1700068(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -850,6 +873,7 @@ def test_ble_connects_to_dut_04_raspi_01_C1700068(wifi_dut, ble_client):
 
 
 # Passkey, Raspi: 0x02 (KeyboardOnly) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1700069')
 def test_ble_smp_passkey_with_io_capability_dut_0x04_raspi_0x02_C1700069(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -863,6 +887,7 @@ def test_ble_smp_passkey_with_io_capability_dut_0x04_raspi_0x02_C1700069(wifi_du
     ble_test.run()
    
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1700070')
 def test_ble_connects_to_dut_04_raspi_03_C1700070(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -876,6 +901,7 @@ def test_ble_connects_to_dut_04_raspi_03_C1700070(wifi_dut, ble_client):
     ble_test.run()
 
 # NumericComparison, Raspi: 0x04 (KeyboardDisplay) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1700071')
 def test_ble_connects_to_dut_04_raspi_04_C1700071(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)

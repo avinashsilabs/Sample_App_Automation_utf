@@ -84,6 +84,7 @@ def clean_up_method(wifi_dut, switch):
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19314')
 def test_device_as_sta_and_ap_c19314(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -188,6 +189,7 @@ def test_device_as_sta_and_ap_c19314(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["reset","disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19315')
 def test_device_as_sta_and_ap_c19315(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -299,6 +301,7 @@ def test_device_as_sta_and_ap_c19315(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19324')
 def test_device_as_sta_and_ap_c19324(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     ping_iterations = 10
     validation = True
@@ -426,6 +429,7 @@ def test_device_as_sta_and_ap_c19324(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19313')
 def test_device_as_ap_and_sta_c19313(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     ping_iterations = 10
@@ -558,6 +562,7 @@ def test_device_as_ap_and_sta_c19313(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19322')
 def test_device_as_sta_and_ap_c19322(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     ping_iterations = 10
@@ -683,6 +688,7 @@ def test_device_as_sta_and_ap_c19322(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19312')
 def test_device_as_sta_and_ap_c19312(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -802,6 +808,7 @@ def test_device_as_sta_and_ap_c19312(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19319')
 def test_device_as_sta_and_ap_c19319(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer):
     validation = True
     channel = wifi_access_point.interfaces.wifi.channel
@@ -912,6 +919,7 @@ def test_device_as_sta_and_ap_c19319(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19318')
 def test_device_as_sta_and_ap_c19318(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -1034,6 +1042,7 @@ def test_device_as_sta_and_ap_c19318(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19320')
 def test_device_as_sta_and_ap_c19320(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -1180,6 +1189,7 @@ def test_device_as_sta_and_ap_c19320(firmware_loader, wifi_access_point, wifi_du
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19316')
 def test_device_as_sta_and_ap_c19316(firmware_loader, wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                       protocol, net_perf_client):
     validation = True
@@ -1375,6 +1385,7 @@ def join_get_ip(wifi_access_point, utf_constants, wifi_dut):
 @pytest.mark.end_state("wifi_dut",
                        wifi=["multicast_leave", "close_sockets", "wifi_powersave_disable", "bt_powersave_disable",
                              "disassociated", "reset"])
+@pytest.mark.test_src_map_id('C19321')
 def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_constants, wifi_client, wifi_dut,
                                       multicast_client):
     capture_file = 'test_device_as_sta_and_ap_C19321'
@@ -1470,6 +1481,7 @@ def test_sta_ap_multicast_data_c19321(wifi_sniffer, wifi_access_point, utf_const
 @pytest.mark.end_state("wifi_dut", wifi=["reset", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19317')
 def test_rejoin_failure_indication_to_host_c19317(firmware_loader, wifi_sniffer, wifi_access_point, utf_constants,
                                                   wifi_client, wifi_dut, switch):
     try:

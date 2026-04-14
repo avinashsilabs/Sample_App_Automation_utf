@@ -435,6 +435,7 @@ pytestmark = [pytest.mark.firmware_app("test_416K_M4SS_256K")]
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C532892')
 def test_wlan_standalone_tcp_tx_416_256K_C532892(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -478,6 +479,7 @@ def test_wlan_standalone_tcp_tx_416_256K_C532892(firmware_loader, wifi_sniffer, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C532893')
 def test_wlan_standalone_tcp_rx_416_256K_C532893(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -520,6 +522,7 @@ def test_wlan_standalone_tcp_rx_416_256K_C532893(firmware_loader, wifi_sniffer, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C532890')
 def test_wlan_standalone_udp_tx_416_256K_C532890(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -562,6 +565,7 @@ def test_wlan_standalone_udp_tx_416_256K_C532890(firmware_loader, wifi_sniffer, 
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C532891')
 def test_wlan_standalone_udp_rx_416_256K_C532891(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -600,6 +604,7 @@ def test_wlan_standalone_udp_rx_416_256K_C532891(firmware_loader, wifi_sniffer, 
 
     }
 )
+@pytest.mark.test_src_map_id('C532944')
 def test_wlan_ble_connected_tcp_tx_416_256K_C532944(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -638,6 +643,7 @@ def test_wlan_ble_connected_tcp_tx_416_256K_C532944(firmware_loader, wifi_sniffe
 
     }
 )
+@pytest.mark.test_src_map_id('C532945')
 def test_wlan_ble_connected_tcp_rx_416_256K_C532945(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -677,6 +683,7 @@ def test_wlan_ble_connected_tcp_rx_416_256K_C532945(firmware_loader, wifi_sniffe
 
     }
 )
+@pytest.mark.test_src_map_id('C532942')
 def test_wlan_ble_connected_udp_tx_416_256K_C532942(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -715,6 +722,7 @@ def test_wlan_ble_connected_udp_tx_416_256K_C532942(firmware_loader, wifi_sniffe
 
     }
 )
+@pytest.mark.test_src_map_id('C532943')
 def test_wlan_ble_connected_udp_rx_416_256K_C532943(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -754,6 +762,7 @@ def test_wlan_ble_connected_udp_rx_416_256K_C532943(firmware_loader, wifi_sniffe
           "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
+@pytest.mark.test_src_map_id('C532948')
 def test_wlan_ble_with_ble_data_trans_416_256K_tcp_tx_C532948(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [416]"""
@@ -795,6 +804,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_tcp_tx_C532948(firmware_loader, w
           "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
+@pytest.mark.test_src_map_id('C532949')
 def test_wlan_ble_with_ble_data_trans_416_256K_tcp_rx_C532949(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [416]"""
@@ -836,6 +846,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_tcp_rx_C532949(firmware_loader, w
           "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
+@pytest.mark.test_src_map_id('C532946')
 def test_wlan_ble_with_ble_data_trans_416_256K_udp_tx_C532946(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [416K]"""
@@ -877,6 +888,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_udp_tx_C532946(firmware_loader, w
           "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
+@pytest.mark.test_src_map_id('C532947')
 def test_wlan_ble_with_ble_data_trans_416_256K_udp_rx_C532947(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [416K]"""
@@ -922,6 +934,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_udp_rx_C532947(firmware_loader, w
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C537722')
 def test_wlan_standalone_tcp_tx_with_416_256K_11n_C537722(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -965,6 +978,7 @@ def test_wlan_standalone_tcp_tx_with_416_256K_11n_C537722(firmware_loader, wifi_
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C537723')
 def test_wlan_standalone_tcp_rx_with_416_256K_11n_C537723(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -1009,6 +1023,7 @@ def test_wlan_standalone_tcp_rx_with_416_256K_11n_C537723(firmware_loader, wifi_
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C537720')
 def test_wlan_standalone_udp_tx_with_416_256K_11n_C537720(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -1053,6 +1068,7 @@ def test_wlan_standalone_udp_tx_with_416_256K_11n_C537720(firmware_loader, wifi_
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C537721')
 def test_wlan_standalone_udp_rx_with_416_256K_11n_C537721(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections):
     ping_count = utf_constants.get("ping_count")
@@ -1091,6 +1107,7 @@ def test_wlan_standalone_udp_rx_with_416_256K_11n_C537721(firmware_loader, wifi_
 
     }
 )
+@pytest.mark.test_src_map_id('C537860')
 def test_wlan_ble_connected_tcp_tx_416_256K_11n_C537860(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1129,6 +1146,7 @@ def test_wlan_ble_connected_tcp_tx_416_256K_11n_C537860(firmware_loader, wifi_sn
 
     }
 )
+@pytest.mark.test_src_map_id('C537861')
 def test_wlan_ble_connected_tcp_rx_416_256K_11n_C537861(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1167,6 +1185,7 @@ def test_wlan_ble_connected_tcp_rx_416_256K_11n_C537861(firmware_loader, wifi_sn
 
     }
 )
+@pytest.mark.test_src_map_id('C537858')
 def test_wlan_ble_connected_udp_tx_416_256K_11n_C537858(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1205,6 +1224,7 @@ def test_wlan_ble_connected_udp_tx_416_256K_11n_C537858(firmware_loader, wifi_sn
 
     }
 )
+@pytest.mark.test_src_map_id('C537859')
 def test_wlan_ble_connected_udp_rx_416_256K_11n_C537859(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     ping_count = utf_constants.get("ping_count")
@@ -1244,6 +1264,7 @@ def test_wlan_ble_connected_udp_rx_416_256K_11n_C537859(firmware_loader, wifi_sn
           "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
+@pytest.mark.test_src_map_id('C537864')
 def test_wlan_ble_with_ble_data_trans_416_256K_11N_tcp_tx_C537864(firmware_loader, wifi_sniffer, wifi_access_point,
                                        wifi_client, wifi_dut, net_perf_client, protocol, utf_constants, request,
                                        sl_collections, ble_client, bt_dut):
@@ -1286,6 +1307,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_11N_tcp_tx_C537864(firmware_loade
           "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
+@pytest.mark.test_src_map_id('C537865')
 def test_wlan_ble_with_ble_data_trans_416_256K_11N_tcp_rx_C537865(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [416]"""
@@ -1327,6 +1349,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_11N_tcp_rx_C537865(firmware_loade
           "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
+@pytest.mark.test_src_map_id('C537862')
 def test_wlan_ble_with_ble_data_trans_416_256K_11N_udp_tx_C537862(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [416K]"""
@@ -1368,6 +1391,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_11N_udp_tx_C537862(firmware_loade
           "ble": {"count": 1, "stack_len": 2048, "priority": 8}}
     }
 )
+@pytest.mark.test_src_map_id('C537863')
 def test_wlan_ble_with_ble_data_trans_416_256K_11N_udp_rx_C537863(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants, request, sl_collections, ble_client, bt_dut):
     """Validating with RAM_LEVEL_NWP_BASIC_MCU_ADV [416K]"""
@@ -1407,6 +1431,7 @@ def test_wlan_ble_with_ble_data_trans_416_256K_11N_udp_rx_C537863(firmware_loade
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C532960')
 def test_wlan_ble_conn_with_data_trans_ssl_tx_ax_C532960(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
@@ -1446,6 +1471,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_tx_ax_C532960(firmware_loader, wifi_s
 
     }
 )
+@pytest.mark.test_src_map_id('C532961')
 def test_wlan_ble_conn_with_data_trans_ssl_rx_ax_C532961(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
@@ -1484,6 +1510,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_rx_ax_C532961(firmware_loader, wifi_s
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C537876')
 def test_wlan_ble_conn_with_data_trans_ssl_tx_11n_C537876(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
@@ -1523,6 +1550,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_tx_11n_C537876(firmware_loader, wifi_
 
     }
 )
+@pytest.mark.test_src_map_id('C537877')
 def test_wlan_ble_conn_with_data_trans_ssl_rx_11n_C537877(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
@@ -1561,6 +1589,7 @@ def test_wlan_ble_conn_with_data_trans_ssl_rx_11n_C537877(firmware_loader, wifi_
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C695593')
 def test_wlan_ble_conn_with_ssl_tx_ax_C695593(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
@@ -1600,6 +1629,7 @@ def test_wlan_ble_conn_with_ssl_tx_ax_C695593(firmware_loader, wifi_sniffer, wif
 
     }
 )
+@pytest.mark.test_src_map_id('C695594')
 def test_wlan_ble_conn_with_ssl_rx_ax_C695594(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
@@ -1638,6 +1668,7 @@ def test_wlan_ble_conn_with_ssl_rx_ax_C695594(firmware_loader, wifi_sniffer, wif
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C695595')
 def test_wlan_ble_conn_with_ssl_tx_11n_C695595(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):
@@ -1677,6 +1708,7 @@ def test_wlan_ble_conn_with_ssl_tx_11n_C695595(firmware_loader, wifi_sniffer, wi
 
     }
 )
+@pytest.mark.test_src_map_id('C695596')
 def test_wlan_ble_conn_with_ssl_rx_11n_C695596(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client,
                                                           wifi_dut, utf_constants, request, sl_collections, ble_client,
                                                           bt_dut, ssl_server):

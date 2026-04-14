@@ -83,6 +83,7 @@ class WifiJoin(ThreadBase):
         "custom_features": Si91xCustomFeatureBitMap.Default},
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19031')
 def test_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                wifi_client, protocol, sl_collections, sniffer_filter):
 
@@ -183,6 +184,7 @@ def test_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_perf_client, wi
         "custom_features": Si91xCustomFeatureBitMap.Default},
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19033')
 def test_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                              wifi_client, protocol, sl_collections, sniffer_filter):
 
@@ -282,6 +284,7 @@ def test_udp_tx_aggregation_open_mode_c19033(wifi_sniffer, net_perf_client, wifi
         "custom_features": Si91xCustomFeatureBitMap.Default},
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19032')
 def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                                wifi_client, protocol, sl_collections, sniffer_filter):
 
@@ -379,6 +382,7 @@ def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wi
         "custom_features": Si91xCustomFeatureBitMap.Default},
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19034')
 def test_udp_rx_aggregation_open_mode_c19034(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request,
                                              wifi_client, protocol, sl_collections, sniffer_filter):
 

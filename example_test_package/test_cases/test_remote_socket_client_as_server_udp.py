@@ -62,6 +62,7 @@ from utf.interfaces.socket import SOCKET_TYPE_UDP
 )
 @pytest.mark.wifi_clients(["raspi_wifi", "raspi_wifi_ssh"])
 @pytest.mark.remote_socket("raspi_ip_remote_socket")
+@pytest.mark.test_src_map_id('TC0813369277')
 def test_single_remote_wifi_client_as_server_dut_as_ap_udp(
     wifi_dut, wifi_clients, remote_socket, logger
 ):
@@ -162,6 +163,7 @@ def test_single_remote_wifi_client_as_server_dut_as_ap_udp(
 @pytest.mark.config(
     "remote_socket_factory", socket={"remote_ip_list": ["10.207.16.93"]}
 )
+@pytest.mark.test_src_map_id('TC7949927282')
 def test_multi_remote_wifi_client_as_server_dut_as_ap_udp(
     wifi_dut, wifi_clients, remote_socket_factory, logger
 ):
@@ -285,6 +287,7 @@ def test_multi_remote_wifi_client_as_server_dut_as_ap_udp(
 @pytest.mark.config(
     "remote_socket_factory", socket={"remote_ip_list": ["10.207.16.93"]}
 )
+@pytest.mark.test_src_map_id('TC5377070288')
 def test_multiple_remote_wifi_clients_as_server_dut_as_sta_udp(
     wifi_dut, wifi_access_point, wifi_clients, remote_socket_factory, logger
 ):

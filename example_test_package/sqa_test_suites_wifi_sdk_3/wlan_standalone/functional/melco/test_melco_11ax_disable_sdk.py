@@ -554,6 +554,7 @@ pytestmark = [
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C557301')
 def test_wifi_sdk_Verifying_the_sta_connectivity_with_11ax_disabled_C557301(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                             sl_collections, request, sniffer_filter,
                                                                             wifi_client):
@@ -584,6 +585,7 @@ def test_wifi_sdk_Verifying_the_sta_connectivity_with_11ax_disabled_C557301(wifi
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C557302')
 def test_wifi_sdk_Verifying_the_sta_connectivity_with_non_11ax_AP_11ax_disabled_C557302(wifi_dut, wifi_access_point,
                                                                                         wifi_sniffer,
                                                                                         sl_collections, request,
@@ -628,6 +630,7 @@ def test_wifi_sdk_Verifying_the_sta_connectivity_with_non_11ax_AP_11ax_disabled_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled", )
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 
+@pytest.mark.test_src_map_id('C557303')
 def test_wifi_sdk_sta_Connectivity_in_concurrent_with_11ax_disabled_C557303(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                             sl_collections, request, sniffer_filter,
                                                                             wifi_client, wifi_clients):
@@ -670,6 +673,7 @@ def test_wifi_sdk_sta_Connectivity_in_concurrent_with_11ax_disabled_C557303(wifi
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C557304')
 def test_wifi_sdk_Verifying_the_sta_connectivity_with_non_11ax_AP_11ax_disabled_C557304(wifi_dut, wifi_access_point,
                                                                                         wifi_sniffer,
                                                                                         sl_collections, request,
@@ -731,6 +735,7 @@ def test_wifi_sdk_Verifying_the_sta_connectivity_with_non_11ax_AP_11ax_disabled_
 )
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"]
 )
+@pytest.mark.test_src_map_id('C557306')
 def test_wifi_sdk_mbssid_T_profile_c557306(
     wifi_sniffer, wifi_access_point, wifi_dut, request, sniffer_filter, sl_collections, wifi_client):
     test_name = request.node.name
@@ -790,6 +795,7 @@ def test_wifi_sdk_mbssid_T_profile_c557306(
 )
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"]
 )
+@pytest.mark.test_src_map_id('C557307')
 def test_wifi_sdk_mbssid_NT_profile_c557307(
     wifi_sniffer, wifi_access_point, wifi_dut, request, sniffer_filter, sl_collections, wifi_client):
     test_name = request.node.name
@@ -826,6 +832,7 @@ def test_wifi_sdk_mbssid_NT_profile_c557307(
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "channel": 11, "standard": 'bgnax'})
+@pytest.mark.test_src_map_id('C557305')
 def test_wifi_sdk_rejoin_11ax_disable_for_staut_conc_mode_C557305(
         wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request, sniffer_filter, wifi_client, switch,
         wifi_clients):

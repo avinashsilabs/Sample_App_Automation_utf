@@ -353,6 +353,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0, HiddenSSID=0):
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887642')
 def test_wifi_sdk_ap_provisioning_wpa2_security_c887642(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter, ble_client, ble_dut):
@@ -415,6 +416,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_c887642(
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'sharma_test', "security": 'OPEN', "passphrase": '123456789',
                                                "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887643')
 def test_wifi_sdk_ap_provisioning_open_security_c887643(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -478,6 +480,7 @@ def test_wifi_sdk_ap_provisioning_open_security_c887643(
 @pytest.mark.parametrize("ap_channel", [11])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887644')
 def test_wifi_sdk_ap_provisioning_wpa3_security_c887644(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -541,6 +544,7 @@ def test_wifi_sdk_ap_provisioning_wpa3_security_c887644(
                           "passphrase": 'thisistestnetworkthisistestnetworkthisistestnetworkthisistestne',
                           "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887645')
 def test_wifi_sdk_ap_provisioning_wpa2_security_with_psk_63bytes_c887645(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -604,6 +608,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_psk_63bytes_c887645(
                           "passphrase": '123456789',
                           "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887646')
 def test_wifi_sdk_ap_provisioning_wpa2_security_with_ssid_32bytes_c887646(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -665,6 +670,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_ssid_32bytes_c887646(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887647')
 def test_wifi_sdk_ap_provisioning_wpa2_security_with_wrong_psk_c887647(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -726,6 +732,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_wrong_psk_c887647(
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 # @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 # @pytest.mark.end_state("wifi_dut", wifi=["reset"])
+@pytest.mark.test_src_map_id('C887648')
 def test_wifi_sdk_ap_provisioning_in_loop_c887648(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -808,6 +815,7 @@ def test_wifi_sdk_ap_provisioning_in_loop_c887648(
                     wifi={"ssid": "ASUS@home_2GHz!", "passphrase": "P@ssw0rd#2025!", "security": "WPA2",
                           "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887649')
 def test_wifi_sdk_ap_provisioning_with_special_charac_ssid_psk_c887649(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -872,6 +880,7 @@ def test_wifi_sdk_ap_provisioning_with_special_charac_ssid_psk_c887649(
                     wifi={"ssid": 'sharma_test_sharma_t', "passphrase": 'thisistestnetworkthisistestnetwor',
                           "security": 'WPA2', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887652')
 def test_wifi_sdk_ap_provisioning_ssid_20bytes_psk_33bytes_c887652(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -940,6 +949,7 @@ def test_wifi_sdk_ap_provisioning_ssid_20bytes_psk_33bytes_c887652(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0xc8', 0)])
+@pytest.mark.test_src_map_id('C887653')
 def test_wifi_sdk_ap_provisioning_and_iperf_run_in_sta_mode_c887653(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, protocol, net_perf_client, traffic,
@@ -1003,6 +1013,7 @@ def test_wifi_sdk_ap_provisioning_and_iperf_run_in_sta_mode_c887653(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma_testsharma_te', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887666')
 def test_wifi_sdk_ap_provisioning_dut_ap_ssid_20bytes_psk_40bytes_c887666(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1064,6 +1075,7 @@ def test_wifi_sdk_ap_provisioning_dut_ap_ssid_20bytes_psk_40bytes_c887666(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma_testsharma_te', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887665')
 def test_wifi_sdk_ap_provisioning_dut_ap_ssid_32bytes_psk_63bytes_c887665(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1126,6 +1138,7 @@ def test_wifi_sdk_ap_provisioning_dut_ap_ssid_32bytes_psk_63bytes_c887665(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma_testsharma_te', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887664')
 def test_wifi_sdk_ap_provisioning_dut_ap_wrong_psk_c887664(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1188,6 +1201,7 @@ def test_wifi_sdk_ap_provisioning_dut_ap_wrong_psk_c887664(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887660')
 def test_wifi_sdk_ap_provisioning_extended_scan_c887660(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1241,6 +1255,7 @@ def test_wifi_sdk_ap_provisioning_extended_scan_c887660(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887661')
 def test_wifi_sdk_ap_provisioning_extended_scan_and_connect_third_party_ap_c887661(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1303,6 +1318,7 @@ def test_wifi_sdk_ap_provisioning_extended_scan_and_connect_third_party_ap_c8876
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887659')
 def test_wifi_sdk_ap_provisioning_with_hidden_ssid_c887659(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1364,6 +1380,7 @@ def test_wifi_sdk_ap_provisioning_with_hidden_ssid_c887659(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 3})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887658')
 def test_wifi_sdk_ap_provisioning_client_conn_reconn_c887658(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1432,6 +1449,7 @@ def test_wifi_sdk_ap_provisioning_client_conn_reconn_c887658(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887657')
 def test_wifi_sdk_ap_provisioning_multi_client_connection_c887657(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1494,6 +1512,7 @@ def test_wifi_sdk_ap_provisioning_multi_client_connection_c887657(
                     wifi={"ssid": 'Anshul_test', "security": 'WPAWPA2MixedMode', "passphrase": '123456789',
                           "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887650')
 def test_wifi_sdk_ap_provisioning_mixed_security_c887650(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1557,6 +1576,7 @@ def test_wifi_sdk_ap_provisioning_mixed_security_c887650(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887672')
 def test_wifi_sdk_ap_provisioning_wpa2_security_12h_long_run_c887672(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, ble_client, ble_dut,
         wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter):
@@ -1680,6 +1700,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_12h_long_run_c887672(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887671')
 def test_wifi_sdk_ap_provisioning_wpa2_security_with_wrong_psk_for_multiple_iterations_C887671(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -1896,6 +1917,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_with_wrong_psk_for_multiple_iter
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887673')
 def test_wifi_sdk_ap_provisioning_wpa2_security_for_multiple_iteration_loop_C887673(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -2127,6 +2149,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_for_multiple_iteration_loop_C887
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C887674')
 def test_wifi_sdk_ap_only_provisioning_wpa2_security_for_multiple_iteration_loop_C887674(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -2283,6 +2306,7 @@ def test_wifi_sdk_ap_only_provisioning_wpa2_security_for_multiple_iteration_loop
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C913405')
 def test_wifi_sdk_ap_provisioning_wpa2_security_Auto_JOIN_to_same_AP_C913405(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter, ble_client, ble_dut):
@@ -2376,6 +2400,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_Auto_JOIN_to_same_AP_C913405(
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C913406')
 def test_wifi_sdk_ap_provisioning_wpa2_security_Auto_JOIN_to_other_AP_C913406(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter, ble_client, ble_dut,

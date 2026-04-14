@@ -655,6 +655,7 @@ class TxIndicationFunctionality:
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664439')
 def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_C664439(ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_240_bytes_write_with_response_C664439"
                             f"{int(time.time())}.log")
@@ -778,6 +779,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_C664439(ble_d
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664450')
 def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_write_with_response_C664450(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_240_bytes_write_without_response_write_with_response_C664450"
@@ -904,6 +906,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_write_with
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664458')
 def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_write_without_response_C664458(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -1033,6 +1036,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_write_without
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664459')
 def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_tx_indication_C664459(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -1186,6 +1190,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_tx_indication
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664460')
 def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_tx_notification_C664460(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -1337,6 +1342,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_tx_notificati
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664461')
 def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_rx_notification_C664461(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -1486,6 +1492,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_with_response_rx_notificati
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664466')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_write_with_response_C664466(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -1637,6 +1644,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_write_with_response
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664474')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_write_with_response_C664474(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -1790,6 +1798,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_write_with_respon
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664482')
 def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_write_with_response_C664482(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -1940,6 +1949,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_write_with_respon
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664495')
 def test_ble_dut_as_slave_and_master_200_bytes_write_with_response_C664495(ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_200_bytes_write_with_response_C664495"
                             f"{int(time.time())}.log")
@@ -2065,6 +2075,7 @@ def test_ble_dut_as_slave_and_master_200_bytes_write_with_response_C664495(ble_d
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664437')
 def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_C664437(ble_dut, ble_clients, ble_sniffer, sl_collections):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_240_bytes_write_without_response_C664437"
                             f"{int(time.time())}.log")
@@ -2192,6 +2203,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_C664437(bl
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664441')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_C664441(ble_dut, ble_clients, ble_sniffer, sl_collections):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_240_bytes_tx_indication_C664441"
                             f"{int(time.time())}.log")
@@ -2354,6 +2366,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_C664441(ble_dut, bl
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664443')
 def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_C664443(ble_dut, ble_clients, ble_sniffer, sl_collections):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_240_bytes_rx_notification_C664443"
                             f"{int(time.time())}.log")
@@ -2510,6 +2523,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_C664443(ble_dut, 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664445')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_C664445(ble_dut, ble_clients, ble_sniffer, sl_collections):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_240_bytes_tx_notification_C664445"
                             f"{int(time.time())}.log")
@@ -2673,6 +2687,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_C664445(ble_dut, 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664451')
 def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_tx_indication_C664451(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -2823,6 +2838,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_tx_indicat
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664452')
 def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_tx_notification_C664452(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -2978,6 +2994,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_tx_notific
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664453')
 def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_rx_notification_C664453(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -3133,6 +3150,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_write_without_response_rx_notific
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664467')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_write_without_response_C664467(
         ble_dut, ble_clients, ble_sniffer, sl_collections):
     bt_mon_log_file_name = (
@@ -3292,6 +3310,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_write_without_respo
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664468')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_tx_notification_C664468(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -3457,6 +3476,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_tx_notification_C66
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664469')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_rx_notification_C664469(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -3622,6 +3642,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_indication_rx_notification_C66
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664475')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_write_without_response_C664475(ble_dut, ble_clients, ble_sniffer, sl_collections):
     bt_mon_log_file_name = (
         f"reports/test_ble_dut_as_slave_and_master_240_bytes_tx_notification_write_without_response_C664475"
@@ -3777,6 +3798,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_write_without_res
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664476')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_tx_indication_C664476(ble_dut, ble_clients,
                                                                                      sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -3940,6 +3962,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_tx_indication_C66
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664477')
 def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_rx_notification_C664477(ble_dut, ble_clients,
                                                                                      sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -4108,6 +4131,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_tx_notification_rx_notification_C
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664483')
 def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_write_without_response_C664483(ble_dut, ble_clients,
                                                                                               sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -4261,6 +4285,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_write_without_res
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664484')
 def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_tx_indication_C664484(
         ble_dut, ble_clients, sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -4425,6 +4450,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_tx_indication_C66
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664485')
 def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_tx_notification_C664485(ble_dut, ble_clients,
                                                                                      sl_collections, ble_sniffer):
     bt_mon_log_file_name = (
@@ -4590,6 +4616,7 @@ def test_ble_dut_as_slave_and_master_240_bytes_rx_notification_tx_notification_C
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664487')
 def test_ble_dut_as_slave_and_master_200_bytes_tx_notification_C664487(ble_dut, ble_clients, sl_collections,
                                                                        ble_sniffer):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_200_bytes_tx_notification_C664487"
@@ -4754,6 +4781,7 @@ def test_ble_dut_as_slave_and_master_200_bytes_tx_notification_C664487(ble_dut, 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664489')
 def test_ble_dut_as_slave_and_master_200_bytes_rx_notification_C664489(ble_dut, ble_clients, ble_sniffer,sl_collections):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_200_bytes_rx_notification_C664489"
                             f"{int(time.time())}.log")
@@ -4908,6 +4936,7 @@ def test_ble_dut_as_slave_and_master_200_bytes_rx_notification_C664489(ble_dut, 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664491')
 def test_ble_dut_as_slave_and_master_200_bytes_tx_indication_C664491(
         ble_dut, ble_clients, ble_sniffer, sl_collections):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_200_bytes_tx_indication_C664491"
@@ -5073,6 +5102,7 @@ def test_ble_dut_as_slave_and_master_200_bytes_tx_indication_C664491(
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664493')
 def test_ble_dut_as_slave_and_master_200_bytes_write_without_response_C664493(
         ble_dut, ble_clients, ble_sniffer, sl_collections):
     bt_mon_log_file_name = (f"reports/test_ble_dut_as_slave_and_master_200_bytes_write_without_response_C664493"

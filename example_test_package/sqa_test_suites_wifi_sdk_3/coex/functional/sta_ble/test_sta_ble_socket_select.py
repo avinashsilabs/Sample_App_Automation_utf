@@ -112,6 +112,7 @@ class SocketDataTransfer:
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133576')
 def test_Coex_sdk_WLAN_TCP_socket_select_without_bit_BLE_scan_C133576(
     wifi_sniffer,
     wifi_access_point,
@@ -250,6 +251,7 @@ def test_Coex_sdk_WLAN_TCP_socket_select_without_bit_BLE_scan_C133576(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133577')
 def test_Coex_sdk_WLAN_TCP_socket_select_when_no_socket_BLE_scan_C133577(
     wifi_sniffer,
     wifi_access_point,
@@ -377,6 +379,7 @@ def test_Coex_sdk_WLAN_TCP_socket_select_when_no_socket_BLE_scan_C133577(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133578')
 def test_Coex_sdk_WLAN_TCP_socket_select_rx_BLE_master_C133578(
     wifi_sniffer,
     wifi_access_point,
@@ -556,6 +559,7 @@ def test_Coex_sdk_WLAN_TCP_socket_select_rx_BLE_master_C133578(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133579')
 def test_Coex_sdk_WLAN_TCP_socket_select_rx_BLE_scann_C133579(
     wifi_sniffer,
     wifi_access_point,
@@ -737,6 +741,7 @@ def test_Coex_sdk_WLAN_TCP_socket_select_rx_BLE_scann_C133579(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133580')
 def test_Coex_sdk_WLAN_TCP_async_socket_select_rx_BLE_scann_C133580(
     wifi_sniffer,
     wifi_access_point,
@@ -915,6 +920,7 @@ def test_Coex_sdk_WLAN_TCP_async_socket_select_rx_BLE_scann_C133580(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133581')
 def test_Coex_sdk_WLAN_TCP_sync_socket_select_threads_BLE_scann_C133581(
     wifi_sniffer,
     wifi_access_point,
@@ -1077,6 +1083,7 @@ def test_Coex_sdk_WLAN_TCP_sync_socket_select_threads_BLE_scann_C133581(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C133582')
 def test_Coex_sdk_socket_select_remote_terminate_BLE_scan_C133582(
     wifi_sniffer,
     wifi_access_point,
@@ -1262,6 +1269,7 @@ def test_Coex_sdk_socket_select_remote_terminate_BLE_scan_C133582(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780394')
 def test_Coex_sdk_WLAN_TCP_socket_select_when_no_socket_BLE_scan_SI_60ms_SW_20ms_C780394(
     wifi_sniffer,
     wifi_access_point,
@@ -1392,6 +1400,7 @@ def test_Coex_sdk_WLAN_TCP_socket_select_when_no_socket_BLE_scan_SI_60ms_SW_20ms
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780395')
 def test_Coex_sdk_WLAN_TCP_socket_select_when_no_socket_BLE_scan_SI_300ms_SW_100ms_C780395(
     wifi_sniffer,
     wifi_access_point,
@@ -1523,6 +1532,7 @@ def test_Coex_sdk_WLAN_TCP_socket_select_when_no_socket_BLE_scan_SI_300ms_SW_100
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780396')
 def test_Coex_sdk_WLAN_TCP_socket_select_when_no_socket_BLE_scan_SI_900ms_SW_300ms_C780396(
     wifi_sniffer,
     wifi_access_point,
@@ -1652,6 +1662,7 @@ def test_Coex_sdk_WLAN_TCP_socket_select_when_no_socket_BLE_scan_SI_900ms_SW_300
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780397')
 def test_Coex_sdk_WLAN_TCP_async_socket_select_rx_BLE_scan_SI_60ms_SW_20ms_C780397(
     wifi_sniffer,
     wifi_access_point,
@@ -1832,6 +1843,7 @@ def test_Coex_sdk_WLAN_TCP_async_socket_select_rx_BLE_scan_SI_60ms_SW_20ms_C7803
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780398')
 def test_Coex_sdk_WLAN_TCP_async_socket_select_rx_BLE_scan_SI_300ms_SW_100ms_C780398(
     wifi_sniffer,
     wifi_access_point,
@@ -2011,6 +2023,7 @@ def test_Coex_sdk_WLAN_TCP_async_socket_select_rx_BLE_scan_SI_300ms_SW_100ms_C78
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780399')
 def test_Coex_sdk_WLAN_TCP_async_socket_select_rx_BLE_scan_SI_900ms_SW_300ms_C780399(
     wifi_sniffer,
     wifi_access_point,
@@ -2190,6 +2203,7 @@ def test_Coex_sdk_WLAN_TCP_async_socket_select_rx_BLE_scan_SI_900ms_SW_300ms_C78
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780400')
 def test_Coex_sdk_WLAN_TCP_sync_socket_select_threads_BLE_scan_SI_60ms_SW_20ms_C780400(
     wifi_sniffer,
     wifi_access_point,
@@ -2355,6 +2369,7 @@ def test_Coex_sdk_WLAN_TCP_sync_socket_select_threads_BLE_scan_SI_60ms_SW_20ms_C
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780401')
 def test_Coex_sdk_WLAN_TCP_sync_socket_select_threads_BLE_scan_SI_300ms_SW_100ms_C780401(
     wifi_sniffer,
     wifi_access_point,
@@ -2519,6 +2534,7 @@ def test_Coex_sdk_WLAN_TCP_sync_socket_select_threads_BLE_scan_SI_300ms_SW_100ms
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780402')
 def test_Coex_sdk_WLAN_TCP_sync_socket_select_threads_BLE_scan_SI_900ms_SW_300ms_C780402(
     wifi_sniffer,
     wifi_access_point,

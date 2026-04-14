@@ -327,6 +327,7 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_fe
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148566')
 def test_wifi_sdk_websocket_default_buffer_size_c148566(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients, http_server):
@@ -389,6 +390,7 @@ def test_wifi_sdk_websocket_default_buffer_size_c148566(
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148567')
 def test_wifi_sdk_websocket_ssl_default_buffer_size_c148567(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients, http_server):
@@ -451,6 +453,7 @@ def test_wifi_sdk_websocket_ssl_default_buffer_size_c148567(
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148568')
 def test_wifi_sdk_websocket_ssl_max_buffer_size_c148568(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients, http_server):

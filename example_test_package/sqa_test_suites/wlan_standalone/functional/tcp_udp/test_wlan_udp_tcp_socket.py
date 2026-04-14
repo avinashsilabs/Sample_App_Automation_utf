@@ -175,6 +175,7 @@ class AccessPointApOnOff(ThreadBase):
         "client_socket_limit": 10,
     }
 )
+@pytest.mark.test_src_map_id('C19357')
 def test_socket_tcp_data_transfer_mss_c19357(wifi_access_point, wifi_dut, wifi_client, net_perf_client,
                                                 protocol):
     time_out = 10

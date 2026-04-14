@@ -1309,6 +1309,7 @@ def test_wifi_sdk_ipv4_change_notify_IPV6_C156972(firmware_loader, wifi_dut, wif
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C156963')
 def test_wifi_sdk_sim_tcp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA3_C156963(firmware_loader, wifi_dut, wifi_access_point,
                                                                        wifi_sniffer, sniffer_filter,
                                                                        sl_collections, request,
@@ -1380,6 +1381,7 @@ def test_wifi_sdk_sim_tcp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA3_C156963(firmware_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C156964')
 def test_wifi_sdk_sim_udp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156964(firmware_loader, wifi_dut, wifi_access_point,
                                                                        wifi_sniffer,
                                                                        sl_collections, request,
@@ -1456,6 +1458,7 @@ def test_wifi_sdk_sim_udp_tx_rx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156964(firmware_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C156965')
 def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(firmware_loader, wifi_dut, wifi_access_point,
                                                                            wifi_sniffer,
                                                                            sl_collections,
@@ -1607,6 +1610,7 @@ def test_wifi_sdk_sim_tcp_rx_udp_tx_ipv4_ipv6_stateful_dhcpv6_WPA2_C156965(firmw
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C119367')
 def test_wifi_sdk_ipv6_http_file_download_stateful_C119367(firmware_loader, wifi_dut,
                                                            wifi_access_point, wifi_sniffer,
                                                            sl_collections,
@@ -1668,6 +1672,7 @@ def test_wifi_sdk_ipv6_http_file_download_stateful_C119367(firmware_loader, wifi
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C119370')
 def test_wifi_sdk_ipv6_https_file_download_C119370(firmware_loader, wifi_dut,
                                                    wifi_access_point, wifi_sniffer,
                                                    sl_collections,
@@ -1724,6 +1729,7 @@ def test_wifi_sdk_ipv6_https_file_download_C119370(firmware_loader, wifi_dut,
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C119404')
 def test_wifi_sdk_ipv6_http_file_download_stateless_C119404(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer,
                                                             sl_collections,
                                                             utf_constants,
@@ -1780,6 +1786,7 @@ def test_wifi_sdk_ipv6_http_file_download_stateless_C119404(firmware_loader, wif
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C119405')
 def test_wifi_sdk_ipv6_https_file_download_C119405(firmware_loader, wifi_dut,
                                                    wifi_access_point, wifi_sniffer,
                                                    sl_collections,
@@ -1840,6 +1847,7 @@ def test_wifi_sdk_ipv6_https_file_download_C119405(firmware_loader, wifi_dut,
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C156968')
 def test_wifi_sdk_ipv6_http_dwnld_ipv4_fw_mqtt_stateless_C156968(firmware_loader, wifi_dut,
                                                                  wifi_access_point, wifi_sniffer,
                                                                  sl_collections,
@@ -1925,6 +1933,7 @@ def test_wifi_sdk_ipv6_http_dwnld_ipv4_fw_mqtt_stateless_C156968(firmware_loader
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C156967')
 def test_wifi_sdk_ipv4_https_dwnld_ipv6_fw_mqtt_statefull_C156967(firmware_loader, wifi_dut,
                                                                   wifi_access_point, wifi_sniffer,
                                                                   sl_collections,
@@ -2006,6 +2015,7 @@ def test_wifi_sdk_ipv4_https_dwnld_ipv6_fw_mqtt_statefull_C156967(firmware_loade
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C156969')
 def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_statefull_C156969(firmware_loader, wifi_dut,
                                                                   wifi_access_point, wifi_sniffer,
                                                                   sl_collections,
@@ -2085,6 +2095,7 @@ def test_wifi_sdk_ipv6_https_dwnld_ipv4_fw_mqtt_statefull_C156969(firmware_loade
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.mqtt_server("raspi_mosquitto_ipv6")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C119385')
 def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS0_C119385(firmware_loader, wifi_dut,
                                                                    wifi_access_point, wifi_sniffer,
                                                                    sl_collections,
@@ -2158,6 +2169,7 @@ def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS0_C119385(firmware_loader, wifi_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.mqtt_server("raspi_mosquitto_ipv6")
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC119387')
 def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS1_TC119387(firmware_loader, wifi_dut,
                                                            wifi_access_point, wifi_sniffer,
                                                            sl_collections,
@@ -2239,6 +2251,7 @@ def test_wifi_sdk_mqtt_on_ipv6_stateful_dhcp_QOS1_TC119387(firmware_loader, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls_ipv6")
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC119391')
 def test_wifi_sdk_mqtt_functionality_on_ipv6_stateful_dhcp_with_QOS1_TC119391(firmware_loader,
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, utf_constants,
         sniffer_filter, wifi_client):
@@ -2296,6 +2309,7 @@ def test_wifi_sdk_mqtt_functionality_on_ipv6_stateful_dhcp_with_QOS1_TC119391(fi
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('TC9717442197')
 def test_wifi_sdk_udp_socket_async_port_ipv6_622353(firmware_loader, wifi_dut, wifi_access_point,
                                                     wifi_sniffer,
                                                     sl_collections,
@@ -2356,6 +2370,7 @@ def test_wifi_sdk_udp_socket_async_port_ipv6_622353(firmware_loader, wifi_dut, w
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC1412953205')
 def test_wifi_sdk_udp_socket_async_port_ipv4_622354(firmware_loader, wifi_dut, wifi_access_point,
                                                     wifi_sniffer,
                                                     sl_collections,

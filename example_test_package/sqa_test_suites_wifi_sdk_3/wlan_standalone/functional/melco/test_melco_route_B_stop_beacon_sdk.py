@@ -225,6 +225,7 @@ def wifi_dut_marker(accesspoint=0, concurrent=0, DHCPv6Client=0, DHCPv6Server=0,
 )
 @pytest.mark.config("wifi_access_point", wifi={"channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557385')
 def test_wifi_sdk_stop_beacon_api_apmode_c557385(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants):
     """Verify STOP Beacon API Functionality in AP Mode"""
@@ -282,6 +283,7 @@ def test_wifi_sdk_stop_beacon_api_apmode_c557385(
 )
 @pytest.mark.config("wifi_access_point", wifi={"channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557386')
 def test_wifi_sdk_start_beacon_api_apmode_c557386(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -345,6 +347,7 @@ def test_wifi_sdk_start_beacon_api_apmode_c557386(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557387')
 def test_wifi_sdk_stop_beacon_api_concurrent_mode_c557387(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants):
     """Verify STOP Beacon API FunctionalityÂ  for AP Mode in Concurrent Mode"""
@@ -407,6 +410,7 @@ def test_wifi_sdk_stop_beacon_api_concurrent_mode_c557387(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557388')
 def test_wifi_sdk_start_beacon_api_concurrent_mode_c557388(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants):
     """Verify START Beacon API Functionality for AP Mode in Concurrent Mode"""
@@ -469,6 +473,7 @@ def test_wifi_sdk_start_beacon_api_concurrent_mode_c557388(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557389')
 def test_wifi_sdk_staut_and_stop_beacon_api_concurrent_mode_c557389(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants):
     """Verify the STAUT Connectivity while Giving STOP Beacon API in concurrent Mode"""
@@ -532,6 +537,7 @@ def test_wifi_sdk_staut_and_stop_beacon_api_concurrent_mode_c557389(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 8})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557390')
 def test_wifi_sdk_staut_and_stop_beacon_api_concurrent_mode_c557390(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants):
     """Verification of STAUT connectivity to 3rd party AP after Beacon STOP API in concurrent Mode"""

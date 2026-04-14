@@ -166,6 +166,7 @@ class WifiJoinThreadRssi(ThreadBase):
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881264')
 def test_wifi_sdk_sta_rssi_11g_in_channel_1_c881264(firmware_loader, wifi_dut, sl_collections, rf_attenuator,
                                                     utf_constants, remote_wiseconnect3):
     """Verify RSSI with WPA2 security in Channel 1"""
@@ -227,6 +228,7 @@ def test_wifi_sdk_sta_rssi_11g_in_channel_1_c881264(firmware_loader, wifi_dut, s
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881265')
 def test_wifi_sdk_sta_rssi_11g_in_channel_6_c881265(firmware_loader, wifi_dut, sl_collections, rf_attenuator,
                                                     remote_wiseconnect3, utf_constants):
     """Verify RSSI with WPA2 security in Channel 6"""
@@ -289,6 +291,7 @@ def test_wifi_sdk_sta_rssi_11g_in_channel_6_c881265(firmware_loader, wifi_dut, s
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881266')
 def test_wifi_sdk_sta_rssi_11g_in_channel_11_c881266(firmware_loader, wifi_dut, sl_collections, rf_attenuator,
                                                      remote_wiseconnect3, utf_constants):
     """Verify RSSI with WPA2 security in Channel 11"""
@@ -351,6 +354,7 @@ def test_wifi_sdk_sta_rssi_11g_in_channel_11_c881266(firmware_loader, wifi_dut, 
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881267')
 def test_wifi_sdk_sta_rssi_11b_in_channel_1_c881267(firmware_loader, wifi_dut, sl_collections, rf_attenuator,
                                                     utf_constants, remote_wiseconnect3):
     """Verify RSSI with WPA2 security in Channel 1"""
@@ -412,6 +416,7 @@ def test_wifi_sdk_sta_rssi_11b_in_channel_1_c881267(firmware_loader, wifi_dut, s
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881268')
 def test_wifi_sdk_sta_rssi_11b_in_channel_6_c881268(firmware_loader, wifi_dut, sl_collections, rf_attenuator,
                                                     remote_wiseconnect3, utf_constants):
     """Verify RSSI with WPA2 security in Channel 6"""
@@ -474,6 +479,7 @@ def test_wifi_sdk_sta_rssi_11b_in_channel_6_c881268(firmware_loader, wifi_dut, s
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881269')
 def test_wifi_sdk_sta_rssi_11b_in_channel_11_c881269(firmware_loader, wifi_dut, sl_collections, rf_attenuator,
                                                      remote_wiseconnect3, utf_constants):
     """Verify RSSI with WPA2 security in Channel 11"""
@@ -536,6 +542,7 @@ def test_wifi_sdk_sta_rssi_11b_in_channel_11_c881269(firmware_loader, wifi_dut, 
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881270')
 def test_wifi_sdk_sta_rssi_11n_in_channel_1_c881270(firmware_loader, wifi_dut, sl_collections, rf_attenuator,
                                                     utf_constants, remote_wiseconnect3):
     """Verify RSSI with WPA2 security in Channel 1"""
@@ -597,6 +604,7 @@ def test_wifi_sdk_sta_rssi_11n_in_channel_1_c881270(firmware_loader, wifi_dut, s
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881271')
 def test_wifi_sdk_sta_rssi_11n_in_channel_6_c881271(firmware_loader, wifi_dut, sl_collections, rf_attenuator,
                                                     remote_wiseconnect3, utf_constants):
     """Verify RSSI with WPA2 security in Channel 6"""
@@ -659,6 +667,7 @@ def test_wifi_sdk_sta_rssi_11n_in_channel_6_c881271(firmware_loader, wifi_dut, s
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881272')
 def test_wifi_sdk_sta_rssi_11n_in_channel_11_c881272(firmware_loader, wifi_dut, sl_collections, rf_attenuator,
                                                      remote_wiseconnect3, utf_constants):
     """Verify RSSI with WPA2 security in Channel 11"""
@@ -720,6 +729,7 @@ def test_wifi_sdk_sta_rssi_11n_in_channel_11_c881272(firmware_loader, wifi_dut, 
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881273')
 def test_wifi_sdk_sta_rssi_scan_in_channel_1_c881273(wifi_dut, sl_collections, rf_attenuator, remote_wiseconnect3,
                                                      utf_constants):
     """Verify RSSI with WPA2 security in Channel 11"""
@@ -793,6 +803,7 @@ def test_wifi_sdk_sta_rssi_scan_in_channel_1_c881273(wifi_dut, sl_collections, r
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881274')
 def test_wifi_sdk_sta_rssi_scan_in_channel_6_c881274(wifi_dut, sl_collections, rf_attenuator, remote_wiseconnect3,
                                                      utf_constants):
     """Verify RSSI with WPA2 security in Channel 11"""
@@ -866,6 +877,7 @@ def test_wifi_sdk_sta_rssi_scan_in_channel_6_c881274(wifi_dut, sl_collections, r
         "region_code": "us"
     },
 )
+@pytest.mark.test_src_map_id('C881275')
 def test_wifi_sdk_sta_rssi_scan_in_channel_11_c881275(wifi_dut, sl_collections, rf_attenuator, remote_wiseconnect3,
                                                      utf_constants):
     """Verify RSSI with WPA2 security in Channel 11"""

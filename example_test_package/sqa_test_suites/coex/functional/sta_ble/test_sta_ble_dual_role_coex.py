@@ -503,6 +503,7 @@ pytestmark = [pytest.mark.ble_client("raspi_ble_client"),
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133447')
 def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C133447(wifi_dut, wifi_sniffer,
                                                                                      wifi_access_point, wifi_client,
                                                                                      ble_clients, net_perf_client,
@@ -632,6 +633,7 @@ def test_wlan_data_transfer_after_ble_master_connection_along_with_advertise_C13
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133507')
 def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C133507(wifi_dut, ble_clients, wifi_access_point,
                                                                              wifi_client, wifi_sniffer, rs_helper,
                                                                              utf_constants):
@@ -749,6 +751,7 @@ def test_dual_role_verify_ble_master_first_and_slave_later_with_ping_C133507(wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133508')
 def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C133508(wifi_dut, ble_clients, wifi_access_point,
                                                                              wifi_client, wifi_sniffer, rs_helper,
                                                                              utf_constants):
@@ -863,6 +866,7 @@ def test_dual_role_verify_ble_slave_first_and_master_later_with_ping_C133508(wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133511')
 def test_dual_role_wlan_udp_rx_data_transfer_C133511(wifi_dut, wifi_sniffer, wifi_access_point, net_perf_client,
                                                      wifi_client, ble_clients, protocol, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -999,6 +1003,7 @@ def test_dual_role_wlan_udp_rx_data_transfer_C133511(wifi_dut, wifi_sniffer, wif
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C20349')
 def test_dual_role_verify_scan_join_and_data_transfer_functionality_of_dut_sta_when_ble_in_connection_C20349(wifi_dut,
                                                                                                              wifi_sniffer,
                                                                                                              wifi_access_point,
@@ -1119,6 +1124,7 @@ def test_dual_role_verify_scan_join_and_data_transfer_functionality_of_dut_sta_w
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C20332')
 def test_sta_ble_datatransfer_in_dualrole_C20332(wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client,
                                                  wifi_client, protocol, ble_clients, ble_client):
     logger().info("**************testcase : C20332*******************")
@@ -1201,6 +1207,7 @@ def test_sta_ble_datatransfer_in_dualrole_C20332(wifi_dut, wifi_access_point, wi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133509')
 def test_dual_role_verify_query_profiles_func_of_dut_when_wlan_is_in_connection_C133509(firmware_loader, wifi_dut,
                                                                                         wifi_sniffer, wifi_access_point,
                                                                                         rs_helper, ble_clients,

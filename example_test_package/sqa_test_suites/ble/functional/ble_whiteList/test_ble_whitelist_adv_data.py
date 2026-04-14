@@ -114,6 +114,7 @@ class BleScan(ThreadBase):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19951')
 def test_ble_whitelist_with_adv_data_index10_C19951(wifi_dut, ble_client):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
@@ -155,6 +156,7 @@ def test_ble_whitelist_with_adv_data_index10_C19951(wifi_dut, ble_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19953')
 def test_ble_whitelist_with_adv_data_index20_C19953(wifi_dut, ble_client):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
@@ -196,6 +198,7 @@ def test_ble_whitelist_with_adv_data_index20_C19953(wifi_dut, ble_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19954')
 def test_ble_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client):
     try:
         logger().info(f"\n\n**************Start ble on DUT**************\n\n")
@@ -255,6 +258,7 @@ def test_ble_whitelist_with_adv_data_index25_C19954(wifi_dut, ble_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19950')
 def test_diable_ble_whitelist_with_adv_data_C19950(wifi_dut, ble_client):
     try:
         logger().info(f"\n\n**************Start DUT**************\n\n")
@@ -296,6 +300,7 @@ def test_diable_ble_whitelist_with_adv_data_C19950(wifi_dut, ble_client):
         time.sleep(5)
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19955')
 def test_enable_and_disable_whitelist_for_100_iterations_c19955(wifi_dut, ble_clients):
         assert len(ble_clients) >= 2, f"minimum 2 Raspi devices needed"
         ble_client1 = ble_clients[1]
@@ -436,6 +441,7 @@ def test_enable_and_disable_whitelist_for_100_iterations_c19955(wifi_dut, ble_cl
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', "ble_stop_adv"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19841')
 def test_verify_ble_advertising_with_whitelist_filter_policy_0x01_C19841(ble_dut, ble_clients):
     assert len(ble_clients) >= 2, f"MINIMUM 2 RASPI DEVICES NEEDED"
     ble_client1 = ble_clients[0]
@@ -533,6 +539,7 @@ def test_verify_ble_advertising_with_whitelist_filter_policy_0x01_C19841(ble_dut
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', "ble_stop_adv"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19842')
 def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x02_C19842(ble_dut, ble_clients):
  with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_dut_master_remote_device_directed_connectable.logs_{int(time.time())}"):
@@ -629,6 +636,7 @@ def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x02_C19842(bl
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', "ble_stop_adv"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19843')
 def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x00_C19843(ble_dut, ble_clients):
     try:
         with BleLogs(start_collecting_logs=True,
@@ -748,6 +756,7 @@ def test_verify_ble_slave_connection_with_whitelist_filter_policy_0x00_C19843(bl
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', "ble_stop_adv"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19844')
 def test_ble_dut_slave_2_white_list_rd_1_non_white_list_rd_c19844(ble_dut, ble_clients):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_dut_master_remote_device_directed_connectable.logs_{int(time.time())}"):
@@ -845,6 +854,7 @@ def test_ble_dut_slave_2_white_list_rd_1_non_white_list_rd_c19844(ble_dut, ble_c
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19845')
 def test_verify_dut_ble_scanning_with_whitelist_device_C19845(ble_clients, ble_dut):
  with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_dut_master_remote_device_directed_connectable.logs_{int(time.time())}"):
@@ -925,6 +935,7 @@ def test_verify_dut_ble_scanning_with_whitelist_device_C19845(ble_clients, ble_d
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19846')
 def test_ble_dut_master_white_list_remote_device_c19846(ble_dut, ble_client, rs_helper_ble):
     try:
         with BleLogs(start_collecting_logs=True,
@@ -986,6 +997,7 @@ def test_ble_dut_master_white_list_remote_device_c19846(ble_dut, ble_client, rs_
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19949')
 def test_ble_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client):
     try:
         count = 0
@@ -1099,6 +1111,7 @@ def test_ble_whitelist_with_adv_data_index5_C19949(wifi_dut, ble_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19952')
 def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_clients):
     assert len(ble_clients) >= 2
     ble_client1 = ble_clients[0]
@@ -1245,6 +1258,7 @@ def test_ble_scan_whitelist_adv_data_index15_2Advertisers_C19952(wifi_dut, ble_c
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19956')
 def test_ble_scan_aggressive_interval_whitelist_adv_data_index5_C19956(firmware_loader, wifi_dut, ble_client, ble_clients):
     try:
         count = 0
@@ -1356,6 +1370,7 @@ def test_ble_scan_aggressive_interval_whitelist_adv_data_index5_C19956(firmware_
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19957')
 def test_ble_scan_aggressive_interval_whitelist_adv_data_2advertisers_index5_C19957(firmware_loader, wifi_dut, ble_client, ble_clients):
     assert len(ble_clients) >= 2
     ble_client1 = ble_clients[1]

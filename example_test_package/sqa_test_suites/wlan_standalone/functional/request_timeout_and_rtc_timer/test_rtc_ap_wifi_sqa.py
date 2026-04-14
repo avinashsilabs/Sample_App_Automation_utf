@@ -29,6 +29,7 @@ from utf.utils.time_measurer import TimeMeasurer
 @pytest.mark.parametrize("channel", [3])
 @pytest.mark.parametrize("tolerance_threshold", [[-1, 2]])
 # The test case checks whether the RTC timer functionality is working fine in Access point mode
+@pytest.mark.test_src_map_id('C19051')
 def test_wifi_set_get_rtc_c19051(wifi_sniffer, wifi_dut, wifi_client, channel, tolerance_threshold, logger, utf_constants):
     set_seconds = 30
     set_minutes = 6

@@ -135,6 +135,7 @@ class PassiveScanFunctionality:
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C551131')
 def test_wifi_zephyr_passive_scan_with_dwell_time_110ms_c551131(wifi_access_point, wifi_sniffer, wifi_dut, request,
                                                                 sniffer_filter, zephyr_wifi_collections):
     """
@@ -158,6 +159,7 @@ def test_wifi_zephyr_passive_scan_with_dwell_time_110ms_c551131(wifi_access_poin
     }
 )
 @pytest.mark.parametrize("dwell_time", [200, 400, 600, 800])
+@pytest.mark.test_src_map_id('C551133')
 def test_wifi_zephyr_passive_scan_for_diff_dwell_time_c551133(wifi_access_point, wifi_sniffer,
                                                               wifi_dut,
                                                               request, sniffer_filter, zephyr_wifi_collections,
@@ -184,6 +186,7 @@ def test_wifi_zephyr_passive_scan_for_diff_dwell_time_c551133(wifi_access_point,
     }
 )
 @pytest.mark.parametrize("dwell_time", [300, 500, 700])
+@pytest.mark.test_src_map_id('C551134')
 def test_wifi_zephyr_passive_scan_for_diff_dwell_time_c551134(wifi_access_point, wifi_sniffer, wifi_dut,
                                                               request, sniffer_filter, zephyr_wifi_collections,
                                                               dwell_time):
@@ -211,6 +214,7 @@ def test_wifi_zephyr_passive_scan_for_diff_dwell_time_c551134(wifi_access_point,
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C551132')
 def test_wifi_zephyr_passive_scan_max_dwell_time_1000ms_c551132(wifi_access_point, wifi_sniffer, wifi_dut, request,
                                                                 sniffer_filter, zephyr_wifi_collections):
     """
@@ -238,6 +242,7 @@ def test_wifi_zephyr_passive_scan_max_dwell_time_1000ms_c551132(wifi_access_poin
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C551135')
 def test_wifi_zephyr_passive_scan_func_probe_response_check_c551135(wifi_access_point, wifi_sniffer, wifi_dut, request,
                                                                     sniffer_filter, zephyr_wifi_collections):
     """
@@ -269,6 +274,7 @@ def test_wifi_zephyr_passive_scan_func_probe_response_check_c551135(wifi_access_
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
+@pytest.mark.test_src_map_id('C551136')
 def test_wifi_zephyr_passive_scan_with_dwell_time_1001ms_c551136(wifi_dut, zephyr_wifi_collections):
     """
     Negative Case : Verify Passive scan functionality by enabling Dwell time to 1001msec.
@@ -289,6 +295,7 @@ def test_wifi_zephyr_passive_scan_with_dwell_time_1001ms_c551136(wifi_dut, zephy
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C551140')
 def test_wifi_zephyr_passive_scan_connect_disconnect_30min_c551140(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                    request, sniffer_filter, zephyr_wifi_collections):
     """
@@ -323,6 +330,7 @@ def test_wifi_zephyr_passive_scan_connect_disconnect_30min_c551140(wifi_access_p
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C551147')
 def test_wifi_zephyr_passive_scan_and_active_scan_30min__c551147(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                  request, sniffer_filter, zephyr_wifi_collections):
     """
@@ -361,6 +369,7 @@ def test_wifi_zephyr_passive_scan_and_active_scan_30min__c551147(wifi_access_poi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C751132')
 def test_wifi_zephyr_passive_scan_default_dwell_time_in_all_channels_c751132(wifi_access_point, wifi_sniffer, wifi_dut,
                                                                              request,
                                                                              sniffer_filter, zephyr_wifi_collections):
@@ -389,6 +398,7 @@ def test_wifi_zephyr_passive_scan_default_dwell_time_in_all_channels_c751132(wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C751133')
 def test_wifi_zephyr_passive_scan_default_dwell_time_in_single_channel_c751133(wifi_access_point, wifi_sniffer,
                                                                                wifi_dut,
                                                                                request,
@@ -416,6 +426,7 @@ def test_wifi_zephyr_passive_scan_default_dwell_time_in_single_channel_c751133(w
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
+@pytest.mark.test_src_map_id('C751134')
 def test_wifi_zephyr_passive_scan_neg_band_5ghz_c751134(wifi_dut, zephyr_wifi_collections):
     """
     Negative Case : Verify Passive scan functionality by enabling Dwell time to 1001msec.
@@ -436,6 +447,7 @@ def test_wifi_zephyr_passive_scan_neg_band_5ghz_c751134(wifi_dut, zephyr_wifi_co
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # Verifies the scan functionality with the channel 1,6,11
+@pytest.mark.test_src_map_id('C751135')
 def test_wifi_zephyr_passive_scan_selective_channel_c751135(wifi_sniffer, wifi_dut, wifi_access_point, request,
                                                             sniffer_filter,
                                                             zephyr_wifi_collections):
@@ -490,6 +502,7 @@ def test_wifi_zephyr_passive_scan_selective_channel_c751135(wifi_sniffer, wifi_d
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
+@pytest.mark.test_src_map_id('C751136')
 def test_wifi_zephyr_passive_scan_neg_dwell_time_less_than_10sec_c751136(wifi_dut, zephyr_wifi_collections):
     """
     Negative Case : Verify Passive scan functionality by enabling Dwell time to 9 sec.

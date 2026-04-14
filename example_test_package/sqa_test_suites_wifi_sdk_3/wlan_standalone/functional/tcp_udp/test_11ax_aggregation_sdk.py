@@ -217,6 +217,7 @@ pytestmark = [
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0xc8', 6, "qos_voice_tx")])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148311')
 def test_tcp_data_tx_with_VO_c148311(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client,
                                      protocol, sl_collections, sniffer_filter, traffic, qos, filter_name):
     """ Verify whether DUT is sending TCP packets by aggregating in series of A-MPDU subframes when Access category of
@@ -245,6 +246,7 @@ def test_tcp_data_tx_with_VO_c148311(wifi_sniffer, net_perf_client, wifi_access_
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x80', 4, "qos_video_tx")])
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C148313')
 def test_tcp_data_tx_with_VI_c148313(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client,
                                      protocol, sl_collections, sniffer_filter, traffic, qos, filter_name):
     """ Verify whether DUT is sending TCP packets by aggregating in series of A-MPDU subframes when Access category of
@@ -272,6 +274,7 @@ def test_tcp_data_tx_with_VI_c148313(wifi_sniffer, net_perf_client, wifi_access_
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x20', 1, "qos_back_ground_tx")])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148314')
 def test_tcp_data_tx_with_BK_c148314(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client,
                                      protocol, sl_collections, sniffer_filter, traffic, qos, filter_name):
     """ Verify whether DUT is sending TCP packets by aggregating in series of A-MPDU subframes when Access category of
@@ -299,6 +302,7 @@ def test_tcp_data_tx_with_BK_c148314(wifi_sniffer, net_perf_client, wifi_access_
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x00', 0, "qos_best_effort_tx")])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148315')
 def test_tcp_data_tx_with_BE_c148315(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client,
                                      protocol, sl_collections, sniffer_filter, traffic, qos, filter_name):
     """ Verify whether DUT is sending TCP packets by aggregating in series of A-MPDU subframes when Access category of
@@ -323,6 +327,7 @@ def test_tcp_data_tx_with_BE_c148315(wifi_sniffer, net_perf_client, wifi_access_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148312')
 def test_ping_from_remote_to_dut_c148312(wifi_sniffer, wifi_access_point, wifi_dut, request, wifi_client,
                                          sl_collections, sniffer_filter):
     """ Verify whether DUT is able to send SMPDU when we do only single packet from remote PC """
@@ -374,6 +379,7 @@ def test_ping_from_remote_to_dut_c148312(wifi_sniffer, wifi_access_point, wifi_d
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0xc8', 6, "qos_voice_tx")])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148316')
 def test_udp_data_tx_with_VO_c148316(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client,
                                      protocol, sl_collections, sniffer_filter, traffic, qos, filter_name):
     """ Verify whether DUT is sending UDP packets by aggregating in series of A-MPDU subframes when Access category of
@@ -401,6 +407,7 @@ def test_udp_data_tx_with_VO_c148316(wifi_sniffer, net_perf_client, wifi_access_
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x80', 4, "qos_video_tx")])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148317')
 def test_udp_data_tx_with_VI_c148317(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client,
                                      protocol, sl_collections, sniffer_filter, traffic, qos, filter_name):
     """ Verify whether DUT is sending UDP packets by aggregating in series of A-MPDU subframes when Access category of
@@ -427,6 +434,7 @@ def test_udp_data_tx_with_VI_c148317(wifi_sniffer, net_perf_client, wifi_access_
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x00', 0, "qos_best_effort_tx")])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148318')
 def test_udp_data_tx_with_BE_c148318(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client,
                                      protocol, sl_collections, sniffer_filter, traffic, qos, filter_name):
     """ Verify whether DUT is sending UDP packets by aggregating in series of A-MPDU subframes when Access category of
@@ -453,6 +461,7 @@ def test_udp_data_tx_with_BE_c148318(wifi_sniffer, net_perf_client, wifi_access_
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.parametrize("traffic, qos, filter_name", [('0x20', 1, "qos_back_ground_tx")])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148319')
 def test_udp_data_tx_with_BK_c148319(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client,
                                      protocol, sl_collections, sniffer_filter, traffic, qos, filter_name):
     """ Verify whether DUT is sending UDP packets by aggregating in series of A-MPDU subframes when Access category of
@@ -478,6 +487,7 @@ def test_udp_data_tx_with_BK_c148319(wifi_sniffer, net_perf_client, wifi_access_
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148320')
 def test_udp_rx_check_block_ack_for_aggregated_frame_c148320(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                              request, wifi_client, protocol, sl_collections,
                                                              sniffer_filter):
@@ -544,6 +554,7 @@ def test_udp_rx_check_block_ack_for_aggregated_frame_c148320(wifi_sniffer, net_p
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148323')
 def test_dut_sending_mpdu_same_qos_cateqory_c148323(wifi_sniffer, wifi_access_point, wifi_dut, request, wifi_client,
                                                     sl_collections, sniffer_filter):
     """ To check whether DUT sending individual MPDU are of the same QoS access category """
@@ -605,6 +616,7 @@ def test_dut_sending_mpdu_same_qos_cateqory_c148323(wifi_sniffer, wifi_access_po
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148326')
 def test_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, wifi_access_point, wifi_dut, request, wifi_client,
                                                       sl_collections, sniffer_filter):
     """ To verify whether DUT is able to receive individual MPDUs are of the same QoS category """
@@ -669,6 +681,7 @@ def test_dut_receiving_mpdu_same_qos_cateqory_c148326(wifi_sniffer, wifi_access_
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0x20', 1)])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148322')
 def test_dut_send_mpdu_with_same_receiver_addr_c148322(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client, protocol, sl_collections,
         sniffer_filter, traffic, qos):
@@ -727,6 +740,7 @@ def test_dut_send_mpdu_with_same_receiver_addr_c148322(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0x00', 0)])
+@pytest.mark.test_src_map_id('C148324')
 def test_dut_receive_block_ack_after_ampdu_frames_c148324(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client, protocol, sl_collections,
         sniffer_filter, traffic, qos):
@@ -784,6 +798,7 @@ def test_dut_receive_block_ack_after_ampdu_frames_c148324(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("traffic, qos", [('0x80', 4)])
+@pytest.mark.test_src_map_id('C148325')
 def test_dut_duration_id_carrying_same_value_c148325(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, request, wifi_client, protocol, sl_collections,
         sniffer_filter, traffic, qos):

@@ -606,6 +606,7 @@ def service_discovery_on_dut(ble_dut, service_uid=None, char_uid=None):
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C662086')
 def test_dut_master_and_slave_tx_rx_notification_C662086(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """
@@ -819,6 +820,7 @@ def test_dut_master_and_slave_tx_rx_notification_C662086(ble_dut, remote_wisecon
 )
 @pytest.mark.check
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663031')
 def test_dut_master_and_slave_tx_rx_notification_C663031(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """
@@ -1036,6 +1038,7 @@ def test_dut_master_and_slave_tx_rx_notification_C663031(ble_dut, remote_wisecon
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C538065')
 def test_dut_master_and_slave_tx_rx_notification_C538065(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 1M
         """
@@ -2113,6 +2116,7 @@ def skip_test_dut_master_and_slave_tx_write_without_response_C663041(ble_dut, re
 )
 @pytest.mark.check
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663094')
 def test_dut_master_and_slave_tx_tx_notification_C663094(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """
@@ -2734,6 +2738,7 @@ def skip_test_dut_master_and_slave_tx_indication_C663095(ble_dut, remote_wisecon
 )
 @pytest.mark.check
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663035')
 def test_dut_master_and_slave_tx_indication_C663035(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx indications with DLE disabled and phy rate set to 1M
         """
@@ -3167,6 +3172,7 @@ def skip_test_dut_master_and_slave_tx_indication_C663036(ble_dut, remote_wisecon
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768424')
 def test_dut_master_and_slave_tx_rx_notification_C768424(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 1M
         """
@@ -3449,6 +3455,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768424(ble_dut, remote_wisecon
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768425')
 def test_dut_master_and_slave_tx_rx_notification_C768425(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 1M
         """
@@ -3729,6 +3736,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768425(ble_dut, remote_wisecon
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768426')
 def test_dut_master_and_slave_tx_rx_notification_C768426(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 1M
         """
@@ -4008,6 +4016,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768426(ble_dut, remote_wisecon
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768427')
 def test_dut_master_and_slave_tx_rx_notification_C768427(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 1M
         """
@@ -4288,6 +4297,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768427(ble_dut, remote_wisecon
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768428')
 def test_dut_master_and_slave_tx_rx_notification_C768428(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """
@@ -4568,6 +4578,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768428(ble_dut, remote_wisecon
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768429')
 def test_dut_master_and_slave_tx_rx_notification_C768429(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """
@@ -4843,6 +4854,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768429(ble_dut, remote_wisecon
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C768430')
 def test_dut_master_and_slave_tx_rx_notification_C768430(ble_dut, remote_wiseconnect3, remote_wiseconnect3s, sl_collections, ble_sniffer):
     """ Verify the BLE AE DUAL Role(1M+1S) connection and tx/rx notifications with DLE disabled and phy rate set to 2M
         """

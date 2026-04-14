@@ -112,6 +112,7 @@ class power_number_output():
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
        },
 )
+@pytest.mark.test_src_map_id('C20586')
 def test_bt_per_GFSK_HP_RX_C20586(bt_dut, ble_client, power_meter):
     pkt_len_1 = 339
     pkt_type_1 = 15
@@ -218,6 +219,7 @@ def test_bt_per_GFSK_HP_RX_C20586(bt_dut, ble_client, power_meter):
        },
 )
 
+@pytest.mark.test_src_map_id('C20587')
 def test_bt_per_EDR_RX_C20587(bt_dut, ble_client, power_meter):
     pkt_len_1 = 679
     pkt_type_1 = 14

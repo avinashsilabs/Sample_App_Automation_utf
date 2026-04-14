@@ -390,6 +390,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0):
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20143')
 def test_wifi_sdk_ble_conn_wlan_scan_provisioning_C20143(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify BLE connection and WLAN scan using STA+BLE provisioning Application"""
@@ -423,6 +424,7 @@ def test_wifi_sdk_ble_conn_wlan_scan_provisioning_C20143(
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20144')
 def test_wifi_sdk_ble_conn_disconn_along_wlan_scan_C20144(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify BLE connect and disconnect with DUT along with WLAN scan"""
@@ -458,6 +460,7 @@ def test_wifi_sdk_ble_conn_disconn_along_wlan_scan_C20144(
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C20145')
 def test_wifi_sdk_ble_conn_along_wlan_conn_C20145(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify BLE and WLAN connection using STA+BLE provisioning app by configuring Maximum BLE Conn interval"""
@@ -495,6 +498,7 @@ def test_wifi_sdk_ble_conn_along_wlan_conn_C20145(
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20146')
 def test_wifi_sdk_ble_conn_and_firmware_version_C20146(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify Firmware version of DUT after BLE connection"""
@@ -529,6 +533,7 @@ def test_wifi_sdk_ble_conn_and_firmware_version_C20146(
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20147')
 def test_wifi_sdk_ble_conn_along_wrong_psk_C20147(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify wifi scan and connect with AP using wrong PSK while BLE is in connected state"""
@@ -564,6 +569,7 @@ def test_wifi_sdk_ble_conn_along_wrong_psk_C20147(
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'thisisableprovisioningtestplannn'})
+@pytest.mark.test_src_map_id('C20148')
 def test_wifi_sdk_ble_conn_and_wifi_conn_with_32_bytes_ssid_C20148(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify Wifi connection with 32 bytes SSID AP  while BLE is in connected state"""
@@ -600,6 +606,7 @@ def test_wifi_sdk_ble_conn_and_wifi_conn_with_32_bytes_ssid_C20148(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"passphrase": 'thisiswifibleprovisioningtestplanthisisableprovisioningtestplan'})
+@pytest.mark.test_src_map_id('C20149')
 def test_wifi_sdk_ble_conn_and_wifi_conn_with_63_bytes_psk_C20149(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify Wifi connection with 63 bytes PSK AP while BLE is in the connected state by configuring
@@ -635,6 +642,7 @@ def test_wifi_sdk_ble_conn_and_wifi_conn_with_63_bytes_psk_C20149(
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.test_src_map_id('C20152')
 def test_wifi_sdk_ble_conn_and_verify_ssid_security_provisioning_C20152(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify the SSID, Security_Type and max scan list of AP while BLE is in connected state"""
@@ -668,6 +676,7 @@ def test_wifi_sdk_ble_conn_and_verify_ssid_security_provisioning_C20152(
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20158')
 def test_wifi_sdk_ble_conn_20ms_adv_wlan_scan_provisioning_C20158(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify WLAN scan by enabling BLE 20ms advertising interval on DUT"""
@@ -701,6 +710,7 @@ def test_wifi_sdk_ble_conn_20ms_adv_wlan_scan_provisioning_C20158(
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20159')
 def test_wifi_sdk_ble_conn_500ms_adv_wlan_scan_provisioning_C20159(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify WLAN scan by enabling BLE 500ms advertising interval on DUT"""
@@ -735,6 +745,7 @@ def test_wifi_sdk_ble_conn_500ms_adv_wlan_scan_provisioning_C20159(
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20160')
 def test_wifi_sdk_ble_conn_250ms_adv_wlan_scan_provisioning_C20160(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify wifi scan by enabling 250ms advertising interval on DUT"""
@@ -774,6 +785,7 @@ def test_wifi_sdk_ble_conn_250ms_adv_wlan_scan_provisioning_C20160(
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
+@pytest.mark.test_src_map_id('C201159')
 def test_wifi_sdk_ble_conn_along_wlan_conn_open_security_C201159(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify WLAN connection to the AP with Open security using STA+BLE provisioning Application"""
@@ -809,6 +821,7 @@ def test_wifi_sdk_ble_conn_along_wlan_conn_open_security_C201159(
 @wifi_dut_marker(IEEE802_11W=Si91xExtCustomFeatureBitMap.IEEE802_11W, memory_config=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C661503')
 def test_wifi_sdk_ble_conn_along_wlan_conn_WPA3_security_C661503(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify WLAN connection to the AP with WPA3 security using STA+BLE provisioning Application"""
@@ -845,6 +858,7 @@ def test_wifi_sdk_ble_conn_along_wlan_conn_WPA3_security_C661503(
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPAWPA2MixedMode', "cipher": "TKIP_AES", "passphrase": '123456789'})
+@pytest.mark.test_src_map_id('C201275')
 def test_wifi_sdk_ble_conn_along_wlan_conn_WPA_security_C201275(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants):
     """Verify WLAN connection to the AP with WPA security using STA+BLE provisioning Application"""

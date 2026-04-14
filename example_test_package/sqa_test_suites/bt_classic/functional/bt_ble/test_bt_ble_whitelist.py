@@ -477,6 +477,7 @@ pytestmark = [pytest.mark.bt_client("raspi_bt_client"), pytest.mark.ble_client("
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19993')
 def test_bt_ble_connection_with_bt_ble_as_slave_C19993(firmware_loader, wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -524,6 +525,7 @@ def test_bt_ble_connection_with_bt_ble_as_slave_C19993(firmware_loader, wifi_dut
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19994')
 def test_bt_ble_connection_with_bt_ble_as_master_C19994(firmware_loader, wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -569,6 +571,7 @@ def test_bt_ble_connection_with_bt_ble_as_master_C19994(firmware_loader, wifi_du
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19995')
 def test_bt_ble_connection_with_ble_as_dual_role_C19995(firmware_loader, wifi_dut, bt_client, ble_clients):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -630,6 +633,7 @@ def test_bt_ble_connection_with_ble_as_dual_role_C19995(firmware_loader, wifi_du
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19996')
 def test_bt_ble_connection_stability_C19996(firmware_loader, wifi_dut, bt_client, ble_clients):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -688,6 +692,7 @@ def test_bt_ble_connection_stability_C19996(firmware_loader, wifi_dut, bt_client
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19997')
 def test_BT_SPP_Tx_Rx_BLE_connectivity_C19997(firmware_loader, wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -749,6 +754,7 @@ def test_BT_SPP_Tx_Rx_BLE_connectivity_C19997(firmware_loader, wifi_dut, bt_clie
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19998')
 def test_bt_ble_connection_with_dual_mode_functionality_C19998(firmware_loader, wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -798,6 +804,7 @@ def test_bt_ble_connection_with_dual_mode_functionality_C19998(firmware_loader, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19999')
 def test_BT_connect_and_disconnect_BLE_is_in_connection_C19999(firmware_loader, wifi_dut, bt_client, utf_constants, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -853,6 +860,7 @@ def test_BT_connect_and_disconnect_BLE_is_in_connection_C19999(firmware_loader, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20000')
 def test_bt_ble_connection_with_ble_connect_disconnect_C20000(firmware_loader, wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -906,6 +914,7 @@ def test_bt_ble_connection_with_ble_connect_disconnect_C20000(firmware_loader, w
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20001')
 def test_bt_ble_connection_with_powersave_mode2_C20001(firmware_loader, wifi_dut, bt_client, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -953,6 +962,7 @@ def test_bt_ble_connection_with_powersave_mode2_C20001(firmware_loader, wifi_dut
 @pytest.mark.end_state("wifi_dut",
                        wifi=["bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20002')
 def test_dual_role_functionality_of_BLE_BT_in_connection_C20002(firmware_loader, wifi_dut, bt_client, ble_clients):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")

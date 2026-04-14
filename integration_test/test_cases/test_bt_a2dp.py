@@ -155,6 +155,7 @@ def test_bt_avrcp_dut_as_src(firmware_loader, wifi_dut, wifi_access_point, bt_cl
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "bt_disconnect"])
+@pytest.mark.test_src_map_id('TC0218620551')
 def test_bt_a2dp_as_source(firmware_loader, wifi_dut, wifi_access_point, bt_client, logger):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -202,6 +203,7 @@ def test_bt_a2dp_as_source(firmware_loader, wifi_dut, wifi_access_point, bt_clie
     logger.info(f"Scan in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC7546976556')
 def test_bt_a2dp_as_source_with_bt_clients(bt_clients, logger):
     capture_file_path = "/app/reports/a2dp_capture_test_bt_a2dp_dut_as_src.wav"
     with TimeMeasurer() as t:

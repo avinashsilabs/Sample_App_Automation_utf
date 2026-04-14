@@ -295,6 +295,7 @@ pytestmark = [
 ]
 
 #test case to verify positive case GATT notification without DLE 20bytes tx, DUT is performing BLE GATT server
+@pytest.mark.test_src_map_id('C91289')
 def test_gatt_notifcations_without_DLE_20byte_C91289(ble_dut, ble_client, rs_helper_ble):
     service_uuid = "0000180d-0000-1000-8000-00805f9b34fb" #HeartRate Service
     char_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
@@ -333,6 +334,7 @@ def test_gatt_notifcations_without_DLE_20byte_C91289(ble_dut, ble_client, rs_hel
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
 #test case to verify positive case GATT notification with DLE 230 bytes tx, DUT is performing BLE GATT server
+@pytest.mark.test_src_map_id('C91290')
 def test_gatt_notifcations_with_DLE_230byte_C91290(ble_dut, ble_client, rs_helper_ble):
     service_uuid = "0000180d-0000-1000-8000-00805f9b34fb" #HeartRate Service
     char_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
@@ -370,6 +372,7 @@ def test_gatt_notifcations_with_DLE_230byte_C91290(ble_dut, ble_client, rs_helpe
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
 #test case to verify positive case GATT notification with DLE 230 bytes tx, DUT is performing BLE GATT server
+@pytest.mark.test_src_map_id('C91291')
 def test_gatt_notifcations_with_DLE_230byte_C91291(ble_dut, ble_client, rs_helper_ble):
     service_uuid = "0000180d-0000-1000-8000-00805f9b34fb" #HeartRate Service
     char_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
@@ -407,6 +410,7 @@ def test_gatt_notifcations_with_DLE_230byte_C91291(ble_dut, ble_client, rs_helpe
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
 #test case to verify positive case GATT notification without DLE 20bytes tx with other procedures, DUT is performing BLE GATT server
+@pytest.mark.test_src_map_id('C91293')
 def test_gatt_notifcations_with_other_procedure_20byte_C91293(ble_dut, ble_client, rs_helper_ble):
     service_uuid = "0000180d-0000-1000-8000-00805f9b34fb" #HeartRate Service
     char_uuid = "0000180f-0000-1000-8000-00805f9b34fb"
@@ -464,6 +468,7 @@ def test_gatt_notifcations_with_other_procedure_20byte_C91293(ble_dut, ble_clien
     finally:
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
+@pytest.mark.test_src_map_id('C91306')
 def test_negative_write_C91306(ble_dut, ble_client, rs_helper_ble):
     #test case to verify negative scinario of performing write operaion on read only characteristic
     try:
@@ -511,6 +516,7 @@ def test_negative_write_C91306(ble_dut, ble_client, rs_helper_ble):
     finally:
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
+@pytest.mark.test_src_map_id('C91301')
 def test_gatt_notfy_with_unknown_service_C91301(ble_dut, ble_client, rs_helper_ble):
     #test case to verify 20 bytes notification tx with unknown service
     service_uuid = "0000aabb-0000-1000-8000-00805f9b34fb" #Unknown Service
@@ -553,6 +559,7 @@ def test_gatt_notfy_with_unknown_service_C91301(ble_dut, ble_client, rs_helper_b
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
 @pytest.mark.skip #test case is not yet announced as ble_set_att_cmd is not working https://jira.silabs.com/browse/WIFI_BT_UTFHELP-1879
+@pytest.mark.test_src_map_id('C91286')
 def test_write_wr_20_byte_buffer_0_C91286(ble_dut, ble_client, rs_helper_ble):
     #Test case to verify write without response operaion on DUT with 20 bytes of data and buffer mode 0 (Without DLE)
     try:
@@ -584,6 +591,7 @@ def test_write_wr_20_byte_buffer_0_C91286(ble_dut, ble_client, rs_helper_ble):
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
 @pytest.mark.skip #test case is not yet announced as ble_set_att_cmd is not working https://jira.silabs.com/browse/WIFI_BT_UTFHELP-1879
+@pytest.mark.test_src_map_id('C91287')
 def test_write_wr_230_byte_buffer_1_C91287(ble_dut, ble_client, rs_helper_ble):
     #Test case to verify write without response operaion on DUT with 230 bytes of data and buffer mode 1 (DLE)
     try:

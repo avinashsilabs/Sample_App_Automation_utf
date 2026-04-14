@@ -325,6 +325,7 @@ class WifiJoinThread(ThreadBase):
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C20754')
 def test_wlan_sdk_ap_alone_with_480K_tcp_rx_c20754(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                    net_perf_client, protocol, utf_constants, request, sl_collections,
                                                    dtim_period, channel):
@@ -377,6 +378,7 @@ def test_wlan_sdk_ap_alone_with_480K_tcp_rx_c20754(firmware_loader, wifi_sniffer
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C20755')
 def test_wlan_sdk_ap_alone_with_480K_udp_rx_c20755(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                    net_perf_client, protocol, utf_constants, request, sl_collections,
                                                    dtim_period, channel):
@@ -429,6 +431,7 @@ def test_wlan_sdk_ap_alone_with_480K_udp_rx_c20755(firmware_loader, wifi_sniffer
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C20752')
 def test_wlan_sdk_ap_alone_with_480K_tcp_tx_c20752(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                    net_perf_client, protocol, utf_constants, request, sl_collections,
                                                    channel, dtim_period):
@@ -481,6 +484,7 @@ def test_wlan_sdk_ap_alone_with_480K_tcp_tx_c20752(firmware_loader, wifi_sniffer
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C20753')
 def test_wlan_sdk_ap_alone_with_480K_udp_tx_c20753(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                    net_perf_client, protocol, utf_constants, request, sl_collections,
                                                    channel, dtim_period):
@@ -533,6 +537,7 @@ def test_wlan_sdk_ap_alone_with_480K_udp_tx_c20753(firmware_loader, wifi_sniffer
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C532965')
 def test_wlan_sdk_ap_alone_with_416K_tcp_rx_C532965(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                     net_perf_client, protocol, utf_constants, request, sl_collections,
                                                     dtim_period, channel):
@@ -585,6 +590,7 @@ def test_wlan_sdk_ap_alone_with_416K_tcp_rx_C532965(firmware_loader, wifi_sniffe
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C532963')
 def test_wlan_sdk_ap_alone_with_416K_udp_rx_C532963(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                     net_perf_client, protocol, utf_constants, request, sl_collections,
                                                     dtim_period, channel):
@@ -637,6 +643,7 @@ def test_wlan_sdk_ap_alone_with_416K_udp_rx_C532963(firmware_loader, wifi_sniffe
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C532964')
 def test_wlan_sdk_ap_alone_with_416K__tcp_tx_C532964(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                      net_perf_client, protocol, utf_constants, request, sl_collections,
                                                      channel, dtim_period):
@@ -689,6 +696,7 @@ def test_wlan_sdk_ap_alone_with_416K__tcp_tx_C532964(firmware_loader, wifi_sniff
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C532962')
 def test_wlan_sdk_ap_alone_with_416K_udp_tx_C532962(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                     net_perf_client, protocol, utf_constants, request, sl_collections,
                                                     channel, dtim_period):
@@ -741,6 +749,7 @@ def test_wlan_sdk_ap_alone_with_416K_udp_tx_C532962(firmware_loader, wifi_sniffe
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C532969')
 def test_wlan_sdk_ap_alone_with_320K_tcp_rx_C532969(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                     net_perf_client, protocol, utf_constants, request, sl_collections,
                                                     dtim_period, channel):
@@ -793,6 +802,7 @@ def test_wlan_sdk_ap_alone_with_320K_tcp_rx_C532969(firmware_loader, wifi_sniffe
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C532967')
 def test_wlan_sdk_ap_alone_with_320K_udp_rx_C532967(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                     net_perf_client, protocol, utf_constants, request, sl_collections,
                                                     dtim_period, channel):
@@ -845,6 +855,7 @@ def test_wlan_sdk_ap_alone_with_320K_udp_rx_C532967(firmware_loader, wifi_sniffe
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C532968')
 def test_wlan_sdk_ap_alone_with_320K_tcp_tx_C532968(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                     net_perf_client, protocol, utf_constants, request, sl_collections,
                                                     channel, dtim_period):
@@ -897,6 +908,7 @@ def test_wlan_sdk_ap_alone_with_320K_tcp_tx_C532968(firmware_loader, wifi_sniffe
         "interface": "wlan0",
     },
 )
+@pytest.mark.test_src_map_id('C532966')
 def test_wlan_sdk_ap_alone_with_320Kudp_tx_C532966(firmware_loader, wifi_sniffer, wifi_client, wifi_dut, power_meter,
                                                    net_perf_client, protocol, utf_constants, request, sl_collections,
                                                    channel, dtim_period):

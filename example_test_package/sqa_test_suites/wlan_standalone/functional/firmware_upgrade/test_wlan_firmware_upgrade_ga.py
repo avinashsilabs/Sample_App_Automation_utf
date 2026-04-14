@@ -96,6 +96,7 @@ class ApWirelessOff(ThreadBase):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19376')
 def test_fw_upgrade_UART_C19376(wifi_sniffer, wifi_dut, wifi_access_point, wiseconnect_web):
 
     testcase = "test_fw_upgrade_UART_C19376"
@@ -149,6 +150,7 @@ def test_fw_upgrade_UART_C19376(wifi_sniffer, wifi_dut, wifi_access_point, wisec
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"]) #,"load_default_fw"])
+@pytest.mark.test_src_map_id('C19377')
 def test_fw_upgrade_wireless_SPI_C19377(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
 
     testcase = "test_fw_upgrade_wireless_SPI_C19377"
@@ -207,6 +209,7 @@ def test_fw_upgrade_wireless_SPI_C19377(wifi_sniffer,wifi_dut, wifi_access_point
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19379')
 def test_fw_upgrade_wireless_in_rejoin_C19379(wifi_sniffer, wifi_dut, wifi_access_point, wiseconnect_web):
 
     testcase = "test_fw_upgrade_wireless_in_rejoin_C19379"
@@ -270,6 +273,7 @@ def test_fw_upgrade_wireless_in_rejoin_C19379(wifi_sniffer, wifi_dut, wifi_acces
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19380')
 def test_fw_upgrade_wireless_rejoin_failure_C19380(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -341,6 +345,7 @@ def test_fw_upgrade_wireless_rejoin_failure_C19380(wifi_sniffer,wifi_dut, wifi_a
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19381')
 def test_fw_upgrade_wireless_HTTPS_C19381(wifi_sniffer,wifi_dut, wifi_access_point, wiseconnect_web):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -397,6 +402,7 @@ def test_fw_upgrade_wireless_HTTPS_C19381(wifi_sniffer,wifi_dut, wifi_access_poi
 @pytest.mark.wifi_client("raspi_wifi")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config("wifi_client", wifi={"interface": "wlan0"})
+@pytest.mark.test_src_map_id('C19378')
 def test_Wireless_fw_upgradein_AP_mode_C19378(wifi_sniffer, wifi_dut, wifi_client,wiseconnect_web):
 
     testcase = "test_Wireless_fw_upgradein_AP_mode_C19378"
@@ -449,6 +455,7 @@ def test_Wireless_fw_upgradein_AP_mode_C19378(wifi_sniffer, wifi_dut, wifi_clien
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19382')
 def test_While_upgrading_Fw_close_TCP_connection_C19382(wifi_sniffer,wifi_dut,wifi_access_point, wiseconnect_web,wifi_client, net_perf_client,protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(

@@ -83,6 +83,7 @@ def ping_to_host(wifi_client, device_ip):
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C34507')
 def test_scan_c34503_c34504_c34505_c34507(wifi_sniffer, wifi_dut, wifi_access_point,utf_constants):
     logger().info(f"********this test_case to validate DNS_SERVER WITH DHCP********")
     validation = True
@@ -162,6 +163,7 @@ def test_scan_c34503_c34504_c34505_c34507(wifi_sniffer, wifi_dut, wifi_access_po
 
     }
 )
+@pytest.mark.test_src_map_id('C34512')
 def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     validation = True
@@ -254,6 +256,7 @@ def test_tcp_data_tx_with_wpa3_c34512(wifi_sniffer, net_perf_client, wifi_access
 
     }
 )
+@pytest.mark.test_src_map_id('C34514')
 def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     validation = True
@@ -346,6 +349,7 @@ def test_udp_data_tx_with_wpa3_c34514(wifi_sniffer, net_perf_client, wifi_access
 
     }
 )
+@pytest.mark.test_src_map_id('C34513')
 def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     validation = True
@@ -443,6 +447,7 @@ def test_tcp_data_rx_with_wpa3_c34513(wifi_sniffer, net_perf_client, wifi_access
 
     }
 )
+@pytest.mark.test_src_map_id('C34515')
 def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                       protocol):
     validation = True
@@ -541,6 +546,7 @@ def test_udp_data_rx_with_wpa3_c34515(wifi_sniffer, net_perf_client, wifi_access
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 36, "security": 'WPA3'})
+@pytest.mark.test_src_map_id('C34516')
 def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -634,6 +640,7 @@ def test_tcp_data_tx_with_wpa3_5g_c34516(wifi_sniffer, net_perf_client, wifi_acc
     }
 )
 @pytest.mark.wifi_5g
+@pytest.mark.test_src_map_id('C34518')
 def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -726,6 +733,7 @@ def test_udp_data_tx_with_wpa3_5g_c34518(wifi_sniffer, net_perf_client, wifi_acc
     }
 )
 @pytest.mark.wifi_5g
+@pytest.mark.test_src_map_id('C34517')
 def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -826,6 +834,7 @@ def test_tcp_data_rx_with_wpa3_5g_c34517(wifi_sniffer, net_perf_client, wifi_acc
     }
 )
 @pytest.mark.wifi_5g
+@pytest.mark.test_src_map_id('C34519')
 def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client,
                                          protocol):
     validation = True
@@ -921,6 +930,7 @@ def test_udp_data_rx_with_wpa3_5g_c34519(wifi_sniffer, net_perf_client, wifi_acc
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C34508')
 def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, utf_constants):
     validation = True
     iter_count = 2
@@ -993,6 +1003,7 @@ def test_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, net_perf_client, wifi_acce
 
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C34511')
 def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, utf_constants):
     testcase = "wpa3_BG_scan_C34511"
     rejoin_max = 10
@@ -1112,6 +1123,7 @@ def test_bgscan_specific_chal_wpa3_C34511(wifi_sniffer, net_perf_client, wifi_ac
 
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C34510')
 def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
     testcase = "test_bgscan_in_all_channel_wpa3_C34510"
     rejoin_max = 10
@@ -1227,6 +1239,7 @@ def test_bgscan_in_all_channel_wpa3_C34510(wifi_sniffer, wifi_access_point, wifi
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C34509')
 def test_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     validation = True
     ping_count = utf_constants.get("ping_count")

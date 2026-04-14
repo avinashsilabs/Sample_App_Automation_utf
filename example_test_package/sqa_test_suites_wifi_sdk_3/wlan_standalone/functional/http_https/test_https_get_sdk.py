@@ -291,6 +291,7 @@ class HttpDeInit(ThreadBase):
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19209')
 def test_wifi_sdk_https_get_functionality_c19209(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                                  utf_constants, wifi_sniffer, sl_collections):
     """
@@ -354,6 +355,7 @@ def test_wifi_sdk_https_get_functionality_c19209(http_server, wifi_dut, http_cli
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19204')
 def test_wifi_sdk_https_get_functionality_feature_not_enabled_dut_c19204(http_server, wifi_dut, http_client,
                                                                          wifi_access_point, index_path, utf_constants,
                                                                          wifi_sniffer, sl_collections):
@@ -403,6 +405,7 @@ def test_wifi_sdk_https_get_functionality_feature_not_enabled_dut_c19204(http_se
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19203')
 def test_wifi_sdk_https_get_functionality_not_loading_cert_c19203(http_server, wifi_dut, http_client, wifi_access_point,
                                                                   index_path, utf_constants, wifi_sniffer,
                                                                   sl_collections):
@@ -453,6 +456,7 @@ def test_wifi_sdk_https_get_functionality_not_loading_cert_c19203(http_server, w
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19211')
 def test_wifi_sdk_https_get_with_wrong_certificate_c19211(http_server, wifi_dut, http_client, wifi_access_point,
                                                           index_path, utf_constants, wifi_sniffer, sl_collections):
     """
@@ -501,6 +505,7 @@ def test_wifi_sdk_https_get_with_wrong_certificate_c19211(http_server, wifi_dut,
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC6232453045')
 def test_wifi_sdk_https_get_functionality_port10_c19207_case1(http_server, wifi_dut, http_client, wifi_access_point,
                                                               index_path, utf_constants, wifi_sniffer, sl_collections):
     """
@@ -559,6 +564,7 @@ def test_wifi_sdk_https_get_functionality_port10_c19207_case1(http_server, wifi_
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC8336928051')
 def test_wifi_sdk_https_get_functionality_port200_c19207_case2(http_server, wifi_dut, http_client, wifi_access_point,
                                                                index_path, utf_constants, wifi_sniffer, sl_collections):
     """
@@ -617,6 +623,7 @@ def test_wifi_sdk_https_get_functionality_port200_c19207_case2(http_server, wifi
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC7153442057')
 def test_wifi_sdk_https_get_functionality_port2000_c19207_case3(http_server, wifi_dut, http_client, wifi_access_point,
                                                                 index_path, utf_constants, wifi_sniffer,
                                                                 sl_collections):
@@ -676,6 +683,7 @@ def test_wifi_sdk_https_get_functionality_port2000_c19207_case3(http_server, wif
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC9116527063')
 def test_wifi_sdk_https_get_functionality_port20000_c19207_case4(http_server, wifi_dut, http_client, wifi_access_point,
                                                                  index_path, utf_constants, wifi_sniffer,
                                                                  sl_collections):
@@ -735,6 +743,7 @@ def test_wifi_sdk_https_get_functionality_port20000_c19207_case4(http_server, wi
 @pytest.mark.parametrize("index_path", {"100MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19206')
 def test_wifi_sdk_https_get_functionality_send_100mb_file_from_peer_c19206(http_server, wifi_dut, http_client,
                                                                            wifi_access_point, index_path, utf_constants,
                                                                            wifi_sniffer, sl_collections):
@@ -798,6 +807,7 @@ def test_wifi_sdk_https_get_functionality_send_100mb_file_from_peer_c19206(http_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19210')
 def test_wifi_sdk_http_get_when_httpserver_does_not_ssl_handshake_c19210(wifi_sniffer, http_server, wifi_dut,
                                                                          wifi_access_point, index_path, sl_collections):
     """
@@ -846,6 +856,7 @@ def test_wifi_sdk_http_get_when_httpserver_does_not_ssl_handshake_c19210(wifi_sn
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19212')
 def test_wifi_sdk_http_get_functionality_non_existing_server_c19212(http_server, wifi_dut, http_client, index_path,
                                                                     wifi_access_point, utf_constants, wifi_sniffer,
                                                                     sl_collections):
@@ -884,6 +895,7 @@ def test_wifi_sdk_http_get_functionality_non_existing_server_c19212(http_server,
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19216')
 def test_wifi_sdk_http_get_with_host_name_c19216(http_server, wifi_sniffer, http_client, wifi_dut, wifi_access_point,
                                                  index_path, utf_constants, sl_collections, sniffer_filter):
     """
@@ -948,6 +960,7 @@ def test_wifi_sdk_http_get_with_host_name_c19216(http_server, wifi_sniffer, http
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476944')
 def test_wifi_sdk_https_get_functionality_with_long_http_url_bit_disable_without_disconnect_c476944(http_server,
                                                                                                     wifi_dut,
                                                                                                     http_client,
@@ -1001,6 +1014,7 @@ def test_wifi_sdk_https_get_functionality_with_long_http_url_bit_disable_without
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476945')
 def test_wifi_sdk_http_get_functionality_multiple_times_with_long_http_url_bit_enable_c476945(http_server, wifi_dut,
                                                                                               http_client,
                                                                                               wifi_access_point,
@@ -1052,6 +1066,7 @@ def test_wifi_sdk_http_get_functionality_multiple_times_with_long_http_url_bit_e
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476965')
 def test_wifi_sdk_https_get_functionality_multiple_times_with_long_http_url_bit_enable_c476965(http_server, wifi_dut,
                                                                                                http_client,
                                                                                                wifi_access_point,
@@ -1102,6 +1117,7 @@ def test_wifi_sdk_https_get_functionality_multiple_times_with_long_http_url_bit_
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476947')
 def test_wifi_sdk_https_get_functionality_with_url_len_around_800_c476947(http_server, wifi_dut, http_client,
                                                                           wifi_access_point, wifi_sniffer,
                                                                           sl_collections, sniffer_filter):
@@ -1141,6 +1157,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_around_800_c476947(http_s
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476948')
 def test_wifi_sdk_https_get_functionality_with_url_len_exact_1024_c476948(http_server, wifi_dut, http_client,
                                                                           wifi_access_point, wifi_sniffer,
                                                                           sl_collections, sniffer_filter):
@@ -1180,6 +1197,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_exact_1024_c476948(http_s
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476949')
 def test_wifi_sdk_https_get_functionality_with_url_len_1140_c476949(http_server, wifi_dut, http_client,
                                                                     wifi_access_point, wifi_sniffer,
                                                                     sl_collections, sniffer_filter):
@@ -1219,6 +1237,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_1140_c476949(http_server,
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476950')
 def test_wifi_sdk_https_get_functionality_with_url_len_2048_c476950(http_server, wifi_dut, http_client,
                                                                     wifi_access_point, wifi_sniffer,
                                                                     sl_collections, sniffer_filter):
@@ -1258,6 +1277,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_2048_c476950(http_server,
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476951')
 def test_wifi_sdk_https_get_with_url_length_greater_than_2048_c476951(http_server, wifi_dut, http_client,
                                                                       wifi_access_point, wifi_sniffer,
                                                                       sl_collections, sniffer_filter):
@@ -1294,6 +1314,7 @@ def test_wifi_sdk_https_get_with_url_length_greater_than_2048_c476951(http_serve
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476952')
 def test_wifi_sdk_https_get_functionality_with_url_len_2048_with_longer_url_bit_disable_c476952(http_server,
                                                                                                 wifi_dut,
                                                                                                 http_client,
@@ -1334,6 +1355,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_2048_with_longer_url_bit_
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476953')
 def test_wifi_sdk_https_get_functionality_with_url_len_with_longer_url_bit_disable_2048_c476953(http_server, wifi_dut,
                                                                                                 http_client,
                                                                                                 wifi_access_point,
@@ -1372,6 +1394,7 @@ def test_wifi_sdk_https_get_functionality_with_url_len_with_longer_url_bit_disab
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C476967')
 def test_wifi_sdk_https_get_100_mb_with_url_length_2048_c476967(http_server, wifi_dut, http_client, wifi_access_point,
                                                                 wifi_sniffer, sl_collections, sniffer_filter):
     """
@@ -1420,6 +1443,7 @@ def test_wifi_sdk_https_get_100_mb_with_url_length_2048_c476967(http_server, wif
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537610')
 def test_wifi_sdk_https_get_sni_functionality_c537610(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                                       utf_constants, wifi_sniffer, sl_collections, wifi_client,
                                                       sniffer_filter):
@@ -1465,6 +1489,7 @@ def test_wifi_sdk_https_get_sni_functionality_c537610(http_server, wifi_dut, htt
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19205')
 def test_wifi_sdk_https_get_with_different_url_length_c19205(http_server, wifi_dut, http_client, wifi_access_point,
                                                              utf_constants, wifi_sniffer, sl_collections):
     """
@@ -1529,6 +1554,7 @@ def test_wifi_sdk_https_get_with_different_url_length_c19205(http_server, wifi_d
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19228')
 def test_wifi_sdk_http_abort_functionality_c19228(http_server, wifi_dut, http_client, wifi_access_point, index_path,
                                                   utf_constants, wifi_sniffer, sl_collections):
     """HTTP abort for multiple times and check whether the Module closes the HTTP connection or not"""
@@ -1570,6 +1596,7 @@ def test_wifi_sdk_http_abort_functionality_c19228(http_server, wifi_dut, http_cl
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C510834')
 def test_wifi_sdk_https_get_no_file_on_remote_c510834(http_server, wifi_dut, wifi_access_point,
                                                       wifi_sniffer, sl_collections):
     """
@@ -1626,6 +1653,7 @@ def test_wifi_sdk_https_get_no_file_on_remote_c510834(http_server, wifi_dut, wif
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C476955')
 def test_wifi_sdk_http_get_with_weak_signal_70dbm_longer_url_bit_greater_than_2048_c476955(http_server, wifi_dut, http_client,
                                                                       wifi_access_point, wifi_sniffer,
                                                                       sl_collections, sniffer_filter,rf_attenuator):

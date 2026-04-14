@@ -70,6 +70,7 @@ class Pingthread(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C40158')
 def test_wlan_pwr_mode2_lp_mode_listen_interval_C40158(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer,
                                                        power_meter, request, rs_helper, utf_constants):
     with TimeMeasurer() as t:
@@ -138,6 +139,7 @@ def test_wlan_pwr_mode2_lp_mode_listen_interval_C40158(firmware_loader, wifi_acc
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C113952')
 def test_wlan_pwr_mode2_lp_mode_listen_interval_C113952(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer,
                                                         power_meter, request, rs_helper, utf_constants):
     with TimeMeasurer() as t:

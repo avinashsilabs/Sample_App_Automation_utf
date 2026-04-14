@@ -83,6 +83,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20041')
 def test_bt_spp_tx_rx_data_transfer_master_mode_c20041(bt_dut, bt_client, tx_rx_duration=60):
     try:
         send_text = text_generator()
@@ -152,6 +153,7 @@ def test_bt_spp_tx_rx_data_transfer_master_mode_c20041(bt_dut, bt_client, tx_rx_
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20042')
 def test_bt_spp_tx_rx_data_transfer_slave_mode_c20042(bt_dut, bt_client, tx_rx_duration=60):
     try:
         send_text = text_generator()
@@ -216,6 +218,7 @@ def test_bt_spp_tx_rx_data_transfer_slave_mode_c20042(bt_dut, bt_client, tx_rx_d
 
 # This testcase requirement to send 800 bytes or more data from bt_client to DUT, Please refer this testagent JIRA:WIFI_BT_UTFHELP-1393
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20044')
 def test_bt_spp_rx_800bytes_data_transfer_c20044(bt_dut, bt_client):
     try:
         send_text = text_generator(size=210)
@@ -261,6 +264,7 @@ def test_bt_spp_rx_800bytes_data_transfer_c20044(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20046')
 def test_bt_spp_tx_remote_device_disconnect_c20046(bt_dut, bt_client, tx_rx_duration=30):
     try:
         send_text = text_generator()
@@ -348,6 +352,7 @@ def test_bt_spp_tx_remote_device_disconnect_c20046(bt_dut, bt_client, tx_rx_dura
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20047')
 def test_bt_spp_tx_rx_data_transfer_simultaneously_c20047(bt_dut, bt_client):
     bt_client_address = None
     try:
@@ -419,6 +424,7 @@ def test_bt_spp_tx_rx_data_transfer_simultaneously_c20047(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20048')
 def test_bt_spp_data_transfer_long_duration_c20048(bt_dut, bt_client, tx_rx_duration=900):
     try:
         send_text = text_generator()

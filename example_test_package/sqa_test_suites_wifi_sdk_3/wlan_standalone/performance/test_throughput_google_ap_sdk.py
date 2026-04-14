@@ -271,6 +271,7 @@ pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402800')
 def test_wlan_standalone_tcp_tx_with_fast_psp_C402800(wifi_client, wifi_dut, net_perf_client, wifi_access_point,
                                        protocol, utf_constants, request, sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -326,6 +327,7 @@ def test_wlan_standalone_tcp_tx_with_fast_psp_C402800(wifi_client, wifi_dut, net
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402801')
 def test_wlan_standalone_tcp_rx_with_fast_psp_C402801(wifi_client, wifi_dut, net_perf_client, wifi_access_point,
                                        protocol, utf_constants, request, sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -381,6 +383,7 @@ def test_wlan_standalone_tcp_rx_with_fast_psp_C402801(wifi_client, wifi_dut, net
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402802')
 def test_wlan_standalone_udp_tx_with_fast_psp_C402802(wifi_client, wifi_dut, net_perf_client, wifi_access_point,
                                        protocol, utf_constants, request, sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -436,6 +439,7 @@ def test_wlan_standalone_udp_tx_with_fast_psp_C402802(wifi_client, wifi_dut, net
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402803')
 def test_wlan_standalone_udp_rx_with_fast_psp_C402803(wifi_client, wifi_dut, net_perf_client, wifi_access_point,
                                        protocol, utf_constants, request, sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -492,6 +496,7 @@ def test_wlan_standalone_udp_rx_with_fast_psp_C402803(wifi_client, wifi_dut, net
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402804')
 def test_wlan_standalone_tcp_tx_with_enh_psp_C402804(wifi_client, wifi_dut, net_perf_client, wifi_access_point,
                                        protocol, utf_constants, request, sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -550,6 +555,7 @@ def test_wlan_standalone_tcp_tx_with_enh_psp_C402804(wifi_client, wifi_dut, net_
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402805')
 def test_wlan_standalone_tcp_rx_with_enh_psp_C402805(wifi_client, wifi_dut, net_perf_client, wifi_access_point,
                                        protocol, utf_constants, request, sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -606,6 +612,7 @@ def test_wlan_standalone_tcp_rx_with_enh_psp_C402805(wifi_client, wifi_dut, net_
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402806')
 def test_wlan_standalone_udp_tx_with_enh_psp_C402806(wifi_client, wifi_dut, net_perf_client, wifi_access_point,
                                        protocol, utf_constants, request, sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -662,6 +669,7 @@ def test_wlan_standalone_udp_tx_with_enh_psp_C402806(wifi_client, wifi_dut, net_
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402807')
 def test_wlan_standalone_udp_rx_with_enc_psp_C402807(wifi_client, wifi_dut, net_perf_client, wifi_access_point,
                                        protocol, utf_constants, request, sl_collections, wifi_sniffer):
     ping_count = utf_constants.get("ping_count")
@@ -713,6 +721,7 @@ def test_wlan_standalone_udp_rx_with_enc_psp_C402807(wifi_client, wifi_dut, net_
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402808')
 def test_wlan_ble_connected_udp_tx_with_fast_psp_C402808(firmware_loader, wifi_access_point, wifi_client,
                                                          wifi_dut, net_perf_client, protocol, utf_constants, request,
                                                          sl_collections, ble_client, bt_dut):
@@ -766,6 +775,7 @@ def test_wlan_ble_connected_udp_tx_with_fast_psp_C402808(firmware_loader, wifi_a
         "interface": "wlan0",
     }
 )
+@pytest.mark.test_src_map_id('C402809')
 def test_wlan_ble_connected_udp_tx_with_enh_psp_C402809(firmware_loader, wifi_access_point, wifi_client,
                                                         wifi_dut, net_perf_client, protocol, utf_constants, request,
                                                         sl_collections, ble_client, bt_dut):

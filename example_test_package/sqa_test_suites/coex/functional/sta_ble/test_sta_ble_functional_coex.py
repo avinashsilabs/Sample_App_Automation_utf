@@ -497,6 +497,7 @@ pytestmark = [pytest.mark.ble_client("raspi_ble_client"), pytest.mark.wifi_clien
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133440')
 def test_ble_encryption_C133440(wifi_dut, wifi_sniffer, wifi_access_point, net_perf_client, wifi_client, ble_client,
                                 protocol, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -629,6 +630,7 @@ def test_ble_encryption_C133440(wifi_dut, wifi_sniffer, wifi_access_point, net_p
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133441')
 def test_ble_smp_pair_request_C133441(wifi_dut, wifi_sniffer, wifi_access_point, net_perf_client, wifi_client,
                                       ble_client, protocol, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -746,6 +748,7 @@ def test_ble_smp_pair_request_C133441(wifi_dut, wifi_sniffer, wifi_access_point,
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133442')
 def test_ble_smp_pair_response_C133442(wifi_dut, wifi_sniffer, wifi_access_point, net_perf_client, wifi_client,
                                        ble_client, protocol, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -859,6 +862,7 @@ def test_ble_smp_pair_response_C133442(wifi_dut, wifi_sniffer, wifi_access_point
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133443')
 def test_ble_smp_passkey_C133443(wifi_dut, wifi_sniffer, wifi_access_point, net_perf_client, wifi_client, ble_client,
                                  protocol, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -976,6 +980,7 @@ def test_ble_smp_passkey_C133443(wifi_dut, wifi_sniffer, wifi_access_point, net_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133436')
 def test_get_attribute_descriptors_value_C133436(firmware_loader, wifi_dut, wifi_sniffer, wifi_access_point,
                                                  net_perf_client, wifi_client, ble_client, protocol, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1153,6 +1158,7 @@ def test_get_attribute_descriptors_value_C133436(firmware_loader, wifi_dut, wifi
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
 @pytest.mark.test_wlan_powersave_mode3_lp
+@pytest.mark.test_src_map_id('C133515')
 def test_sta_ble_verify_msg_power_save_C133515(firmware_loader, wifi_dut, wifi_sniffer, wifi_access_point, wifi_client,
                                                ble_client, utf_constants):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1256,6 +1262,7 @@ def test_sta_ble_verify_msg_power_save_C133515(firmware_loader, wifi_dut, wifi_s
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133513')
 def test_sta_ble_powersave_mode2_with_wlan_and_ble_connected_sleep_C133513(wifi_dut, wifi_sniffer,
                                                                            wifi_access_point, ble_client,
                                                                            net_perf_client, wifi_client,
@@ -1375,6 +1382,7 @@ def test_sta_ble_powersave_mode2_with_wlan_and_ble_connected_sleep_C133513(wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133448')
 def test_wlan_and_ble_radio_on_off_C133448(wifi_dut, ble_client, wifi_access_point, test_run_time):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError("This test case is only currently implemented for SAPI")
@@ -1429,6 +1437,7 @@ def test_wlan_and_ble_radio_on_off_C133448(wifi_dut, ble_client, wifi_access_poi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133444')
 def test_verify_ble_advertise_and_scan_functionality_dut_in_connected_state_C133444(wifi_dut, ble_clients,
                                                                                     wifi_access_point, wifi_sniffer):
     assert len(ble_clients) >= 2, f"Minimum 2 raspi devices needed for this test"
@@ -1578,6 +1587,7 @@ def test_verify_ble_advertise_and_scan_functionality_dut_in_connected_state_C133
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "ble_stop_adv", "ble_stop_scan"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C133446')
 def test_validate_ble_services_when_dut_in_connected_state_C133446(firmware_loader, wifi_dut, ble_client,
                                                                    wifi_access_point, wifi_sniffer):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1668,6 +1678,7 @@ def test_validate_ble_services_when_dut_in_connected_state_C133446(firmware_load
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133439')
 def test_ble_pxp_link_loss_alert_functionality_dut_slave_tcp_tx_C133439(firmware_loader, wifi_dut, wifi_sniffer,
                                                                         wifi_access_point, net_perf_client, wifi_client,
                                                                         ble_client, protocol):
@@ -1829,6 +1840,7 @@ def test_ble_pxp_link_loss_alert_functionality_dut_slave_tcp_tx_C133439(firmware
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "load_default_fw"])
+@pytest.mark.test_src_map_id('C133484')
 def test_otaf_firmware_upgrade_through_wifi_after_ble_connection_C133484(wifi_dut, ble_client, wifi_access_point,
                                                                          wifi_sniffer, http_server):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1955,6 +1967,7 @@ def test_otaf_firmware_upgrade_through_wifi_after_ble_connection_C133484(wifi_du
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133435')
 def test_query_att_descriptors_of_remote_ble_device_while_wlan_tcp_tx_C133435(firmware_loader, wifi_dut, wifi_sniffer,
                                                                               wifi_client, ble_client, protocol,
                                                                               wifi_access_point, net_perf_client):
@@ -2097,6 +2110,7 @@ def test_query_att_descriptors_of_remote_ble_device_while_wlan_tcp_tx_C133435(fi
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C133437')
 def test_set_att_value_with_diff_lengths_to_remote_ble_device_while_tcp_tx_C133437(firmware_loader, wifi_dut,
                                                                                    wifi_sniffer, protocol, wifi_client,
                                                                                    utf_constants, wifi_access_point,
@@ -2262,6 +2276,7 @@ def test_set_att_value_with_diff_lengths_to_remote_ble_device_while_tcp_tx_C1334
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan", "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C133561')
 def test_ble_pxp_link_loss_alert_func_when_tcp_tx_is_in_progress_C133561(firmware_loader, wifi_dut,
                                                                          wifi_sniffer, protocol, wifi_client,
                                                                          utf_constants, wifi_access_point,
@@ -2412,6 +2427,7 @@ def test_ble_pxp_link_loss_alert_func_when_tcp_tx_is_in_progress_C133561(firmwar
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133574')
 def test_mqtt_func_in_wlan_ble_mode_while_dut_ble_is_in_connection_with_remote_ble_dev_C133574(wifi_dut, wifi_sniffer,
                                                                                                mqtt_client, mqtt_server,
                                                                                                wifi_client, ble_client,
@@ -2567,6 +2583,7 @@ def test_mqtt_func_in_wlan_ble_mode_while_dut_ble_is_in_connection_with_remote_b
 @pytest.mark.ble_client("raspi_ble_client")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C133575')
 def test_func_and_data_transfer_of_2_ssl_socket_conn_while_ble_is_in_connection_C133575(wifi_dut, wifi_sniffer,
                                                                                         ble_client, wifi_access_point,
                                                                                         ssl_server):

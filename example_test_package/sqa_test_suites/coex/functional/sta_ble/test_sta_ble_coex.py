@@ -787,6 +787,7 @@ pytestmark = [pytest.mark.ble_client("raspi_ble_client"),
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133564')
 def test_get_local_bd_address_of_ble_while_sta_data_transfer_in_progress_C133564(wifi_dut, bt_dut, wifi_access_point,
                                                                                  net_perf_client, wifi_client, ssid,
                                                                                  ble_client, wifi_sniffer, protocol,
@@ -868,6 +869,7 @@ def test_get_local_bd_address_of_ble_while_sta_data_transfer_in_progress_C133564
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133550')
 def test_connection_stability_of_rsi_sta_when_ble_dual_role_C133550(wifi_dut, bt_dut, ble_clients, wifi_access_point,
                                                                     ssid, net_perf_client, wifi_client, wifi_sniffer,
                                                                     protocol, recovery):
@@ -960,6 +962,7 @@ def test_connection_stability_of_rsi_sta_when_ble_dual_role_C133550(wifi_dut, bt
     },
 )
 @pytest.mark.config("net_perf_client")
+@pytest.mark.test_src_map_id('C133551')
 def test_adv_functionality_of_ble_when_sta_scan_C133551(wifi_dut, wifi_sniffer, wifi_access_point, ble_client,
                                                         recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1016,6 +1019,7 @@ def test_adv_functionality_of_ble_when_sta_scan_C133551(wifi_dut, wifi_sniffer, 
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C133552')
 def test_adv_func_of_ble_while_sta_data_transfer_in_progress_C133552(wifi_dut, ble_client, wifi_access_point,
                                                                      net_perf_client, wifi_client, protocol,
                                                                      wifi_sniffer, recovery):
@@ -1077,6 +1081,7 @@ def test_adv_func_of_ble_while_sta_data_transfer_in_progress_C133552(wifi_dut, b
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C133553')
 def test_adv_functionality_of_ble_when_sta_disconnect_C133553(wifi_dut, ble_client, wifi_access_point, net_perf_client,
                                                               wifi_sniffer, wifi_client, protocol, ssid, recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1183,6 +1188,7 @@ def test_adv_functionality_of_ble_when_sta_disconnect_C133553(wifi_dut, ble_clie
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0
     },
 )
+@pytest.mark.test_src_map_id('C133555')
 def test_functionality_of_sta_when_ble_scan_C133555(wifi_dut, ble_client, wifi_access_point, wifi_sniffer, ssid,
                                                     recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1251,6 +1257,7 @@ def test_functionality_of_sta_when_ble_scan_C133555(wifi_dut, ble_client, wifi_a
     },
 )
 @pytest.mark.config("net_perf_client")
+@pytest.mark.test_src_map_id('C133554')
 def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C133554(wifi_dut, ble_client, wifi_access_point, ssid,
                                                                       wifi_sniffer, recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1350,6 +1357,7 @@ def test_connectivity_of_ble_when_sta_connect_scan_disconnect_C133554(wifi_dut, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133559')
 def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C133559(wifi_dut, ble_client, wifi_access_point,
                                                                                 net_perf_client, wifi_sniffer,
                                                                                 wifi_client, protocol, ssid, recovery):
@@ -1436,6 +1444,7 @@ def test_disconnect_request_of_ble_when_sta_scan_connect_and_disconnect_C133559(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
 @pytest.mark.firmware_app("test_coex_custom")
+@pytest.mark.test_src_map_id('C133560')
 def test_Active_scan_func_of_ble_when_sta_connect_C133560(firmware_loader, wifi_dut, ble_client, wifi_access_point,
                                                           ssid,
                                                           wifi_sniffer,
@@ -1544,6 +1553,7 @@ def test_Active_scan_func_of_ble_when_sta_connect_C133560(firmware_loader, wifi_
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C133568')
 def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C133568(wifi_dut, ble_client, wifi_access_point,
                                                                       net_perf_client, wifi_client, protocol, ssid,
                                                                       wifi_sniffer, recovery):
@@ -1628,6 +1638,7 @@ def test_scan_enable_and_disable_func_of_ble_when_sta_connect_C133568(wifi_dut, 
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C133569')
 def test_scan_adv_func_of_ble_while_sta_data_transfer_in_progress_C133569(wifi_dut, ble_client, wifi_access_point,
                                                                           net_perf_client, wifi_client, protocol, ssid,
                                                                           wifi_sniffer, recovery):
@@ -1713,6 +1724,7 @@ def test_scan_adv_func_of_ble_while_sta_data_transfer_in_progress_C133569(wifi_d
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C133517')
 def test_dual_role_ble_msg_based_power_save_C133517(wifi_dut, ble_clients, wifi_access_point, net_perf_client,
                                                     wifi_client, wifi_sniffer, protocol, recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1791,6 +1803,7 @@ def test_dual_role_ble_msg_based_power_save_C133517(wifi_dut, ble_clients, wifi_
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C133519')
 def test_dual_role_ble_gpio_based_power_save_C133519(wifi_dut, ble_clients, wifi_access_point, net_perf_client,
                                                      wifi_client, wifi_sniffer, protocol, recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1868,6 +1881,7 @@ def test_dual_role_ble_gpio_based_power_save_C133519(wifi_dut, ble_clients, wifi
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C133556')
 def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C133556(wifi_dut, ble_clients,
                                                                                   net_perf_client,
                                                                                   wifi_sniffer, wifi_client, protocol,
@@ -1968,6 +1982,7 @@ def test_connection_request_of_ble_when_sta_scan_connect_disconnect_state_C13355
     },
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.test_src_map_id('C133570')
 def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_C133570(wifi_access_point, recovery, wifi_client,
                                                                              ble_client, wifi_sniffer, net_perf_client,
                                                                              wifi_dut, protocol, ssid):
@@ -2124,6 +2139,7 @@ def test_disconnect_event_of_ble_while_sta_data_transfer_in_progress_C133570(wif
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C20336')
 def test_throughput_func_of_sta_when_ble_connect_c20336(wifi_dut, ble_clients, wifi_access_point, net_perf_client,
                                                         wifi_client, wifi_sniffer, protocol, recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -2202,6 +2218,7 @@ def test_throughput_func_of_sta_when_ble_connect_c20336(wifi_dut, ble_clients, w
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C20333')
 def test_dual_role_func_of_ble_while_sta_data_transfer_in_progress_c20333(wifi_dut, ble_clients, wifi_access_point,
                                                                           net_perf_client, wifi_client, protocol,
                                                                           wifi_sniffer, ssid, recovery):
@@ -2285,6 +2302,7 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_in_progress_c20333(wifi_d
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133572')
 def test_dual_role_func_of_ble_while_sta_data_transfer_in_progress_with_CI20ms_C133572(wifi_dut, ble_clients, protocol,
                                                                                        wifi_access_point,
                                                                                        net_perf_client, recovery,
@@ -2405,6 +2423,7 @@ def test_dual_role_func_of_ble_while_sta_data_transfer_in_progress_with_CI20ms_C
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133573')
 def test_scan_func_of_ble_while_sta_data_transfer_in_progress_C133573(wifi_dut, ble_client, wifi_access_point, protocol,
                                                                       wifi_sniffer, net_perf_client, wifi_client,
                                                                       recovery):
@@ -2476,6 +2495,7 @@ def test_scan_func_of_ble_while_sta_data_transfer_in_progress_C133573(wifi_dut, 
     },
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.test_src_map_id('C133520')
 def test_sta_connection_with_ble_connect_disconnect_C133520(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,
                                                             recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -2573,6 +2593,7 @@ def test_sta_connection_with_ble_connect_disconnect_C133520(wifi_dut, ble_client
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133565')
 def test_smp_func_of_ble_while_sta_data_transfer_in_progress_C133565(wifi_dut, ble_client, wifi_access_point,
                                                                      net_perf_client, wifi_sniffer, wifi_client,
                                                                      protocol, recovery):
@@ -2676,6 +2697,7 @@ def test_smp_func_of_ble_while_sta_data_transfer_in_progress_C133565(wifi_dut, b
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133557')
 def test_get_all_profiles_functionality_of_dut_ble_C133557(firmware_loader, net_perf_client, wifi_dut,
                                                            wifi_access_point,
                                                            ble_client, wifi_client, protocol, wifi_sniffer, recovery):
@@ -2798,6 +2820,7 @@ def test_get_all_profiles_functionality_of_dut_ble_C133557(firmware_loader, net_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133558')
 def test_get_particular_profiles_functionality_of_dut_ble_C133558(firmware_loader, wifi_dut, protocol,
                                                                   wifi_access_point,
                                                                   wifi_client, net_perf_client, ble_client,
@@ -2916,6 +2939,7 @@ def test_get_particular_profiles_functionality_of_dut_ble_C133558(firmware_loade
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133549')
 def test_ble_and_Wlan_data_transfer_for_5min_C133549(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,
                                                      net_perf_client, wifi_client, protocol, utf_constants, recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -3151,6 +3175,7 @@ def test_ble_and_Wlan_data_transfer_for_5min_C133549(wifi_dut, ble_client, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133563')
 def test_query_rssi_of_ble_while_sta_data_transfer_in_progress_C133563(wifi_dut, ble_client, wifi_access_point,
                                                                        net_perf_client, wifi_sniffer, wifi_client,
                                                                        protocol, recovery):
@@ -3236,6 +3261,7 @@ def test_query_rssi_of_ble_while_sta_data_transfer_in_progress_C133563(wifi_dut,
     },
 )
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890', "ssid": 'SILABS_AP'})
+@pytest.mark.test_src_map_id('C133487')
 def test_sta_ble_connection_with_ble_connect_disconnect_C133487(wifi_dut, ble_client, wifi_access_point, wifi_sniffer,
                                                                 recovery):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -3367,6 +3393,7 @@ def test_sta_ble_connection_with_ble_connect_disconnect_C133487(wifi_dut, ble_cl
 @pytest.mark.ble_clients(["raspi_ble_client", "secondary_raspi_ble_client", "tertiary_raspi_ble_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133567')
 def test_ble_3_slave_connection_with_wlan_tx_C133567(wifi_dut, ble_clients, wifi_sniffer, wifi_access_point):
     assert len(ble_clients) >= 3, f"Minimum 3 raspi devices needed for this test"
 
@@ -3488,6 +3515,7 @@ def test_ble_3_slave_connection_with_wlan_tx_C133567(wifi_dut, ble_clients, wifi
                        wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan",
                              "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133464')
 def test_dut_functionality_as_sta_when_ap_lost_with_ble_connection_C133464(wifi_dut, ble_client, wifi_sniffer,
                                                                            wifi_access_point, switch, rs_helper):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -3610,6 +3638,7 @@ def test_dut_functionality_as_sta_when_ap_lost_with_ble_connection_C133464(wifi_
                     wifi={"security": "WPA2", "cipher": "AES", "passphrase": '12345678', "ssid": 'Silabs'})
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "ble_stop_adv", "disassociated", "ble_stop_scan",
                                          "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133485')
 def test_mac_based_connectivity_in_wpa2_ble_connection_C133485(wifi_dut, ble_client, wifi_sniffer,
                                                                wifi_access_point, rs_helper):
     iter_count = 5
@@ -3724,6 +3753,7 @@ def test_mac_based_connectivity_in_wpa2_ble_connection_C133485(wifi_dut, ble_cli
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv",
                              "ble_stop_scan",
                              "ble_disconnect"])
+@pytest.mark.test_src_map_id('C133481')
 def test_http_get_functionality_after_ble_connection_C133481(http_server, http_client, wifi_dut, ble_client,
                                                              wifi_sniffer,
                                                              wifi_access_point, rs_helper, index_path):

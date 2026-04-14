@@ -71,6 +71,7 @@ def _check_for_devices_in_scanned_results(ble_interface, bt_dut_address, adv_dat
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv","wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19801')
 def test_ble_undirected_connectable_adv_C19801(wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
@@ -149,6 +150,7 @@ def test_ble_undirected_connectable_adv_C19801(wifi_dut, ble_client):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19803')
 def test_ble_undirected_scannable_adv_C19803(wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
@@ -223,6 +225,7 @@ def test_ble_undirected_scannable_adv_C19803(wifi_dut, ble_client):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19804')
 def test_ble_undirected_non_connectable_adv_C19804(wifi_dut, ble_client):
     with BleLogs(
         start_collecting_logs=True,
@@ -302,6 +305,7 @@ def test_ble_undirected_non_connectable_adv_C19804(wifi_dut, ble_client):
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19849')
 def test_ble_init_adv_deinit_for_multiple_iteration_C19849(wifi_dut, ble_client):
     for count in range(0, 15):
         wifi_dut.interfaces.wifi.ble_initialized = False
@@ -367,6 +371,7 @@ def test_ble_init_adv_deinit_for_multiple_iteration_C19849(wifi_dut, ble_client)
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19850')
 def test_ble_adv_with_configured_name_of_length_16bytes_C19850(wifi_dut, ble_client):
     set_local_name = "ble_123456789012"
     logger().info(f"Setting BLE local name {set_local_name}")
@@ -420,6 +425,7 @@ def test_ble_adv_with_configured_name_of_length_16bytes_C19850(wifi_dut, ble_cli
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+@pytest.mark.test_src_map_id('C71442')
 def test_ble_set_localname_configured_with_17bytes_C71442(wifi_dut):
 
     with pytest.raises(WlanError) as exc_info:

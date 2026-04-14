@@ -692,6 +692,7 @@ def wifi_dut_fixture(
 @pytest.mark.parametrize("channel", [8])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C776228')
 def test_wifi_sdk_csa_with_rx_data_transfer_c776228(
     wifi_dut,
     wifi_access_point,
@@ -731,6 +732,7 @@ def test_wifi_sdk_csa_with_rx_data_transfer_c776228(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "WPA2"})
 @pytest.mark.parametrize("channel", [9])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C776229')
 def test_wifi_sdk_csa_with_tx_data_transfer_c776229(
     wifi_dut,
     wifi_access_point,
@@ -771,6 +773,7 @@ def test_wifi_sdk_csa_with_tx_data_transfer_c776229(
 @pytest.mark.parametrize("beacon_count", [1])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C776230')
 def test_wifi_sdk_csa_with_min_switch_count_c776230(
     wifi_dut,
     wifi_access_point,
@@ -812,6 +815,7 @@ def test_wifi_sdk_csa_with_min_switch_count_c776230(
 @pytest.mark.parametrize("channel", [7])
 @pytest.mark.parametrize("beacon_count", [255])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C776231')
 def test_wifi_sdk_csa_with_max_switch_count_c776231(
     wifi_dut,
     wifi_access_point,
@@ -856,6 +860,7 @@ def test_wifi_sdk_csa_with_max_switch_count_c776231(
 @pytest.mark.parametrize("beacon_count", [4])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C776232')
 def test_wifi_sdk_csa_when_ap_switched_to_unsupported_region_c776232(
     wifi_dut,
     wifi_access_point,
@@ -938,6 +943,7 @@ def test_wifi_sdk_csa_when_ap_switched_to_unsupported_region_c776232(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "WPA2"})
 @pytest.mark.parametrize("channel", [4])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C776233')
 def test_wifi_sdk_csa_with_otaf_upgrade_in_parallel_c776233(
     wifi_dut,
     wifi_access_point,
@@ -1017,6 +1023,7 @@ def test_wifi_sdk_csa_with_otaf_upgrade_in_parallel_c776233(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "WPA2"})
 @pytest.mark.parametrize("channel", [2])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C776234')
 def test_wifi_sdk_csa_with_aws_shadow_updates_C776234(
     wifi_dut,
     wifi_access_point,
@@ -1054,6 +1061,7 @@ def test_wifi_sdk_csa_with_aws_shadow_updates_C776234(
 @pytest.mark.parametrize("channel", [5])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C776235')
 def test_wifi_sdk_csa_with_wpa3_personal_security_c776235(
     wifi_dut,
     wifi_access_point,
@@ -1152,6 +1160,7 @@ def test_wifi_sdk_csa_with_wpa3_personal_security_c776235(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "clear_certs"]
 )
+@pytest.mark.test_src_map_id('C776236')
 def test_wifi_sdk_csa_with_wpa3_enterprise_security_c776236(
     wifi_dut,
     wifi_access_point,
@@ -1203,6 +1212,7 @@ def test_wifi_sdk_csa_with_wpa3_enterprise_security_c776236(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "open"})
 @pytest.mark.parametrize("channel_sequence", [[8, 1, 6, 2, 3, 7, 11, 10, 4, 5, 9]])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C776237')
 def test_wifi_sdk_frequent_csa_changes_c776237(
     wifi_dut,
     wifi_access_point,
@@ -1311,6 +1321,7 @@ def test_wifi_sdk_frequent_csa_changes_c776237(
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C776238')
 def test_wifi_sdk_csa_immediate_disconnect_wpa2_enterprise_c776238(
     wifi_dut,
     wifi_access_point,
@@ -1405,6 +1416,7 @@ def test_wifi_sdk_csa_immediate_disconnect_wpa2_enterprise_c776238(
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.parametrize("channel", [13])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C776239')
 def test_wifi_sdk_csa_with_mbssid_enabled_ap_c776239(
     wifi_dut,
     wifi_access_point,
@@ -1492,6 +1504,7 @@ def test_wifi_sdk_csa_with_mbssid_enabled_ap_c776239(
 @pytest.mark.parametrize("channel", [5])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C776240')
 def test_wifi_sdk_csa_with_switch_mode_c776240(
     wifi_dut,
     wifi_access_point,
@@ -1538,6 +1551,7 @@ def test_wifi_sdk_csa_with_switch_mode_c776240(
 @pytest.mark.parametrize("channel", [4])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C776241')
 def test_wifi_sdk_csa_with_quiet_mode_c776241(
     wifi_dut,
     wifi_access_point,
@@ -1584,6 +1598,7 @@ def test_wifi_sdk_csa_with_quiet_mode_c776241(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "WPA2"})
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C779609')
 def test_wifi_sdk_csa_with_instant_bgscan_c779609(
     wifi_dut,
     wifi_access_point,
@@ -1652,6 +1667,7 @@ def test_wifi_sdk_csa_with_instant_bgscan_c779609(
 @pytest.mark.config("wifi_access_point", wifi={"channel": 6, "security": "WPA2"})
 @pytest.mark.parametrize("channel", [4])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C779701')
 def test_wifi_sdk_csa_with_bgscan_during_rx_data_transfer_c779701(
     wifi_dut,
     wifi_access_point,

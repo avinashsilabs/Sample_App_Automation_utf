@@ -33,6 +33,7 @@ from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band, RS91
         "channel": 36,
     },
 )
+@pytest.mark.test_src_map_id('TC7091724807')
 def test_wifi_join_9116_ap_5g(wifi_dut, wifi_client, logger):
     wifi_dut.interfaces.wifi.start_ap()
     wifi_client.interfaces.wifi.join()

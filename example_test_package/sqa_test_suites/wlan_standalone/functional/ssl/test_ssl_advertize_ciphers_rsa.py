@@ -652,6 +652,7 @@ pytestmark = [
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19604')
 def test_advertise_all_ciphers_ssl_tx_c19604(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                               logger):
     try:
@@ -671,6 +672,7 @@ def test_advertise_all_ciphers_ssl_tx_c19604(wifi_sniffer, wifi_access_point, wi
 @pytest.mark.parametrize("cipher_list", [[]])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19605')
 def test_advertise_all_ciphers_ssl_rx_c19605(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list,
                                               logger):
     try:
@@ -697,6 +699,7 @@ def test_advertise_all_ciphers_ssl_rx_c19605(wifi_sniffer, wifi_access_point, wi
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19606')
 def test_advertise_ciphers_ssl_tx_c19606(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
         capture_filename = "test_advertise_ciphers_ssl_tx_c19606"
@@ -722,6 +725,7 @@ def test_advertise_ciphers_ssl_tx_c19606(wifi_sniffer, wifi_access_point, wifi_d
                                           'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19607')
 def test_advertise_ciphers_ssl_rx_c19607(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
         capture_filename = "test_advertise_ciphers_ssl_rx_c19607"
@@ -741,6 +745,7 @@ def test_advertise_ciphers_ssl_rx_c19607(wifi_sniffer, wifi_access_point, wifi_d
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19608')
 def test_advertise_ciphers_ssl_tx_c19608(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
         capture_filename = "test_advertise_ciphers_ssl_tx_c19608"
@@ -760,6 +765,7 @@ def test_advertise_ciphers_ssl_tx_c19608(wifi_sniffer, wifi_access_point, wifi_d
                          [['TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19609')
 def test_advertise_ciphers_ssl_rx_c19609(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
         capture_filename = "test_advertise_ciphers_ssl_rx_c19609"
@@ -779,6 +785,7 @@ def test_advertise_ciphers_ssl_rx_c19609(wifi_sniffer, wifi_access_point, wifi_d
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19610')
 def test_advertise_ciphers_ssl_tx_c19610(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
         capture_filename = "test_advertise_ciphers_ssl_tx_c19610"
@@ -798,6 +805,7 @@ def test_advertise_ciphers_ssl_tx_c19610(wifi_sniffer, wifi_access_point, wifi_d
                          [['TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19611')
 def test_advertise_ciphers_ssl_rx_c19611(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger):
     try:
         capture_filename = "test_advertise_ciphers_ssl_tx_c19611"
@@ -836,6 +844,7 @@ def test_advertise_ciphers_ssl_rx_c19611(wifi_sniffer, wifi_access_point, wifi_d
                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19612')
 def test_advertise_ciphers_ssl_tx_c19612(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, cipher_list,
                                           logger):
     try:
@@ -953,6 +962,7 @@ def test_advertise_ciphers_ssl_tx_c19612(wifi_sniffer, wifi_dut, wifi_access_poi
                          [['TLS_DHE_RSA_WITH_AES_128_GCM_SHA256', 'TLS_DHE_RSA_WITH_AES_256_GCM_SHA384']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19613')
 def test_advertise_ciphers_ssl_rx_c19613(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client, cipher_list,
                                           logger):
     try:
@@ -1059,6 +1069,7 @@ def test_advertise_ciphers_ssl_rx_c19613(wifi_sniffer, wifi_access_point, wifi_d
                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19614')
 def test_advertise_ciphers_ssl_tx_c19614(wifi_sniffer, wifi_dut, wifi_access_point, openssl, wifi_client, cipher_list,
                                           logger):
     try:
@@ -1175,6 +1186,7 @@ def test_advertise_ciphers_ssl_tx_c19614(wifi_sniffer, wifi_dut, wifi_access_poi
                          [['TLS_DHE_RSA_WITH_AES_256_CBC_SHA256', 'TLS_DHE_RSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19615')
 def test_advertise_ciphers_ssl_rx_c19615(wifi_sniffer, wifi_access_point, wifi_dut, openssl, wifi_client, cipher_list,
                                           logger, ssl_server):
     try:

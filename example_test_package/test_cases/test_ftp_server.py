@@ -4,6 +4,7 @@ from utf.utils.logger import get_logger
 def logger():
     return get_logger(__name__)
 
+@pytest.mark.test_src_map_id('TC2851883015')
 def test_ftp_server(ftp_server, ftp_client):
     # login to FTP server
     ftp_client.interfaces.ftp_client.login()
@@ -30,6 +31,7 @@ def test_ftp_server(ftp_server, ftp_client):
 
 @pytest.mark.ftp_server("raspi_ftp_server_tls")
 @pytest.mark.ftp_client("raspi_ftp_client_tls")
+@pytest.mark.test_src_map_id('TC4882801020')
 def test_ftp_server_tls(ftp_server, ftp_client):
     ftp_client.interfaces.ftp_client.login()
     # read file to ftp server 

@@ -119,6 +119,7 @@ def remote_wiseconnect3_config():
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C557354')
 def test_wifi_melco_sdk_ipv4_ipv6_ping_C557354(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                request, remote_wiseconnect3,
                                                sniffer_filter, utf_constants,
@@ -168,6 +169,7 @@ def test_wifi_melco_sdk_ipv4_ipv6_ping_C557354(wifi_dut, wifi_access_point, wifi
           "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C557356')
 def test_wifi_melco_sdk_ipv4_ipv6_ping_C557356(wifi_dut, wifi_access_point, wifi_sniffer, sl_collections,
                                                request, remote_wiseconnect3,
                                                sniffer_filter, utf_constants,
@@ -216,6 +218,7 @@ def test_wifi_melco_sdk_ipv4_ipv6_ping_C557356(wifi_dut, wifi_access_point, wifi
           "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C557357')
 def test_wifi_melco_sdk_ipv4_ipv6_ping_STA_LI_powersave_C557357(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                 sl_collections,
                                                                 request, remote_wiseconnect3,
@@ -267,6 +270,7 @@ def test_wifi_melco_sdk_ipv4_ipv6_ping_STA_LI_powersave_C557357(wifi_dut, wifi_a
           "wan_ipv6_address": random_ipv6_addr("2401:4900:1cb3::/48"), 'channel': 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C557358')
 def test_wifi_melco_sdk_ipv4_ipv6_ping_STA_DTIM_powersave_C557358(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                   sl_collections,
                                                                   request, remote_wiseconnect3,

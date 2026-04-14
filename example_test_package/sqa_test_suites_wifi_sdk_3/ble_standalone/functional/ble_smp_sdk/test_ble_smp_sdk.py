@@ -835,6 +835,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557291')
 def test_ble_smp_anthencation_verify_passkey_declined_C557291(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                               ble_client):
     """Verify the connect, disconnect and reconnect(with bond info) for DUT as Central with paring method Just works"""
@@ -862,6 +863,7 @@ def test_ble_smp_anthencation_verify_passkey_declined_C557291(wifi_dut, nrf_ble_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557287')
 def test_ble_smp_anthencation_verify_passkey_declined_C557287(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                               ble_client):
     """Verify the connect, disconnect and reconnect(with bond info) for DUT as Central with paring method Just works"""
@@ -889,6 +891,7 @@ def test_ble_smp_anthencation_verify_passkey_declined_C557287(wifi_dut, nrf_ble_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557289')
 def test_ble_smp_anthencation_verify_passkey_decline_C557289(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                              ble_client):
     """Verify the connect, disconnect and reconnect(with bond info) for DUT as Central with paring method Just works"""
@@ -916,6 +919,7 @@ def test_ble_smp_anthencation_verify_passkey_decline_C557289(wifi_dut, nrf_ble_c
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557290')
 def test_ble_smp_anthencation_verify_passkey_decline_C557290(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                              ble_client):
     """Verify the connect, disconnect and reconnect(with bond info) for DUT as Central with paring method Just works"""
@@ -942,6 +946,7 @@ def test_ble_smp_anthencation_verify_passkey_decline_C557290(wifi_dut, nrf_ble_c
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557281')
 def test_ble_smp_anthencation_verify_passkey_not_entered_C557281(wifi_dut, nrf_ble_client, sl_collections, ble_client):
     """SMP Anthentication: Verify Passkey Display/Passkey Entry Auth methods timeout occure if passkey is not entered (Initiator:KeyboardOnly Responder: Displayonly"""
     ble_obj = None
@@ -965,6 +970,7 @@ def test_ble_smp_anthencation_verify_passkey_not_entered_C557281(wifi_dut, nrf_b
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557282')
 def test_ble_smp_anthencation_verify_passkey_not_enterred_C557282(wifi_dut, nrf_ble_client, sl_collections, ble_client):
     """SMP Anthentication: Verify Passkey Display/Passkey Entry Auth methods timeout occure if passkey is not entered (Initiator:KeyboardDisplay Responder: DisplayYes No"""
     ble_obj = None
@@ -988,6 +994,7 @@ def test_ble_smp_anthencation_verify_passkey_not_enterred_C557282(wifi_dut, nrf_
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557283')
 def test_ble_smp_anthencation_verify_passkey_entered_incorrectly_C557283(wifi_dut, nrf_ble_client, sl_collections,
                                                                          ble_client):
     """SMP Anthentication: Verify Passkey Display/Passkey Entry Auth methods fail with "confirm value failed" if passkey is not entered correctly (Initiator:KeyboardOnly Responder: DisplayOnly"""
@@ -1012,6 +1019,7 @@ def test_ble_smp_anthencation_verify_passkey_entered_incorrectly_C557283(wifi_du
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557284')
 def test_ble_smp_anthencation_verify_passkey_entered_incorrectly_C557284(wifi_dut, nrf_ble_client, sl_collections,
                                                                          ble_client):
     """SMP Anthentication: Verify Passkey Display/Passkey Entry Auth methods fail with "confirm value failed" if passkey is not entered correctly (Initiator:KeyboardOnly Responder: KeyboardOnly"""
@@ -1037,6 +1045,7 @@ def test_ble_smp_anthencation_verify_passkey_entered_incorrectly_C557284(wifi_du
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557293')
 def test_verify_numeric_comparision_SMP_timeout_C557293(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                         ble_client):
     """Verify just works pairing method for DUT as master with random address"""
@@ -1070,6 +1079,7 @@ def test_verify_numeric_comparision_SMP_timeout_C557293(wifi_dut, nrf_ble_client
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557257')
 def test_ble_smp_verify_dh_key_check_exchange_C557257(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client,
                                                       pin_code, dut_capability):
     """Verify DH key check exchanges for DUT as Peripheral"""
@@ -1163,6 +1173,7 @@ def test_ble_smp_verify_dh_key_check_exchange_C557257(wifi_dut, nrf_ble_client, 
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557253')
 def test_ble_smp_anthencation_verify_fields_of_pairing_request_C557253(wifi_dut, nrf_ble_client, ble_sniffer,
                                                                        dut_capability, client_capability, pin_code,
                                                                        sl_collections, ble_client):
@@ -1214,6 +1225,7 @@ def test_ble_smp_anthencation_verify_fields_of_pairing_request_C557253(wifi_dut,
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557254')
 def test_ble_smp_anthencation_passkey_verify_pairing_response_C557254(wifi_dut, nrf_ble_client, ble_sniffer,
                                                                       dut_capability, client_capability, pin_code,
                                                                       sl_collections, ble_client):
@@ -1271,6 +1283,7 @@ def test_ble_smp_anthencation_passkey_verify_pairing_response_C557254(wifi_dut, 
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557255')
 def test_ble_smp_anthencation_verify_responder_key_fields_C557255(wifi_dut, nrf_ble_client, ble_sniffer, dut_capability,
                                                                   client_capability, pin_code, sl_collections,
                                                                   ble_client):
@@ -1321,6 +1334,7 @@ def test_ble_smp_anthencation_verify_responder_key_fields_C557255(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557258')
 def test_ble_smp_anthencation_verify_pairing_with_dut_entered_C557258(wifi_dut, nrf_ble_client, ble_sniffer,
                                                                       sl_collections, ble_client):
     """Verify SMP Pairing of DUT with nrf Dongle with IO Capability as Display YES/NO(0X01) on both sides"""
@@ -1367,6 +1381,7 @@ def test_ble_smp_anthencation_verify_pairing_with_dut_entered_C557258(wifi_dut, 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557263')
 def test_ble_smp_anthencation_verify_lesc_non_lesc_C557263(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                            ble_client):
     """Verify the pairing between LESC supported DUT(Central ) and Non-LESC supported nRF Dongle"""
@@ -1406,6 +1421,7 @@ def test_ble_smp_anthencation_verify_lesc_non_lesc_C557263(wifi_dut, nrf_ble_cli
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557259')
 def test_ble_smp_anthencation_mitm_bit_disabled_C557259(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                         ble_client):
     """Verify the auth flag is proper when the MITM flaf is set to FALSE"""
@@ -1447,6 +1463,7 @@ def test_ble_smp_anthencation_mitm_bit_disabled_C557259(wifi_dut, nrf_ble_client
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557261')
 def test_ble_smp_anthencation_justworks_pairing_method_C557261(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                                ble_client):
     """Verify the JustWorks pairing method for DUT as Central"""
@@ -1498,6 +1515,7 @@ def test_ble_smp_anthencation_justworks_pairing_method_C557261(wifi_dut, nrf_ble
 # ---------------------------------------------------------------------------------#
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663304')
 def test_ble_smp_anthencation_just_works_displayonly_on_both_sides_pairing_method_C663304(wifi_dut, nrf_ble_client,
                                                                                           ble_sniffer, sl_collections,
                                                                                           ble_client):
@@ -1546,6 +1564,7 @@ def test_ble_smp_anthencation_just_works_displayonly_on_both_sides_pairing_metho
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663309')
 def test_ble_smp_just_works_pairing_method_Initiator_displayonly_responsder_displayyesno_C663309(wifi_dut,
                                                                                                  nrf_ble_client,
                                                                                                  ble_sniffer,
@@ -1596,6 +1615,7 @@ def test_ble_smp_just_works_pairing_method_Initiator_displayonly_responsder_disp
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663319')
 def test_ble_smp_just_works_pairing_Initiator_displayonly_responder_NoInput_NoOutput_C663319(wifi_dut, nrf_ble_client,
                                                                                              ble_sniffer,
                                                                                              sl_collections,
@@ -1645,6 +1665,7 @@ def test_ble_smp_just_works_pairing_Initiator_displayonly_responder_NoInput_NoOu
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663305')
 def test_ble_smp_just_works_pairing_Initiator_displayyesorno_responder_displayonly_C663305(wifi_dut, nrf_ble_client,
                                                                                            ble_sniffer, sl_collections,
                                                                                            ble_client):
@@ -1720,6 +1741,7 @@ def test_ble_smp_just_works_pairing_Initiator_displayyesorno_responder_displayon
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663376')
 def test_just_works_pairing_method_DUT_as_peripheral_C663376(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                              ble_client, dut_capability, client_capability, pin_code):
     """VVerify JustWorks Pairing method for IOCap , Initiator : DisplayOnly and Responder : DisplayOnly with public addr"""
@@ -1774,6 +1796,7 @@ def test_just_works_pairing_method_DUT_as_peripheral_C663376(wifi_dut, nrf_ble_c
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557266')
 def test_verify_passkey_entry_pairing_method_for_DUT_as_peripheral_C557266(wifi_dut, nrf_ble_client, ble_sniffer,
                                                                            sl_collections, ble_client, dut_capability,
                                                                            client_capability, pin_code):
@@ -1829,6 +1852,7 @@ def test_verify_passkey_entry_pairing_method_for_DUT_as_peripheral_C557266(wifi_
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557274')
 def test_verify_Encryption_initiated_by_DUT_as_peripheral_C557274(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                                   ble_client, dut_capability, client_capability,
                                                                   pin_code):
@@ -1878,6 +1902,7 @@ def test_verify_Encryption_initiated_by_DUT_as_peripheral_C557274(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557267')
 def test_verify_just_works_pairing_DUT_master_with_random_address_C557267(wifi_dut, nrf_ble_client, ble_sniffer,
                                                                           sl_collections, ble_client):
     """Verify just works pairing method for DUT as master with random address"""
@@ -1926,6 +1951,7 @@ def test_verify_just_works_pairing_DUT_master_with_random_address_C557267(wifi_d
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663320')
 def test_ble_smp_just_works_pairing_Initiator_displayyesorno_responder_no_input_no_output_C663320(wifi_dut,
                                                                                                   nrf_ble_client,
                                                                                                   ble_sniffer,
@@ -1976,6 +2002,7 @@ def test_ble_smp_just_works_pairing_Initiator_displayyesorno_responder_no_input_
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557292')
 def test_ble_smp_anthencation_verify_passkey_not_entered_C557292(wifi_dut, nrf_ble_client, sl_collections, ble_sniffer,
                                                                  ble_client):
     """Verify combo: [Numeric Comparison][Peripheral Action: Accept][Central Action: No action][Action Order: Peripheral][Expected Behaviour: SMP Timeout]"""
@@ -2001,6 +2028,7 @@ def test_ble_smp_anthencation_verify_passkey_not_entered_C557292(wifi_dut, nrf_b
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557288')
 def test_ble_smp_anthencation_verify_passkey_entered_incorrectly_C557288(wifi_dut, nrf_ble_client, sl_collections,
                                                                          ble_client):
     """Verify combo: [Numeric Comparison][Peripheral Action: Accept][Central Action: No action][Action Order: Peripheral][Expected Behaviour: SMP Timeout]"""
@@ -2026,6 +2054,7 @@ def test_ble_smp_anthencation_verify_passkey_entered_incorrectly_C557288(wifi_du
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663322')
 def test_ble_smp_just_works_pairing_Initiator_no_input_no_output_responder_no_input_no_output_C663322(wifi_dut,
                                                                                                       nrf_ble_client,
                                                                                                       ble_sniffer,
@@ -2077,6 +2106,7 @@ def test_ble_smp_just_works_pairing_Initiator_no_input_no_output_responder_no_in
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663312')
 def test_ble_smp_just_works_pairing_Initiator_noInputNoOutput_responder_displayyesno_C663312(wifi_dut, nrf_ble_client,
                                                                                              ble_sniffer,
                                                                                              sl_collections,
@@ -2127,6 +2157,7 @@ def test_ble_smp_just_works_pairing_Initiator_noInputNoOutput_responder_displayy
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663307')
 def test_ble_smp_just_works_pairing_initiator_No_Input_No_Output_responder_displayonly_C663307(wifi_dut, nrf_ble_client,
                                                                                                ble_sniffer,
                                                                                                sl_collections,
@@ -2196,6 +2227,7 @@ def test_ble_smp_just_works_pairing_initiator_No_Input_No_Output_responder_displ
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557256')
 def test_ble_smp_anthencation_verify_passkey_entered_C557256(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                              ble_client):
     """Verify the NumericCompairision Pairing Method for DUT as Peripheral"""
@@ -2249,6 +2281,7 @@ def test_ble_smp_anthencation_verify_passkey_entered_C557256(wifi_dut, nrf_ble_c
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557265')
 def test_ble_smp_disconnection_failure_C557265(wifi_dut, nrf_ble_client, ble_sniffer, dut_capability, pin_code,
                                                sl_collections, ble_client):
     """Verify BLE disconnect on authentication failure """
@@ -2275,6 +2308,7 @@ def test_ble_smp_disconnection_failure_C557265(wifi_dut, nrf_ble_client, ble_sni
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557277')
 def test_ble_smp_anthencation_encryption_initiation_C557277(wifi_dut, nrf_ble_client, ble_sniffer, dut_capability,
                                                             client_capability, pin_code, sl_collections, ble_client):
     """verify Encryption initiation by DUT as Central"""
@@ -2324,6 +2358,7 @@ def test_ble_smp_anthencation_encryption_initiation_C557277(wifi_dut, nrf_ble_cl
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557285')
 def test_ble_smp_anthencation_verify_passkey_entered_C557285(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections,
                                                              ble_client):
     """Verify combo: [Numeric Comparison][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
@@ -2376,6 +2411,7 @@ def test_ble_smp_anthencation_verify_passkey_entered_C557285(wifi_dut, nrf_ble_c
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C557278')
 def test_verify_Encryption_initiation_DUT_as_central_with_random_addr_C557278(wifi_dut, nrf_ble_client, ble_sniffer,
                                                                               sl_collections, ble_client,
                                                                               dut_capability, client_capability,
@@ -2432,6 +2468,7 @@ def test_verify_Encryption_initiation_DUT_as_central_with_random_addr_C557278(wi
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C557269')
 def test_verify_passkey_entry_pairing_method_by_DUT_as_peripheral_with_random_addr_C557269(wifi_dut, nrf_ble_client,
                                                                                            ble_sniffer, sl_collections,
                                                                                            ble_client, dut_capability,
@@ -2486,6 +2523,7 @@ def test_verify_passkey_entry_pairing_method_by_DUT_as_peripheral_with_random_ad
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663375')
 def test_verify_SMP_timeout_error_DUT_as_peripheral_C663375(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify Encryption initiated by DUT as peripheral"""
     try:
@@ -2504,6 +2542,7 @@ def test_verify_SMP_timeout_error_DUT_as_peripheral_C663375(wifi_dut, nrf_ble_cl
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C557270')
 def test_verify_connect_disconnect_reconnect_DUT_as_peripheral_C557270(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify Encryption initiated by DUT as peripheral"""
     ble_obj = None
@@ -2524,6 +2563,7 @@ def test_verify_connect_disconnect_reconnect_DUT_as_peripheral_C557270(wifi_dut,
         nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C557280')
 def test_verify_Rand_memset_0_for_encryption_using_LTK_C557280(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify LESC pairing EDIV/Rand memset 0 for encryption using LTK"""
     ble_obj = None
@@ -2551,6 +2591,7 @@ def test_verify_Rand_memset_0_for_encryption_using_LTK_C557280(wifi_dut, nrf_ble
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663374')
 def test_verify_SMP_timeout_error_DUT_as_central_C663374(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify Encryption initiated by DUT as peripheral"""
     ble_obj = None
@@ -2578,6 +2619,7 @@ def test_verify_SMP_timeout_error_DUT_as_central_C663374(wifi_dut, nrf_ble_clien
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C557276')
 def test_verify_Encryption_pause_resume_for_DUT_central_C557276(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify Encryption pause resume for DUT as central """
     ble_obj = None
@@ -2604,6 +2646,7 @@ def test_verify_Encryption_pause_resume_for_DUT_central_C557276(wifi_dut, nrf_bl
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C557275')
 def test_verify_Encryption_initiated_by_DUT_as_peripheral_with_random_addr_C557275(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify Encryption initiated by DUT as peripheral"""
     ble_obj = None
@@ -2624,6 +2667,7 @@ def test_verify_Encryption_initiated_by_DUT_as_peripheral_with_random_addr_C5572
         nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C557271')
 def test_verify_just_works_pairing_DUT_central_connect_disconnect_C557271(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify just works pairing method for DUT as master with random address"""
     ble_obj = None
@@ -2644,6 +2688,7 @@ def test_verify_just_works_pairing_DUT_central_connect_disconnect_C557271(wifi_d
         nrf_ble_client.interfaces.bluetooth.delete_bonding_data()
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C557272')
 def test_verify_connect_disconnect_DUT_as_central_Numeric_comparision_C557272(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify just works pairing method for DUT as master with random address"""
     ble_obj = None

@@ -321,6 +321,7 @@ class WifiConnectionThread(ThreadBase):
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
+@pytest.mark.test_src_map_id('C34513')
 def test_wifi_sdk_2_4_tcp_rx_wpa3_ent_C34513(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                              wifi_client, sniffer_filter, sl_collections, net_perf_client, protocol,
                                              radius_server):
@@ -373,6 +374,7 @@ def test_wifi_sdk_2_4_tcp_rx_wpa3_ent_C34513(wifi_sniffer, wifi_access_point, wi
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
+@pytest.mark.test_src_map_id('C34515')
 def test_wifi_sdk_2_4_udp_rx_wpa3_ent_C34515(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                              wifi_client, sniffer_filter, sl_collections, net_perf_client, protocol,
                                              radius_server):
@@ -425,6 +427,7 @@ def test_wifi_sdk_2_4_udp_rx_wpa3_ent_C34515(wifi_sniffer, wifi_access_point, wi
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
+@pytest.mark.test_src_map_id('C34512')
 def test_wifi_sdk_2_4_tcp_tx_wpa3_ent_C34512(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                              wifi_client, sniffer_filter, sl_collections, net_perf_client, protocol,
                                              radius_server):
@@ -477,6 +480,7 @@ def test_wifi_sdk_2_4_tcp_tx_wpa3_ent_C34512(wifi_sniffer, wifi_access_point, wi
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
+@pytest.mark.test_src_map_id('C34514')
 def test_wifi_sdk_2_4_udp_tx_wpa3_ent_C34514(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                              wifi_client, sniffer_filter, sl_collections, net_perf_client, protocol,
                                              radius_server):
@@ -528,6 +532,7 @@ def test_wifi_sdk_2_4_udp_tx_wpa3_ent_C34514(wifi_sniffer, wifi_access_point, wi
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C354512')
 def test_wifi_sdk_2_4_ssl_tx_wpa3_ent_C354512(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                               wifi_client, sniffer_filter, sl_collections, radius_server, ssl_server):
     ping_count = utf_constants.get("ping_count")
@@ -577,6 +582,7 @@ def test_wifi_sdk_2_4_ssl_tx_wpa3_ent_C354512(wifi_sniffer, wifi_access_point, w
         "eap_cert": ["wifi-user.pem", "SL_NET_CERTIFICATE", "SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID"]
     }
 )
+@pytest.mark.test_src_map_id('C354512')
 def test_wifi_sdk_2_4_ssl_rx_wpa3_ent_C354512(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                               wifi_client, sniffer_filter, sl_collections, radius_server, ssl_server):
     ping_count = utf_constants.get("ping_count")

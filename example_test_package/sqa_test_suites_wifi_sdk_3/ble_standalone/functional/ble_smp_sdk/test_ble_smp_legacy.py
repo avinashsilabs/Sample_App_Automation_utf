@@ -581,6 +581,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664290')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664290(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with DUT & DisplayOnly on dongle, dut as slave """
     ble_obj = None
@@ -618,6 +619,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664290(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664291')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664291(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with dongle & DisplayOnly on dut, dut as slave """
     ble_obj = None
@@ -654,6 +656,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664291(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664293')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664293(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output with dongle & DisplayOnly on dut, dut as slave """
     ble_obj = None
@@ -691,6 +694,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664293(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664295')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664295(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with dongle & Display yes or no , dut as slave """
     ble_obj = None
@@ -728,6 +732,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664295(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664296')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664296(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Yes/No IOCap On dongle & dongle, dut as slave """
     ble_obj = None
@@ -764,6 +769,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664296(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664298')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664298(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input no output on dongle & Display Yes/No IOCap on dut, dut as slave """
     ble_obj = None
@@ -801,6 +807,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664298(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664305')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664305(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Only on dongle & no input no output on  DUT as slave """
     ble_obj = None
@@ -839,6 +846,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664305(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664306')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664306(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Yes/No IOCap on dongle, dut as slave """
     ble_obj = None
@@ -876,6 +884,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664306(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664308')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664308(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output on both side , dut as slave """
     ble_obj = None
@@ -913,6 +922,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_public_C664308(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664315')
 def test_ble_smp_legacy_pairing_dut_as_slave_using_random_C664315(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with DUT & DisplayOnly on dongle, dut as slave """
     ble_obj = None
@@ -951,6 +961,7 @@ def test_ble_smp_legacy_pairing_dut_as_slave_using_random_C664315(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664316')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664316(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with dongle & DisplayOnly on dut, dut as slave """
     ble_obj = None
@@ -988,6 +999,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664316(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664318')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664318(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output with dongle & DisplayOnly on dut, dut as slave """
     ble_obj = None
@@ -1024,6 +1036,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664318(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664320')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664320(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with dongle & Display yes or no , dut as slave """
     ble_obj = None
@@ -1061,6 +1074,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664320(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664321')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664321(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Yes/No IOCap On dongle & dongle, dut as slave """
     ble_obj = None
@@ -1099,6 +1113,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664321(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664323')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664323(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input no output on dongle & Display Yes/No IOCap on dut, dut as slave """
     ble_obj = None
@@ -1137,6 +1152,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664323(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664330')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664330(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Only on dongle & no input no output on  DUT as slave """
     ble_obj = None
@@ -1174,6 +1190,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664330(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664331')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664331(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output on dut side & display yes or no on remote , dut as slave """
     ble_obj = None
@@ -1211,6 +1228,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664331(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664333')
 def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664333(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -1249,6 +1267,7 @@ def test_ble_smp_anthencation_legacy_pairing_dut_as_slave_using_random_C664333(w
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664496')
 def test_ble_smp_anthencation_legacy_pairing_using_public_C664496(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with DUT & DisplayOnly on dongle as Central """
     ble_obj = None
@@ -1285,6 +1304,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_public_C664496(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664497')
 def test_ble_smp_anthencation_legacy_pairing__using_public_C664497(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & DisplayOnly on dongle as Central """
     ble_obj = None
@@ -1321,6 +1341,7 @@ def test_ble_smp_anthencation_legacy_pairing__using_public_C664497(wifi_dut, nrf
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664499')
 def test_ble_smp_anthencation_legacy_pairing_using_public_C664499(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output with DUT & DisplayOnly on dongle as Central """
     ble_obj = None
@@ -1358,6 +1379,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_public_C664499(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664501')
 def test_ble_smp_anthencation_legacy_pairing_using_public_C664501(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with DUT & Display yes or no on dongle as Central """
     ble_obj = None
@@ -1395,6 +1417,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_public_C664501(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=[ "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664572')
 def test_ble_smp_anthencation_legacy_pairing_using_public_C664572(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Yes/No IOCap On both dut & dongle as Central """
     ble_obj = None
@@ -1430,6 +1453,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_public_C664572(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664574')
 def test_ble_smp_anthencation_legacy_pairing_using_public_C664574(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input no output & Display Yes/No IOCap on nrf dongle as Central """
     ble_obj = None
@@ -1466,6 +1490,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_public_C664574(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664581')
 def test_ble_smp_anthencation_legacy_pairing_using_public_C664581(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Only with DUT as Central """
     ble_obj = None
@@ -1502,6 +1527,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_public_C664581(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664582')
 def test_ble_smp_anthencation_legacy_pairing_using_public_C664582(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Yes/No IOCap with DUT as Central """
     ble_obj = None
@@ -1537,6 +1563,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_public_C664582(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664584')
 def test_ble_smp_anthencation_legacy_pairing_using_public_C664584(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Yes/No IOCap with DUT as Central """
     ble_obj = None
@@ -1573,6 +1600,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_public_C664584(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664661')
 def test_ble_smp_anthencation_legacy_pairing_using_random_C664661(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with DUT & DisplayOnly on dongle as Central """
     ble_obj = None
@@ -1608,6 +1636,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_random_C664661(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664662')
 def test_ble_smp_anthencation_legacy_pairing_using_random_C664662(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & DisplayOnly on dongle as Central """
     ble_obj = None
@@ -1643,6 +1672,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_random_C664662(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664664')
 def test_ble_smp_anthencation_legacy_pairing_using_random_C664664(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output with DUT & DisplayOnly on dongle as Central """
     ble_obj = None
@@ -1678,6 +1708,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_random_C664664(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664666')
 def test_ble_smp_anthencation_legacy_pairing_using_random_C664666(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with DUT & Display yes or no on dongle as Central """
     ble_obj = None
@@ -1714,6 +1745,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_random_C664666(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664667')
 def test_ble_smp_anthencation_legacy_pairing_using_random_C664667(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Yes/No IOCap On dut & dongle as Central """
     ble_obj = None
@@ -1753,6 +1785,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_random_C664667(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664669')
 def test_ble_smp_anthencation_legacy_pairing_using_random_C664669(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input no output & Display Yes/No IOCap on nrf dongle as Central """
     ble_obj = None
@@ -1791,6 +1824,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_random_C664669(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664676')
 def test_ble_smp_anthencation_legacy_pairing_using_random_C664676(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Only with DUT as Central """
     ble_obj = None
@@ -1829,6 +1863,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_random_C664676(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664677')
 def test_ble_smp_anthencation_legacy_pairing_using_random_C664677(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Yes/No IOCap with DUT as Central """
     ble_obj = None
@@ -1867,6 +1902,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_random_C664677(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=[ "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664679')
 def test_ble_smp_anthencation_legacy_pairing_using_random_C664679(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display Yes/No IOCap with DUT as Central """
     ble_obj = None
@@ -1907,6 +1943,7 @@ def test_ble_smp_anthencation_legacy_pairing_using_random_C664679(wifi_dut, nrf_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664579')
 def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_only_using_public_C664579(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -1945,6 +1982,7 @@ def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664589')
 def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_display_using_public_C664589(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -1983,6 +2021,7 @@ def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664583')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_No_input_no_output_using_public_C664583(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2022,6 +2061,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_No_input_no_ou
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664585')
 def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_No_input_No_output_using_public_C664585(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2060,6 +2100,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_No_input_No
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664674')
 def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_only_using_random_C664674(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2098,6 +2139,7 @@ def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664678')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responderNo_input_No_output_using_random_C664678(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2136,6 +2178,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responderNo_input_No_out
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664680')
 def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_No_input_No_output_using_random_C664680(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2175,6 +2218,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_No_input_No
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664684')
 def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_display_using_random_C664684(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2215,6 +2259,7 @@ def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664313')
 def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_display_using_public_C664313(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2253,6 +2298,7 @@ def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664303')
 def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_Only_using_public_C664303(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2291,6 +2337,7 @@ def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664309')
 def test_ble_smp_legacy_pairing_initiator_Keyboard_display_responder_No_input_No_output_using_public_C664309(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2328,6 +2375,7 @@ def test_ble_smp_legacy_pairing_initiator_Keyboard_display_responder_No_input_No
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664307')
 def test_ble_smp_legacy_pairing_initiator_Keyboard_Only_responder_No_input_No_output_using_public_C664307(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2368,6 +2416,7 @@ def test_ble_smp_legacy_pairing_initiator_Keyboard_Only_responder_No_input_No_ou
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664338')
 def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_display_using_random_C664338(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2405,6 +2454,7 @@ def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664328')
 def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_Only_using_random_C664328(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2442,6 +2492,7 @@ def test_ble_smp_legacy_pairing_initiator_No_input_No_output_responder_keyboard_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664334')
 def test_ble_smp_legacy_pairing_initiator_Keyboard_display_responder_No_input_No_output_using_random_C664334(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2480,6 +2531,7 @@ def test_ble_smp_legacy_pairing_initiator_Keyboard_display_responder_No_input_No
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=[ "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664332')
 def test_ble_smp_legacy_pairing_initiator_Keyboard_Only_responder_No_input_No_output_using_random_C664332(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for No input No output IOCap with DUT & dongle , dut as slave """
     ble_obj = None
@@ -2516,6 +2568,7 @@ def test_ble_smp_legacy_pairing_initiator_Keyboard_Only_responder_No_input_No_ou
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557262')
 def test_verify_legacy_pairing_Display_yes_No_DUT_as_master_C557262(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify legacy pairing with Display Yes/No with DUT as master"""
     ble_obj = None
@@ -2552,6 +2605,7 @@ def test_verify_legacy_pairing_Display_yes_No_DUT_as_master_C557262(wifi_dut, nr
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557279')
 def test_verify_Rand_memset_0_for_encryption_using_STK_C557279(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify EDIV/Rand memset 0 for encryption using STK"""
     ble_obj = None
@@ -2590,6 +2644,7 @@ def test_verify_Rand_memset_0_for_encryption_using_STK_C557279(wifi_dut, nrf_ble
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664576')
 def test_ble_smp_legacy_pairing_initiator_DisplayOnly_responder_keyboard_only_using_public_C664576(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2628,6 +2683,7 @@ def test_ble_smp_legacy_pairing_initiator_DisplayOnly_responder_keyboard_only_us
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan","wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664577')
 def test_ble_smp_legacy_pairing_initiator_Displayyes_or_no_responder_keyboard_only_using_public_C664577(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2665,6 +2721,7 @@ def test_ble_smp_legacy_pairing_initiator_Displayyes_or_no_responder_keyboard_on
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan","wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664586')
 def test_ble_smp_legacy_pairing_initiator_Display_only_responder_keyboard_display_using_public_C664586(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display only IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2702,6 +2759,7 @@ def test_ble_smp_legacy_pairing_initiator_Display_only_responder_keyboard_displa
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664587')
 def test_ble_smp_legacy_pairing_initiator_Display_yes_or_no_responder_keyboard_display_using_public_C664587(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2739,6 +2797,7 @@ def test_ble_smp_legacy_pairing_initiator_Display_yes_or_no_responder_keyboard_d
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664671')
 def test_ble_smp_legacy_pairing_initiator_DisplayOnly_responder_keyboard_only_using_random_C664671(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for DisplayOnly IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2776,6 +2835,7 @@ def test_ble_smp_legacy_pairing_initiator_DisplayOnly_responder_keyboard_only_us
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664672')
 def test_ble_smp_legacy_pairing_initiator_Displayyes_or_no_responder_keyboard_only_using_random_C664672(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2815,6 +2875,7 @@ def test_ble_smp_legacy_pairing_initiator_Displayyes_or_no_responder_keyboard_on
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664681')
 def test_ble_smp_legacy_pairing_initiator_Display_only_responder_keyboard_display_using_random_C664681(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display only IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2854,6 +2915,7 @@ def test_ble_smp_legacy_pairing_initiator_Display_only_responder_keyboard_displa
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664682')
 def test_ble_smp_legacy_pairing_initiator_Display_yes_or_no_responder_keyboard_display_using_random_C664682(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2892,6 +2954,7 @@ def test_ble_smp_legacy_pairing_initiator_Display_yes_or_no_responder_keyboard_d
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664292')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_using_public_C664292(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2929,6 +2992,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_u
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664294')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_using_public_C664294(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -2967,6 +3031,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_u
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664297')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_yer_or_no_using_public_C664297(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -3006,6 +3071,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_yer_or
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664299')
 def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_yer_or_no_using_public_C664299(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
     ble_obj = None
@@ -3043,6 +3109,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_yer
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664317')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_using_random_C664317(wifi_dut,
                                                                                                     nrf_ble_client,
                                                                                                     ble_sniffer,
@@ -3088,6 +3155,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_u
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664319')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_using_random_C664319(wifi_dut,
                                                                                                     nrf_ble_client,
                                                                                                     ble_sniffer,
@@ -3134,6 +3202,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_u
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664322')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_yer_or_no_using_random_C664322(wifi_dut,
                                                                                                          nrf_ble_client,
                                                                                                          ble_sniffer,
@@ -3179,6 +3248,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_yer_or
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664324')
 def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_yer_or_no_using_random_C664324(wifi_dut,
                                                                                                             nrf_ble_client,
                                                                                                             ble_sniffer,
@@ -3225,6 +3295,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_yer
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664580')
 def test_ble_smp_legacy_just_works_pairing_initiator_keyboard_display_responder_keyboard_only_C664580(wifi_dut,
                                                                                                             nrf_ble_client,
                                                                                                             ble_sniffer,
@@ -3266,6 +3337,7 @@ def test_ble_smp_legacy_just_works_pairing_initiator_keyboard_display_responder_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664590')
 def test_ble_smp_legacy_numeric_comparison_pairing_initiator_keyboard_display_responder_keyboard_display_C664590(wifi_dut,
                                                                                                             nrf_ble_client,
                                                                                                             ble_sniffer,
@@ -3307,6 +3379,7 @@ def test_ble_smp_legacy_numeric_comparison_pairing_initiator_keyboard_display_re
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664675')
 def test_ble_smp_legacy_just_works_pairing_initiator_keyboard_display_responder_keyboard_only_using_random_C664675(wifi_dut,
                                                                                                             nrf_ble_client,
                                                                                                             ble_sniffer,
@@ -3349,6 +3422,7 @@ def test_ble_smp_legacy_just_works_pairing_initiator_keyboard_display_responder_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664685')
 def test_ble_smp_legacy_numeric_comparison_pairing_initiator_keyboard_display_responder_keyboard_display_using_random_C664685(wifi_dut,
                                                                                                             nrf_ble_client,
                                                                                                             ble_sniffer,
@@ -3391,6 +3465,7 @@ def test_ble_smp_legacy_numeric_comparison_pairing_initiator_keyboard_display_re
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664578')
 def test_ble_smp_legacy_numeric_comparison_pairing_initiator_keyboard_only_responder_keyboard_only_C664578(wifi_dut,
                                                                                                             nrf_ble_client,
                                                                                                             ble_sniffer,
@@ -3432,6 +3507,7 @@ def test_ble_smp_legacy_numeric_comparison_pairing_initiator_keyboard_only_respo
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664498')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_C664498(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
@@ -3471,6 +3547,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_C
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664500')
 def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_only_C664500(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for keyboard display, display only or no IOCap with DUT & dongle , dut as master """
@@ -3511,6 +3588,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_onl
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664573')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_yesno_C664573(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
@@ -3550,6 +3628,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_yesno_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664588')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_keyboard_display_C664588(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
@@ -3589,6 +3668,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_keyboard_displ
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664575')
 def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_yesno_C664575(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
@@ -3628,6 +3708,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_yes
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664673')
 def test_ble_smp_legacy_numeric_comparison_pairing_initiator_keyboard_only_responder_keyboard_only_using_random_C664673(wifi_dut,
                                                                                                             nrf_ble_client,
                                                                                                             ble_sniffer,
@@ -3670,6 +3751,7 @@ def test_ble_smp_legacy_numeric_comparison_pairing_initiator_keyboard_only_respo
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664670')
 def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_yesno_C664670(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
@@ -3709,6 +3791,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_yes
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664663')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_C664663(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
@@ -3749,6 +3832,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_only_C
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664665')
 def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_only_C664665(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
@@ -3789,6 +3873,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_display_responder_display_onl
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664668')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_yesno_C664668(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """
@@ -3829,6 +3914,7 @@ def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_display_yesno_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664683')
 def test_ble_smp_legacy_pairing_initiator_keyboard_only_responder_keyboard_display_C664683(
         wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify the Legacy pairing for Display yes or no IOCap with DUT & dongle , dut as master """

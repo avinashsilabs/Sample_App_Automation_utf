@@ -438,6 +438,7 @@ class WifiJoinThread(ThreadBase):
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C401960')
 def test_wlan_standalone_ofdma_tcp_tx_C401960(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_clients, request,
                               protocol, utf_constants, sl_collections, remote_wiseconnect3):
     ping_count = utf_constants.get("ping_count")
@@ -502,6 +503,7 @@ def test_wlan_standalone_ofdma_tcp_tx_C401960(wifi_sniffer, wifi_access_point, w
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C401961')
 def test_wlan_standalone_ofdma_udp_tx_C401961(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, sl_collections,
                                                 net_perf_clients, protocol, utf_constants, request, remote_wiseconnect3
                                                 ):
@@ -565,6 +567,7 @@ def test_wlan_standalone_ofdma_udp_tx_C401961(wifi_sniffer, wifi_access_point, w
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C401963')
 def test_wlan_standalone_ofdma_rtt_tcp_tx_C401963(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3):
@@ -635,6 +638,7 @@ def test_wlan_standalone_ofdma_rtt_tcp_tx_C401963(wifi_sniffer, wifi_access_poin
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C401964')
 def test_wlan_standalone_ofdma_rtt_udp_tx_C401964(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3, bt_dut, ble_client):
@@ -705,6 +709,7 @@ def test_wlan_standalone_ofdma_rtt_udp_tx_C401964(wifi_sniffer, wifi_access_poin
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
     }
 )
+@pytest.mark.test_src_map_id('C401970')
 def test_wlan_standalone_ofdma_ssl_tx_C401970(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                 ssl_server, request, utf_constants, sl_collections,
                                                 remote_wiseconnect3):
@@ -770,6 +775,7 @@ def test_wlan_standalone_ofdma_ssl_tx_C401970(wifi_sniffer, wifi_access_point, w
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
     }
 )
+@pytest.mark.test_src_map_id('C401971')
 def test_wlan_standalone_ofdma_rtt_ssl_tx_C401971(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     ssl_server, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3):

@@ -927,6 +927,7 @@ class VSIEInjection(ThreadBase):
 )
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing"])
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C893061')
 def test_vs_ie_injection_in_soft_ap_mgmt_frames_C893061(
     wifi_dut, wifi_sniffer, wifi_client, request, sl_collections, sniffer_filter
 ):
@@ -984,6 +985,7 @@ def test_vs_ie_injection_in_soft_ap_mgmt_frames_C893061(
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C893062')
 def test_vs_ie_injection_in_sta_mgmt_frames_C893062(
     wifi_dut, wifi_sniffer, wifi_access_point, sl_collections, request, sniffer_filter
 ):
@@ -1052,6 +1054,7 @@ def test_vs_ie_injection_in_sta_mgmt_frames_C893062(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing", "unassociated"])
+@pytest.mark.test_src_map_id('C893063')
 def test_vs_ie_injection_in_concurrent_mode_mgmt_frames_C893063(
     wifi_dut,
     wifi_sniffer,
@@ -1122,6 +1125,7 @@ def test_vs_ie_injection_in_concurrent_mode_mgmt_frames_C893063(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing"])
+@pytest.mark.test_src_map_id('C893064')
 def test_vs_ie_remove_all_api_in_soft_ap_mgmt_frames_C893064(
     wifi_dut, wifi_sniffer, wifi_client, request, sl_collections, sniffer_filter
 ):
@@ -1182,6 +1186,7 @@ def test_vs_ie_remove_all_api_in_soft_ap_mgmt_frames_C893064(
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing"])
+@pytest.mark.test_src_map_id('C893065')
 def test_vs_ie_three_ie_addition_failure_C893065(
     wifi_dut, wifi_sniffer, wifi_client, request, sl_collections, sniffer_filter
 ):
@@ -1244,6 +1249,7 @@ def test_vs_ie_three_ie_addition_failure_C893065(
 )
 @pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing"])
+@pytest.mark.test_src_map_id('C893066')
 def test_vs_ie_injection_with_max_255_bytes_vendor_data_C893066(
     wifi_dut, wifi_sniffer, wifi_client, request, sl_collections, sniffer_filter
 ):
@@ -1319,6 +1325,7 @@ def test_vs_ie_injection_with_max_255_bytes_vendor_data_C893066(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing"])
+@pytest.mark.test_src_map_id('C893068')
 def test_vs_ie_not_retained_after_dut_reinitialization_C893068(
     wifi_dut, wifi_sniffer, wifi_client, request, sl_collections, sniffer_filter
 ):
@@ -1386,6 +1393,7 @@ def test_vs_ie_not_retained_after_dut_reinitialization_C893068(
 )
 @pytest.mark.skip(reason="Marking this Manual")
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing", "unassociated"])
+@pytest.mark.test_src_map_id('C893069')
 def test_vs_ie_add_remove_in_concurrent_mode_long_run_C893069(
     wifi_dut,
     wifi_sniffer,
@@ -1451,6 +1459,7 @@ def test_vs_ie_add_remove_in_concurrent_mode_long_run_C893069(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C893070')
 def test_vs_ie_injection_in_probe_reqs_during_bg_scan_C893070(
     wifi_dut, wifi_sniffer, wifi_access_point, sl_collections, request, sniffer_filter
 ):
@@ -1510,6 +1519,7 @@ def test_vs_ie_injection_in_probe_reqs_during_bg_scan_C893070(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing"])
+@pytest.mark.test_src_map_id('C893072')
 def test_vs_ie_injection_error_with_non_reserved_bitmap_C893072(
     wifi_dut, wifi_sniffer, wifi_client, request, sl_collections, sniffer_filter
 ):
@@ -1577,6 +1587,7 @@ def test_vs_ie_injection_error_with_non_reserved_bitmap_C893072(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing", "unassociated"])
+@pytest.mark.test_src_map_id('C893073')
 def test_vs_ie_overriding_with_existing_unique_id_C893073(
     wifi_dut,
     wifi_sniffer,
@@ -1640,6 +1651,7 @@ def test_vs_ie_overriding_with_existing_unique_id_C893073(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C893074')
 def test_vs_ie_presence_after_rejoin_C893074(
     switch,
     wifi_dut,
@@ -1715,6 +1727,7 @@ def test_vs_ie_presence_after_rejoin_C893074(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["stop_ap_beaconing", "unassociated"])
+@pytest.mark.test_src_map_id('C893076')
 def test_vs_ie_injection_using_continious_add_remove_C893076(
     wifi_dut,
     wifi_sniffer,

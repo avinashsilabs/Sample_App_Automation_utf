@@ -213,6 +213,7 @@ def discover_service_char_of_remote_in_dut(wifi_dut, ble_client, ble_client_addr
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19920')
 def test_ble_slave_tx_data_length_20_bytes_C19920(wifi_dut, ble_client, sl_collections, utf_constants):
     """Validate BLE Tx as slave by configuring data length with 20bytes without Duty cycling"""
     try:
@@ -325,6 +326,7 @@ def test_ble_slave_tx_data_length_20_bytes_C19920(wifi_dut, ble_client, sl_colle
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19923')
 def test_ble_slave_tx_data_length_230_bytes_C19923(wifi_dut, ble_client, sl_collections, utf_constants):
     """Validate BLE Tx as slave by configuring data length with 230bytes without Duty cycling"""
     try:
@@ -439,6 +441,7 @@ def test_ble_slave_tx_data_length_230_bytes_C19923(wifi_dut, ble_client, sl_coll
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19926')
 def test_ble_slave_tx_data_length_20_bytes_duty_cycle_C19926(wifi_dut, ble_client, sl_collections, utf_constants):
     """Validate BLE Tx as slave by configuring data length with 20bytes with Duty cycling"""
     try:
@@ -553,6 +556,7 @@ def test_ble_slave_tx_data_length_20_bytes_duty_cycle_C19926(wifi_dut, ble_clien
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19929')
 def test_ble_slave_tx_data_length_230_bytes_duty_cycle_C19929(wifi_dut, ble_client, sl_collections, utf_constants):
     """Validate BLE Tx as slave by configuring data length with 230bytes with Duty cycling"""
     try:
@@ -667,6 +671,7 @@ def test_ble_slave_tx_data_length_230_bytes_duty_cycle_C19929(wifi_dut, ble_clie
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19924')
 def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wifi_dut, utf_constants):
     bt_mon_log_file_name = f"reports/test_ble_master_rx_100_bytes_C19924{int(time.time())}.log"
     """Validate BLE RX as master by configuring data length with 100bytes without Duty cycling"""
@@ -814,6 +819,7 @@ def test_ble_master_rx_100_bytes_C19924(ble_dut, ble_client, sl_collections, wif
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19930')
 def test_ble_master_rx_100_bytes_duty_cycle_C19930(ble_dut, ble_client, sl_collections, wifi_dut, utf_constants):
     bt_mon_log_file_name = f"reports/test_ble_master_rx_100_bytes_C19930{int(time.time())}.log"
     """Validate BLE RX as master by configuring data length with 100bytes with Duty cycling"""
@@ -955,6 +961,7 @@ def test_ble_master_rx_100_bytes_duty_cycle_C19930(ble_dut, ble_client, sl_colle
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19921')
 def test_ble_master_rx_230_bytes_C19921(ble_dut, ble_client, sl_collections, wifi_dut, utf_constants):
     bt_mon_log_file_name = (f"reports/test_ble_master_rx_230_bytes_C19921"
                             f"{int(time.time())}.log")
@@ -1103,6 +1110,7 @@ def test_ble_master_rx_230_bytes_C19921(ble_dut, ble_client, sl_collections, wif
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19927')
 def test_ble_master_rx_230_bytes_duty_cycle_C19927(ble_dut, ble_client, sl_collections, wifi_dut, utf_constants):
     bt_mon_log_file_name = (f"reports/test_ble_master_rx_230_bytes_C19927"
                             f"{int(time.time())}.log")
@@ -1248,6 +1256,7 @@ def test_ble_master_rx_230_bytes_duty_cycle_C19927(ble_dut, ble_client, sl_colle
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19922')
 def test_ble_slave_tx_rx_100_bytes_C19922(wifi_dut, ble_client, sl_collections, utf_constants):
     """ Validate BLE Tx and Rx as slave by configuring data length with 100bytes without Duty cycling"""
     try:
@@ -1336,6 +1345,7 @@ def test_ble_slave_tx_rx_100_bytes_C19922(wifi_dut, ble_client, sl_collections, 
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19925')
 def test_ble_master_tx_rx_230_bytes_C19925(wifi_dut, ble_client, sl_collections, utf_constants):
     """ Validate BLE Tx and Rx as Master by configuring data length with 230bytes without Duty cycling."""
     bt_mon_log_file_name = (f"reports/test_ble_master_tx_rx_230_bytes_C19925"
@@ -1430,6 +1440,7 @@ def test_ble_master_tx_rx_230_bytes_C19925(wifi_dut, ble_client, sl_collections,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19928')
 def test_ble_slave_tx_rx_100_bytes_C19928(wifi_dut, ble_client, sl_collections, utf_constants):
     """ Validate BLE Tx and Rx as slave by configuring data length with 100bytes with Duty cycling"""
     try:
@@ -1520,6 +1531,7 @@ def test_ble_slave_tx_rx_100_bytes_C19928(wifi_dut, ble_client, sl_collections, 
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19931')
 def test_ble_master_tx_rx_230_bytes_C19931(wifi_dut, ble_client, sl_collections, utf_constants):
     """ Validate BLE Tx and Rx as Master by configuring data length with 230bytes without Duty cycling."""
     bt_mon_log_file_name = (f"reports/test_ble_master_tx_rx_230_bytes_C19931"
@@ -1612,6 +1624,7 @@ def test_ble_master_tx_rx_230_bytes_C19931(wifi_dut, ble_client, sl_collections,
     )
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C537347')
 def test_ble_hogp_smp_master_mode_C537347(ble_dut, ble_client, sl_collections):
     with BleLogs(
             start_collecting_logs=True,

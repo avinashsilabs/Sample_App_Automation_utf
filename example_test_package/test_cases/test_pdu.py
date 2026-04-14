@@ -1,3 +1,4 @@
+import pytest
 import time
 
 from utf.utils.logger import get_logger
@@ -7,11 +8,13 @@ def logger():
     return get_logger(__name__)
 
 
+@pytest.mark.test_src_map_id('TC7838791170')
 def test_verify_pdu(wifi_access_point, wifi_dut, switch):
     switch.interfaces.pdu_switch.turn_on()
     time.sleep(5)
     switch.interfaces.pdu_switch.turn_off()
 
+@pytest.mark.test_src_map_id('TC2982589175')
 def test_pdu_switch_state(wifi_access_point):
    # Point access point to switch_ap in harness
    wifi_access_point.interfaces.wifi.switch.turn_on(delay=5)
@@ -23,6 +26,7 @@ def test_pdu_switch_state(wifi_access_point):
    logger().info("pdu switch state : " + str(state))
    assert state == 'false'
    
+@pytest.mark.test_src_map_id('TC4625513180')
 def test_pdu_switches(switches):
    # swtich #1
     switches[0].interfaces.pdu_switch.turn_on()

@@ -208,6 +208,7 @@ class IperfThraed(ThreadBase):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC5349077373')
 def test_wifi_zephyr_scan_wpa3_c34503_04_05_07(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                sniffer_filter, zephyr_wifi_collections):
     ping_count = utf_constants.get("ping_count")
@@ -242,6 +243,7 @@ def test_wifi_zephyr_scan_wpa3_c34503_04_05_07(wifi_sniffer, wifi_access_point, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C34508')
 def test_wifi_zephyr_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                     sniffer_filter, zephyr_wifi_collections):
     ping_count = utf_constants.get("ping_count")
@@ -279,6 +281,7 @@ def test_wifi_zephyr_conn_deconn_reconn_wpa3_C34508(wifi_sniffer, wifi_access_po
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C34509')
 def test_wifi_zephyr_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                       sniffer_filter, switch, zephyr_wifi_collections):
     try:
@@ -365,6 +368,7 @@ def test_wifi_zephyr_rejoin_with_wpa3_security_c34509(wifi_sniffer, wifi_access_
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C113907')
 def test_wifi_zephyr_conn_STA_AP_in_H2E_mode_C113907(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                      sniffer_filter, zephyr_wifi_collections):
     try:
@@ -409,6 +413,7 @@ def test_wifi_zephyr_conn_STA_AP_in_H2E_mode_C113907(wifi_sniffer, wifi_access_p
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C113909')
 def test_wifi_zephyr_DUT_behaviour_rejoin_H2E_C113909(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                       sniffer_filter, switch, zephyr_wifi_collections):
     try:
@@ -511,6 +516,7 @@ def test_wifi_zephyr_DUT_behaviour_rejoin_H2E_C113909(wifi_sniffer, wifi_access_
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C113911')
 def test_wifi_zephyr_data_transfer_STA_AP_in_H2E_mode_C113911(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                               net_perf_client, protocol, request, sniffer_filter,
                                                               wifi_client,
@@ -558,6 +564,7 @@ def test_wifi_zephyr_data_transfer_STA_AP_in_H2E_mode_C113911(wifi_sniffer, wifi
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2WPA3MixedMode', "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C113912')
 def test_wifi_zephyr_conn_STA_AP_in_Transition_mode_C113912(wifi_sniffer, wifi_access_point, wifi_dut,
                                                             utf_constants,
                                                             request, sniffer_filter, zephyr_wifi_collections):
@@ -595,6 +602,7 @@ def test_wifi_zephyr_conn_STA_AP_in_Transition_mode_C113912(wifi_sniffer, wifi_a
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C113913')
 def test_wifi_zephyr_data_transfer_STA_in_Transition_mode_C113913(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                   utf_constants,
                                                                   wifi_client, net_perf_client, protocol, request,
@@ -634,6 +642,7 @@ def test_wifi_zephyr_data_transfer_STA_in_Transition_mode_C113913(wifi_sniffer, 
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA3', "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C537920')
 def test_wifi_zephyr_conn_with_ax_enabled_C537920(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sniffer_filter, zephyr_wifi_collections):
     ''' Verify WPA3 with 11 AX enabled parameter in the AP'''
@@ -695,6 +704,7 @@ def test_wifi_zephyr_conn_with_ax_enabled_C537920(wifi_sniffer, wifi_access_poin
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2WPA3MixedMode', "protected_management_frame": "Capable"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C537921')
 def test_wifi_zephyr_conn_when_ap_in_wpa3_transition_mode_and_11w_capable_only_C537921(wifi_sniffer, wifi_access_point,
                                                                                        wifi_dut, utf_constants,
                                                                                        request, sniffer_filter,
@@ -742,6 +752,7 @@ def test_wifi_zephyr_conn_when_ap_in_wpa3_transition_mode_and_11w_capable_only_C
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC2762920405')
 def test_wifi_zephyr_ap_wpa3_security_dut_wpa2_sec_neg(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request,
                                                        sniffer_filter, zephyr_wifi_collections):
@@ -785,6 +796,7 @@ def test_wifi_zephyr_ap_wpa3_security_dut_wpa2_sec_neg(wifi_sniffer, wifi_access
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C34509')
 def test_wifi_zephyr_wpa3_security_udp_tx_after_rejoin_successful_c34509(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                          utf_constants, request,
                                                                          sniffer_filter, switch,

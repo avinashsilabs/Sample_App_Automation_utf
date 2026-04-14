@@ -168,6 +168,7 @@ pytestmark = [
 )
 @pytest.mark.wifi_5g
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19391')
 def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
 
     try:
@@ -285,6 +286,7 @@ def test_rejoin_c19391(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_co
 )
 @pytest.mark.wifi_5g
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19392')
 def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                    change_security_mode_startup_time,
                                                                    change_security_mode, switch):
@@ -412,6 +414,7 @@ def test_rejoin_max_retry_failure_with_security_mode_change_c19392(wifi_sniffer,
 )
 @pytest.mark.wifi_dualband
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19393')
 def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     try:
         '''configure the 2.4Ghz and 5ghz channel bitmap positions to zero with dual band configuration and Check our
@@ -536,6 +539,7 @@ def test_rejoin_dual_band_c19393(wifi_sniffer, wifi_access_point, wifi_dut, swit
 )
 @pytest.mark.wifi_5g
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19394')
 def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
 
     validation = True
@@ -630,6 +634,7 @@ def test_rejoin_dfs_channel_c19394(wifi_sniffer, wifi_access_point, wifi_dut, sw
 )
 @pytest.mark.wifi_5g
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19395')
 def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
                                                 set_region_dut, switch, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
@@ -750,6 +755,7 @@ def test_rejoin_different_region_non_dfs_c19395(wifi_sniffer, wifi_access_point,
     },
 )
 @pytest.mark.wifi_5g
+@pytest.mark.test_src_map_id('C19396')
 def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
                                                set_region_dut, switch,utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
@@ -872,6 +878,7 @@ def test_rejoin_different_region_dfs_ch_c19396(wifi_sniffer, wifi_access_point, 
     },
 )
 @pytest.mark.wifi_dualband
+@pytest.mark.test_src_map_id('C19398')
 def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_access_point, wifi_dut, set_region_ap,
                                                           set_region_dut, switch, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
@@ -992,6 +999,7 @@ def test_rejoin_different_region_dual_band_non_dfs_c19398(wifi_sniffer, wifi_acc
 )
 @pytest.mark.wifi_5g
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C43023')
 def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
 
     try:
@@ -1109,6 +1117,7 @@ def test_rejoin_selected_channels_c43023(wifi_sniffer, wifi_access_point, wifi_d
 )
 @pytest.mark.wifi_5g
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C43022')
 def test_rejoin_only_channels_36_c43022(wifi_sniffer, wifi_access_point, wifi_dut, switch, utf_constants):
     validation = True
     channel = 36

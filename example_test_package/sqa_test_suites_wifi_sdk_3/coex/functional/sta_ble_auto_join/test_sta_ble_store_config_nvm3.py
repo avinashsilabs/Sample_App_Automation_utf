@@ -605,6 +605,7 @@ Map_secrity = {"OPEN": 0, "WPA": 1, "WPA2": 2, "WEP": 3, "WPA_ENTERPRISE": 4,  "
 @pytest.mark.config(
     "wifi_access_point", wifi={"ssid": "ssid_profile1", "security": "WPA2", "passphrase": "1234567890", "channel": 1}
 )
+@pytest.mark.test_src_map_id('C769742')
 def test_sta_ble_store_config_1_profile_ble_adv_nvm3_C769742(wifi_dut, wifi_access_point,
                                                           wifi_sniffer, sl_collections, sniffer_filter,
                                                           utf_constants, ble_client, request,
@@ -740,6 +741,7 @@ def test_sta_ble_store_config_1_profile_ble_adv_nvm3_C769742(wifi_dut, wifi_acce
                                "protected_management_frame": "Required"
                                }
 )
+@pytest.mark.test_src_map_id('C769743')
 def test_sta_ble_store_config_2_profiles_ble_scan_C769743(wifi_dut, wifi_access_point,
                                       wifi_sniffer, sl_collections, sniffer_filter,
                                       utf_constants, ble_client, request,
@@ -854,6 +856,7 @@ def test_sta_ble_store_config_2_profiles_ble_scan_C769743(wifi_dut, wifi_access_
                                }
 )
 
+@pytest.mark.test_src_map_id('C769740')
 def test_sta_ble_store_config_2_profiles_ble_peripheral_200ms_nvm3_C769740(wifi_dut, wifi_access_point,
                                       wifi_sniffer, sl_collections, sniffer_filter,
                                       utf_constants, ble_client, request,
@@ -968,6 +971,7 @@ def test_sta_ble_store_config_2_profiles_ble_peripheral_200ms_nvm3_C769740(wifi_
                                }
 )
 
+@pytest.mark.test_src_map_id('C769741')
 def test_sta_ble_store_config_2_profiles_ble_central_250ms_nvm3_C769741(wifi_dut, wifi_access_point,
                                       wifi_sniffer, sl_collections, sniffer_filter,
                                       utf_constants, ble_client, request,

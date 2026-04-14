@@ -789,6 +789,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=Si91xExtCustomFeatureBitMap.Fea
 
 @wifi_dut_marker(with_certificates=True)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "aws_unsubscribe", "aws_disconnect", "unassociated"])
+@pytest.mark.test_src_map_id('C537997')
 def test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, aws_iot_client, request, utf_constants):
     """Verify BLE and WLAN connection using STA+BLE provisioning app by configuring Maximum BLE Conn interval with AWS IoT connectivity"""
@@ -962,6 +963,7 @@ def test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "unassociated"])
+@pytest.mark.test_src_map_id('C20153')
 def test_wifi_sdk_ble_provisioning_power_save_aws_validation_C20153(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, aws_iot_client, request,
         utf_constants):
@@ -1149,6 +1151,7 @@ def test_wifi_sdk_ble_provisioning_power_save_aws_validation_C20153(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "unassociated"])
+@pytest.mark.test_src_map_id('C20155')
 def test_wifi_sdk_ble_provisioning_wifi_disconnect_reconnect_aws_validation_C20155(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, aws_iot_client, request,
         utf_constants):

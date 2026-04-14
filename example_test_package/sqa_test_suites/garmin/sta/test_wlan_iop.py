@@ -47,6 +47,7 @@ This function runs below test steps for DUT-RS9116 for WLAN Alone Garmin test ca
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "............", "standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C16573')
 def test_wlan_ssid_with_dots_c16573(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants, request):
     logger().info(" Verifying scan functionality by configuring the all dots in SSID ")
     test_name = request.node.name
@@ -88,6 +89,7 @@ def test_wlan_ssid_with_dots_c16573(wifi_sniffer, wifi_access_point, wifi_dut, r
 @pytest.mark.config('wifi_access_point', wifi={"ssid": "wlan_iop_auto", "passphrase": 'abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzaaaaaaaaaaa'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C16574')
 def test_wlan_passphrase_with_63_length_c16574(wifi_sniffer, wifi_access_point, wifi_dut, rs_helper, utf_constants, request):
     logger().info("Verifying the passphrase with 63 lenght of PSK")
     test_name = request.node.name

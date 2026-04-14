@@ -395,6 +395,7 @@ class WLanThread(ThreadBase):
                                "channel": 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('TC557391')
 def test_wifi_sdk_staut_connection_with_wpa2_security_with_default_sec_new_tc557391(wifi_dut, wifi_access_point,
                                                                                     wifi_sniffer,
                                                                                     sl_collections, request,
@@ -446,6 +447,7 @@ def test_wifi_sdk_staut_connection_with_wpa2_security_with_default_sec_new_tc557
                                "channel": 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('TC557392')
 def test_wifi_sdk_staut_connection_with_wpa2_security_with_ccmp_enc_new_tc557392(wifi_dut, wifi_access_point,
                                                                                  wifi_sniffer,
                                                                                  sl_collections, request,
@@ -499,6 +501,7 @@ def test_wifi_sdk_staut_connection_with_wpa2_security_with_ccmp_enc_new_tc557392
                                "channel": 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('TC557393')
 def test_wifi_sdk_staut_connection_with_wpa2_tkip_ccmp_on_ap_side_new_tc557393(wifi_dut, wifi_access_point,
                                                                                wifi_sniffer,
                                                                                sl_collections, request, sniffer_filter,
@@ -553,6 +556,7 @@ def test_wifi_sdk_staut_connection_with_wpa2_tkip_ccmp_on_ap_side_new_tc557393(w
                                "channel": 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('TC557395')
 def test_wifi_sdk_staut_connection_with_wpa_wpa2_security_tkip_aes_new_security_tc557395(wifi_dut, wifi_access_point,
                                                                                          wifi_sniffer,
                                                                                          sl_collections, request,
@@ -602,6 +606,7 @@ def test_wifi_sdk_staut_connection_with_wpa_wpa2_security_tkip_aes_new_security_
 @pytest.mark.config("wifi_access_point",
                     wifi={"cipher": "TKIP_AES", "security": "WPAWPA2MixedMode", "ssid": "ipv6_autiomation",
                           "passphrase": "12345678", "channel": 11})
+@pytest.mark.test_src_map_id('TC557396')
 def test_wifi_sdk_staut_connection_with_wpa_wpa2_security_tkip_aes_security_tc557396(
         wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request, sniffer_filter, wifi_client):
     test_name = request.node.name
@@ -649,6 +654,7 @@ def test_wifi_sdk_staut_connection_with_wpa_wpa2_security_tkip_aes_security_tc55
                     wifi={"cipher": "TKIP_AES", "security": "WPAWPA2MixedMode", "ssid": "ipv6_autiomation",
                           "passphrase": "12345678", "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["clear_certs"])
+@pytest.mark.test_src_map_id('TC557403')
 def test_wifi_sdk_staut_connection_wpa2_enterpise_security_tkip_aes_tc557403(
         wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request, sniffer_filter, wifi_client, radius_server):
 
@@ -701,6 +707,7 @@ def test_wifi_sdk_staut_connection_wpa2_enterpise_security_tkip_aes_tc557403(
 @pytest.mark.config("wifi_access_point",
                     wifi={"cipher": "AES", "security": "WPA2Enterprise", "ssid": "ipv6_autiomation",
                           "passphrase": "12345678", "channel": 11})
+@pytest.mark.test_src_map_id('TC557404')
 def test_wifi_sdk_staut_connection_wpa2_enterpise_security_aes_tc557404(
         wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request, sniffer_filter, wifi_client, radius_server):
 
@@ -754,6 +761,7 @@ def test_wifi_sdk_staut_connection_wpa2_enterpise_security_aes_tc557404(
                                "channel": 11}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('TC557397')
 def test_wifi_sdk_staut_connection_with_wpa_wpa2_security_aes_security_tc557397(wifi_dut, wifi_access_point,
                                                                                 wifi_sniffer,
                                                                                 sl_collections, request, sniffer_filter,
@@ -818,6 +826,7 @@ def test_wifi_sdk_staut_connection_with_wpa_wpa2_security_aes_security_tc557397(
     }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('TC557400')
 def test_wifi_sdk_in_concurrent_mode_with_ap_wpawpa2_aes_ccmp_security_tc557400(wifi_dut, wifi_access_point,
                                                                                 wifi_sniffer,
                                                                                 sl_collections, request, sniffer_filter,
@@ -881,6 +890,7 @@ def test_wifi_sdk_in_concurrent_mode_with_ap_wpawpa2_aes_ccmp_security_tc557400(
     }
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('TC557402')
 def test_wifi_sdk_in_concurrent_mode_with_ap_wpawpa2_tkip_security_tc557402(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                             sl_collections, request, sniffer_filter,
                                                                             wifi_client, wifi_clients):
@@ -934,6 +944,7 @@ def test_wifi_sdk_in_concurrent_mode_with_ap_wpawpa2_tkip_security_tc557402(wifi
 @pytest.mark.config("wifi_access_point",
                     wifi={"cipher": "AES", "security": "WPAWPA2MixedMode", "ssid": "ipv6_autiomation",
                           "passphrase": "12345678", "channel": 11})
+@pytest.mark.test_src_map_id('TC557398')
 def test_wifi_sdk_staut_connection_with_switch_from_aes_to_tkip_aes_tc557398(
         wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request, sniffer_filter, wifi_client):
     test_name = request.node.name
@@ -1005,6 +1016,7 @@ def test_wifi_sdk_staut_connection_with_switch_from_aes_to_tkip_aes_tc557398(
 @pytest.mark.config("wifi_access_point",
                     wifi={"cipher": "AES", "security": "WPAWPA2MixedMode", "ssid": "917_AP",
                           "passphrase": "12345678", "channel": 11})
+@pytest.mark.test_src_map_id('TC557401')
 def test_wifi_sdk_staut_connection_with_switch_from_aes_to_tkip_aes_concmode_tc557401(
         wifi_dut, wifi_access_point, wifi_sniffer, sl_collections, request, sniffer_filter, wifi_client,
         wifi_clients):

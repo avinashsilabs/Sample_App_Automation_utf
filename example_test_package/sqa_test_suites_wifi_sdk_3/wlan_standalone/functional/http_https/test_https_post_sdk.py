@@ -174,6 +174,7 @@ class WLanThread(ThreadBase):
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19220')
 def test_wifi_sdk_http_post_functionality_invalid_ip_c19220(http_server, wifi_dut, wifi_access_point,
                                                             index_path
                                                             , wifi_sniffer, sl_collections, utf_constants):
@@ -225,6 +226,7 @@ def test_wifi_sdk_http_post_functionality_invalid_ip_c19220(http_server, wifi_du
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19221')
 def test_wifi_sdk_http_post_functionality_multiple_iterations_C19221(http_server, wifi_dut, wifi_access_point,
                                                                      index_path
                                                                      , wifi_sniffer, sl_collections):
@@ -276,6 +278,7 @@ def test_wifi_sdk_http_post_functionality_multiple_iterations_C19221(http_server
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19224')
 def test_wifi_sdk_http_post_functionality_different_urls_C19224(http_server, wifi_dut, wifi_access_point
                                                                 , wifi_sniffer, sl_collections):
     """
@@ -332,6 +335,7 @@ def test_wifi_sdk_http_post_functionality_different_urls_C19224(http_server, wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19225')
 def test_wifi_sdk_https_post_functionality_multiple_iterations_C19225(http_server, wifi_dut, wifi_access_point,
                                                                       index_path
                                                                       , wifi_sniffer, sl_collections):
@@ -387,6 +391,7 @@ def test_wifi_sdk_https_post_functionality_multiple_iterations_C19225(http_serve
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19226')
 def test_wifi_sdk_https_post_functionality_different_urls_C19226(http_server, wifi_dut, wifi_access_point
                                                                  , wifi_sniffer, sl_collections):
     """
@@ -441,6 +446,7 @@ def test_wifi_sdk_https_post_functionality_different_urls_C19226(http_server, wi
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "clear_certs"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C19227')
 def test_wifi_sdk_https_post_functionality_on_different_ports_c19227(http_server, wifi_dut, wifi_access_point,
                                                             index_path
                                                             , wifi_sniffer, sl_collections, utf_constants):
@@ -496,6 +502,7 @@ def test_wifi_sdk_https_post_functionality_on_different_ports_c19227(http_server
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19222')
 def test_wifi_sdk_http_post_diff_urls_diff_data_C19222(http_server, wifi_dut, wifi_access_point
                                                                 , wifi_sniffer, sl_collections):
     """ HTTP POST functionality by providing data with different data URL lengths """
@@ -552,6 +559,7 @@ def test_wifi_sdk_http_post_diff_urls_diff_data_C19222(http_server, wifi_dut, wi
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537608')
 def test_wifi_sdk_https_post_sni_functionality_c537608(http_server, wifi_dut, http_client, wifi_access_point,
                                                        index_path, utf_constants, wifi_sniffer, sl_collections,
                                                        sniffer_filter, wifi_client):

@@ -91,6 +91,7 @@ ble_obj = None
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133464')
 def test_Coex_sdk_rejoin_fun_ble_slave_C133464(
     switch,
     wifi_sniffer,
@@ -247,6 +248,7 @@ def test_Coex_sdk_rejoin_fun_ble_slave_C133464(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133465')
 def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
     wifi_sniffer,
     wifi_access_point,
@@ -437,6 +439,7 @@ def test_Coex_sdk_rejoin_ap_deauth_ble_slave_C133465(
         "disassociated"
     ],
 )
+@pytest.mark.test_src_map_id('C133553')
 def test_Coex_sdk_BLE_ADV_STA_Disconn_C133553(
     switch,
     wifi_sniffer,
@@ -573,6 +576,7 @@ def test_Coex_sdk_BLE_ADV_STA_Disconn_C133553(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133471')
 def test_Coex_sdk_TCP_while_rejoin_BLE_slave_C133471(
     switch,
     wifi_sniffer,
@@ -735,6 +739,7 @@ def test_Coex_sdk_TCP_while_rejoin_BLE_slave_C133471(
         "disassociated"
     ],
 )
+@pytest.mark.test_src_map_id('C133472')
 def test_Coex_sdk_UDP_while_rejoin_BLE_slave_C133472(
     switch,
     wifi_sniffer,
@@ -895,6 +900,7 @@ def test_Coex_sdk_UDP_while_rejoin_BLE_slave_C133472(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133500')
 def test_Coex_sdk_rejoin_fun_ble_slave_bypass_C133500(
     switch,
     wifi_sniffer,
@@ -1031,6 +1037,7 @@ def test_Coex_sdk_rejoin_fun_ble_slave_bypass_C133500(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133501')
 def test_Coex_sdk_rejoin_ap_deauth_ble_slave_bypass_C133501(
     wifi_sniffer,
     wifi_access_point,

@@ -1029,6 +1029,7 @@ def ble_connect_dut_to_raspii(ble_dut, ble_client, wait_for_bt=False, wait_for_b
 # =============================================================================
 # TEST CASES
 # =============================================================================
+@pytest.mark.test_src_map_id('TC7947206871')
 def test_connect_dut_as_ble_peripheral_bt_inquiry(ble_dut, bt_client, ble_clients):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -1091,6 +1092,7 @@ def test_connect_dut_as_ble_peripheral_bt_inquiry(ble_dut, bt_client, ble_client
 
 
 # Add @pytest.mark.ble_only marker to BLE-only tests
+@pytest.mark.test_src_map_id('TC3734347876')
 def test_connect_raspii_as_ble_peripheral_bt_inquiry(ble_dut, bt_client, ble_clients):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -1153,6 +1155,7 @@ def test_connect_raspii_as_ble_peripheral_bt_inquiry(ble_dut, bt_client, ble_cli
 
 
 
+@pytest.mark.test_src_map_id('TC1290401881')
 def test_bt_inquiry_ble_scan_adv(ble_dut, bt_client):
     """
     Test BT classic Inquiry when DUT is in BLE advertising and scanning mode
@@ -1251,6 +1254,7 @@ def test_bt_inquiry_ble_scan_adv(ble_dut, bt_client):
     cleanup_after_test()
     
 
+@pytest.mark.test_src_map_id('TC6491461888')
 def test_bt_connect_initiator_ble_scan_adv(ble_dut, bt_client):
     """
     Test BT classic connection as initiator when DUT is in BLE advertising and scanning mode
@@ -1363,6 +1367,7 @@ def test_bt_connect_initiator_ble_scan_adv(ble_dut, bt_client):
     cleanup_after_test()
 
 
+@pytest.mark.test_src_map_id('TC0088274893')
 def test_ble_bt_inquiry_connection(ble_dut, bt_client, ble_clients):
     """
     This test case verifies that the DUT can establish two BLE connections

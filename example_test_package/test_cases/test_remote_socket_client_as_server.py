@@ -63,6 +63,7 @@ from utf_wiseconnect.devices.rs911x import DeviceConstants, RS9116OperatingMode,
 @pytest.mark.wifi_clients(["raspi_wifi", "raspi_wifi_ssh"])
 @pytest.mark.remote_socket("raspi_ip_remote_socket")
 #https://jira.silabs.com/browse/UTF-1801
+@pytest.mark.test_src_map_id('TC9222346260')
 def test_single_remote_wifi_client_as_server_dut_as_ap(wifi_dut, wifi_clients, remote_socket, logger):
     """
     Illustrate the usage of sockets on a remote client (Raspberry) as server and dut as AP without standalone remote_socket fixture that works with single sockets
@@ -156,6 +157,7 @@ def test_single_remote_wifi_client_as_server_dut_as_ap(wifi_dut, wifi_clients, r
     }
 )
 #https://jira.silabs.com/browse/UTF-1802
+@pytest.mark.test_src_map_id('TC2486647266')
 def test_multiple_remote_wifi_clients_as_server_dut_as_ap(wifi_dut, wifi_clients, remote_socket_factory, logger):
     """
     Illustrate the usage of sockets on local and remote client (Raspberry) as server and dut as AP with remote_socket_factory
@@ -255,6 +257,7 @@ def test_multiple_remote_wifi_clients_as_server_dut_as_ap(wifi_dut, wifi_clients
         "remote_ip_list": ['10.207.16.93']
     }
 )
+@pytest.mark.test_src_map_id('TC1834810271')
 def test_multiple_remote_wifi_clients_as_server_dut_as_sta(wifi_dut, wifi_access_point, wifi_clients, remote_socket_factory, logger):
     """
     Illustrate the usage of sockets on local and remote client (Raspberry) as server and dut as station with remote_socket_factory

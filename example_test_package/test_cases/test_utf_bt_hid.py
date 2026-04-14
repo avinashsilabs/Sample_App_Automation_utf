@@ -24,6 +24,7 @@ pytestmark = [
 
 
 @pytest.mark.parametrize("enable_ssp", [True, False])
+@pytest.mark.test_src_map_id('TC2230147359')
 def test_bt_hid_dut_as_slave(wifi_dut, bt_client, logger, enable_ssp):
     if not isinstance(wifi_dut.interfaces.wifi, RSATCommands):
         raise NotImplementedError(

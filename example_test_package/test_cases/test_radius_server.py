@@ -44,6 +44,7 @@ ping_count = 10
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.test_src_map_id('TC7659120230')
 def test_radius_server_connectivity_in_WPA2_EAP_TLS(wifi_dut, wifi_access_point, radius_server):
     ap_user_name = "\\\"user1\\\""
     ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
@@ -129,6 +130,7 @@ def test_radius_server_connectivity_in_WPA2_EAP_TLS(wifi_dut, wifi_access_point,
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', "radius_ip": "192.168.50.120"}) # "radius_ip": "192.168.50.120"
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 @pytest.mark.radius_server("raspi_radius_server")
+@pytest.mark.test_src_map_id('TC9407252236')
 def test_connectivity_in_WPA2_EAP_TTLS(wifi_dut, wifi_access_point, radius_server):
 
     ap_user_name = "\\\"user1\\\""
@@ -216,6 +218,7 @@ def test_connectivity_in_WPA2_EAP_TTLS(wifi_dut, wifi_access_point, radius_serve
 @pytest.mark.config('radius_server',
                         radius_server={"username": 'user2',"password": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
+@pytest.mark.test_src_map_id('TC0832048242')
 def test_connectivity_in_WPA2_EAP_PEAP(wifi_dut, wifi_access_point, radius_server):
     ap_user_name = "\\\"user2\\\""
     ap_password = f"\\\"{wifi_access_point.interfaces.wifi.passphrase}\\\""
@@ -301,6 +304,7 @@ def test_connectivity_in_WPA2_EAP_PEAP(wifi_dut, wifi_access_point, radius_serve
                     wifi={"security": 'WPA2Enterprise', "passphrase": '12345678', "radius_ip": "192.168.50.120"}) # "radius_ip": "192.168.50.120"
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "clear_certs"])
 @pytest.mark.radius_server("raspi_radius_server")
+@pytest.mark.test_src_map_id('TC2265279249')
 def test_connectivity_in_WPA2_EAP_FAST(wifi_dut, wifi_access_point, radius_server):
 
     ap_user_name = "\\\"user1\\\""

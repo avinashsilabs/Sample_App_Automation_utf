@@ -230,6 +230,7 @@ def dut_clean_up(wifi_dut):
 @pytest.mark.parametrize("number_of_pkts", [500])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets",
                                         "disassociated", "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133468')
 def test_TCP_packet_loss_C133468(wifi_sniffer, wifi_dut, wifi_access_point, ble_client, remote_socket,
                                 remote_socket_factory, number_of_pkts, rs_helper, utf_constants):
     try:
@@ -351,6 +352,7 @@ def test_TCP_packet_loss_C133468(wifi_sniffer, wifi_dut, wifi_access_point, ble_
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "wifi_powersave_disable", "bt_powersave_disable",
                                          "disassociated", "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133473')
 def test_Multicast_C133473(multicast_client, net_perf_client, protocol, wifi_sniffer, wifi_dut,
                           wifi_access_point, wifi_client, ble_client, utf_constants, rs_helper):
     validation = True
@@ -427,6 +429,7 @@ def test_Multicast_C133473(multicast_client, net_perf_client, protocol, wifi_sni
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                                          "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133474')
 def test_Broadcast_C133474(net_perf_client, protocol, wifi_sniffer, wifi_dut, wifi_access_point,
                           wifi_client, ble_client, utf_constants, rs_helper):
     validation = True
@@ -508,6 +511,7 @@ def test_Broadcast_C133474(net_perf_client, protocol, wifi_sniffer, wifi_dut, wi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C133477')
 def test_wifi_ssl_tx_and_stability_C133477(ssl_server, cert1, protocol, wifi_sniffer, wifi_dut, wifi_access_point,
                                           ble_client, utf_constants, rs_helper):
     try:

@@ -518,6 +518,7 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 
+@pytest.mark.test_src_map_id('C148629')
 def test_wifi_sdk_wifi_tx_ble_tx_alarm_based_C148629(
     wifi_sniffer,
     wifi_access_point,
@@ -637,6 +638,7 @@ def test_wifi_sdk_wifi_tx_ble_tx_alarm_based_C148629(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C148631')
 def test_wifi_sdk_wifi_tcp_rx_ble_rx_wireless_based_C148631(
     wifi_sniffer,
     wifi_access_point,
@@ -747,6 +749,7 @@ def test_wifi_sdk_wifi_tcp_rx_ble_rx_wireless_based_C148631(
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
+@pytest.mark.test_src_map_id('C133486')
 def test_wifi_sdk_wifi_ssl_rx_ble_rx_C133486(
     wifi_sniffer,
     wifi_access_point,

@@ -3,6 +3,7 @@ import pytest
 from utf_wiseconnect.devices.rs911x import DeviceConstants, RS9116OperatingMode, RS9116Band
 
 
+@pytest.mark.test_src_map_id('TC2668026312')
 def test_socket(wifi_networked_dut, remote_socket, logger):
     device_ip = wifi_networked_dut.interfaces.wifi.ip.ip.decode(DeviceConstants.ENCODING)
 
@@ -21,6 +22,7 @@ def test_socket(wifi_networked_dut, remote_socket, logger):
     wifi_networked_dut.interfaces.wifi.leave()
 
 
+@pytest.mark.test_src_map_id('TC3034868318')
 def test_wifi_tcp_recv_data(wifi_dut, wifi_access_point, remote_socket, logger):
     # DUT connects to AP after join_ap API is executed
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -86,6 +88,7 @@ def test_wifi_tcp_recv_data(wifi_dut, wifi_access_point, remote_socket, logger):
         "interface": "wlan0"
     },
 )
+@pytest.mark.test_src_map_id('TC6637992323')
 def test_wifi_tcp_recv_data_dut_ap(wifi_dut, wifi_client, remote_socket, logger):
     wifi_dut.interfaces.wifi.start_ap()
     # DUT connects to AP after join_ap API is executed

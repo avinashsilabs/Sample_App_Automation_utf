@@ -82,6 +82,7 @@ def slave_conn(ble_dut, ble_dut_address, m_remote, conn_count, rs_helper_ble):
                                                     smp_flag=True)
     
 #@pytest.mark.skip #test case is not completely implemented as need support from test agent team for MIC error
+@pytest.mark.test_src_map_id('C91282')
 def test_5_remote_2m_3s_conn_reconn_c91282(ble_dut, ble_clients, rs_helper_ble):
     #test case to verify connection stability with 3 master connections and 2 slave connections
     try:

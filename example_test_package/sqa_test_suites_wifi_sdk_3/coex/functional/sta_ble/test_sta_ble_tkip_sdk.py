@@ -88,6 +88,7 @@ def logger():
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable",  "disassociated"])
+@pytest.mark.test_src_map_id('C133457')
 def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_C133457(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                      request, utf_constants, sl_collections, wifi_client,
                                                      sniffer_filter):
@@ -191,6 +192,7 @@ def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_C133457(wifi_sniffer, wifi_access_p
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133459')
 def test_Coex_sdk_join_time_WPA_TKIP_PMK_BLE_Adv_C133459(
     wifi_sniffer,
     wifi_access_point,
@@ -296,6 +298,7 @@ def test_Coex_sdk_join_time_WPA_TKIP_PMK_BLE_Adv_C133459(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable",  "disassociated"])
+@pytest.mark.test_src_map_id('C133493')
 def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_bypass_C133493(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                      request, utf_constants, sl_collections, wifi_client,
                                                      sniffer_filter):
@@ -403,6 +406,7 @@ def test_Coex_sdk_join_time_WPA_TKIP_BLE_adv_bypass_C133493(wifi_sniffer, wifi_a
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133495')
 def test_Coex_sdk_join_time_WPA_TKIP_PMK_BLE_Adv_bypass_C133495(
     wifi_sniffer,
     wifi_access_point,

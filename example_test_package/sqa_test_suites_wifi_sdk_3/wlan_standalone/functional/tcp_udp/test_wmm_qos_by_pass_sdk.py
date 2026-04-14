@@ -101,6 +101,7 @@ def _wifi_setup(wifi_dut, wifi_sniffer, wifi_access_point, wifi_client, capture_
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_dut", wifi=COMMON_DUT_WIFI_CFG)
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="net_init_client")
+@pytest.mark.test_src_map_id('C19755')
 def test_wifi_sdk_udp_tx_all_qos_in_bypass_mode_c19755(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                        wifi_client, protocol, sl_collections):
     """Send UDP data with all traffic types in TCP/IP bypass mode"""
@@ -154,6 +155,7 @@ def test_wifi_sdk_udp_tx_all_qos_in_bypass_mode_c19755(wifi_sniffer, net_perf_cl
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_dut", wifi=COMMON_DUT_WIFI_CFG)
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="net_init_client")
+@pytest.mark.test_src_map_id('C19755')
 def test_wifi_sdk_udp_rx_all_qos_in_bypass_mode_c19755(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                        wifi_client, protocol, sl_collections):
     """Receive UDP traffic for all WMM QoS types in bypass mode."""
@@ -215,6 +217,7 @@ def test_wifi_sdk_udp_rx_all_qos_in_bypass_mode_c19755(wifi_sniffer, net_perf_cl
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_dut", wifi=COMMON_DUT_WIFI_CFG)
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="net_init_client")
+@pytest.mark.test_src_map_id('C19756')
 def test_wifi_sdk_udp_different_traffic_types_tx_bypass_mode_c19756(wifi_sniffer, net_perf_client, wifi_access_point,
                                                                     wifi_dut, wifi_client, protocol, sl_collections):
     """Send UDP data with different traffic types in TCP/IP bypass mode"""
@@ -266,6 +269,7 @@ def test_wifi_sdk_udp_different_traffic_types_tx_bypass_mode_c19756(wifi_sniffer
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_dut", wifi=COMMON_DUT_WIFI_CFG)
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="net_init_client")
+@pytest.mark.test_src_map_id('C19756')
 def test_wifi_sdk_udp_different_traffic_types_rx_bypass_mode_c19756(wifi_sniffer, net_perf_client, wifi_access_point,
                                                                     wifi_dut, wifi_client, protocol, sl_collections):
     """Receive UDP data with different traffic types in TCP/IP bypass mode"""
@@ -318,6 +322,7 @@ def test_wifi_sdk_udp_different_traffic_types_rx_bypass_mode_c19756(wifi_sniffer
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.config("wifi_dut", wifi=COMMON_DUT_WIFI_CFG)
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="net_init_client")
+@pytest.mark.test_src_map_id('C539022')
 def test_wifi_sdk_tcp_rx_in_tcp_ip_bypass_mode_loop_c539022(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, sl_collections):
     """Receive TCP data with different traffic types in TCP/IP bypass mode (create->bind->listen->accept->recv->close)"""
     transfer_type   = 1   # TCP

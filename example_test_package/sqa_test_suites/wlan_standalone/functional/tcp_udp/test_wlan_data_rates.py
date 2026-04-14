@@ -110,6 +110,7 @@ class IopTcpIpSockets:
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19622')
 def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -187,6 +188,7 @@ def test_mgmt_data_rates_C19622(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19623')
 def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -277,6 +279,7 @@ def test_mgmt_data_rates_rts_cts_C19623(wifi_sniffer, wifi_access_point, wifi_du
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19624')
 def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -351,6 +354,7 @@ def test_data_rates_for_data_packet_C19624(wifi_sniffer, wifi_access_point, wifi
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19625')
 def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -442,6 +446,7 @@ def test_data_rates_for_b_mode_C19625(wifi_sniffer, wifi_access_point, wifi_dut)
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19626')
 def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -531,6 +536,7 @@ def test_data_rates_for_g_mode_C19626(wifi_sniffer, wifi_access_point, wifi_dut)
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19627')
 def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -616,6 +622,7 @@ def test_data_rates_for_n_mode_C19627(wifi_sniffer, wifi_access_point, wifi_dut)
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19628')
 def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -694,6 +701,7 @@ def test_data_rates_for_data_packets_12mbps_C19628(wifi_sniffer, wifi_access_poi
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19629')
 def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, wifi_dut):
     """Verification of Block ack req/res, RTS/CTS mgmt packets data rates for 12 Mbps"""
     tcp_socket_obj = IopTcpIpSockets()
@@ -775,6 +783,7 @@ def test_data_rates_for_rts_cts_12mbps_C19629(wifi_sniffer, wifi_access_point, w
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19631')
 def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -845,6 +854,7 @@ def test_data_rates_eapol_C19631(wifi_sniffer, wifi_access_point, wifi_dut):
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19634')
 def test_basic_data_rates_C19634(wifi_sniffer, wifi_access_point, wifi_dut):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000
@@ -946,6 +956,7 @@ def test_basic_data_rates_C19634(wifi_sniffer, wifi_access_point, wifi_dut):
         "config_features": RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | RS9116ConfigFeatureBitMap.EnahanceMaxPsp,
     },
 )
+@pytest.mark.test_src_map_id('C19630')
 def test_data_rates_with_diff_rssi_values_c19630(wifi_sniffer, wifi_access_point, wifi_dut, rf_attenuator, utf_constants):
     tcp_socket_obj = IopTcpIpSockets()
     send_bytes = 1000

@@ -13,6 +13,7 @@ def __print_throughput(throughput: dict):
         print_dict("##     ", throughput)
 
 @pytest.mark.power_meter("keysight_N6705_power_analyzer")
+@pytest.mark.test_src_map_id('TC8377842185')
 def test_capture_power_meter_data_points_to_file(power_meter):
     # Initialize Instrument
     power_meter.interfaces.power_meter.initialize_instrument()
@@ -32,6 +33,7 @@ def test_capture_power_meter_data_points_to_file(power_meter):
     assert file_size > 0
 
 @pytest.mark.power_analyzer("power_analyzer_wlan")
+@pytest.mark.test_src_map_id('TC8134863190')
 def test_power_meter_keysight_benchvue_win_wcf(power_meter, power_analyzer):
     # Init power meter by specifying module name as datalogger or scope
     power_meter.interfaces.power_meter.init_power_meter(data_log_file_name="UTF1_Data_Log")
@@ -56,6 +58,7 @@ def test_power_meter_keysight_benchvue_win_wcf(power_meter, power_analyzer):
     power_analyzer.interfaces.power_analyzer.generate_report(csvfile)
     
 @pytest.mark.power_meter("keysight_benchvue_power_analyzer_win_rm")
+@pytest.mark.test_src_map_id('TC4323392194')
 def test_power_meter_keysight_benchvue_win_rm(power_meter):
     # Init power meter as datalogger/scope
     power_meter.interfaces.power_meter.init_power_meter()
@@ -71,6 +74,7 @@ def test_power_meter_keysight_benchvue_win_rm(power_meter):
     __print_throughput(parsed_result)
     assert parsed_result["Output"] is not None 
    
+@pytest.mark.test_src_map_id('TC2687344200')
 def test_power_meter_using_nrf_ppk(power_meters):
     # Initialize Instrument
     power_meters[0].interfaces.power_meter.initialize_instrument()
@@ -91,6 +95,7 @@ def test_power_meter_using_nrf_ppk(power_meters):
     __print_throughput(parsed_result)
     assert parsed_result["Output"] is not None 
     
+@pytest.mark.test_src_map_id('TC8152960206')
 def test_power_meter_keysight_benchvue_win_wcf_scope(power_meter):
     # Init power meter by specifying module name as datalogger or scope
     power_meter.interfaces.power_meter.init_power_meter()
@@ -106,6 +111,7 @@ def test_power_meter_keysight_benchvue_win_wcf_scope(power_meter):
     assert parsed_result["Scp File Name"] is not None
 
 
+@pytest.mark.test_src_map_id('TC1300135212')
 def test_power_meter_using_nrf_ppk_mp(power_meters, plotter):
     # Initialize Instrument
     power_meters[0].interfaces.power_meter.initialize_instrument()
@@ -135,6 +141,7 @@ def test_power_meter_using_nrf_ppk_mp(power_meters, plotter):
         assert plot_file_size > 0
 
 
+@pytest.mark.test_src_map_id('TC6577484216')
 def test_power_meter_keysight_benchvue_win_wcf_data_logger_channels_settings(power_meter):
     # Init power meter by specifying module name as datalogger or scope
     power_meter.interfaces.power_meter.init_power_meter(data_log_file_name="UTF1_Data_Log")
@@ -162,6 +169,7 @@ def test_power_meter_keysight_benchvue_win_wcf_data_logger_channels_settings(pow
     assert parsed_result["Output"] is not None
 
 
+@pytest.mark.test_src_map_id('TC2191425220')
 def test_power_meter_keysight_benchvue_win_wcf_scope_channels_settings(power_meter):
     # Init power meter by specifying module name as datalogger or scope
     power_meter.interfaces.power_meter.init_power_meter()

@@ -429,6 +429,7 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, thread_count=1):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893042')
 def test_wifi_sdk_sta_wps_pbc_conn_c893042(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                            sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC connection via Software API """
@@ -458,6 +459,7 @@ def test_wifi_sdk_sta_wps_pbc_conn_c893042(wifi_dut, wifi_access_point, wifi_sni
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893043')
 def test_wifi_sdk_sta_wps_pbc_conn_loop_c893043(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                 sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC connection via Software API in loop """
@@ -491,6 +493,7 @@ def test_wifi_sdk_sta_wps_pbc_conn_loop_c893043(wifi_dut, wifi_access_point, wif
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893047')
 def test_wifi_sdk_wps_no_AP_in_PBC_mode_c893047(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                 sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the SL_STATUS_SI91X_ASSOCIATION_TIMEOUT_IN_P2P_WPS_MODE error when no AP in PBC mode """
@@ -519,6 +522,7 @@ def test_wifi_sdk_wps_no_AP_in_PBC_mode_c893047(wifi_dut, wifi_access_point, wif
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893048')
 def test_wifi_sdk_sta_wps_AP_reboot_c893048(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                             sl_collections, sniffer_filter, request, wifi_client, switch):
     """This test case verifies the STA WPS PBC connection via Software API with AP reboot during WPS process"""
@@ -549,6 +553,7 @@ def test_wifi_sdk_sta_wps_AP_reboot_c893048(wifi_dut, wifi_access_point, wifi_sn
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893052')
 def test_wifi_sdk_wps_ragistrar_role_c893052(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                              sl_collections, sniffer_filter, request, wifi_client):
     """ This test case verifies when the WPS role is incorrectly set to SL_WIFI_WPS_ROLE_REGISTRAR """
@@ -574,6 +579,7 @@ def test_wifi_sdk_wps_ragistrar_role_c893052(wifi_dut, wifi_access_point, wifi_s
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893053')
 def test_wifi_sdk_wps_auto_conn_false_c893053(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                               sl_collections, sniffer_filter, request, wifi_client):
     """ This test case verifies the STA WPS PBC connection via Software API with auto_connect parameter set to false """
@@ -623,6 +629,7 @@ def test_wifi_sdk_wps_auto_conn_false_c893053(wifi_dut, wifi_access_point, wifi_
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893055')
 def test_wifi_sdk_wps_ap_mode_ragistrar_role_c893055(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                      sl_collections, sniffer_filter, request, wifi_client):
     """ This test case verify WPS feature in AP mode and the WPS role is set to SL_WIFI_WPS_ROLE_REGISTRAR """
@@ -673,6 +680,7 @@ def test_wifi_sdk_wps_ap_mode_ragistrar_role_c893055(wifi_dut, wifi_access_point
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893056')
 def test_wifi_sdk_wps_pbc_concurrent_mode_c893056(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
                                                   sniffer_filter, utf_constants, sl_collections):
     """ To Verify Dut Behaviour in  STA and AP connection by enabling concurrent mode"""
@@ -695,6 +703,7 @@ def test_wifi_sdk_wps_pbc_concurrent_mode_c893056(wifi_access_point, wifi_dut, w
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893057')
 def test_wifi_sdk_wps_tcp_tx_c893057(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                      protocol, net_perf_client, sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC connection via Software API and TCP TX data Transfer"""
@@ -735,6 +744,7 @@ def test_wifi_sdk_wps_tcp_tx_c893057(wifi_dut, wifi_access_point, wifi_sniffer, 
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893058')
 def test_wifi_sdk_wps_ping_long_run_c893058(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                             sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC connection via Software API and ping long run"""
@@ -763,6 +773,7 @@ def test_wifi_sdk_wps_ping_long_run_c893058(wifi_dut, wifi_access_point, wifi_sn
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893051')
 def test_wifi_sdk_sta_wps_api_disabled_c893051(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC when WPS API is disabled """
@@ -823,6 +834,7 @@ def test_wifi_sdk_sta_wps_api_disabled_c893051(wifi_dut, wifi_access_point, wifi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893059')
 def test_wifi_sdk_sta_wps_bit_disabled_c893059(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC when WPS bit is disabled """
@@ -854,6 +866,7 @@ def test_wifi_sdk_sta_wps_bit_disabled_c893059(wifi_dut, wifi_access_point, wifi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893054')
 def test_wifi_sdk_sta_wps_pin_method_c893054(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                              sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PIN method connection"""
@@ -883,6 +896,7 @@ def test_wifi_sdk_sta_wps_pin_method_c893054(wifi_dut, wifi_access_point, wifi_s
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C922292')
 def test_wifi_sdk_sta_wps_pbc_conn_open_security_c922292(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                          sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC connection with OPEN security via Software API """
@@ -912,6 +926,7 @@ def test_wifi_sdk_sta_wps_pbc_conn_open_security_c922292(wifi_dut, wifi_access_p
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C922347')
 def test_wifi_sdk_sta_wps_pbc_conn_response_struct_null_c922347(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                 utf_constants,
                                                                 sl_collections, sniffer_filter, request, wifi_client):
@@ -938,6 +953,7 @@ def test_wifi_sdk_sta_wps_pbc_conn_response_struct_null_c922347(wifi_dut, wifi_a
 @pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C922348')
 def test_wifi_sdk_sta_wps_response_struct_null_autoconnect_false_c922348(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                          utf_constants,
                                                                          sl_collections, sniffer_filter, request,
@@ -965,6 +981,7 @@ def test_wifi_sdk_sta_wps_response_struct_null_autoconnect_false_c922348(wifi_du
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893046')
 def test_wifi_sdk_wps_session_lockout_c893046(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                               sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies WPS session lockout mechanism by initiating WPS PBC from DUT while another WPS session is ongoing and NO AP in PBC mode"""
@@ -1000,6 +1017,7 @@ def test_wifi_sdk_wps_session_lockout_c893046(wifi_dut, wifi_access_point, wifi_
 @pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "120", "security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893091')
 def test_wifi_sdk_dhcp_renewal_after_wps_conn_c893091(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                       utf_constants, request, sl_collections, dhcp_lease,
                                                       sniffer_filter):
@@ -1071,6 +1089,7 @@ def test_wifi_sdk_dhcp_renewal_after_wps_conn_c893091(wifi_sniffer, wifi_access_
 @pytest.mark.config("wifi_access_point", wifi={"dhcp_lease": "60", "security": 'OPEN'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C893090')
 def test_wifi_sdk_dhcp_discover_failure_after_wps_conn_c893090(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                                sl_collections, sniffer_filter, request, wifi_client,
                                                                dhcp_lease):
@@ -1125,6 +1144,7 @@ def test_wifi_sdk_dhcp_discover_failure_after_wps_conn_c893090(wifi_dut, wifi_ac
                     wifi={"security": 'WPA2WPA3MixedMode', 'protected_management_frame': 'Capable'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C922293')
 def test_wifi_sdk_wps_pbc_wpa2_wpa3_PMF_capable_c922293(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                         sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC connection when AP is configured with wpa2/wpa3 mixed and PMF Capable"""
@@ -1187,6 +1207,7 @@ def test_wifi_sdk_wps_pbc_wpa2_wpa3_PMF_capable_c922293(wifi_dut, wifi_access_po
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C925838')
 def test_wifi_sdk_sta_wps_pbc_conn_ipv6_c925838(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                            sl_collections, sniffer_filter, request, wifi_client):
     """This test case verifies the STA WPS PBC connection via Software API with IPV6"""

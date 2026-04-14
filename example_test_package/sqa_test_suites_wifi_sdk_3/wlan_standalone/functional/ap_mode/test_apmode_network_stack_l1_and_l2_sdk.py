@@ -795,6 +795,7 @@ class SocketDataTransfer(ThreadBase):
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19465')
 def test_wifi_sdk_DUTAP_Validate_UDP_Rx_data_C19465(wifi_sniffer, net_perf_client, wifi_dut, wifi_clients, protocol,
                                            utf_constants, sl_collections, sniffer_filter):
     '''Validate UDP Tx data on Remote peer in ap mode connection'''
@@ -849,6 +850,7 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Rx_data_C19465(wifi_sniffer, net_perf_clien
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19464')
 def test_wifi_sdk_DUTAP_Validate_TCP_Rx_data_C19464(wifi_sniffer, net_perf_client, wifi_dut, protocol,
                                                     utf_constants, sl_collections, wifi_clients, wifi_access_point, sniffer_filter):
     '''Validate TCP Rx data on Remote peer in ap mode connection'''
@@ -903,6 +905,7 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Rx_data_C19464(wifi_sniffer, net_perf_clien
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19462')
 def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_C19462(wifi_sniffer, net_perf_client, wifi_dut, protocol,
                                                     utf_constants, sniffer_filter, sl_collections, wifi_clients):
     """Validate TCP Tx data on Remote peer in ap mode connection"""
@@ -958,6 +961,7 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_C19462(wifi_sniffer, net_perf_clien
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19463')
 def test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_client, wifi_dut, protocol,
                                            utf_constants, sl_collections, sniffer_filter, wifi_clients):
     """Validate UDP Tx data on Remote peer in ap mode connection"""
@@ -1016,6 +1020,7 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_clien
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19480')
 def test_wifi_sdk_dutap_tcp_socket_create_transfer_terminate_30min_c19480(wifi_sniffer, sniffer_filter, remote_socket, wifi_dut,
                                                                           utf_constants, sl_collections, wifi_clients, channel):
     '''By creating socket need to test tcp data transfer functionality in ap mode for 30mins'''
@@ -1086,6 +1091,7 @@ def test_wifi_sdk_dutap_tcp_socket_create_transfer_terminate_30min_c19480(wifi_s
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19481')
 def test_wifi_sdk_dutap_udp_socket_create_transfer_terminate_30min_C19481(wifi_sniffer, remote_socket, wifi_dut,
                                                                            utf_constants, sniffer_filter, sl_collections, wifi_clients, channel):
     '''By creating socket need to test udp data transfer functionality in ap mode for 30mins'''
@@ -1153,6 +1159,7 @@ def test_wifi_sdk_dutap_udp_socket_create_transfer_terminate_30min_C19481(wifi_s
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19466')
 def test_wifi_sdk_DUTAP_tcp_remote_termiate_C19466(wifi_sniffer, sniffer_filter, remote_socket, wifi_dut, utf_constants, sl_collections, wifi_clients):
     '''Run tcp iperf data transfer , check for remote terminate in the dut'''
     try:
@@ -1244,6 +1251,7 @@ def test_wifi_sdk_DUTAP_tcp_remote_termiate_C19466(wifi_sniffer, sniffer_filter,
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19482')
 def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C19482(utf_constants, sniffer_filter, wifi_sniffer, wifi_dut, wifi_client, remote_socket_factory, sl_collections, wifi_clients):
     '''create 4 sockets ,do the data transfer check for remote terminate event in the dut'''
     try:
@@ -1355,6 +1363,7 @@ def test_wifi_sdk_DUTAP_remote_terminate_while_sending_tcp_data_on_4sockets_C194
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19473')
 def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473( wifi_dut, wifi_sniffer, remote_socket_factory, sl_collections, wifi_clients):
     '''Open 10 TCP client sockets and Data TX in ap mode'''
     socket_threads = []
@@ -1465,6 +1474,7 @@ def test_wifisdk_DUTAP_open_10_TCP_client_sockets_send_tx_C19473( wifi_dut, wifi
 )
 
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C19472')
 def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_access_point, wifi_clients, wifi_sniffer, sl_collections, wifi_dut, utf_constants, remote_socket_factory):
     '''Checking maximum socket limit(11) on the Dut in ap mode connection'''
     try:
@@ -1563,6 +1573,7 @@ def test_DUTAP_LTCP_socket_connection_when_max_sockets_limit_to_11_C19472(wifi_a
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19469')
 def test_wifi_sdk_Verify_Multicast_data_TX_and_RX_C19469(wifi_sniffer, net_perf_client, wifi_dut, protocol,
                                                     utf_constants, sniffer_filter, sl_collections, wifi_clients, multicast_client):
     try:
@@ -1652,6 +1663,7 @@ def test_wifi_sdk_Verify_Multicast_data_TX_and_RX_C19469(wifi_sniffer, net_perf_
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19484')
 def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi_dut, protocol,
                                                     utf_constants, sniffer_filter, sl_collections, wifi_clients, multicast_client, net_perf_clients):
     try:
@@ -1756,6 +1768,7 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
                }
          }
 )
+@pytest.mark.test_src_map_id('C19474')
 def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, wifi_dut,  remote_socket_factory, sl_collections, wifi_clients):
     try:
         no_of_pkts = 100
@@ -1866,6 +1879,7 @@ def test_wifisdk_DUTAP_open_10_UDP_client_sockets_send_tx_C19474(wifi_sniffer, w
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19467')
 def test_wifi_sdk_DUTAP_Bidirectional_TCP_traffic_data_C19467(wifi_sniffer, net_perf_client, wifi_dut, protocol,
                                                     utf_constants, net_perf_clients, sniffer_filter, sl_collections, wifi_clients, multicast_client, net_perf_server,):
     """Validate bidirectional tcp traffic on Remote peer in ap mode connection"""
@@ -1966,6 +1980,7 @@ def test_wifi_sdk_DUTAP_Bidirectional_TCP_traffic_data_C19467(wifi_sniffer, net_
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C19468')
 def test_wifi_sdk_DUTAP_Bidirectional_UDP_traffic_data_C19468(wifi_sniffer, net_perf_client, wifi_dut, protocol,
                                                     utf_constants, net_perf_clients, sniffer_filter, sl_collections, wifi_clients, multicast_client, net_perf_server,):
     """Validate bidirectional udp traffic on Remote peer in ap mode connection"""
@@ -2058,6 +2073,7 @@ def test_wifi_sdk_DUTAP_Bidirectional_UDP_traffic_data_C19468(wifi_sniffer, net_
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19475')
 def test_wifisdk_DUTAP_open_10_tcp_server_sockets_rx_C19475(wifi_dut, wifi_sniffer, utf_constants,
                                                             remote_socket_factory, sl_collections, wifi_clients):
     """Open 10 TCP server sockets and Data RX"""
@@ -2175,6 +2191,7 @@ def test_wifisdk_DUTAP_open_10_tcp_server_sockets_rx_C19475(wifi_dut, wifi_sniff
 )
 @pytest.mark.end_state("wifi_dut", ["close_sockets"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19476')
 def test_wifisdk_DUTAP_open_10_udp_server_sockets_rx_C19476(wifi_dut, remote_socket, wifi_sniffer, utf_constants,
                                                             remote_socket_factory, sl_collections, wifi_clients,
                                                             remote_multi_socket):
@@ -2292,6 +2309,7 @@ def test_wifisdk_DUTAP_open_10_udp_server_sockets_rx_C19476(wifi_dut, remote_soc
                }
          }
 )
+@pytest.mark.test_src_map_id('C19478')
 def test_wifisdk_DUTAP_open_5_UDP_client_sockets_tx_5_TCP_server_socket_send_rx_C19478( wifi_dut, wifi_sniffer, remote_multi_socket, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
     """ Test DUT as AP by opening 5 UDP client sockets & tx, 5 TCP server by rx """
     socket_threads = []
@@ -2456,6 +2474,7 @@ def test_wifisdk_DUTAP_open_5_UDP_client_sockets_tx_5_TCP_server_socket_send_rx_
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19477')
 def test_wifisdk_DUTAP_open_5_TCP_client_sockets_tx_5_udp_server_socket_send_rx_C19477( wifi_dut, wifi_sniffer, remote_multi_socket, utf_constants, remote_socket_factory, sl_collections, wifi_clients):
     socket_threads = []
     try:
@@ -2615,6 +2634,7 @@ def test_wifisdk_DUTAP_open_5_TCP_client_sockets_tx_5_udp_server_socket_send_rx_
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551123')
 def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_for_multiple_iterations_C551123(wifi_sniffer, net_perf_client, wifi_dut, protocol,
                                                     utf_constants, sniffer_filter, sl_collections, wifi_clients):
     """TCP-socket create, Receive data, socket close and Repeat"""
@@ -2672,6 +2692,7 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_for_multiple_iterations_C551123(wif
 )
 @pytest.mark.start_state("wifi_dut", wifi=['net_init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551124')
 def test_wifi_sdk_DUTAP_wlan_disconnect_while_sending_data_C551124(wifi_sniffer, wifi_dut,
                                                     utf_constants, sl_collections, wifi_clients, remote_socket):
     """trigger WLAN disconnect callback while sending TCP data"""
@@ -2760,6 +2781,7 @@ def test_wifi_sdk_DUTAP_wlan_disconnect_while_sending_data_C551124(wifi_sniffer,
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689592')
 def test_verify_one_TCP_TX_and_UDP_TX_using_multithread_C689592(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
     """ Verify  one TCP TX and UDP TX simultaneously using multi thread sockets.
          steps:
@@ -2854,6 +2876,7 @@ def test_verify_one_TCP_TX_and_UDP_TX_using_multithread_C689592(wifi_dut, wifi_c
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689593')
 def test_verify_one_TCP_TX_and_UDP_RX_using_multithread_C689593(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
     """ Verify  one TCP TX and UDP RX simultaneously using multi thread sockets
         steps:
@@ -2974,6 +2997,7 @@ def test_verify_one_TCP_TX_and_UDP_RX_using_multithread_C689593(wifi_dut, wifi_c
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689594')
 def test_verify_one_TCP_TX_and_TCP_RX_using_multithread_C689594(wifi_dut, wifi_clients, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants, request, channel):
     """ Verify  one TCP TX and TCP RX simultaneously using multi thread sockets
         steps:
@@ -3085,6 +3109,7 @@ def test_verify_one_TCP_TX_and_TCP_RX_using_multithread_C689594(wifi_dut, wifi_c
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689595')
 def test_verify_one_TCP_RX_and_UDP_TX_using_multithread_C689595(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
     """ Verify  one TCP RX and UDP TX simultaneously using multi thread sockets
         steps:
@@ -3195,6 +3220,7 @@ def test_verify_one_TCP_RX_and_UDP_TX_using_multithread_C689595(wifi_dut, wifi_c
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689596')
 def test_verify_one_TCP_RX_and_UDP_RX_using_multithread_C689596(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
     """ Verify  one TCP RX and UDP RX simultaneously using multi thread sockets
         steps:
@@ -3288,6 +3314,7 @@ def test_verify_one_TCP_RX_and_UDP_RX_using_multithread_C689596(wifi_dut, wifi_c
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689600')
 def test_verify_one_UDP_TX_and_UDP_RX_using_multithread_C689600(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
     """Verify  one UDP TX and UDP RX simultaneously using multi thread sockets
         steps:
@@ -3399,6 +3426,7 @@ def test_verify_one_UDP_TX_and_UDP_RX_using_multithread_C689600(wifi_dut, wifi_c
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689597')
 def test_verify_one_UDP_RX_and_UDP_TX_using_multithread_C689597(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
     """ Verify  one UDP RX and UDP TX simultaneously using multi thread sockets
         steps:
@@ -3510,6 +3538,7 @@ def test_verify_one_UDP_RX_and_UDP_TX_using_multithread_C689597(wifi_dut, wifi_c
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C689599')
 def test_verify_one_UDP_RX_and_TCP_RX_using_multithread_C689599(wifi_dut, wifi_clients, request, wifi_sniffer, net_perf_clients, wifi_access_point, sl_collections,utf_constants,  channel):
     """ Verify  one UDP RX and TCP RX simultaneously using multi thread sockets
         steps:
@@ -3604,6 +3633,7 @@ def test_verify_one_UDP_RX_and_TCP_RX_using_multithread_C689599(wifi_dut, wifi_c
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C689590')
 def test_verify_two_TCP_TX_and_TCP_RX_using_multithread_C689590(wifi_dut, wifi_clients, request, wifi_sniffer, remote_socket_factory, wifi_access_point, sl_collections, channel):
     """ Verify  two UDP RX and UDP TX simultaneously using multi thread sockets
         steps:
@@ -3725,6 +3755,7 @@ def test_verify_two_TCP_TX_and_TCP_RX_using_multithread_C689590(wifi_dut, wifi_c
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C689591')
 def test_verify_two_UDP_TX_and_UDP_RX_using_multithread_C689591(wifi_dut, wifi_clients, request, wifi_sniffer, remote_socket_factory, wifi_access_point, sl_collections, channel):
     """ Verify  two UDP RX and UDP TX simultaneously using multi thread sockets
         steps:

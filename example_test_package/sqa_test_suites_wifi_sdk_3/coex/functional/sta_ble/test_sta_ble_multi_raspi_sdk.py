@@ -222,6 +222,7 @@ def wifi_dut_marker(ext_custom_bit=0, tcp_feat_bit=0,
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133444')
 def test_Coex_sdk_ble_adv_scan_wlan_conn_C133444(
     wifi_sniffer,
     wifi_access_point,
@@ -326,6 +327,7 @@ def test_Coex_sdk_ble_adv_scan_wlan_conn_C133444(
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133569')
 def test_Coex_sdk_ble_scan_adv_wlan_conn_C133569(
     wifi_sniffer,
     wifi_access_point,
@@ -432,6 +434,7 @@ def test_Coex_sdk_ble_scan_adv_wlan_conn_C133569(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133507')
 def test_Coex_sdk_fun_ble_master_slave_wlan_ping_C133507(
     wifi_sniffer,
     wifi_access_point,
@@ -556,6 +559,7 @@ def test_Coex_sdk_fun_ble_master_slave_wlan_ping_C133507(
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133508')
 def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
     wifi_sniffer,
     wifi_access_point,
@@ -676,6 +680,7 @@ def test_Coex_sdk_fun_ble_slave_master_wlan_ping_C133508(
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133519')
 def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133519(
     wifi_sniffer,
     wifi_access_point,
@@ -796,6 +801,7 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133519(
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133550')
 def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133550(
     wifi_sniffer,
     wifi_access_point,
@@ -921,6 +927,7 @@ def test_Coex_sdk_fun_ble_dual_role_wlan_ping_C133550(
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133572')
 def test_Coex_sdk_fun_ble_master_slave_20ms_wlan_ping_C133572(
     wifi_sniffer,
     wifi_access_point,
@@ -1047,6 +1054,7 @@ def test_Coex_sdk_fun_ble_master_slave_20ms_wlan_ping_C133572(
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133570')
 def test_Coex_sdk_discon_from_remote_wlan_conn_C133570(
     wifi_sniffer,
     wifi_access_point,
@@ -1149,6 +1157,7 @@ def test_Coex_sdk_discon_from_remote_wlan_conn_C133570(
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133447')
 def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
     wifi_sniffer,
     wifi_access_point,
@@ -1289,6 +1298,7 @@ def test_Coex_sdk_fun_ble_master_adv_wlan_UDP_C133447(
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133511')
 def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
     wifi_sniffer,
     wifi_access_point,
@@ -1417,6 +1427,7 @@ def test_Coex_sdk_ble_dual_role_wlan_UDP_RX_C133511(
     ],
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C133509')
 def test_Coex_sdk_profiles_ble_master_slave_wlan_connected_C133509(
     wifi_sniffer,
     wifi_access_point,
@@ -1542,6 +1553,7 @@ def test_Coex_sdk_profiles_ble_master_slave_wlan_connected_C133509(
                       ]
 )
 @wifi_dut_marker()
+@pytest.mark.test_src_map_id('C622328')
 def test_Coex_sdk_2_TCP_RX_ble_dual_role_C622328(
     wifi_sniffer,
     wifi_access_point,
@@ -1712,6 +1724,7 @@ def test_Coex_sdk_2_TCP_RX_ble_dual_role_C622328(
 # @pytest.mark.skip("3 threads required facing issue with memory allocation in BLE DUT ")
 @wifi_dut_marker(num_central_connections=2, num_peripheral_connections=0, wifi_stack_len=3584,
                     ble_stack_len=3584, ble_thread_count=2)
+@pytest.mark.test_src_map_id('C538060')
 def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
     wifi_sniffer,
     wifi_access_point,
@@ -1881,6 +1894,7 @@ def test_Coex_sdk_ble_multi_central_UDP_RX_C538060(
     ],
 )
 @wifi_dut_marker(num_central_connections=2, num_peripheral_connections=0)
+@pytest.mark.test_src_map_id('C133567')
 def test_Coex_sdk_ble_multi_central_ping_C133567(
     wifi_sniffer,
     wifi_access_point,
@@ -2007,6 +2021,7 @@ def test_Coex_sdk_ble_multi_central_ping_C133567(
                  wifi_thread_count=1, ble_thread_count=2
                  )
 # @pytest.mark.skip("3 threads required facing issue with memory allocation in BLE DUT ")
+@pytest.mark.test_src_map_id('C133510')
 def test_Coex_sdk_gatt_rd_wr_dual_role_ssl_tx_C133510(
     wifi_sniffer,
     wifi_access_point,
@@ -2186,6 +2201,7 @@ def test_Coex_sdk_gatt_rd_wr_dual_role_ssl_tx_C133510(
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"5MB.htm"})
 # @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C538059')
 def test_Coex_sdk_gatt_rw_wr_dual_role_http_download_C538059(
     wifi_sniffer,
     wifi_access_point,
@@ -2356,6 +2372,7 @@ def test_Coex_sdk_gatt_rw_wr_dual_role_http_download_C538059(
 )
 
 @wifi_dut_marker(num_central_connections=0, num_peripheral_connections=2)
+@pytest.mark.test_src_map_id('C133518')
 def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
     wifi_sniffer,
     wifi_access_point,
@@ -2483,6 +2500,7 @@ def test_Coex_sdk_ble_multi_slave_wlan_connected_C133518(
 )
 @wifi_dut_marker(num_central_connections=0, num_peripheral_connections=2, ble_stack_len=3584, wifi_stack_len=3584)
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C538058')
 def test_Coex_sdk_ble_multi_peripheral_UDP_TX_C538058(
     wifi_sniffer,
     wifi_access_point,

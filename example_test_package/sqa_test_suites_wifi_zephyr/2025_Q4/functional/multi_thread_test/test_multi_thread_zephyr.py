@@ -415,6 +415,7 @@ class MQTTTHREAD(ThreadBase):
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_tcp_tx_udp_tx_c19033(wifi_dut, wifi_access_point,
                                           wifi_sniffer, sniffer_filter,
                                           zephyr_wifi_collections, request,
@@ -488,6 +489,7 @@ def test_wifi_zephyr_tcp_tx_udp_tx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_tcp_tx_tcp_rx_c19033(wifi_dut, wifi_access_point,
                                           wifi_sniffer, sniffer_filter,
                                           zephyr_wifi_collections, request,
@@ -559,6 +561,7 @@ def test_wifi_zephyr_tcp_tx_tcp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_udp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
                                           wifi_sniffer, sniffer_filter,
                                           zephyr_wifi_collections, request,
@@ -630,6 +633,7 @@ def test_wifi_zephyr_udp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_tcp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
                                           wifi_sniffer, sniffer_filter,
                                           zephyr_wifi_collections, request,
@@ -701,6 +705,7 @@ def test_wifi_zephyr_tcp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_tcp_rx_udp_rx_c19033(wifi_dut, wifi_access_point,
                                           wifi_sniffer, sniffer_filter,
                                           zephyr_wifi_collections, request,
@@ -771,6 +776,7 @@ def test_wifi_zephyr_tcp_rx_udp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_icmp_tx_icmp_rx_c19033(wifi_dut, wifi_access_point,
                                             wifi_sniffer, sniffer_filter,
                                             zephyr_wifi_collections, request,
@@ -832,6 +838,7 @@ def test_wifi_zephyr_icmp_tx_icmp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_sntp_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wifi_access_point,
                                                                      wifi_sniffer, sniffer_filter,
                                                                      zephyr_wifi_collections, request,
@@ -886,6 +893,7 @@ def test_wifi_zephyr_sntp_mqtt_operations_in_multiple_threads_c19033(wifi_dut, w
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_dns_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wifi_access_point,
                                                                     wifi_sniffer, sniffer_filter,
                                                                     zephyr_wifi_collections, request,
@@ -942,6 +950,7 @@ def test_wifi_zephyr_dns_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.test_src_map_id('C19033')
 def test_wifi_zephyr_http_client_icmp_in_multiple_threads_c19033(wifi_dut, wifi_access_point,
                                                                  wifi_sniffer, sniffer_filter,
                                                                  zephyr_wifi_collections, request,

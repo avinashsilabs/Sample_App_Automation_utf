@@ -99,6 +99,7 @@ class DUTAPThread(ThreadBase):
     net_perf={"host_role": IperfConstants.SERVER_MODE, IperfConstants.IPERF_TEST_PROTOCOL: IperfConstants.TCP}
 )
 @pytest.mark.firmware_app("test_concurrent_mode")
+@pytest.mark.test_src_map_id('TC4185087426')
 def test_device_as_sta_and_ap(firmware_loader, net_perf_client, wifi_access_point, wifi_dut, wifi_client, logger):
     with DUTSTAThread(wifi_dut, wifi_access_point, wifi_client, net_perf_client), DUTAPThread(wifi_dut, wifi_client):
          time.sleep(15)

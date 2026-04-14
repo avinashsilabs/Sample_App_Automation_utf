@@ -536,6 +536,7 @@ class BT_Inquiry(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34674')
 def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_c34674(wifi_dut,bt_client,wifi_access_point):
     mode = "initiator"
     codec="SBC"
@@ -564,6 +565,7 @@ def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_c34674(wifi_dut,bt_client,wi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.skip(reason="support for acceptor mode not available right now")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34675')
 def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_acceptor_C34675(wifi_dut,bt_client,wifi_access_point):
     mode = "acceptor"
     codec = "SBC"
@@ -591,6 +593,7 @@ def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_acceptor_C34675(wifi_dut,bt_client,wif
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34676')
 def test_sta_bt_with_STA_A2DP_2DH5_DUT_as_initiator_C34676(wifi_dut,bt_client,wifi_access_point):
     mode = "initiator"
     codec = "SBC"
@@ -619,6 +622,7 @@ def test_sta_bt_with_STA_A2DP_2DH5_DUT_as_initiator_C34676(wifi_dut,bt_client,wi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.skip(reason="support for acceptor mode not available right now")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34677')
 def test_sta_bt_with_STA_A2DP_2DH5_DUT_as_acceptor_C34677(wifi_dut,bt_client,wifi_access_point):
     mode = "acceptor"
     codec = "SBC"
@@ -648,6 +652,7 @@ def test_sta_bt_with_STA_A2DP_2DH5_DUT_as_acceptor_C34677(wifi_dut,bt_client,wif
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34678')
 def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_SBC_codec_c34678(wifi_dut,bt_client,wifi_access_point):
     mode = "initiator"
     codec="SBC"
@@ -677,6 +682,7 @@ def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_initiator_SBC_codec_c34678(wifi_dut,bt
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.skip(reason="support for acceptor mode not available right now")
+@pytest.mark.test_src_map_id('C34679')
 def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_acceptor_SBC_codec_c34679(wifi_dut,bt_client,wifi_access_point):
     mode = "acceptor"
     codec="SBC"
@@ -709,6 +715,7 @@ def test_sta_bt_with_STA_A2DP_2DH3_DUT_as_acceptor_SBC_codec_c34679(wifi_dut,bt_
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34680')
 def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_2DH5_C34680(http_server,wifi_dut,bt_client,wifi_access_point,index_path):
     mode = "initiator"
     codec = "SBC"
@@ -741,6 +748,7 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_2DH5_C34680(http
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.skip(reason="support for acceptor mode not available right now")
+@pytest.mark.test_src_map_id('C34681')
 def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_2DH5_C34681(http_server,wifi_dut,bt_client,wifi_access_point,index_path):
     mode = "acceptor"
     codec = "SBC"
@@ -774,6 +782,7 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_2DH5_C34681(http
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34682')
 def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_3DH5_C34682(http_server,wifi_dut,bt_client,wifi_access_point,index_path):
     mode = "initiator"
     codec = "SBC"
@@ -806,6 +815,7 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_3DH5_C34682(http
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.skip(reason="support for acceptor mode not available right now")
+@pytest.mark.test_src_map_id('C34683')
 def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_3DH5_C34683(http_server,wifi_dut,bt_client,wifi_access_point,index_path):
     mode = "acceptor"
     codec = "SBC"
@@ -839,6 +849,7 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_3DH5_C34683(http
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34684')
 def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_3DH5_C34684(http_server,wifi_dut,bt_client,wifi_access_point,index_path):
     mode = "initiator"
     codec = "SBC"
@@ -872,6 +883,7 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_3DH5_C34684(http
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.skip(reason="support for acceptor mode not available right now")
+@pytest.mark.test_src_map_id('C34685')
 def test_sta_BT_where_STA_continious_HTTP_Download_BT_acceptor_3DH5_C34685(http_server,wifi_dut,bt_client,wifi_access_point,index_path):
     mode = "acceptor"
     codec = "SBC"
@@ -905,6 +917,7 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_acceptor_3DH5_C34685(http_
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34690')
 def test_StaRejoin_BT_Streaming_C34690(http_server,wifi_dut,bt_client,wifi_access_point,index_path):
     mode = "initiator"
     codec = "SBC"
@@ -938,6 +951,7 @@ def test_StaRejoin_BT_Streaming_C34690(http_server,wifi_dut,bt_client,wifi_acces
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34696')
 def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_C34696(http_server,wifi_dut,bt_client,wifi_access_point,index_path):
     mode = "initiator"
     codec = "SBC"
@@ -972,6 +986,7 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_C34696(http_serv
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34697')
 def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_C34697(http_server,wifi_dut,bt_client,wifi_access_point,index_path):
     mode = "initiator"
     codec = "SBC"
@@ -1003,6 +1018,7 @@ def test_sta_BT_where_STA_continious_HTTP_Download_BT_initiator_C34697(http_serv
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34687')
 def test_sta_connect_ping_disconnect_reconnect_C34687(http_server,wifi_dut,bt_client,wifi_access_point):
     mode = "initiator"
     codec = "SBC"
@@ -1035,6 +1051,7 @@ def test_sta_connect_ping_disconnect_reconnect_C34687(http_server,wifi_dut,bt_cl
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34688')
 def test_WLAN_continious_scan_with_A2DP_C34688(http_server,wifi_dut,bt_client,wifi_access_point):
     mode = "initiator"
     codec = "SBC"
@@ -1066,6 +1083,7 @@ def test_WLAN_continious_scan_with_A2DP_C34688(http_server,wifi_dut,bt_client,wi
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34689')
 def test_continious_scan_with_BT_inquiry_BTandBLE_enabled_C34689(http_server,wifi_dut,bt_client,wifi_access_point):
     BT_Inquiry_obj=BT_Inquiry(wifi_dut,bt_client)
     Wlan_scan_obj=WLAN_continious_scan(wifi_dut,wifi_access_point)
@@ -1094,6 +1112,7 @@ def test_continious_scan_with_BT_inquiry_BTandBLE_enabled_C34689(http_server,wif
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34689')
 def test_continious_scan_with_BT_inquiry_onlyBTenabled_C34689(http_server,wifi_dut,bt_client,wifi_access_point):
     BT_Inquiry_obj=BT_Inquiry(wifi_dut,bt_client)
     Wlan_scan_obj=WLAN_continious_scan(wifi_dut,wifi_access_point)
@@ -1121,6 +1140,7 @@ def test_continious_scan_with_BT_inquiry_onlyBTenabled_C34689(http_server,wifi_d
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 
+@pytest.mark.test_src_map_id('C34692')
 def test_WLAN_continious_scan_with_A2DP_C34692(http_server,wifi_dut,bt_client,wifi_access_point):
     mode = "initiator"
     codec = "SBC"
@@ -1216,6 +1236,7 @@ def Test_HTTPS1MB_download_BTA2DP_2DH3_initiator_C34699(http_server, wifi_dut,bt
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34700')
 def  test_Wlan_connection_dualpairOn_DUT_C34700(wifi_dut,bt_client,wifi_access_point):
     mode = "initiator"
     codec = "SBC"
@@ -1245,6 +1266,7 @@ def  test_Wlan_connection_dualpairOn_DUT_C34700(wifi_dut,bt_client,wifi_access_p
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34701')
 def test_A2DP_Sta_connection_BLE_connect_disconnect_C34701(wifi_dut,bt_client,wifi_access_point,ble_client):
     mode = "initiator"
     codec = "SBC"
@@ -1279,6 +1301,7 @@ def test_A2DP_Sta_connection_BLE_connect_disconnect_C34701(wifi_dut,bt_client,wi
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34703')
 def test_A2DP_Sta_connection_BLE_connect_disconnect_C34703(wifi_dut,bt_client,wifi_access_point,ble_client):
     mode = "initiator"
     codec = "SBC"
@@ -1315,6 +1338,7 @@ def test_A2DP_Sta_connection_BLE_connect_disconnect_C34703(wifi_dut,bt_client,wi
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34704')
 def test_long_run_A2DP_wifi_join_C34704(wifi_dut,bt_client,wifi_access_point):
     mode = "initiator"
     codec = "SBC"
@@ -1348,6 +1372,7 @@ def test_long_run_A2DP_wifi_join_C34704(wifi_dut,bt_client,wifi_access_point):
 @pytest.mark.parametrize("index_path", {"100MB.html"})
 @pytest.mark.config('wifi_access_point',wifi ={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34706')
 def  test_BTInquiry_with_HTTP_download_C34706(wifi_dut,bt_client,wifi_access_point,http_server,index_path):
     BT_inquiry_obj=BT_Inquiry(wifi_dut, bt_client)
     HTTP_download_obj=HTTP_download(http_server,wifi_dut,wifi_access_point,index_path)
@@ -1371,6 +1396,7 @@ def  test_BTInquiry_with_HTTP_download_C34706(wifi_dut,bt_client,wifi_access_poi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34708')
 def  test_AVRCP_DUT_when_WLAN_is_connected_and_A2DPdata_transfer_is_happening_C34708(wifi_dut,bt_client,wifi_access_point):
     mode="initiator"
     codec="SBC"
@@ -1399,6 +1425,7 @@ def  test_AVRCP_DUT_when_WLAN_is_connected_and_A2DPdata_transfer_is_happening_C3
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C34709')
 def  test_A2DP_WLan_radioONOFF_C34709(wifi_dut,bt_client,wifi_access_point):
     mode = "initiator"
     codec = "SBC"

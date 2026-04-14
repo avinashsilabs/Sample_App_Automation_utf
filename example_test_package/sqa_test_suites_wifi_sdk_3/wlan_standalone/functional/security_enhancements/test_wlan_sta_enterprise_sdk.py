@@ -215,6 +215,7 @@ class WPA2Enterprise(ThreadBase):
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C19018')
 def test_wifi_sdk_connectivity_wpa2_eap_tls_c19018(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                    radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap tls method"""
@@ -279,6 +280,7 @@ def test_wifi_sdk_connectivity_wpa2_eap_tls_c19018(wifi_dut, wifi_access_point, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19019')
 def test_wifi_sdk_connectivity_wpa2_eap_ttls_c19019(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                     radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap ttls method"""
@@ -342,6 +344,7 @@ def test_wifi_sdk_connectivity_wpa2_eap_ttls_c19019(wifi_dut, wifi_access_point,
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19020')
 def test_wifi_sdk_connectivity_wpa2_eap_peapv0_c19020(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                       radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity while using eap peap method"""
@@ -409,6 +412,7 @@ def test_wifi_sdk_connectivity_wpa2_eap_peapv0_c19020(wifi_dut, wifi_access_poin
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19027')
 def test_wifi_sdk_connectivity_wpa2_tls_v_1_0_C19027(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                      radius_server, sl_collections, request):
     """ This test case verifies the wpa2 enterprise connectivity with tls version 1.0 while using eap tls method"""
@@ -481,6 +485,7 @@ def test_wifi_sdk_connectivity_wpa2_tls_v_1_0_C19027(wifi_dut, wifi_access_point
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19030')
 def test_wifi_sdk_gtk_wpa2_eap_ttls_c19030(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                            radius_server, sl_collections, request, utf_constants):
     """This test case verifies the wpa2 enterprise connectivity while using eap ttls method when
@@ -551,6 +556,7 @@ def test_wifi_sdk_gtk_wpa2_eap_ttls_c19030(wifi_dut, wifi_access_point, wifi_sni
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19026')
 def test_wifi_sdk_connectivity_wpa2_eap_tls_pmf_c19026(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                        radius_server, sl_collections, request):
     """ This test case verifies the WPA2 Enterprise Connectivity with PMF enabled while using EAP TLS Method"""
@@ -622,6 +628,7 @@ def test_wifi_sdk_connectivity_wpa2_eap_tls_pmf_c19026(wifi_dut, wifi_access_poi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19022')
 def test_wifi_sdk_connectivity_wpa2_tls_when_no_cert_c19022(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                             radius_server, sl_collections, request):
     """This test case verifies the wpa2 enterprise connectivity when the certificate is not loaded into
@@ -702,6 +709,7 @@ def test_wifi_sdk_connectivity_wpa2_tls_when_no_cert_c19022(wifi_dut, wifi_acces
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19023')
 def test_wifi_sdk_connectivity_wpa2_with_expired_cert_tls_c19023(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                  sniffer_filter, radius_server, sl_collections,
                                                                  request):
@@ -778,6 +786,7 @@ def test_wifi_sdk_connectivity_wpa2_with_expired_cert_tls_c19023(wifi_dut, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19024')
 def test_wifi_sdk_connectivity_wpa2_with_wrong_cert_tls_c19024(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                sniffer_filter, radius_server, sl_collections, request):
     """This test case verifies the wpa2 enterprise connectivity when the Wrong Certificate loaded into device while
@@ -853,6 +862,7 @@ def test_wifi_sdk_connectivity_wpa2_with_wrong_cert_tls_c19024(wifi_dut, wifi_ac
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C70609')
 def test_wifi_sdk_gtk_renewal_wpa2_eap_unicast_c70609(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                       sniffer_filter, net_perf_client, protocol, radius_server,
                                                       sl_collections, request):
@@ -960,6 +970,7 @@ def test_wifi_sdk_gtk_renewal_wpa2_eap_unicast_c70609(wifi_dut, wifi_access_poin
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs",
                              "multicast_leave"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C70608')
 def test_wifi_sdk_gtk_renewal_wpa2_eap_multicast_c70608(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                         sniffer_filter, net_perf_client, protocol, radius_server,
                                                         sl_collections, request, multicast_client):
@@ -1083,6 +1094,7 @@ def test_wifi_sdk_gtk_renewal_wpa2_eap_multicast_c70608(wifi_dut, wifi_access_po
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C70607')
 def test_wifi_sdk_gtk_renewal_wpa_eap_unicast_c70607(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                       sniffer_filter, net_perf_client, protocol, radius_server,
                                                       sl_collections, request):
@@ -1189,6 +1201,7 @@ def test_wifi_sdk_gtk_renewal_wpa_eap_unicast_c70607(wifi_dut, wifi_access_point
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs",
                              "multicast_leave"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19029')
 def test_wifi_sdk_gtk_renewal_wpa_eap_multicast_c19029(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                         sniffer_filter, net_perf_client, protocol, radius_server,
                                                         sl_collections, request, multicast_client):
@@ -1309,6 +1322,7 @@ def test_wifi_sdk_gtk_renewal_wpa_eap_multicast_c19029(wifi_dut, wifi_access_poi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19025')
 def test_wifi_sdk_connectivity_wpa2_eap_tls_valid_invalid_cert_c19025(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                           radius_server, sl_collections, request, utf_constants):
     """ This test case Verifies the wpa2 enterprise connectivity when the valid date and expired date is set """

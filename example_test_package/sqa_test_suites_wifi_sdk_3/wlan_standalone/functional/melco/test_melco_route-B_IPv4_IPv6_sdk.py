@@ -498,6 +498,7 @@ class AccessDUTAPage(ThreadBase):
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123"})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557419')
 def test_wifi_sdk_ipv4_assign_sta_interface_c557419(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         net_perf_client, protocol):
@@ -561,6 +562,7 @@ def test_wifi_sdk_ipv4_assign_sta_interface_c557419(
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123",
                           "ipv6_state": "1"})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557420')
 def test_wifi_sdk_ipv6_assign_sta_interface_c557420(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         net_perf_client, protocol):
@@ -623,6 +625,7 @@ def test_wifi_sdk_ipv6_assign_sta_interface_c557420(
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "ipv6_state": "1",
                           "connection_type": "disabled", "use_ipv6_web": True})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557421')
 def test_wifi_sdk_static_ipv6_assign_sta_interface_c557421(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         net_perf_client, protocol):
@@ -694,6 +697,7 @@ def test_wifi_sdk_static_ipv6_assign_sta_interface_c557421(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557424')
 def test_wifi_sdk_ipv4_assign_sta_first_c557424(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -764,6 +768,7 @@ def test_wifi_sdk_ipv4_assign_sta_first_c557424(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557425')
 def test_wifi_sdk_ipv4_assign_apmode_first_c557425(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -830,6 +835,7 @@ def test_wifi_sdk_ipv4_assign_apmode_first_c557425(
         },
     }
 )
+@pytest.mark.test_src_map_id('C557422')
 def test_wifi_sdk_ipv4_assign_apmode_interface_c557422(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -902,6 +908,7 @@ def test_wifi_sdk_ipv4_assign_apmode_interface_c557422(
                     wifi={"security": "WPA2", "passphrase": "123456789", "ssid": "sharma1234", "ipv6_state": "0",
                           "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C557427')
 def test_wifi_sdk_ipv6_stamode_ipv4_apmode_c557427(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         net_perf_client, protocol, wifi_clients):
@@ -970,6 +977,7 @@ def test_wifi_sdk_ipv6_stamode_ipv4_apmode_c557427(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA2", "passphrase": "123456789", "ssid": "sharma1234", "ipv6_state": "0"})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C563960')
 def test_wifi_sdk_static_ipv6_assign_sta_interface_with_fs_c563960(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         net_perf_client, protocol):
@@ -1040,6 +1048,7 @@ def test_wifi_sdk_static_ipv6_assign_sta_interface_with_fs_c563960(
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "channel": 8})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557429')
 def test_melco_sdk_ipv4_assign_stamode_and_channel_change_c557429(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, wiseconnect_web, request):
     """
@@ -1132,6 +1141,7 @@ def test_melco_sdk_ipv4_assign_stamode_and_channel_change_c557429(
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "channel": 8})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557430')
 def test_melco_sdk_ipv6_assign_stamode_and_channel_change_c557430(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, wiseconnect_web, request):
     """
@@ -1224,6 +1234,7 @@ def test_melco_sdk_ipv6_assign_stamode_and_channel_change_c557430(
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557431')
 def test_melco_sdk_ipv4_assign_stamode_and_psk_change_c557431(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, wiseconnect_web, request):
     """
@@ -1321,6 +1332,7 @@ def test_melco_sdk_ipv4_assign_stamode_and_psk_change_c557431(
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": "WPA2", "passphrase": "thisistestnetwork", "ssid": "sharma123", "channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557432')
 def test_melco_sdk_ipv6_assign_stamode_and_psk_change_c557432(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point, wiseconnect_web, request):
     """

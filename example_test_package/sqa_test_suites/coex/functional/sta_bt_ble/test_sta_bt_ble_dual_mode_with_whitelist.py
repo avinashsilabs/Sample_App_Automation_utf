@@ -591,6 +591,7 @@ pytestmark = [pytest.mark.bt_client("raspi_bt_client"), pytest.mark.ble_client("
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20075')
 def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(firmware_loader, wifi_sniffer, recovery, wifi_dut, bt_client,
                                                            ble_client, wifi_client, wifi_access_point, net_perf_client,
                                                            protocol):
@@ -674,6 +675,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_slave_C20075(firmware_loader, wifi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20076')
 def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(firmware_loader, recovery, wifi_dut, bt_client,
                                                             wifi_access_point, ble_client, net_perf_client, wifi_client,
                                                             protocol):
@@ -741,6 +743,7 @@ def test_sta_bt_ble_connection_with_bt_ble_as_master_C20076(firmware_loader, rec
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20077')
 def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(firmware_loader, recovery, wifi_dut, wifi_access_point,
                                                             bt_client, ble_clients, net_perf_client, wifi_client,
                                                             protocol):
@@ -822,6 +825,7 @@ def test_sta_bt_ble_connection_with_ble_as_dual_role_C20077(firmware_loader, rec
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20078')
 def test_sta_bt_ble_connection_stability_C20078(firmware_loader, wifi_sniffer, recovery, wifi_dut, bt_client,
                                                 ble_client, wifi_access_point, net_perf_client, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -906,6 +910,7 @@ def test_sta_bt_ble_connection_stability_C20078(firmware_loader, wifi_sniffer, r
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20079')
 def test_sta_bt_ble_connection_with_http_download_C20079(firmware_loader, wifi_sniffer, recovery, wifi_dut, bt_client,
                                                          ble_client, http_server, wifi_access_point, http_client,
                                                          index_path):
@@ -993,6 +998,7 @@ def test_sta_bt_ble_connection_with_http_download_C20079(firmware_loader, wifi_s
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20080')
 def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(firmware_loader, wifi_sniffer, recovery, wifi_dut,
                                                                    wifi_access_point, ble_client, net_perf_client,
                                                                    bt_client, wifi_client, protocol):
@@ -1075,6 +1081,7 @@ def test_sta_bt_ble_connection_with_dual_mode_functionality_C20080(firmware_load
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20081')
 def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(firmware_loader, wifi_sniffer, recovery,
                                                                   wifi_access_point, wifi_dut, ble_client, bt_client,
                                                                   net_perf_client, wifi_client, protocol):
@@ -1166,6 +1173,7 @@ def test_sta_bt_ble_connection_with_sta_connect_disconnect_C20081(firmware_loade
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20082')
 def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(firmware_loader, wifi_sniffer, recovery, wifi_dut,
                                                                  wifi_access_point, ble_client, bt_client, http_client,
                                                                  http_server, index_path):
@@ -1256,6 +1264,7 @@ def test_sta_bt_ble_connection_with_bt_connect_disconnect_C20082(firmware_loader
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20083')
 def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(firmware_loader, wifi_sniffer, recovery, wifi_dut,
                                                                   wifi_access_point, ble_client, bt_client, http_client,
                                                                   http_server, index_path):
@@ -1347,6 +1356,7 @@ def test_sta_bt_ble_connection_with_ble_connect_disconnect_C20083(firmware_loade
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20084')
 def test_sta_bt_ble_connection_with_powersave_mode2_C20084(firmware_loader, recovery, wifi_dut, bt_client, wifi_sniffer,
                                                            wifi_access_point, net_perf_client, wifi_client, ble_client,
                                                            protocol):
@@ -1431,6 +1441,7 @@ def test_sta_bt_ble_connection_with_powersave_mode2_C20084(firmware_loader, reco
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20085')
 def test_sta_bt_ble_connection_with_bg_scan_C20085(firmware_loader, recovery, wifi_sniffer, bt_client, net_perf_client,
                                                    wifi_access_point, ble_client, wifi_dut, wifi_client, protocol):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
@@ -1566,6 +1577,7 @@ def test_sta_bt_ble_connection_with_bg_scan_C20085(firmware_loader, recovery, wi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20086')
 def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(firmware_loader, recovery, wifi_sniffer, wifi_dut, bt_client,
                                                          wifi_access_point, ble_client, net_perf_client, wifi_client,
                                                          protocol, ssid):
@@ -1656,6 +1668,7 @@ def test_sta_bt_ble_connection_with_sta_scan_mode_C20086(firmware_loader, recove
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated",
                              "ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C20087')
 def test_sta_bt_ble_connection_with_deep_sleep_functionality_C20087(firmware_loader, wifi_sniffer, recovery, bt_client,
                                                                     wifi_access_point, ble_client, net_perf_client,
                                                                     wifi_client, wifi_dut, protocol):

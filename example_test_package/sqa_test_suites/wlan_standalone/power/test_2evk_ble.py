@@ -113,6 +113,7 @@ class power_number_output():
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.BLE,
        },
 )
+@pytest.mark.test_src_map_id('C20581')
 def test_blr_125kbps_per_lpchain_C20581(bt_dut, ble_client, power_meter):
     cmd_ix_1 = 0x13
     access_addr_1 = 1903575337
@@ -208,6 +209,7 @@ def test_blr_125kbps_per_lpchain_C20581(bt_dut, ble_client, power_meter):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.BLE,
        },
 )
+@pytest.mark.test_src_map_id('C20580')
 def test_ble_per_1mbps_rx_lpchain_C20580(bt_dut, ble_client, power_meter):
     cmd_ix_1 = 0x13
     access_addr_1 = 1903575337

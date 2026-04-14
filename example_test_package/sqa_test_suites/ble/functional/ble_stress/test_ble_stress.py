@@ -23,6 +23,7 @@ def logger():
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19810')
 def test_ble_start_stop_scan_1000_times_C19810(ble_dut, ble_client):
     iter_count = 1000
 
@@ -54,6 +55,7 @@ def test_ble_start_stop_scan_1000_times_C19810(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19829')
 def test_BLE_continuousscanning_for_48_hours_C19829(wifi_dut, ble_client):
     # for the time being we are advetising with only one client need to add 9 other devices to do the ask
     logger().info("start ble in dut")

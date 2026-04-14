@@ -1,3 +1,4 @@
+import pytest
 """
 BLE SMP Pairing IO Capability Test Suite
 
@@ -605,6 +606,7 @@ class BLESMPPairingTest:
             time.sleep(5)
 
 # Just works, Raspi: 0x00 (Display) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1696465')
 def test_ble_smp_just_works_dut_0x00_raspi_0x00_C1696465(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -618,6 +620,7 @@ def test_ble_smp_just_works_dut_0x00_raspi_0x00_C1696465(wifi_dut, ble_client):
     
 
 # Just works, Raspi: 0x01 (Display Yes/No) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1696470')
 def test_ble_smp_just_works_dut_0x00_raspi_0x01_C1696470(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -630,6 +633,7 @@ def test_ble_smp_just_works_dut_0x00_raspi_0x01_C1696470(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x02 (Keyboard Only) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1696475')
 def test_ble_smp_passkey_entry_dut_0x00_raspi_0x02_C1696475(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -642,6 +646,7 @@ def test_ble_smp_passkey_entry_dut_0x00_raspi_0x02_C1696475(wifi_dut, ble_client
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1696480')
 def test_ble_smp_just_works_dut_0x00_raspi_0x03_C1696480(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -654,6 +659,7 @@ def test_ble_smp_just_works_dut_0x00_raspi_0x03_C1696480(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x04 (Keyboard Display) DUT: 0x00 (Display)
+@pytest.mark.test_src_map_id('C1696485')
 def test_ble_smp_passkey_entry_dut_0x00_raspi_0x04_C1696485(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -666,6 +672,7 @@ def test_ble_smp_passkey_entry_dut_0x00_raspi_0x04_C1696485(wifi_dut, ble_client
     ble_test.run()
 
 # JustWorks, Raspi: 0x00 (DisplayOnly) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1696466')
 def test_ble_smp_just_works_dut_0x01_raspi_0x00_C1696466(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -678,6 +685,7 @@ def test_ble_smp_just_works_dut_0x01_raspi_0x00_C1696466(wifi_dut, ble_client):
     ble_test.run()
 
 # NumericComparison, Raspi: 0x01 (DisplayYesNo) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1696471')
 def test_ble_smp_just_works_dut_0x01_raspi_0x01_C1696471(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -690,6 +698,7 @@ def test_ble_smp_just_works_dut_0x01_raspi_0x01_C1696471(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x02 (KeyboardOnly) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1696476')
 def test_ble_smp_passkey_entry_dut_0x01_raspi_0x02_C1696476(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -702,6 +711,7 @@ def test_ble_smp_passkey_entry_dut_0x01_raspi_0x02_C1696476(wifi_dut, ble_client
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1696481')
 def test_ble_smp_just_works_dut_0x01_raspi_0x03_C1696481(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -714,6 +724,7 @@ def test_ble_smp_just_works_dut_0x01_raspi_0x03_C1696481(wifi_dut, ble_client):
     ble_test.run()
 
 # passkey entry, Raspi: 0x04 (KeyboardDisplay) DUT: 0x01 (DisplayYesNo)
+@pytest.mark.test_src_map_id('C1696486')
 def test_ble_smp_passkey_entry_dut_0x01_raspi_0x04_C1696486(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -726,6 +737,7 @@ def test_ble_smp_passkey_entry_dut_0x01_raspi_0x04_C1696486(wifi_dut, ble_client
     ble_test.run()
 
 # Passkey, Raspi: 0x00 (DisplayOnly) DUT: 0x02 (KeyboardOnly) 
+@pytest.mark.test_src_map_id('C1696467')
 def test_ble_dut_0x02_raspi_0x00_C1696467(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -739,6 +751,7 @@ def test_ble_dut_0x02_raspi_0x00_C1696467(wifi_dut, ble_client):
 
 
 # Passkey, Raspi: 0x01 (DisplayYesNo) DUT: 0x02 (KeyboardOnly)
+@pytest.mark.test_src_map_id('C1696472')
 def test_ble_dut_0x02_raspi_0x01_C1696472(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -751,6 +764,7 @@ def test_ble_dut_0x02_raspi_0x01_C1696472(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x02 (KeyboardOnly) DUT: 0x02 (KeyboardOnly)
+@pytest.mark.test_src_map_id('C1696477')
 def test_ble_dut_0x02_raspi_0x02_C1696477(wifi_dut, ble_client):
     time.sleep(20)
     # For KeyboardOnly/KeyboardOnly, both sides must enter the same fixed passkey after SMP pairing starts.
@@ -842,6 +856,7 @@ def test_ble_dut_0x02_raspi_0x02_C1696477(wifi_dut, ble_client):
     ble_test.run()
 
 # justwork, Raspi: 0x03 (NoInputNoOutput) DUT: 0x02 (KeyboardOnly)
+@pytest.mark.test_src_map_id('C1696482')
 def test_ble_dut_0x02_raspi_0x03_C1696482(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -854,6 +869,7 @@ def test_ble_dut_0x02_raspi_0x03_C1696482(wifi_dut, ble_client):
     ble_test.run()
 
 # Passkey, Raspi: 0x04 (KeyboardDisplay) DUT: 0x02 (KeyboardOnly)
+@pytest.mark.test_src_map_id('C1696487')
 def test_ble_dut_0x02_raspi_0x04_C1696487(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -866,6 +882,7 @@ def test_ble_dut_0x02_raspi_0x04_C1696487(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x00 (DisplayOnly) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1696468')
 def test_ble_dut_0x03_raspi_0x00_C1696468(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -878,6 +895,7 @@ def test_ble_dut_0x03_raspi_0x00_C1696468(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x01 (DisplayYesNo) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1696473')
 def test_ble_dut_0x03_raspi_0x01_C1696473(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -890,6 +908,7 @@ def test_ble_dut_0x03_raspi_0x01_C1696473(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x02 (KeyboardOnly) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1696478')
 def test_ble_dut_0x03_raspi_0x02_C1696478(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -902,6 +921,7 @@ def test_ble_dut_0x03_raspi_0x02_C1696478(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1696483')
 def test_ble_dut_0x03_raspi_0x03_C1696483(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -914,6 +934,7 @@ def test_ble_dut_0x03_raspi_0x03_C1696483(wifi_dut, ble_client):
     ble_test.run()  
 
 # JustWorks, Raspi: 0x04 (KeyboardDisplay) DUT: 0x03 (NoInputNoOutput)
+@pytest.mark.test_src_map_id('C1696488')
 def test_ble_dut_0x03_raspi_0x04_C1696488(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -926,6 +947,7 @@ def test_ble_dut_0x03_raspi_0x04_C1696488(wifi_dut, ble_client):
     ble_test.run() 
 
 # Passkey, Raspi: 0x00 (DisplayOnly) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1696469')
 def test_ble_dut_0x04_raspi_0x00_C1696469(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -938,6 +960,7 @@ def test_ble_dut_0x04_raspi_0x00_C1696469(wifi_dut, ble_client):
     ble_test.run() 
 
 # passkeyentry Raspi: 0x01 (DisplayYesNo) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1696474')
 def test_ble_dut_0x04_raspi_0x01_C1696474(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -951,6 +974,7 @@ def test_ble_dut_0x04_raspi_0x01_C1696474(wifi_dut, ble_client):
 
 
 # Passkey, Raspi: 0x02 (KeyboardOnly) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1696479')
 def test_ble_dut_0x04_raspi_0x02_C1696479(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -963,6 +987,7 @@ def test_ble_dut_0x04_raspi_0x02_C1696479(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x03 (NoInputNoOutput) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1696484')
 def test_ble_dut_0x04_raspi_0x03_C1696484(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(
@@ -975,6 +1000,7 @@ def test_ble_dut_0x04_raspi_0x03_C1696484(wifi_dut, ble_client):
     ble_test.run()
 
 # passkeyentry Raspi: 0x04 (KeyboardDisplay) DUT: 0x04 (KeyboardDisplay)
+@pytest.mark.test_src_map_id('C1696489')
 def test_ble_dut_0x04_raspi_0x04_C1696489(wifi_dut, ble_client):
     time.sleep(20)
     ble_test = BLESMPPairingTest(

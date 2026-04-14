@@ -180,6 +180,7 @@ pytestmark = [
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos0
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19252')
 def test_mqtt_qos0_connect_sub_publish_c19241_c19243_c19252(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -264,6 +265,7 @@ def test_mqtt_qos0_connect_sub_publish_c19241_c19243_c19252(
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos1
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19254')
 def test_mqtt_qos1_connect_sub_publish_c19254(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -347,6 +349,7 @@ def test_mqtt_qos1_connect_sub_publish_c19254(
 # The test case checks DUT behavior when DUT is trying to connect to MQTT server, but server is not responding
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19242')
 def test_mqtt_invalid_server_c19242(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
 ):
@@ -378,6 +381,7 @@ def test_mqtt_invalid_server_c19242(
 # id is already being used by another mqtt client
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19245')
 def test_mqtt_common_clientid_c19245(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -443,6 +447,7 @@ def test_mqtt_common_clientid_c19245(
 # enabled on mqtt server
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19246')
 def test_mqtt_authentication_c19246(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -527,6 +532,7 @@ def test_mqtt_authentication_c19246(
 # The test case checks DUT behavior when trying to connect to MQTT server with wrong credentials
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19247')
 def test_mqtt_authentication_wrong_cred_c19247(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
 ):
@@ -561,6 +567,7 @@ def test_mqtt_authentication_wrong_cred_c19247(
 # The test case checks mqtt publish message with retain option
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19256')
 def test_mqtt_retain_c19256(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -615,6 +622,7 @@ def test_mqtt_retain_c19256(
 # The test case checks mqtt publish message with retain option
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19262')
 def test_mqtt_delete_retain_message_c19262(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -670,6 +678,7 @@ def test_mqtt_delete_retain_message_c19262(
 # the test case checks MQTT unsubscribe functionality
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19260')
 def test_mqtt_unsubscribe_c19260(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -740,6 +749,7 @@ def test_mqtt_unsubscribe_c19260(
 # the test case runs mqtt sequence multiple times
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19277')
 def test_mqtt_sequence_c19277(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -778,6 +788,7 @@ def test_mqtt_sequence_c19277(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case checks mqtt functionality after DUT is connected to AP second time
+@pytest.mark.test_src_map_id('TC2823525914')
 def test_mqtt_reconnect_testcase_23(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -848,6 +859,7 @@ def test_mqtt_reconnect_testcase_23(
 # DUT functionality when trying to connect to MQTT server with client-id NULL
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19269')
 def test_mqtt_common_clientid_null_c19269(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -948,6 +960,7 @@ def ApWirelessOff(switch, wait_time, logger):
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19273')
 def test_mqtt_tx_after_rejoin_testcase_c19273(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes,
         pkt_delay, switch
@@ -1057,6 +1070,7 @@ def test_mqtt_tx_after_rejoin_testcase_c19273(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19265')
 def test_mqtt_init_after_rejoin_fail_c19265(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut,
                                              logger, publish_len, total_bytes, pkt_delay, switch):
     current_time = time.time()
@@ -1198,6 +1212,7 @@ def test_mqtt_init_after_rejoin_fail_c19265(wifi_sniffer, mqtt_server, mqtt_clie
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19270')
 def test_mqtt_rx_after_rejoin_c19270(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
@@ -1292,6 +1307,7 @@ def test_mqtt_rx_after_rejoin_c19270(
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19272')
 def test_mqtt_publish_qos1_c19272(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
@@ -1376,6 +1392,7 @@ def test_mqtt_publish_qos1_c19272(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19283')
 def test_mqtt_rx_c19283(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, publish_len, total_bytes, pkt_delay
 ):
@@ -1466,6 +1483,7 @@ def test_mqtt_rx_c19283(
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 300)])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19248')
 def test_mqtt_keep_alive_60_c19248(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
@@ -1519,6 +1537,7 @@ def test_mqtt_keep_alive_60_c19248(
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(120, 600)])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19249')
 def test_mqtt_keep_alive_120_c19249(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
@@ -1572,6 +1591,7 @@ def test_mqtt_keep_alive_120_c19249(
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(300, 1200)])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19250')
 def test_mqtt_keep_alive_300_c19250(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
@@ -1625,6 +1645,7 @@ def test_mqtt_keep_alive_300_c19250(
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19251')
 def test_mqtt_keep_alive_disable_c19251(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger, keep_alive_time, idle_time
 ):
@@ -1656,6 +1677,7 @@ def test_mqtt_keep_alive_disable_c19251(
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19289')
 def test_mqtt_connect_clean_session_0_c19289(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
 ):
@@ -1705,6 +1727,7 @@ def test_mqtt_connect_clean_session_0_c19289(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
 # The test case should produce error 0X0036 as username or password is more than 60 bytes
+@pytest.mark.test_src_map_id('C19275')
 def test_mqtt_check_error_0X0036_C19275(
         wifi_sniffer, mqtt_server, wifi_access_point, wifi_dut, logger
         ):
@@ -1733,6 +1756,7 @@ def test_mqtt_check_error_0X0036_C19275(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19278')
 def test_reconnection_MQTT_server_C19278(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, wifi_client,
 ):
@@ -1781,6 +1805,7 @@ def test_reconnection_MQTT_server_C19278(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19276')
 def test_reconnection_MQTT_server_with_same_client_port_C19276(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger, wifi_client,
 ):
@@ -1827,6 +1852,7 @@ def test_reconnection_MQTT_server_with_same_client_port_C19276(
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19280')
 def test_mqtt_check_error_0X0030_C19280(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger):
 # The test case checks error 0X0030 as topic length is greater than or less than the topic name given in the command
     topic1 = "mytesttopic"
@@ -1863,6 +1889,7 @@ def test_mqtt_check_error_0X0030_C19280(wifi_sniffer, mqtt_server, mqtt_client, 
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19281')
 def test_mqtt_check_error_0X003e_C19281(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger):
     # The test case checks error 0X003e as topic length is greater than or less than the topic name given in the command
     topic1 = "mytesttopic"
@@ -1899,6 +1926,7 @@ def test_mqtt_check_error_0X003e_C19281(wifi_sniffer, mqtt_server, mqtt_client, 
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C19279')
 def test_mqtt_check_error_0X0036_C19279(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger):
     # The test case checks error 0X0036 as topic length is greater than or less than the topic name given in the command
     topic1 = "thisismytopicfromautomation"

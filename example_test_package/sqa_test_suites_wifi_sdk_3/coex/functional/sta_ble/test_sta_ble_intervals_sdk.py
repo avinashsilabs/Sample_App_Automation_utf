@@ -420,6 +420,7 @@ def wifi_dut_marker(ext_custom_bit=0, tcp_feat_bit=0, ext_tcp_feat_bit=0, ca_cer
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C20164')
 def test_Wifi_sdk_scan_BLE_AI_20ms_C20164(
     wifi_sniffer,
     wifi_access_point,
@@ -501,6 +502,7 @@ def test_Wifi_sdk_scan_BLE_AI_20ms_C20164(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20165')
 def test_Wifi_sdk_connection_BLE_AI_20ms_C20165(
     wifi_sniffer,
     wifi_access_point,
@@ -590,6 +592,7 @@ def test_Wifi_sdk_connection_BLE_AI_20ms_C20165(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20166')
 def test_Wifi_sdk_Data_BLE_AI_20ms_C20166(
     wifi_sniffer,
     wifi_access_point,
@@ -673,6 +676,7 @@ def test_Wifi_sdk_Data_BLE_AI_20ms_C20166(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C20167')
 def test_Wifi_sdk_scan_BLE_AI_10240ms_C20167(
     wifi_sniffer,
     wifi_access_point,
@@ -754,6 +758,7 @@ def test_Wifi_sdk_scan_BLE_AI_10240ms_C20167(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20168')
 def test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168(
     wifi_sniffer,
     wifi_access_point,
@@ -844,6 +849,7 @@ def test_wifi_sdk_AP_conn_BLE_AI_10240ms_C20168(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20169')
 def test_Wifi_sdk_Data_BLE_AI_10240ms_C20169(
     wifi_sniffer,
     wifi_access_point,
@@ -930,6 +936,7 @@ def test_Wifi_sdk_Data_BLE_AI_10240ms_C20169(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20173')
 def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_3440ms_C20173(
     wifi_sniffer,
     wifi_access_point,
@@ -1007,6 +1014,7 @@ def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_3440ms_C20173(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20174')
 def test_Wifi_sdk_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(
     wifi_sniffer,
     wifi_access_point,
@@ -1096,6 +1104,7 @@ def test_Wifi_sdk_AP_conn_BLE_SI_10240ms_SW_3440ms_C20174(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20175')
 def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(
     wifi_sniffer,
     wifi_access_point,
@@ -1183,6 +1192,7 @@ def test_Wifi_Data_BLE_SI_10240ms_SW_3440ms_C20175(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20170')
 def test_Wifi_sdk_scan_BLE_SI_7_5ms_SW_2_5ms_C20170(
     wifi_sniffer,
     wifi_access_point,
@@ -1260,6 +1270,7 @@ def test_Wifi_sdk_scan_BLE_SI_7_5ms_SW_2_5ms_C20170(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20171')
 def test_Wifi_sdk_AP_conn_BLE_SI_7_5ms_SW_2_5ms_C20171(
     wifi_sniffer,
     wifi_access_point,
@@ -1348,6 +1359,7 @@ def test_Wifi_sdk_AP_conn_BLE_SI_7_5ms_SW_2_5ms_C20171(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20172')
 def test_Wifi_sdk_Data_BLE_SI_7_5ms_SW_2_5ms_C20172(
     wifi_sniffer,
     wifi_access_point,
@@ -1435,6 +1447,7 @@ def test_Wifi_sdk_Data_BLE_SI_7_5ms_SW_2_5ms_C20172(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C148613')
 def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_5000ms_C148613(
     wifi_sniffer,
     wifi_access_point,
@@ -1517,6 +1530,7 @@ def test_Wifi_sdk_scan_BLE_SI_10240ms_SW_5000ms_C148613(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20176')
 def test_Wifi_sdk_wifi_http_download_BLE_AI_20ms_C20176(
     wifi_sniffer,
     wifi_access_point,
@@ -1612,6 +1626,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_20ms_C20176(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20177')
 def test_Wifi_sdk_wifi_http_download_BLE_AI_10240ms_C20177(
     wifi_sniffer,
     wifi_access_point,
@@ -1704,6 +1719,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_10240ms_C20177(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20178')
 def test_Wifi_sdk_wifi_http_download_BLE_SI_7_5ms_SW_2_5ms_C20178(
         wifi_sniffer,
         wifi_access_point,
@@ -1796,6 +1812,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_7_5ms_SW_2_5ms_C20178(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C20179')
 def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_3440ms_C20179(
         wifi_sniffer,
         wifi_access_point,
@@ -1889,6 +1906,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_3440ms_C20179(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C148614')
 def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_5000ms_C148614(
         wifi_sniffer,
         wifi_access_point,
@@ -1981,6 +1999,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_SI_10240ms_SW_5000ms_C148614(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537981')
 def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_peripheral_C537981(
     wifi_sniffer,
     wifi_access_point,
@@ -2077,6 +2096,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_peripheral_C537981(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537982')
 def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_peripheral_C537982(
     wifi_sniffer,
     wifi_access_point,
@@ -2170,6 +2190,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_peripheral_C537982(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537983')
 def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_central_C537983(
     wifi_sniffer,
     wifi_access_point,
@@ -2266,6 +2287,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_500ms_central_C537983(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537984')
 def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_central_C537984(
     wifi_sniffer,
     wifi_access_point,
@@ -2359,6 +2381,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_1000ms_central_C537984(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C538015')
 def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_45ms_peripheral_C538015(
     wifi_sniffer,
     wifi_access_point,
@@ -2454,6 +2477,7 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_45ms_peripheral_C538015(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C538016')
 def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_500ms_peripheral_C538016(
     wifi_sniffer,
     wifi_access_point,
@@ -2548,6 +2572,7 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_500ms_peripheral_C538016(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C538017')
 def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_1000ms_peripheral_C538017(
     wifi_sniffer,
     wifi_access_point,
@@ -2643,6 +2668,7 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_1000ms_peripheral_C538017(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537945')
 def test_Wifi_sdk_scan_BLE_SI_1000ms_SW_100ms_C537945(
     wifi_sniffer,
     wifi_access_point,
@@ -2728,6 +2754,7 @@ def test_Wifi_sdk_scan_BLE_SI_1000ms_SW_100ms_C537945(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537978')
 def test_Wifi_sdk_scan_BLE_SI_160ms_SW_40ms_C537978(
     wifi_sniffer,
     wifi_access_point,
@@ -2809,6 +2836,7 @@ def test_Wifi_sdk_scan_BLE_SI_160ms_SW_40ms_C537978(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C537949')
 def test_Wifi_sdk_SSL_RX_BLE_SI_1000ms_SW_100ms_C537949(
     wifi_sniffer,
     wifi_access_point,
@@ -2930,6 +2958,7 @@ def test_Wifi_sdk_SSL_RX_BLE_SI_1000ms_SW_100ms_C537949(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537989')
 def test_Wifi_sdk_wifi_https_download_BLE_CI_250ms_central_C537989(
     wifi_sniffer,
     wifi_access_point,
@@ -3026,6 +3055,7 @@ def test_Wifi_sdk_wifi_https_download_BLE_CI_250ms_central_C537989(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537990')
 def test_Wifi_sdk_wifi_https_download_BLE_CI_4000ms_central_C537990(
     wifi_sniffer,
     wifi_access_point,
@@ -3121,6 +3151,7 @@ def test_Wifi_sdk_wifi_https_download_BLE_CI_4000ms_central_C537990(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537986')
 def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_45ms_peripheral_C537986(
     wifi_sniffer,
     wifi_access_point,
@@ -3217,6 +3248,7 @@ def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_45ms_peripheral_C537986(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537987')
 def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_500ms_peripheral_C537987(
     wifi_sniffer,
     wifi_access_point,
@@ -3311,6 +3343,7 @@ def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_500ms_peripheral_C537987(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C537988')
 def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_1000ms_peripheral_C537988(
     wifi_sniffer,
     wifi_access_point,
@@ -3399,6 +3432,7 @@ def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_1000ms_peripheral_C537988(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C780232')
 def test_Wifi_sdk_scan_BLE_AI_50ms_C780232(
     wifi_sniffer,
     wifi_access_point,
@@ -3477,6 +3511,7 @@ def test_Wifi_sdk_scan_BLE_AI_50ms_C780232(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C780233')
 def test_Wifi_sdk_scan_BLE_AI_80ms_C780233(
     wifi_sniffer,
     wifi_access_point,
@@ -3554,6 +3589,7 @@ def test_Wifi_sdk_scan_BLE_AI_80ms_C780233(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.test_src_map_id('C780234')
 def test_Wifi_sdk_scan_BLE_AI_120ms_C780234(
     wifi_sniffer,
     wifi_access_point,
@@ -3637,6 +3673,7 @@ def test_Wifi_sdk_scan_BLE_AI_120ms_C780234(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780235')
 def test_Wifi_sdk_connection_BLE_AI_50ms_C780235(
     wifi_sniffer,
     wifi_access_point,
@@ -3721,6 +3758,7 @@ def test_Wifi_sdk_connection_BLE_AI_50ms_C780235(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780236')
 def test_Wifi_sdk_connection_BLE_AI_80ms_C780236(
     wifi_sniffer,
     wifi_access_point,
@@ -3805,6 +3843,7 @@ def test_Wifi_sdk_connection_BLE_AI_80ms_C780236(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780237')
 def test_Wifi_sdk_connection_BLE_AI_120ms_C780237(
     wifi_sniffer,
     wifi_access_point,
@@ -3893,6 +3932,7 @@ def test_Wifi_sdk_connection_BLE_AI_120ms_C780237(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780238')
 def test_Wifi_sdk_Data_UDP_BLE_AI_50ms_C780238(
     wifi_sniffer,
     wifi_access_point,
@@ -3983,6 +4023,7 @@ def test_Wifi_sdk_Data_UDP_BLE_AI_50ms_C780238(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780239')
 def test_Wifi_sdk_Data_UDP_BLE_AI_80ms_C780239(
     wifi_sniffer,
     wifi_access_point,
@@ -4073,6 +4114,7 @@ def test_Wifi_sdk_Data_UDP_BLE_AI_80ms_C780239(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780240')
 def test_Wifi_sdk_Data_UDP_BLE_AI_120ms_C780240(
     wifi_sniffer,
     wifi_access_point,
@@ -4163,6 +4205,7 @@ def test_Wifi_sdk_Data_UDP_BLE_AI_120ms_C780240(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780241')
 def test_Wifi_sdk_Data_TCP_BLE_AI_50ms_C780241(
     wifi_sniffer,
     wifi_access_point,
@@ -4253,6 +4296,7 @@ def test_Wifi_sdk_Data_TCP_BLE_AI_50ms_C780241(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780242')
 def test_Wifi_sdk_Data_TCP_BLE_AI_80ms_C780242(
     wifi_sniffer,
     wifi_access_point,
@@ -4343,6 +4387,7 @@ def test_Wifi_sdk_Data_TCP_BLE_AI_80ms_C780242(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780243')
 def test_Wifi_sdk_Data_TCP_BLE_AI_120ms_C780243(
     wifi_sniffer,
     wifi_access_point,
@@ -4430,6 +4475,7 @@ def test_Wifi_sdk_Data_TCP_BLE_AI_120ms_C780243(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780244')
 def test_Wifi_sdk_wifi_http_download_BLE_AI_50ms_C780244(
     wifi_sniffer,
     wifi_access_point,
@@ -4525,6 +4571,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_50ms_C780244(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780245')
 def test_Wifi_sdk_wifi_http_download_BLE_AI_80ms_C780245(
     wifi_sniffer,
     wifi_access_point,
@@ -4615,6 +4662,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_80ms_C780245(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780246')
 def test_Wifi_sdk_wifi_http_download_BLE_AI_120ms_C780246(
     wifi_sniffer,
     wifi_access_point,
@@ -4704,6 +4752,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_AI_120ms_C780246(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780247')
 def test_Wifi_sdk_wifi_http_download_BLE_CI_30ms_peripheral_C780247(
     wifi_sniffer,
     wifi_access_point,
@@ -4796,6 +4845,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_30ms_peripheral_C780247(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780248')
 def test_Wifi_sdk_wifi_http_download_BLE_CI_80ms_peripheral_C780248(
     wifi_sniffer,
     wifi_access_point,
@@ -4889,6 +4939,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_80ms_peripheral_C780248(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780249')
 def test_Wifi_sdk_wifi_http_download_BLE_CI_150ms_peripheral_C780249(
     wifi_sniffer,
     wifi_access_point,
@@ -4982,6 +5033,7 @@ def test_Wifi_sdk_wifi_http_download_BLE_CI_150ms_peripheral_C780249(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780250')
 def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_30ms_peripheral_C780250(
     wifi_sniffer,
     wifi_access_point,
@@ -5077,6 +5129,7 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_30ms_peripheral_C780250(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780251')
 def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_80ms_peripheral_C780251(
     wifi_sniffer,
     wifi_access_point,
@@ -5171,6 +5224,7 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_80ms_peripheral_C780251(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780252')
 def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_150ms_peripheral_C780252(
     wifi_sniffer,
     wifi_access_point,
@@ -5268,6 +5322,7 @@ def test_Wifi_sdk_wifi_time_for_http_download_BLE_CI_150ms_peripheral_C780252(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780253')
 def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_30ms_peripheral_C780253(
     wifi_sniffer,
     wifi_access_point,
@@ -5364,6 +5419,7 @@ def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_30ms_peripheral_C780253(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780254')
 def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_80ms_peripheral_C780254(
     wifi_sniffer,
     wifi_access_point,
@@ -5458,6 +5514,7 @@ def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_80ms_peripheral_C780254(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780255')
 def test_Wifi_sdk_wifi_time_for_https_download_BLE_CI_150ms_peripheral_C780255(
     wifi_sniffer,
     wifi_access_point,

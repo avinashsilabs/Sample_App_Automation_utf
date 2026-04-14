@@ -309,6 +309,7 @@ pytestmark = [
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217761')
 def test_wifi_sdk_add_operation_ecdh_256_mode_c217761(wifi_dut, sl_collections):
     """ verify addition operation with ecdh 256 mode"""
     try:
@@ -320,6 +321,7 @@ def test_wifi_sdk_add_operation_ecdh_256_mode_c217761(wifi_dut, sl_collections):
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217762')
 def test_wifi_sdk_sub_operation_ecdh_256_mode_c217762(wifi_dut, sl_collections):
     """ verify subtraction operation with ecdh 256 mode"""
     try:
@@ -331,6 +333,7 @@ def test_wifi_sdk_sub_operation_ecdh_256_mode_c217762(wifi_dut, sl_collections):
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217763')
 def test_wifi_sdk_multi_operation_ecdh_256_mode_c217763(wifi_dut, sl_collections):
     """ verify multiplication operation with ecdh 256 mode"""
     try:
@@ -342,6 +345,7 @@ def test_wifi_sdk_multi_operation_ecdh_256_mode_c217763(wifi_dut, sl_collections
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217764')
 def test_wifi_sdk_double_operation_ecdh_256_mode_c217764(wifi_dut, sl_collections):
     """ verify double operation with ecdh 256 mode"""
     try:
@@ -353,6 +357,7 @@ def test_wifi_sdk_double_operation_ecdh_256_mode_c217764(wifi_dut, sl_collection
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217765')
 def test_wifi_sdk_affinity_operation_ecdh_192_mode_c217765(wifi_dut, sl_collections):
     """ verify affinity operation with ecdh 192mode"""
     try:
@@ -364,6 +369,7 @@ def test_wifi_sdk_affinity_operation_ecdh_192_mode_c217765(wifi_dut, sl_collecti
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217766')
 def test_wifi_sdk_add_operation_ecdh_224_mode_c217766(wifi_dut, sl_collections):
     """ verify addition operation with ecdh 224 mode"""
     try:
@@ -375,6 +381,7 @@ def test_wifi_sdk_add_operation_ecdh_224_mode_c217766(wifi_dut, sl_collections):
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217767')
 def test_wifi_sdk_add_operation_ecdh_192_mode_c217767(wifi_dut, sl_collections):
     """ verify addition operation with ecdh 192 mode"""
     try:

@@ -90,6 +90,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.parametrize("traffic, qos, filter_name",
                          [('0x00', 0, "qos_best_effort_tx"), ('0x20', 1, "qos_back_ground_tx"),
                           ('0x80', 4, "qos_video_tx"), ('0xc8', 6, "qos_voice_tx")])
+@pytest.mark.test_src_map_id('C19752')
 def test_wifi_zephyr_tcp_data_tx_with_BE_BK_VI_VO_c19752(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                          wifi_client,
                                                          protocol, request, zephyr_wifi_collections, sniffer_filter,
@@ -161,6 +162,7 @@ def test_wifi_zephyr_tcp_data_tx_with_BE_BK_VI_VO_c19752(wifi_sniffer, net_perf_
 @pytest.mark.parametrize("traffic, qos, filter_name",
                          [('0x00', 0, "qos_best_effort_tx"), ('0x20', 1, "qos_back_ground_tx"),
                           ('0x80', 4, "qos_video_tx"), ('0xc8', 6, "qos_voice_tx")])
+@pytest.mark.test_src_map_id('C19753')
 def test_wifi_zephyr_udp_data_tx_with_BE_BK_VI_VO_c19753(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                          wifi_client,
                                                          protocol, request, zephyr_wifi_collections, sniffer_filter,
@@ -226,6 +228,7 @@ def test_wifi_zephyr_udp_data_tx_with_BE_BK_VI_VO_c19753(wifi_sniffer, net_perf_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C19754')
 def test_wifi_zephyr_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                          request,
                                                                          wifi_client, zephyr_wifi_collections,
@@ -299,6 +302,7 @@ def test_wifi_zephyr_ping_from_ap_to_module_ip_with_four_traffics_c19754(wifi_sn
 @pytest.mark.parametrize("traffic, qos, filter_name",
                          [('0x00', 0, "qos_best_effort_rx"), ('0x20', 1, "qos_back_ground_rx"),
                           ('0x80', 4, "qos_video_rx"), ('0xc8', 6, "qos_voice_rx")])
+@pytest.mark.test_src_map_id('C22116')
 def test_wifi_zephyr_udp_data_rx_with_BE_BK_VI_VO_c22116(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                          wifi_client,
                                                          protocol, request, zephyr_wifi_collections, sniffer_filter,
@@ -367,6 +371,7 @@ def test_wifi_zephyr_udp_data_rx_with_BE_BK_VI_VO_c22116(wifi_sniffer, net_perf_
 @pytest.mark.parametrize("traffic, qos, filter_name",
                          [('0x00', 0, "qos_best_effort_rx"), ('0x20', 1, "qos_back_ground_rx"),
                           ('0x80', 4, "qos_video_rx"), ('0xc8', 6, "qos_voice_rx")])
+@pytest.mark.test_src_map_id('C22115')
 def test_wifi_zephyr_tcp_data_rx_with_BE_BK_VI_VO_c22115(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                          wifi_client,
                                                          protocol, request, zephyr_wifi_collections, sniffer_filter,

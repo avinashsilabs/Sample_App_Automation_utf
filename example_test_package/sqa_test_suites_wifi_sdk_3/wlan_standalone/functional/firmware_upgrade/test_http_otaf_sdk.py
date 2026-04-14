@@ -257,6 +257,7 @@ class WifiJoin(ThreadBase):
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C19780')
 def test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_c19780(http_server, wifi_sniffer, wifi_access_point,
                                                                        wifi_dut, request, wifi_client, sl_collections,
                                                                        sniffer_filter):
@@ -303,6 +304,7 @@ def test_sdk_http_fw_upgrade_in_STA_alone_mode_and_measure_time_c19780(http_serv
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19782')
 def test_sdk_http_fw_upgrade_in_sta_ble_mode_and_measure_time_c19782(http_server, wifi_sniffer, wifi_access_point,
                                                                      wifi_dut, request, wifi_client, sl_collections,
                                                                      sniffer_filter):
@@ -346,6 +348,7 @@ def test_sdk_http_fw_upgrade_in_sta_ble_mode_and_measure_time_c19782(http_server
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19800')
 def test_sdk_http_fw_upgrade_failure_with_empty_rps_c19800(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                            request, wifi_client, sl_collections, sniffer_filter):
     capture_filename = request.node.name
@@ -390,6 +393,7 @@ def test_sdk_http_fw_upgrade_failure_with_empty_rps_c19800(http_server, wifi_sni
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19799')
 def test_sdk_http_fw_upgrade_failure_without_enabling_http_c19799(http_server, wifi_sniffer, wifi_access_point,
                                                                   wifi_dut,
                                                                   request, wifi_client, sl_collections, sniffer_filter):
@@ -435,6 +439,7 @@ def test_sdk_http_fw_upgrade_failure_without_enabling_http_c19799(http_server, w
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19779')
 def test_sdk_fw_upgrade_failure_when_STA_is_not_connected_c19779(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                                  request, wifi_client, sl_collections, sniffer_filter):
     capture_filename = request.node.name
@@ -475,6 +480,7 @@ def test_sdk_fw_upgrade_failure_when_STA_is_not_connected_c19779(http_server, wi
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19797')
 def test_http_fw_upgrade_failure_with_junk_rps_c19797(http_server, wifi_sniffer, wifi_access_point, wifi_dut,
                                                       request, wifi_client, sl_collections, sniffer_filter):
     capture_filename = request.node.name
@@ -518,6 +524,7 @@ def test_http_fw_upgrade_failure_with_junk_rps_c19797(http_server, wifi_sniffer,
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19796')
 def test_sdk_http_fw_upgrade_failure_when_enabled_only_ble_c19796(http_server, wifi_sniffer, wifi_access_point,
                                                                   wifi_dut,
                                                                   request, wifi_client, sl_collections, sniffer_filter):
@@ -575,6 +582,7 @@ def test_sdk_http_fw_upgrade_failure_when_enabled_only_ble_c19796(http_server, w
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19784')
 def test_http_fw_upgrade_in_conc_mode_and_measure_time_c19784(http_server, wifi_sniffer, wifi_dut, wifi_access_point,
                                                               request, sl_collections, wifi_client, utf_constants,
                                                               sniffer_filter):
@@ -687,6 +695,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_c19784(http_server, wifi_
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19798')
 def test_sdk_http_fw_upgrade_using_c19798(http_server, wifi_sniffer, wifi_access_point,
                                           wifi_dut, request, wifi_client, sl_collections
                                           ):
@@ -733,6 +742,7 @@ def test_sdk_http_fw_upgrade_using_c19798(http_server, wifi_sniffer, wifi_access
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C498660')
 def test_sdk_http_fw_upgrade_using_c498660(http_server, wifi_sniffer, wifi_access_point,
                                            wifi_dut, request, wifi_client, sl_collections,
                                            utf_constants):
@@ -779,6 +789,7 @@ def test_sdk_http_fw_upgrade_using_c498660(http_server, wifi_sniffer, wifi_acces
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C652582')
 def test_sdk_http_fw_upgrade_using_extended_header_c652582(http_server, wifi_sniffer, wifi_access_point,
                                                            wifi_dut, request, wifi_client, sl_collections):
     ''' Verify HTTP OTAF with extended header enable using Apache server  '''

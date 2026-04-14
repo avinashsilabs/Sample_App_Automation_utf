@@ -157,6 +157,7 @@ def ble_connection(ble_dut, remote_wiseconnect3):
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19932')
 def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -248,6 +249,7 @@ def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19933')
 def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -342,6 +344,7 @@ def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19934')
 def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -436,6 +439,7 @@ def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19935')
 def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -531,6 +535,7 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19936')
 def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -622,6 +627,7 @@ def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19937')
 def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -718,6 +724,7 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, remote_wiseconnect3, sl
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19938')
 def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -813,6 +820,7 @@ def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19939')
 def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -908,6 +916,7 @@ def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19940')
 def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -1000,6 +1009,7 @@ def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, remote_wiseconnect3, sl_col
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19941')
 def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -1100,6 +1110,7 @@ def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19942')
 def test_ble_phy_change_tx_2_rx_lr_500_C19942(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -1200,6 +1211,7 @@ def test_ble_phy_change_tx_2_rx_lr_500_C19942(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19943')
 def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -1296,6 +1308,7 @@ def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19944')
 def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -1392,6 +1405,7 @@ def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, remote_wiseconnect3, sl_c
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19945')
 def test_ble_phy_change_tx_rx_lr_500_C19945(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     try:
         ble_sniffer.interfaces.sniffer.init_sniffer()
@@ -1490,6 +1504,7 @@ def test_ble_phy_change_tx_rx_lr_500_C19945(ble_dut, remote_wiseconnect3, sl_col
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C537617')
 def test_ble_phy_change_tx_rx_lr_500_C537617(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     """ Verify BLE functionality by configuring PHY Rates(Tx=LR Rx=LR with LR=500) in between modules."""
     try:
@@ -1584,6 +1599,7 @@ def test_ble_phy_change_tx_rx_lr_500_C537617(ble_dut, remote_wiseconnect3, sl_co
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C537618')
 def test_ble_phy_change_tx_rx_lr_125_C537618(ble_dut, remote_wiseconnect3, sl_collections, ble_sniffer):
     """ Verify BLE functionality by configuring PHY Rates(Tx=LR Rx=LR with LR=125) in b/w modules."""
     try:

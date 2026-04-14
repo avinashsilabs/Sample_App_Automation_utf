@@ -63,6 +63,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20521')
 def test_bt_2ble_adv_after_ble_reconn_C20521(bt_dut, bt_client, ble_dut, ble_clients, rs_helper_ble):
     # BLE Advertising Should happen After Multiple Re-Connections
     try:
@@ -155,6 +156,7 @@ def test_bt_2ble_adv_after_ble_reconn_C20521(bt_dut, bt_client, ble_dut, ble_cli
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C111106')
 def test_bt_ble_adv_after_ble_reconn_C111106(bt_dut, bt_client, ble_dut, ble_clients, rs_helper_ble):
     # BLE Advertising Should happen After Multiple Re-Connections with 1 BLE Master and BT connection
     try:

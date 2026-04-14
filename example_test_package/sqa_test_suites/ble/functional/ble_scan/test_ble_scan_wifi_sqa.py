@@ -39,6 +39,7 @@ pytestmark = [
             }
         )
     ]
+@pytest.mark.test_src_map_id('TC5945638209')
 def test_ble_scan_testcase5(wifi_dut, ble_client):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -56,6 +57,7 @@ def test_ble_scan_testcase5(wifi_dut, ble_client):
     assert bt_client_address in str(scan_results),"device not found"
     time.sleep(30)
 
+@pytest.mark.test_src_map_id('TC8958300213')
 def test_ble_scan_multiple_times_testcase10(wifi_dut, ble_client):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -78,6 +80,7 @@ def test_ble_scan_multiple_times_testcase10(wifi_dut, ble_client):
         assert bt_client_address in str(scan_results), "device not found"
         time.sleep(30)
 
+@pytest.mark.test_src_map_id('TC5797004218')
 def test_ble_master_connection_testcase33(wifi_dut, ble_client, logger):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -98,6 +101,7 @@ def test_ble_master_connection_testcase33(wifi_dut, ble_client, logger):
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
 
+@pytest.mark.test_src_map_id('TC9077847222')
 def test_ble_connection_request_testcase35(wifi_dut, ble_client, bt_logs, logger):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -120,6 +124,7 @@ def test_ble_connection_request_testcase35(wifi_dut, ble_client, bt_logs, logger
     state_int = int(state) if state.isdigit() else -1
     assert state_int == BLEDeviceState.Connected, "DUT is unable to connect in master mode"
 
+@pytest.mark.test_src_map_id('TC5072389226')
 def test_ble_master_disconnect_testcase36(wifi_dut, ble_client, logger):
     # Start DUT
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -157,6 +162,7 @@ def test_ble_master_disconnect_testcase36(wifi_dut, ble_client, logger):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC3307009232')
 def test_power_save3_when_dut_Advertising(wifi_dut,ble_client,logger):
     # Set up DUT for BLE advertising
     logger.info("Initiate ble service in DUT")

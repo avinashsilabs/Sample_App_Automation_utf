@@ -379,6 +379,7 @@ pytestmark = [
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19548')
 def test_aws_connect_sub_publish_c19548(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger, iterations):
     topic_1 = "sdk/test/Python"
     try:
@@ -480,6 +481,7 @@ def test_aws_connect_sub_publish_c19548(firmware_loader, wifi_sniffer, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C4053')
 def test_aws_connect_after_wifi_reconnection_c4053(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
     topic_1 = "sdk/test/Python"
     try:
@@ -574,6 +576,7 @@ def test_aws_connect_after_wifi_reconnection_c4053(firmware_loader, wifi_sniffer
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C4062')
 def test_aws_server_not_respond_c4062(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
     topic_1 = "sdk/test/Python"
     try:
@@ -678,6 +681,7 @@ def test_aws_server_not_respond_c4062(firmware_loader, wifi_sniffer, wifi_access
 @pytest.mark.parametrize("test_run_time", [1800])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19552')
 def test_aws_connect_disconnect_sequence_c19552(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                 test_run_time):
     topic_1 = "sdk/test/Python"
@@ -751,6 +755,7 @@ def test_aws_connect_disconnect_sequence_c19552(firmware_loader, wifi_sniffer, w
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19553')
 def test_aws_publish_data_with_different_length_c19553(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
                                                        logger, aws_iot_client):
     topic_1 = "sdk/test/Python"
@@ -814,6 +819,7 @@ def test_aws_publish_data_with_different_length_c19553(firmware_loader, wifi_sni
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19554')
 def test_aws_receive_data_over_subscribed_topic_with_different_lengths_c19554(firmware_loader, wifi_sniffer,
                                                                               wifi_access_point, wifi_dut,
                                                                               aws_iot_client, logger):
@@ -925,6 +931,7 @@ def test_aws_receive_data_over_subscribed_topic_with_different_lengths_c19554(fi
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19558')
 def test_aws_connection_when_client_id_is_null_c19558(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut,
                                                       logger):
     try:
@@ -983,6 +990,7 @@ def test_aws_connection_when_client_id_is_null_c19558(firmware_loader, wifi_snif
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19546')
 def test_aws_tcp_shutdown_c19546(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, logger):
     topic_1 = "sdk/test/Python"
     try:
@@ -1083,6 +1091,7 @@ def test_aws_tcp_shutdown_c19546(firmware_loader, wifi_sniffer, wifi_access_poin
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19566')
 def test_aws_publish_message_in_thread1_and_receive_message_in_thread2_c19566(firmware_loader, wifi_sniffer,
                                                                               wifi_access_point,
                                                                               wifi_dut, aws_iot_client, logger):
@@ -1183,6 +1192,7 @@ def test_aws_publish_message_in_thread1_and_receive_message_in_thread2_c19566(fi
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19567')
 def test_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567(firmware_loader, wifi_dut, wifi_access_point,
                                                                         wifi_sniffer, logger, test_run_time):
     topic_1 = "sdk/test/Python"
@@ -1284,6 +1294,7 @@ def test_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567(firmware
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19561')
 def test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuously_c19561(firmware_loader, wifi_sniffer,
                                                                                          wifi_dut, aws_iot_client,
                                                                                          wifi_access_point, logger,
@@ -1410,6 +1421,7 @@ def test_aws_receive_functionality_while_receiving_100_mqtt_messages_continuousl
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19563')
 def test_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(firmware_loader, wifi_sniffer, wifi_access_point,
                                                                        wifi_dut,
                                                                        aws_iot_client, logger, total_bytes):
@@ -1553,6 +1565,7 @@ def test_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(firmware_
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19562')
 def test_aws_data_integrity_check_after_receiving_1mb_of_data_over_mqtt_c19562(firmware_loader, wifi_dut, wifi_sniffer,
                                                                                aws_iot_client,
                                                                                wifi_access_point, logger, publish_len,
@@ -1697,6 +1710,7 @@ def test_aws_data_integrity_check_after_receiving_1mb_of_data_over_mqtt_c19562(f
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED_LONGRUN
 @pytest.mark.NCP_9116_DEPLOYED_ACX_LONGRUN
+@pytest.mark.test_src_map_id('C19564')
 def test_aws_data_integrity_check_after_sending_1mb_of_data_over_mqtt_c19564(firmware_loader, wifi_sniffer,
                                                                              wifi_access_point, wifi_dut,
                                                                              aws_iot_client, logger, publish_len,
@@ -1839,6 +1853,7 @@ def test_aws_data_integrity_check_after_sending_1mb_of_data_over_mqtt_c19564(fir
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19549')
 def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, switch, wifi_sniffer, wifi_access_point,
                                                               wifi_dut, logger, iterations):
     # def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger, iterations):
@@ -2047,6 +2062,7 @@ def test_aws_check_rejoin_failure_functionality_of_dut_c19549(firmware_loader, s
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19555')
 def test_aws_tx_after_rejoin_qos0_C19555(firmware_loader, switch, wifi_sniffer, wifi_access_point, wifi_dut, logger):
     # def test_aws_tx_after_rejoin_qos0_c19555(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
     topic_1 = "sdk/test/Python"
@@ -2169,6 +2185,7 @@ def test_aws_tx_after_rejoin_qos0_C19555(firmware_loader, switch, wifi_sniffer, 
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19556')
 def test_aws_tx_after_rejoin_qos1_c19556(firmware_loader, switch, wifi_sniffer, wifi_access_point, wifi_dut, logger):
     # def test_aws_tx_after_rejoin_qos1_c19556(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, logger):
     topic_1 = "sdk/test/Python"
@@ -2289,6 +2306,7 @@ def test_aws_tx_after_rejoin_qos1_c19556(firmware_loader, switch, wifi_sniffer, 
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19559')
 def test_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware_loader, switch, wifi_sniffer, wifi_access_point,
                                                                wifi_dut, aws_iot_client, logger):
     # def test_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(firmware_loader, wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, logger):

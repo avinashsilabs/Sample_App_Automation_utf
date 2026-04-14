@@ -69,6 +69,7 @@ pytestmark = [
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19974')
 def test_bt_connectable_c19974(bt_dut, bt_client):
     try:
         bt_local_name = "rs911x_bt_spp"
@@ -149,6 +150,7 @@ def test_bt_connectable_c19974(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19975')
 def test_bt_non_connectable_c19975(bt_dut, bt_client):
     try:
         duration = 10000
@@ -219,6 +221,7 @@ def test_bt_non_connectable_c19975(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19976')
 def test_bt_connectable_non_connectable_c19976(bt_dut, bt_client):
     try:
         duration = 10000
@@ -328,6 +331,7 @@ def test_bt_connectable_non_connectable_c19976(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19977')
 def test_bt_connec_and_non_connectable_c19977(bt_dut, bt_client):
     try:
         duration = 10000
@@ -449,6 +453,7 @@ def test_bt_connec_and_non_connectable_c19977(bt_dut, bt_client):
 
 # # Written By Himaja
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19965')
 def test_pair_unpair_multiple_c19965(bt_dut, bt_client):
     try:
         bt_local_name = "rs911x_bt_spp"
@@ -524,6 +529,7 @@ def test_pair_unpair_multiple_c19965(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19966')
 def test_init_deinit_functionality_of_the_dut_c19966(bt_dut, bt_client):
     try:
         logger().info(f"running the test_Init_DeInit_functionality_of_the_DUT for 5 Iterations ")
@@ -569,6 +575,7 @@ def test_init_deinit_functionality_of_the_dut_c19966(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19967')
 def test_stop_discovery_functionality_c19967(bt_dut, bt_client):
     try:
         bt_local_name = "rs911x_bt_spp"
@@ -616,6 +623,7 @@ def test_stop_discovery_functionality_c19967(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19968')
 def test_discovery_functionality_c19968(bt_dut, bt_client):
     try:
         bt_local_name = "rs911x_bt_spp"
@@ -663,6 +671,7 @@ def test_discovery_functionality_c19968(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19970')
 def test_stop_discovery_after_discovery_functionality_c19970(bt_dut, bt_client):
     try:
         bt_local_name = "rs911x_bt_spp"
@@ -721,6 +730,7 @@ def test_stop_discovery_after_discovery_functionality_c19970(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19963')
 def test_bt_spp_dut_as_slave_wrong_pin_c19963(wifi_dut, bt_client):
     try:
         with TimeMeasurer() as t:
@@ -763,6 +773,7 @@ def test_bt_spp_dut_as_slave_wrong_pin_c19963(wifi_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19969')
 def test_limited_discovery_functionality_c19969(bt_dut, bt_client):
     try:
         bt_local_name = "rs911x_bt_spp"
@@ -819,6 +830,7 @@ def test_limited_discovery_functionality_c19969(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19972')
 def test_get_discoverable_status_after_limited_discovery_c19972(bt_dut, bt_client):
     try:
         bt_local_name = "rs911x_bt_spp"
@@ -875,6 +887,7 @@ def test_get_discoverable_status_after_limited_discovery_c19972(bt_dut, bt_clien
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19973')
 def test_get_discoverable_status_after_stop_discovery_functionality_c19973(bt_dut, bt_client):
     try:
         bt_local_name = "rs911x_bt_spp"
@@ -923,6 +936,7 @@ def test_get_discoverable_status_after_stop_discovery_functionality_c19973(bt_du
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19971')
 def test_get_discoverable_status_after_discovery_c19971(bt_dut, bt_client):
     try:
         bt_local_name = "rs911x_bt_spp"
@@ -967,6 +981,7 @@ def test_get_discoverable_status_after_discovery_c19971(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19961')
 def test_connectivity_of_dut_scanned_remote_bt_with_correct_pin_c19961(wifi_dut, bt_client):
     try:
         with TimeMeasurer() as t:
@@ -1019,6 +1034,7 @@ def test_connectivity_of_dut_scanned_remote_bt_with_correct_pin_c19961(wifi_dut,
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19978')
 def test_remote_name_request_functionality_of_dut_on_sd_when_bt_is_on_c19978(bt_dut, bt_client):
     try:
         logger().info(f"Configuring DUT as SPP Master")
@@ -1074,6 +1090,7 @@ def test_remote_name_request_functionality_of_dut_on_sd_when_bt_is_on_c19978(bt_
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19987')
 def test_get_services_functionality_of_dut_c19987(bt_dut, bt_client):
     try:
         logger().info(f"Configuring DUT as SPP Master")
@@ -1137,6 +1154,7 @@ def test_get_services_functionality_of_dut_c19987(bt_dut, bt_client):
         clean_up_method(bt_dut)
 
 
+@pytest.mark.test_src_map_id('C19988')
 def test_bt_search_service_async_on_dut_c19988(bt_dut, bt_client):
     try:
         logger().info(f"Configuring DUT as SPP Master")
@@ -1222,6 +1240,7 @@ def test_bt_search_service_async_on_dut_c19988(bt_dut, bt_client):
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19962')
 def test_dut_not_respondingto_pincode_request_C19962(wifi_dut, bt_client):
     try:
         with TimeMeasurer() as t:
@@ -1296,6 +1315,7 @@ def test_dut_not_respondingto_pincode_request_C19962(wifi_dut, bt_client):
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19986')
 def test_bt_cancel_inquiry_C19986(bt_dut, bt_client):
     try:
         with TimeMeasurer() as t:
@@ -1343,6 +1363,7 @@ def test_bt_cancel_inquiry_C19986(bt_dut, bt_client):
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19964')
 def test_cancel_pairing_request_C19964(bt_dut, bt_client):
     try:
         with TimeMeasurer() as t:
@@ -1404,6 +1425,7 @@ def test_cancel_pairing_request_C19964(bt_dut, bt_client):
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19989')
 def test_reinitiate_pairing_request_C19989(bt_dut, bt_client):
     try:
         with TimeMeasurer() as t:
@@ -1474,6 +1496,7 @@ def test_reinitiate_pairing_request_C19989(bt_dut, bt_client):
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "bt_disconnect"])
+@pytest.mark.test_src_map_id('C19980')
 def test_max_length_remote_device_name_C19980(bt_dut, bt_client):
     try:
         logger().info(f"Configuring DUT as SPP Master")

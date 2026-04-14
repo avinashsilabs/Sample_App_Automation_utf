@@ -48,6 +48,7 @@ def logger():
 @pytest.mark.config("wifi_access_point", wifi={"channel": 3, "security": 'OPEN'})
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19297')
 def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info(f"********Query DNS server IP address when DNS IP address is obtained through dhcp hs********")
     validation = True
@@ -140,6 +141,7 @@ def test_dns_server_ip_with_dhcp_hs_c19297(wifi_sniffer, wifi_dut, wifi_access_p
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19298')
 def test_dns_server_ip_when_set_statically_c19298(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info(f"****Query DNS server IP address when DNS server IP addresses are set statically****")
     validation = True
@@ -226,6 +228,7 @@ def test_dns_server_ip_when_set_statically_c19298(wifi_sniffer, wifi_dut, wifi_a
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19299')
 def test_dns_server_when_dns_feature_not_enabled_c19299(wifi_sniffer, wifi_dut, wifi_access_point):
     logger().info(f"****Query DNS Server IP address when DNS feature is not enabled in oper_mode****")
 

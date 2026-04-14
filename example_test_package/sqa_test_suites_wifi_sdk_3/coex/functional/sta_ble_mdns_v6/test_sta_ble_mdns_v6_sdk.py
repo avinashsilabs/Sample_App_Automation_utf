@@ -1295,6 +1295,7 @@ wan_gateway = "2001:db8:abcd:0012::1"
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768342')
 def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C768342(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter):
@@ -1416,6 +1417,7 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_ps_C76834
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768351')
 def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_C768351(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter):
@@ -1539,6 +1541,7 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_scan_C768351(
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768344')
 def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_ble_adv_ps_C768344(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter, ):
@@ -1661,6 +1664,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768353')
 def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_ble_adv_C768353(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter, ):
@@ -1785,6 +1789,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateless_disconn_loop_
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768343')
 def test_wifi_sdk_mdns_init_reg_service_deinit_stateful_loop_ble_central_rx_ps_C768343(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter, ):
@@ -1921,6 +1926,7 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateful_loop_ble_central_rx_ps_C
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768352')
 def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_central_rx_C768352(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter, ):
@@ -2054,6 +2060,7 @@ def test_wifi_sdk_mdns_init_reg_service_deinit_stateless_loop_ble_central_rx_C76
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768347')
 def test_wifi_sdk_mdns_ping_hostname_ble_scan_ps_C768347(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter):
@@ -2172,6 +2179,7 @@ def test_wifi_sdk_mdns_ping_hostname_ble_scan_ps_C768347(
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768355')
 def test_wifi_sdk_mdns_ping_hostname_ble_scan_C768355(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter):
@@ -2284,6 +2292,7 @@ def test_wifi_sdk_mdns_ping_hostname_ble_scan_C768355(
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768348')
 def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ble_connection_30ms_ps_C768348(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter):
@@ -2398,6 +2407,7 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ble_connection_30ms_ps
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768356')
 def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ble_connection_30ms_C768356(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter):
@@ -2511,6 +2521,7 @@ def test_wifi_sdk_verify_mdns_functionality_restart_avahi_ble_connection_30ms_C7
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768345')
 def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_ble_tx_240_ps_C768345(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter, ):
@@ -2685,6 +2696,7 @@ def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_b
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated", "unassociated"]
     # Disable power save and disassociate
 )
+@pytest.mark.test_src_map_id('C768354')
 def test_wifi_sdk_wlan_conn_mdns_init_reg_service_deinit_stateful_disconn_loop_ble_tx_240_C768354(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, sl_collections, request, utf_constants,
         service_discovery, wifi_client, sniffer_filter, ):

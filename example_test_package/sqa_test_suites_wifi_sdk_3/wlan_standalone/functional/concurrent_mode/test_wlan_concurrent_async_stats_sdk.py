@@ -367,6 +367,7 @@ class ConcurrentThread(ThreadBase):
         "custom_features": Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
     },
 )
+@pytest.mark.test_src_map_id('C782494')
 def test_wifi_sdk_verify_state_code_in_STA_and_STAUT_c782494(wifi_access_point, wifi_dut, wifi_clients, utf_constants, sl_collections, request, wifi_sniffer):
     """ To Verify State Code in  STA and STAUT mode"""
     try:
@@ -428,6 +429,7 @@ def test_wifi_sdk_verify_state_code_in_STA_and_STAUT_c782494(wifi_access_point, 
                }
          }
 )
+@pytest.mark.test_src_map_id('C782495')
 def test_wifi_sdk_verify_state_code_in_APUT_c782495(wifi_access_point, wifi_dut, wifi_clients, utf_constants, sl_collections, request, wifi_sniffer):
     """ To Verify State Code in APUT mode"""
     try:
@@ -487,6 +489,7 @@ def test_wifi_sdk_verify_state_code_in_APUT_c782495(wifi_access_point, wifi_dut,
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', "passphrase": '12345678'})
+@pytest.mark.test_src_map_id('C782498')
 def test_wifi_sdk_APUT_STAUT_Http_sever_enable_c782498(sl_collections, wifi_dut, wifi_client, channel, wifi_access_point, wiseconnect_web, utf_constants, request, wifi_sniffer):
     """
     Check STAUT Connectivity to 3rd party AP with Credentials from HTTP Server in concurrent Mode after state code 0x80.
@@ -547,6 +550,7 @@ def test_wifi_sdk_APUT_STAUT_Http_sever_enable_c782498(sl_collections, wifi_dut,
 )
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "channel": 1, "ssid": 'SAKSHI-ASUS', "passphrase": 'Automation@123'})
+@pytest.mark.test_src_map_id('C782501')
 def test_wifi_sdk_APUT_STAUT_data_transfer_C782501(wifi_access_point, wifi_dut, wifi_clients, utf_constants, sl_collections, remote_socket, request, wifi_sniffer):
     """ To Verify the data transfer when device is in STAUT mode after State Code 0x80 """
     try:
@@ -610,6 +614,7 @@ def test_wifi_sdk_APUT_STAUT_data_transfer_C782501(wifi_access_point, wifi_dut, 
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', "passphrase": '12345678'})
+@pytest.mark.test_src_map_id('C782502')
 def test_wifi_sdk_STAUT_data_transfer_stop_Http_sever_c782502(sl_collections, wifi_dut, wifi_client, channel,
                                                        wifi_access_point, wiseconnect_web, utf_constants, remote_socket, request, wifi_sniffer):
     """
@@ -693,6 +698,7 @@ def test_wifi_sdk_STAUT_data_transfer_stop_Http_sever_c782502(sl_collections, wi
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', "passphrase": '12345678'})
+@pytest.mark.test_src_map_id('C782503')
 def test_wifi_sdk_STAUT_data_transfer_stop_soft_ap_c782503(sl_collections, wifi_dut, wifi_client, channel,
                                                        wifi_access_point, wiseconnect_web, utf_constants, remote_socket, request, wifi_sniffer):
     """
@@ -775,6 +781,7 @@ def test_wifi_sdk_STAUT_data_transfer_stop_soft_ap_c782503(sl_collections, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"security": 'WPA2', "channel": 1, "ssid": 'ThirdPartyAP', "passphrase": '12345678'})
+@pytest.mark.test_src_map_id('C782504')
 def test_wifi_sdk_STA_APUT_Http_sever_enable_c782504(sl_collections, wifi_dut, wifi_client, channel, wifi_access_point, wiseconnect_web, utf_constants, request, wifi_sniffer):
     """
     Check STA first and STAUT  Connectivity to 3rd party AP with Credentials from HTTP Server in concurrent Mode after state code 0x80.

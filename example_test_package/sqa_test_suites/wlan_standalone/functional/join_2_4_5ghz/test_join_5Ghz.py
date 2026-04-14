@@ -63,6 +63,7 @@ ping_count = 10
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 36})
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19388')
 def test_join_5ghz_mode_C19388(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -155,6 +156,7 @@ def test_join_5ghz_mode_C19388(wifi_dut, wifi_access_point, wifi_sniffer):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "channel": 52})
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19389')
 def test_join_5ghz_dfs_channel_C19389(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -246,6 +248,7 @@ def test_join_5ghz_dfs_channel_C19389(wifi_dut, wifi_access_point, wifi_sniffer)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19390')
 def test_join_5ghz_dfs_channels_100_and_140_C19390(wifi_dut, wifi_access_point, wifi_sniffer):
     with TimeMeasurer() as t:
         logger().info("Using the channels 52-64 instead of 100-140 as limitation from AP")

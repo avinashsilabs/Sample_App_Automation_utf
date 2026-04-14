@@ -718,6 +718,7 @@ class BleThread(ThreadBase):
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C540347')
 def test_sta_ble_sdk_ble_conn_wlan_conn_dhcp_C540347(
         wifi_sniffer,
         wifi_access_point, wifi_dut, ble_client,
@@ -838,6 +839,7 @@ def test_sta_ble_sdk_ble_conn_wlan_conn_dhcp_C540347(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C538009')
 def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(
         wifi_sniffer,
         wifi_access_point,
@@ -994,6 +996,7 @@ def test_sta_ble_sdk_wlan_scan_ble_slave_tx_dle_C538009(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C535084')
 def test_sta_ble_sdk_ble_whitelist_UDP_TX_C535084(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                   request, utf_constants, sl_collections, wifi_client,
                                                   sniffer_filter, net_perf_client, protocol):
@@ -1124,6 +1127,7 @@ def test_sta_ble_sdk_ble_whitelist_UDP_TX_C535084(wifi_sniffer, wifi_access_poin
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133549')
 def test_sta_ble_sdk_tcp_tx_ble_slave_C133549(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                               request, utf_constants, sl_collections, wifi_client,
                                               sniffer_filter, net_perf_client, protocol):
@@ -1276,6 +1280,7 @@ def test_sta_ble_sdk_tcp_tx_ble_slave_C133549(wifi_sniffer, wifi_access_point, w
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133437')
 def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                         ble_client,
                                                                         request, utf_constants, sl_collections,
@@ -1426,6 +1431,7 @@ def test_sta_ble_sdk_set_att_value_diff_length_tcp_tx_ble_slave_C133437(wifi_sni
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C537979')
 def test_sta_ble_sdk_http_dle_ble_periodic_tx_C537979(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                       request, utf_constants, sl_collections, wifi_client,
                                                       sniffer_filter, http_server, index_path):
@@ -1576,6 +1582,7 @@ def test_sta_ble_sdk_http_dle_ble_periodic_tx_C537979(wifi_sniffer, wifi_access_
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C537980')
 def test_sta_ble_sdk_http_dl_ble_periodic_tx_dle_C537980(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          request, utf_constants, sl_collections, wifi_client,
                                                          sniffer_filter, http_server, index_path):
@@ -1723,6 +1730,7 @@ def test_sta_ble_sdk_http_dl_ble_periodic_tx_dle_C537980(wifi_sniffer, wifi_acce
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C476959')
 def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, http_client,
                                                       wifi_access_point, wifi_sniffer,
                                                       sl_collections, sniffer_filter,
@@ -1887,6 +1895,7 @@ def test_coex_sdk_httpget_url_2048_ble_smp_tx_C476959(http_server, wifi_dut, htt
         "clear_certs"
     ],
 )
+@pytest.mark.test_src_map_id('C476960')
 def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_client,
                                                     wifi_access_point, wifi_sniffer,
                                                     sl_collections, sniffer_filter,
@@ -2041,6 +2050,7 @@ def test_coex_sdk_https_get_url_2048_ble_RX_C476960(http_server, wifi_dut, http_
         "clear_certs"
     ],
 )
+@pytest.mark.test_src_map_id('C476963')
 def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_client,
                                                     wifi_access_point, wifi_sniffer,
                                                     sl_collections, sniffer_filter,
@@ -2173,6 +2183,7 @@ def test_coex_sdk_httpsget_url_1536_ble_smp_C476963(http_server, wifi_dut, http_
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C476964')
 def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, http_client,
                                                       wifi_access_point, wifi_sniffer,
                                                       sl_collections, sniffer_filter,
@@ -2330,6 +2341,7 @@ def test_coex_sdk_httpget_url_1536_ble_smp_tx_C476964(http_server, wifi_dut, htt
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C538010')
 def test_sta_ble_sdk_wlan_scan_ble_master_rx_C538010(
         wifi_sniffer,
         wifi_access_point, wifi_dut, ble_client,

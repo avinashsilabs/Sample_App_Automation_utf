@@ -247,6 +247,7 @@ pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
 
     }
 )
+@pytest.mark.test_src_map_id('C402887')
 def test_wlan_co_ex_rvr_tcp_tx_C402887(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                        net_perf_client, protocol, utf_constants, request, sl_collections,
                                        rf_attenuator):
@@ -287,6 +288,7 @@ def test_wlan_co_ex_rvr_tcp_tx_C402887(firmware_loader, wifi_sniffer, wifi_acces
 
     }
 )
+@pytest.mark.test_src_map_id('C402888')
 def test_wlan_co_ex_rvr_tcp_rx_C402888(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                        net_perf_client, protocol, utf_constants, request, sl_collections,
                                        rf_attenuator):
@@ -327,6 +329,7 @@ def test_wlan_co_ex_rvr_tcp_rx_C402888(firmware_loader, wifi_sniffer, wifi_acces
 
     }
 )
+@pytest.mark.test_src_map_id('C402889')
 def test_wlan_co_ex_rvr_udp_tx_C402889(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                        net_perf_client, protocol, utf_constants, request, sl_collections,
                                        rf_attenuator):
@@ -367,6 +370,7 @@ def test_wlan_co_ex_rvr_udp_tx_C402889(firmware_loader, wifi_sniffer, wifi_acces
 
     }
 )
+@pytest.mark.test_src_map_id('C402890')
 def test_wlan_co_ex_rvr_udp_rx_C402890(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                        net_perf_client, protocol, utf_constants, request, sl_collections, rf_attenuator):
     ping_count = utf_constants.get("ping_count")

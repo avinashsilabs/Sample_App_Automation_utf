@@ -1350,6 +1350,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_create_twt_within_wake_interval_man
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113754')
 def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_after_rejoin_c113754(firmware_loader, wifi_dut, wifi_access_point, sl_collections,
                                                                             wifi_sniffer, sniffer_filter, switch,
                                                                             utf_constants):
@@ -1381,6 +1382,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_setup_twt_after_rejoin_c113754(firm
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113761')
 def test_wifi_sdk_verify_twt_when_device_idle_for_long_hours_c113761(firmware_loader, wifi_dut, wifi_access_point,
                                                                      sl_collections, wifi_sniffer,
                                                                      sniffer_filter, utf_constants):
@@ -1411,6 +1413,7 @@ def test_wifi_sdk_verify_twt_when_device_idle_for_long_hours_c113761(firmware_lo
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "disable_twt"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113760')
 def test_wifi_sdk_verify_twt_tcp_data_transfer_for_long_hours_c113760(firmware_loader, wifi_dut, wifi_access_point, sl_collections,
                                                                       net_perf_client, wifi_sniffer, wifi_client,
                                                                       sniffer_filter, utf_constants):
@@ -1558,6 +1561,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_teardown_when_first_session_is_acti
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C540488')
 def test_wifi_sdk_verify_whether_dut_able_to_send_error_when_different_flow_id_is_provided_c540488(firmware_loader, wifi_dut,
                                                                                                    wifi_access_point,
                                                                                                    sl_collections,
@@ -1619,6 +1623,7 @@ def test_wifi_sdk_verify_whether_dut_able_to_send_error_when_disable_twt_without
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C586161')
 def test_wifi_sdk_verify_tcp_keep_alive_functionality_twt_enabled_with_LI_900ms_c586161(firmware_loader, wifi_dut, wifi_access_point,
                                                                                                  sl_collections, wifi_sniffer,
                                                                                                  sniffer_filter, utf_constants,

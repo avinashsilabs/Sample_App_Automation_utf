@@ -269,6 +269,7 @@ class WLANDisconnectionThread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19302')
 def test_wifi_sdk_when_both_pri_sec_ips_are_statically_c19302(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                               request, utf_constants, sniffer_filter):
     """Obtain the IP address of the specific domain name when both
@@ -315,6 +316,7 @@ def test_wifi_sdk_when_both_pri_sec_ips_are_statically_c19302(wifi_sniffer, wifi
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19303')
 def test_wifi_sdk_when_only_primary_ip_statically_c19303(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                          request, utf_constants, sniffer_filter):
     """Obtain the IP address of the specific domain name
@@ -361,6 +363,7 @@ def test_wifi_sdk_when_only_primary_ip_statically_c19303(wifi_sniffer, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19304')
 def test_wifi_sdk_when_only_secondary_ip_statically_c19304(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                            request, utf_constants, sniffer_filter):
     """Obtain the IP address of the specific domain name
@@ -407,6 +410,7 @@ def test_wifi_sdk_when_only_secondary_ip_statically_c19304(wifi_sniffer, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19305')
 def test_wifi_sdk_when_both_pri_sec_set_to_0_statically_c19305(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                sl_collections, request, utf_constants, sniffer_filter):
     """Obtain the IP address of the specific domain name
@@ -450,6 +454,7 @@ def test_wifi_sdk_when_both_pri_sec_set_to_0_statically_c19305(wifi_sniffer, wif
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19306')
 def test_wifi_sdk_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                               request, utf_constants, sniffer_filter):
 
@@ -493,6 +498,7 @@ def test_wifi_sdk_when_both_pri_sec_ip_with_wrong_dns_server_ips_c19306(wifi_sni
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19307')
 def test_wifi_sdk_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                               request, utf_constants, sniffer_filter):
     """Obtain the IP address of the specific domain name when both
@@ -576,6 +582,7 @@ def test_wifi_sdk_when_both_pri_sec_dut_static_ip_with_wrong_gateway_c19307(wifi
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19308')
 def test_wifi_sdk_when_pri_sec_with_same_dns_server_ips_c19308(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                sl_collections, request, utf_constants, sniffer_filter):
     """Obtain the IP address of the specific domain name when both
@@ -620,6 +627,7 @@ def test_wifi_sdk_when_pri_sec_with_same_dns_server_ips_c19308(wifi_sniffer, wif
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19309')
 def test_wifi_sdk_when_pri_sec_set_twice_with_same_dns_server_ips_c19309(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                          sl_collections, request, utf_constants,
                                                                          sniffer_filter):
@@ -665,6 +673,7 @@ def test_wifi_sdk_when_pri_sec_set_twice_with_same_dns_server_ips_c19309(wifi_sn
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19310')
 def test_wifi_sdk_when_both_pri_sec_twice_diff_dns_server_ips_c19310(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                               request, utf_constants, sniffer_filter):
     """Obtain the IP address of the specific domain name when
@@ -712,6 +721,7 @@ def test_wifi_sdk_when_both_pri_sec_twice_diff_dns_server_ips_c19310(wifi_sniffe
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19300')
 def test_wifi_sdk_when_only_pri_dns_server_ip_assign_through_dhcp_c19300(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                               request, utf_constants, sniffer_filter):
     """Obtain the IP address of the specific domain name
@@ -758,6 +768,7 @@ def test_wifi_sdk_when_only_pri_dns_server_ip_assign_through_dhcp_c19300(wifi_sn
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19311')
 def test_wifi_sdk_when_two_dns_server_ips_assign_through_dhcp_c19301_c19311(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                               request, utf_constants, sniffer_filter):
     """DNS client functionality when 2 DNS server Ips are got through DHCP"""
@@ -803,6 +814,7 @@ def test_wifi_sdk_when_two_dns_server_ips_assign_through_dhcp_c19301_c19311(wifi
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551125')
 def test_wifi_sdk_dns_functionality_for_30_minutes_c551125(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                               request, utf_constants, sniffer_filter):
     """Verify DNS functionality for 30 minutes"""
@@ -847,6 +859,7 @@ def test_wifi_sdk_dns_functionality_for_30_minutes_c551125(wifi_sniffer, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C553434')
 def test_wifi_sdk_dns_functionality_for_24_hours_c553434(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                               request, utf_constants, sniffer_filter):
     """Verify DNS functionality for 24 hours"""
@@ -891,6 +904,7 @@ def test_wifi_sdk_dns_functionality_for_24_hours_c553434(wifi_sniffer, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C553435')
 def test_wifi_sdk_verify_dns_and_wlan_disconnection_c553435(wifi_sniffer, wifi_access_point, wifi_dut, sl_collections,
                                                               request, utf_constants, sniffer_filter):
     """Verify DNS functionality in one thread and WLAN disconnection in another."""
@@ -969,6 +983,7 @@ def test_wifi_sdk_verify_dns_and_wlan_disconnection_c553435(wifi_sniffer, wifi_a
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C551127')
 def test_wifi_sdk_ap_no_internet_for_30mins_recon_check_behavior_c551127(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                           sl_collections,
                                                                           request, utf_constants, sniffer_filter):

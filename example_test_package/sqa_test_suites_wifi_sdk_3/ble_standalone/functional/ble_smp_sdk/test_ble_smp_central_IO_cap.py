@@ -328,6 +328,7 @@ pytestmark = [
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664756')
 def test_ble_JustWorks_Pairing_IOCap_Both_Initiator_Responder_DisplayOnly_C664756(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -356,6 +357,7 @@ def test_ble_JustWorks_Pairing_IOCap_Both_Initiator_Responder_DisplayOnly_C66475
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664761')
 def test_ble_Just_Works_Pairing_IOCap_Initiator_DisplayOnly_Responder_Display_Yes_or_No_C664761(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -388,6 +390,7 @@ def test_ble_Just_Works_Pairing_IOCap_Initiator_DisplayOnly_Responder_Display_Ye
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664771')
 def test_ble_Just_works_Pairing_IOCap_Initiator_DisplayOnly_Responder_No_Input_No_Output_C664771(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -421,6 +424,7 @@ def test_ble_Just_works_Pairing_IOCap_Initiator_DisplayOnly_Responder_No_Input_N
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664757')
 def test_ble_JustWorks_Pairing_IOCap_Initiator_Display_yes_no_Responder_DisplayOnly_C664757(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -457,6 +461,7 @@ def test_ble_JustWorks_Pairing_IOCap_Initiator_Display_yes_no_Responder_DisplayO
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664762')
 def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_Display_Yes_No_C664762(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Numeric Comparison][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -489,6 +494,7 @@ def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_Display_Yes_No_C
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664772')
 def test_ble_Just_works_Pairing_IOCap_Initiator_Display_Yes_No_Responder_No_Input_No_Output_C664772(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -521,6 +527,7 @@ def test_ble_Just_works_Pairing_IOCap_Initiator_Display_Yes_No_Responder_No_Inpu
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664759')
 def test_ble_Just_works_Pairing_IOCap_Initiator_No_Input_No_Output_Responder_DisplayOnly_C664759(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -554,6 +561,7 @@ def test_ble_Just_works_Pairing_IOCap_Initiator_No_Input_No_Output_Responder_Dis
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664764')
 def test_ble_Just_works_Pairing_IOCap_Initiator_No_Input_No_Output_Responder_Display_Yes_or_no_C664764(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -586,6 +594,7 @@ def test_ble_Just_works_Pairing_IOCap_Initiator_No_Input_No_Output_Responder_Dis
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664774')
 def test_ble_Just_works_Pairing_IOCap_Both_Initiator_and_Responder_No_Input_No_Output_C664774(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -624,6 +633,7 @@ def test_ble_Just_works_Pairing_IOCap_Both_Initiator_and_Responder_No_Input_No_O
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664781')
 def test_ble_JustWorks_Pairing_IOCap_Both_Initiator_Responder_DisplayOnly_DUT_Random_Addr_C664781(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -656,6 +666,7 @@ def test_ble_JustWorks_Pairing_IOCap_Both_Initiator_Responder_DisplayOnly_DUT_Ra
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664786')
 def test_ble_Just_Works_Pairing_IOCap_Initiator_DisplayOnly_Responder_Display_Yes_or_No_DUT_Random_addr_C664786(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -688,6 +699,7 @@ def test_ble_Just_Works_Pairing_IOCap_Initiator_DisplayOnly_Responder_Display_Ye
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664796')
 def test_ble_Just_works_Pairing_IOCap_Initiator_DisplayOnly_Responder_No_Input_No_Output_DUT_Random_addr_C664796(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -720,6 +732,7 @@ def test_ble_Just_works_Pairing_IOCap_Initiator_DisplayOnly_Responder_No_Input_N
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664782')
 def test_ble_JustWorks_Pairing_IOCap_Initiator_Display_yes_no_Responder_DisplayOnly_DUT_Random_addr_C664782(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -752,6 +765,7 @@ def test_ble_JustWorks_Pairing_IOCap_Initiator_Display_yes_no_Responder_DisplayO
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664787')
 def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_Display_Yes_No_DUT_Random_addr_C664787(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Numeric Comparison][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -784,6 +798,7 @@ def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_Display_Yes_No_D
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664797')
 def test_ble_Just_works_Pairing_IOCap_Initiator_Display_Yes_No_Responder_No_Input_No_Output_DUT_Random_addr_C664797(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -816,6 +831,7 @@ def test_ble_Just_works_Pairing_IOCap_Initiator_Display_Yes_No_Responder_No_Inpu
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664784')
 def test_ble_Just_works_Pairing_IOCap_Initiator_No_Input_No_Output_Responder_DisplayOnly_DUT_Random_addr_C664784(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -848,6 +864,7 @@ def test_ble_Just_works_Pairing_IOCap_Initiator_No_Input_No_Output_Responder_Dis
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664789')
 def test_ble_Just_works_Pairing_IOCap_Initiator_No_Input_No_Output_Responder_Display_Yes_or_no_DUT_Random_addr_C664789(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -880,6 +897,7 @@ def test_ble_Just_works_Pairing_IOCap_Initiator_No_Input_No_Output_Responder_Dis
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664799')
 def test_ble_Just_works_Pairing_IOCap_Both_Initiator_and_Responder_No_Input_No_Output_DUT_Random_addr_C664799(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Just Works][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -912,6 +930,7 @@ def test_ble_Just_works_Pairing_IOCap_Both_Initiator_and_Responder_No_Input_No_O
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664765')
 def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_keyboard_display_Display_Yes_No_C664765(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Numeric Comparison][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -945,6 +964,7 @@ def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_keyboard_display
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664780')
 def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_keyboard_display_keyboard_display_C664780(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Numeric Comparison][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -978,6 +998,7 @@ def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_keyboard_display
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664790')
 def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_keyboard_display_Display_Yes_No_using_random_C664790(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Numeric Comparison][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:
@@ -1015,6 +1036,7 @@ def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_keyboard_display
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable"])
+@pytest.mark.test_src_map_id('C664805')
 def test_ble_Numeric_comparision_IOCap_Both_Initiator_Responder_keyboard_display_keyboard_display_using_random_C664805(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify combo: [Numeric Comparison][Peripheral Action: Accept][Central Action: Accept][Action Order: Central, Peripheral][Expected Behaviour: Bonding Completes]"""
     try:

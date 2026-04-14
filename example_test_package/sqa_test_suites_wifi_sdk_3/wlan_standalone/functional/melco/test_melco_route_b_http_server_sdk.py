@@ -323,6 +323,7 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_fe
 @wifi_dut_marker()
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557318')
 def test_melco_sdk_HTTP_server_C557318(sl_collections, wifi_dut, wifi_client, channel,
                                        wifi_sniffer,
                                        sniffer_filter,
@@ -385,6 +386,7 @@ def test_melco_sdk_HTTP_server_C557318(sl_collections, wifi_dut, wifi_client, ch
 @wifi_dut_marker()
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557319')
 def test_melco_sdk_HTTP_server_stop_beacon_C557319(sl_collections, wifi_dut, wifi_client,
                                                    channel, wifi_sniffer,
                                                    sniffer_filter, http_client, request):
@@ -462,6 +464,7 @@ def test_melco_sdk_HTTP_server_stop_beacon_C557319(sl_collections, wifi_dut, wif
 @wifi_dut_marker()
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C687978')
 def test_melco_sdk_HTTP_server_connect_reconnec_C687978(sl_collections, wifi_dut, wifi_client,
                                                    channel, wifi_sniffer, utf_constants,
                                                    sniffer_filter, http_client, request):
@@ -526,6 +529,7 @@ def test_melco_sdk_HTTP_server_connect_reconnec_C687978(sl_collections, wifi_dut
 @wifi_dut_marker()
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557320')
 def test_melco_sdk_HTTP_server_start_stop_ap_C557320(sl_collections, wifi_dut, wifi_client,
                                                      channel, wifi_sniffer,
                                                      sniffer_filter, http_client, request):
@@ -601,6 +605,7 @@ def test_melco_sdk_HTTP_server_start_stop_ap_C557320(sl_collections, wifi_dut, w
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557321')
 def test_melco_sdk_HTTP_server_conc_http_webpage_C557321(sl_collections, wifi_dut, wifi_client, channel, wifi_sniffer,
                                                    sniffer_filter, wifi_access_point, wiseconnect_web, request):
     """
@@ -656,6 +661,7 @@ def test_melco_sdk_HTTP_server_conc_http_webpage_C557321(sl_collections, wifi_du
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557322')
 def test_melco_sdk_HTTP_server_conc_STA_11ax_disable_C557322(sl_collections, wifi_dut, wifi_client, channel,
                                                              wifi_sniffer, sniffer_filter, wifi_access_point,
                                                              wiseconnect_web, request):
@@ -714,6 +720,7 @@ def test_melco_sdk_HTTP_server_conc_STA_11ax_disable_C557322(sl_collections, wif
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557323')
 def test_melco_sdk_HTTP_server_conc_http_webpage_C557323(sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer,
                                                    sniffer_filter, wifi_access_point, wiseconnect_web, request):
     """
@@ -771,6 +778,7 @@ def test_melco_sdk_HTTP_server_conc_http_webpage_C557323(sl_collections, wifi_du
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557324')
 def test_melco_sdk_HTTP_server_melco_channel_change_C557324(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                             wifi_sniffer,
                                                             sniffer_filter, wifi_access_point,
@@ -864,6 +872,7 @@ def test_melco_sdk_HTTP_server_melco_channel_change_C557324(sl_collections, wifi
 @pytest.mark.parametrize("ap_channel", [11])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557325')
 def test_melco_sdk_HTTP_server_melco_ap_power_cycle_C557325(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                             wifi_sniffer,
                                                             sniffer_filter, wifi_access_point,
@@ -969,6 +978,7 @@ def test_melco_sdk_HTTP_server_melco_ap_power_cycle_C557325(sl_collections, wifi
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557326')
 def test_melco_sdk_HTTP_server_melco_psk_change_C557326(sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer,
                                                    sniffer_filter, wifi_access_point, wiseconnect_web, request):
     """
@@ -1061,6 +1071,7 @@ def test_melco_sdk_HTTP_server_melco_psk_change_C557326(sl_collections, wifi_dut
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557327')
 def test_melco_sdk_HTTP_server_AP_restart_C557327(sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer,
                                                    sniffer_filter, wifi_access_point, wiseconnect_web, request):
     """
@@ -1142,6 +1153,7 @@ def test_melco_sdk_HTTP_server_AP_restart_C557327(sl_collections, wifi_dut, wifi
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557330')
 def test_melco_sdk_HTTP_server_incorrect_ssid_C557330(sl_collections, wifi_dut, wifi_client, channel,
                                                             sniffer_filter, wifi_access_point, wiseconnect_web,
                                                             wifi_sniffer):
@@ -1230,6 +1242,7 @@ def test_melco_sdk_HTTP_server_incorrect_ssid_C557330(sl_collections, wifi_dut, 
 @pytest.mark.parametrize("ap_channel", [11])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557328')
 def test_melco_sdk_HTTP_server_tcp_tx_C557328(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                remote_socket, sniffer_filter, wifi_access_point,
                                                wiseconnect_web, wifi_sniffer):
@@ -1312,6 +1325,7 @@ def test_melco_sdk_HTTP_server_tcp_tx_C557328(sl_collections, wifi_dut, wifi_cli
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C557331')
 def test_melco_sdk_HTTP_server_tcp_tx_C557331(sl_collections, wifi_dut, wifi_client, channel,
                                               remote_socket, sniffer_filter, wifi_access_point,
                                               wiseconnect_web, wifi_sniffer, net_perf_client,protocol):
@@ -1402,6 +1416,7 @@ def test_melco_sdk_HTTP_server_tcp_tx_C557331(sl_collections, wifi_dut, wifi_cli
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557332')
 def test_melco_sdk_HTTP_server_tcp_rx_C557332(sl_collections, wifi_dut, wifi_client,
                                               remote_socket, wifi_access_point, wiseconnect_web,
                                               wifi_sniffer, sniffer_filter, http_client, ap_channel):

@@ -38,6 +38,7 @@ def logger():
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19889')
 def test_ble_slave_latency_C19889(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x06 0x00"
@@ -125,6 +126,7 @@ def test_ble_slave_latency_C19889(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19890')
 def test_ble_slave_latency_C19890(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x0C 0x00"
@@ -212,6 +214,7 @@ def test_ble_slave_latency_C19890(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19891')
 def test_ble_slave_latency_C19891(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x18 0x00"
@@ -298,6 +301,7 @@ def test_ble_slave_latency_C19891(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19892')
 def test_ble_slave_latency_C19892(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x30 0x00"
@@ -384,6 +388,7 @@ def test_ble_slave_latency_C19892(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19893')
 def test_ble_slave_latency_C19893(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x60 0x00"
@@ -470,6 +475,7 @@ def test_ble_slave_latency_C19893(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19894')
 def test_ble_slave_latency_C19894(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0xC0 0x00"
@@ -556,6 +562,7 @@ def test_ble_slave_latency_C19894(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19895')
 def test_ble_slave_latency_C19895(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x80 0x01"
@@ -644,6 +651,7 @@ def test_ble_slave_latency_C19895(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19896')
 def test_ble_slave_latency_C19896(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x00 0x03"
@@ -731,6 +739,7 @@ def test_ble_slave_latency_C19896(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19897')
 def test_ble_slave_latency_C19897(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x00 0x06"
@@ -818,6 +827,7 @@ def test_ble_slave_latency_C19897(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19898')
 def test_ble_slave_latency_C19898(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x00 0x0C"
@@ -905,6 +915,7 @@ def test_ble_slave_latency_C19898(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19899')
 def test_ble_slave_latency_C19899(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x80 0x0C"
@@ -993,6 +1004,7 @@ def test_ble_slave_latency_C19899(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19900')
 def test_ble_slave_latency_C19900(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x06 0x00"
@@ -1080,6 +1092,7 @@ def test_ble_slave_latency_C19900(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19901')
 def test_ble_slave_latency_C19901(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x0C 0x00"
@@ -1167,6 +1180,7 @@ def test_ble_slave_latency_C19901(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19902')
 def test_ble_slave_latency_C19902(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x18 0x00"
@@ -1254,6 +1268,7 @@ def test_ble_slave_latency_C19902(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19903')
 def test_ble_slave_latency_C19903(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x30 0x00"
@@ -1341,6 +1356,7 @@ def test_ble_slave_latency_C19903(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19904')
 def test_ble_slave_latency_C19904(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x60 0x00"
@@ -1428,6 +1444,7 @@ def test_ble_slave_latency_C19904(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19905')
 def test_ble_slave_latency_C19905(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0xC0 0x00"
@@ -1515,6 +1532,7 @@ def test_ble_slave_latency_C19905(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19906')
 def test_ble_slave_latency_C19906(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x80 0x01"
@@ -1602,6 +1620,7 @@ def test_ble_slave_latency_C19906(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19907')
 def test_ble_slave_latency_C19907(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x00 0x03"
@@ -1690,6 +1709,7 @@ def test_ble_slave_latency_C19907(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19908')
 def test_ble_slave_latency_C19908(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x00 0x06"
@@ -1777,6 +1797,7 @@ def test_ble_slave_latency_C19908(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19909')
 def test_ble_slave_latency_C19909(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x00 0x0C"
@@ -1864,6 +1885,7 @@ def test_ble_slave_latency_C19909(wifi_sniffer, wifi_dut, wifi_access_point, ble
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19910')
 def test_ble_slave_latency_C19910(wifi_sniffer, wifi_dut, wifi_access_point, ble_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x80 0x0C"

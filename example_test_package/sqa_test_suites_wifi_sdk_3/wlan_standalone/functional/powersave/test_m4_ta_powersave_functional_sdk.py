@@ -359,6 +359,7 @@ pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_320K")]
         "band": 0,
     }
 )
+@pytest.mark.test_src_map_id('C514372')
 def test_m4_interrupt_ta_listen_interval_C514372(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                  remote_socket, protocol, utf_constants, sl_collections):
     """Execute M4 Wakes up from sleep randomly,M4 will interrupt TA to wakeup(TA-Listen interval Based powersave),
@@ -466,6 +467,7 @@ def test_m4_interrupt_ta_listen_interval_C514372(wifi_sniffer, wifi_access_point
         "band": 0,
     }
 )
+@pytest.mark.test_src_map_id('C514376')
 def test_m4_interrupt_ta_DTIM_based_C514376(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                             remote_socket, protocol, utf_constants, sl_collections):
     """Execute M4 Wakes up from sleep randomly,M4 will interrupt TA to wakeup(TA-DTIM Based powersave),
@@ -572,6 +574,7 @@ def test_m4_interrupt_ta_DTIM_based_C514376(wifi_sniffer, wifi_access_point, wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
+@pytest.mark.test_src_map_id('C514371')
 def test_tcp_rx_ta_interrupt_m4_wakeup_c514371(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
                                                aws_iot_client):
     """
@@ -668,6 +671,7 @@ def test_tcp_rx_ta_interrupt_m4_wakeup_c514371(wifi_sniffer, wifi_access_point, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
+@pytest.mark.test_src_map_id('C514375')
 def test_tcp_rx_ta_interrupt_m4_wakeup_DTIM_based_power_save_c514375(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
                                                aws_iot_client):
     """
@@ -753,6 +757,7 @@ def test_tcp_rx_ta_interrupt_m4_wakeup_DTIM_based_power_save_c514375(wifi_sniffe
         "band": 0,
     }
 )
+@pytest.mark.test_src_map_id('C708580')
 def test_wifi_sdk_deinit_functionality_after_m4_wakeup_c708580(wifi_dut, wifi_access_point, sl_collections):
     """Verify sl_wifi_deinit functionality after M4 awakes from sleep when WLAN is in connected state"""
     try:

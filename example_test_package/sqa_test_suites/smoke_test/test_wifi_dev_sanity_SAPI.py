@@ -327,6 +327,7 @@ class Ble_Data_Transfer(ThreadBase):
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('TC4400782003')
 def test_firmware_version_testcase18(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
@@ -353,6 +354,7 @@ def test_firmware_version_testcase18(wifi_dut):
     }
 )
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('TC24')
 def test_threading_sta_ble_data_udp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
                                             ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), \
@@ -375,6 +377,7 @@ def test_threading_sta_ble_data_udp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_a
     }
 )
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('TC24')
 def test_threading_sta_ble_data_udp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
                                             ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), Ble_Data_Transfer(wifi_dut,
@@ -397,6 +400,7 @@ def test_threading_sta_ble_data_udp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_a
     }
 )
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('TC24')
 def test_threading_sta_ble_data_tcp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
                                             ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), Ble_Data_Transfer(wifi_dut,
@@ -419,6 +423,7 @@ def test_threading_sta_ble_data_tcp_tx_TC24(wifi_dut, wifi_networked_dut, wifi_a
     }
 )
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('TC24')
 def test_threading_sta_ble_data_tcp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client, run_iperf1,
                                             ble_client):
     with wifiJoinThread(wifi_access_point, wifi_networked_dut, wifi_client, run_iperf1), Ble_Data_Transfer(wifi_dut,
@@ -496,6 +501,7 @@ def test_threading_sta_ble_data_tcp_rx_TC24(wifi_dut, wifi_networked_dut, wifi_a
     }
 )
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('TC5656837022')
 def test_throughput_wifi_alone_tcp_tx_testcase1(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
                                                 run_iperf1,
                                                 bt_client):
@@ -518,6 +524,7 @@ def test_throughput_wifi_alone_tcp_tx_testcase1(wifi_dut, wifi_networked_dut, wi
     }
 )
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('TC1864248028')
 def test_throughput_wifi_alone_tcp_rx_testcase1(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
                                                 run_iperf1,
                                                 bt_client):
@@ -541,6 +548,7 @@ def test_throughput_wifi_alone_tcp_rx_testcase1(wifi_dut, wifi_networked_dut, wi
 )
 @pytest.mark.skip()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
+@pytest.mark.test_src_map_id('TC8874704033')
 def test_throughput_wifi_alone_udp_tx_testcase3(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
                                                 run_iperf1,
                                                 bt_client):
@@ -564,6 +572,7 @@ def test_throughput_wifi_alone_udp_tx_testcase3(wifi_dut, wifi_networked_dut, wi
 )
 @pytest.mark.skip()
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
+@pytest.mark.test_src_map_id('TC9694566039')
 def test_throughput_wifi_alone_udp_rx_testcase3(wifi_dut, wifi_networked_dut, wifi_access_point, wifi_client,
                                                 run_iperf1,
                                                 bt_client):
@@ -585,6 +594,7 @@ def test_throughput_wifi_alone_udp_rx_testcase3(wifi_dut, wifi_networked_dut, wi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "disable_store_config"])
+@pytest.mark.test_src_map_id('TC0879126046')
 def test_store_config_open_testcase12(wifi_sniffer, wifi_access_point, wifi_dut):
     capture_filename = "test_store_config_open_testcase12"
     firmware_version = wifi_dut.interfaces.wifi.version()
@@ -688,6 +698,7 @@ def test_store_config_open_testcase12(wifi_sniffer, wifi_access_point, wifi_dut)
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 # These test case verifies the firmware upgrade in DUT over the http connection in wlan mode
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('TC7411383052')
 def test_http_otaf_testcase53(wifi_sniffer, http_server, wifi_access_point, wifi_dut):
     capture_filename = "test_http_otaf_testcase53"
     # configure interface for the channel of the access point
@@ -784,6 +795,7 @@ def test_http_otaf_testcase53(wifi_sniffer, http_server, wifi_access_point, wifi
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('TC4509438058')
 def test_ssl_client_tx_rejoin_testcase2(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
 ):
@@ -859,6 +871,7 @@ def test_ssl_client_tx_rejoin_testcase2(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "close_sockets", "disassociated"])
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('TC4491041064')
 def test_ssl_client_tx_rejoin_testcase4(
         wifi_sniffer, wifi_dut, wifi_access_point, ssl_server, logger
 ):
@@ -929,6 +942,7 @@ def test_ssl_client_tx_rejoin_testcase4(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks mqtt connection, subscribe and publish feature when mqtt qos associated is qos1
+@pytest.mark.test_src_map_id('TC6694693070')
 def test_mqtt_qos1_connect_sub_publish_testcase_42(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1071,6 +1085,7 @@ def test_mqtt_qos1_connect_sub_publish_testcase_42(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 # The test case checks whether the DUT is able to connect to MQTT server over SSL when authentication feature is enabled
+@pytest.mark.test_src_map_id('TC2277388076')
 def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, logger
 ):
@@ -1217,6 +1232,7 @@ def test_mqtt_qos1_connect_sub_publish_ssl_testcase_41(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.firmware_app("test_aws")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC9959331082')
 def test_AWS_SDK_cloud_connectivity_testcase45(firmware_loader, wifi_access_point, wifi_dut, logger):
     topic_1 = "sdk/test/Python"
     message = '{"message": "my payload"}'
@@ -1292,6 +1308,7 @@ def test_AWS_SDK_cloud_connectivity_testcase45(firmware_loader, wifi_access_poin
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC1096929089')
 def test_get_rtc_before_init_testcase47(wifi_dut, logger):
     set_seconds = 30
     set_minutes = 6
@@ -1331,6 +1348,7 @@ def test_get_rtc_before_init_testcase47(wifi_dut, logger):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC0887821097')
 def test_get_rtc_testcase47(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, logger
 ):
@@ -1485,6 +1503,7 @@ def test_get_rtc_testcase47(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC6561506105')
 def test_query_dns_testcase48(wifi_sniffer, wifi_access_point, wifi_dut, logger):
     capture_filename = "test_query_dns_testcase48"
     # configure interface for the channel of the access point

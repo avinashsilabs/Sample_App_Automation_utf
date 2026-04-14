@@ -157,6 +157,7 @@ class IperfClientThread(ThreadBase):
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551266')
 def test_wifi_sdk_sta_japan_region_aput_c551266( wifi_dut,
                                              sl_collections, remote_wiseconnect3):
     """Verify APUT beacon with region JP, WPA2 security, Channel 14, DTIM 3 , Beacon interval 500ms configurations"""
@@ -249,6 +250,7 @@ def test_wifi_sdk_sta_japan_region_aput_c551266( wifi_dut,
 )
 @pytest.mark.parametrize("listen_interval", [500, 700, 1000])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19445')
 def test_wifi_sdk_sta_with_listen_intervals_c19445(wifi_sniffer, wifi_dut,
                                                    sl_collections, remote_wiseconnect3, listen_interval):
     """APUT functionality ,when a STA connected with various listen intervals."""
@@ -330,6 +332,7 @@ def test_wifi_sdk_sta_with_listen_intervals_c19445(wifi_sniffer, wifi_dut,
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C654502')
 def test_wifi_sdk_ap_mode_scan_in_region_japan_c654502(wifi_dut, sl_collections, remote_wiseconnect3):
     """Verify APUT beacon with region JP, WPA2 security, Channel 14, DTIM 3 , Beacon interval 500ms configurations"""
     try:
@@ -425,6 +428,7 @@ def test_wifi_sdk_ap_mode_scan_in_region_japan_c654502(wifi_dut, sl_collections,
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C477831')
 def test_wifi_sdk_sta_korea_region_ap_c477831(wifi_sniffer, wifi_dut,
                                               sl_collections, remote_wiseconnect3, utf_constants, sniffer_filter):
     """verify connection between 2 DUTs, one setup as STA and other setup as AP  channel 13 and region set to Korea"""
@@ -551,6 +555,7 @@ def test_wifi_sdk_sta_korea_region_ap_c477831(wifi_sniffer, wifi_dut,
     },
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C551269')
 def test_wifi_sdk_wpa2_deauth_based_keep_alive_c551269(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                   sl_collections):
     """Verify APUT Keep alive functionality with DEAUTH_BASED_KEEP_ALIVE configuration in WPA2"""
@@ -641,6 +646,7 @@ def test_wifi_sdk_wpa2_deauth_based_keep_alive_c551269(wifi_sniffer, wifi_dut, r
     },
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C551270')
 def test_wifi_sdk_wpa2_null_based_keep_alive_C551270(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                 sl_collections):
     """Verify APUT Keep alive functionality with NULL_BASED_KEEP_ALIVE configuration in WPA2 mode"""
@@ -758,6 +764,7 @@ def test_wifi_sdk_wpa2_null_based_keep_alive_C551270(wifi_sniffer, wifi_dut, rem
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi="reset")
+@pytest.mark.test_src_map_id('C19459')
 def test_wifi_sdk_ping_from_nonps_to_ps_device_c19459(wifi_sniffer, wifi_dut, wifi_clients, remote_wiseconnect3,
                                                       sl_collections, sniffer_filter):
     """APUT's functionality when the station is inactive for 5 minutes"""
@@ -867,6 +874,7 @@ def test_wifi_sdk_ping_from_nonps_to_ps_device_c19459(wifi_sniffer, wifi_dut, wi
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi="reset")
+@pytest.mark.test_src_map_id('C19460')
 def test_wifi_sdk_ping_between_nonps_devices_while_ps_device_is_connected_c19460(wifi_sniffer, wifi_dut, wifi_clients,
                                                                                  remote_wiseconnect3, sl_collections,
                                                                                  sniffer_filter):

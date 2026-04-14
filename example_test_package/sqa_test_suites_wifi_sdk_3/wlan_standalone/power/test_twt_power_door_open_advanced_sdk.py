@@ -507,6 +507,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166149')
 def test_standby_power_twt_enable_door_rx_latency_1_C166149(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -593,6 +594,7 @@ def test_standby_power_twt_enable_door_rx_latency_1_C166149(firmware_loader, pow
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166150')
 def test_standby_power_twt_enable_door_rx_latency_2_C166150(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -678,6 +680,7 @@ def test_standby_power_twt_enable_door_rx_latency_2_C166150(firmware_loader, pow
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166151')
 def test_standby_power_twt_enable_door_rx_latency_5_C166151(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -764,6 +767,7 @@ def test_standby_power_twt_enable_door_rx_latency_5_C166151(firmware_loader, pow
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166152')
 def test_standby_power_twt_enable_door_rx_latency1_500_C166152(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -850,6 +854,7 @@ def test_standby_power_twt_enable_door_rx_latency1_500_C166152(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166153')
 def test_standby_power_twt_enable_door_rx_latency2_500_C166153(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -935,6 +940,7 @@ def test_standby_power_twt_enable_door_rx_latency2_500_C166153(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166154')
 def test_standby_power_twt_enable_door_rx_latency5_500_C166154(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -1021,6 +1027,7 @@ def test_standby_power_twt_enable_door_rx_latency5_500_C166154(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166155')
 def test_standby_power_twt_enable_camera_rx_latency_1_C166155(power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -1107,6 +1114,7 @@ def test_standby_power_twt_enable_camera_rx_latency_1_C166155(power_meter, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166156')
 def test_standby_power_twt_enable_camera_rx_latency_2_C166156(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -1192,6 +1200,7 @@ def test_standby_power_twt_enable_camera_rx_latency_2_C166156(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166157')
 def test_standby_power_twt_enable_camera_rx_latency_5_C166157(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -1278,6 +1287,7 @@ def test_standby_power_twt_enable_camera_rx_latency_5_C166157(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166158')
 def test_standby_power_twt_enable_camera_rx_latency1_500_C166158(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -1364,6 +1374,7 @@ def test_standby_power_twt_enable_camera_rx_latency1_500_C166158(firmware_loader
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166159')
 def test_standby_power_twt_enable_camera_rx_latency2_500_C166159(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):
@@ -1449,6 +1460,7 @@ def test_standby_power_twt_enable_camera_rx_latency2_500_C166159(firmware_loader
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C166160')
 def test_standby_power_twt_enable_camera_rx_latency5_500_C166160(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                  sl_collections, request, remote_socket, performance_data,
                                                  custom_performance_fixture):

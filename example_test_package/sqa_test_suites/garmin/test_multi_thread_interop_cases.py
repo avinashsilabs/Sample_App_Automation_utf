@@ -95,6 +95,7 @@ class BtThread(ThreadBase):
     }
 )
 # This case verifies the interop of ant,bt,ble,wifi connect to special charactered SSID
+@pytest.mark.test_src_map_id('TC5393716687')
 def test_ant_bt_ble_wifi_connect1(wifi_dut, ble_client, wifi_access_point, bt_client):
     wifi_access_point.config["interfaces"]["wifi"]["ssid"] = "#@#@#@#$@#$@#$@#$"
     with AntThread(wifi_dut),BtThread(wifi_dut, bt_client),BleThread(wifi_dut, ble_client),WifiThread(wifi_dut, wifi_access_point):
@@ -108,6 +109,7 @@ def test_ant_bt_ble_wifi_connect1(wifi_dut, ble_client, wifi_access_point, bt_cl
     }
 )
 # This case verifies the interop of ant,bt,ble,wifi connect to DOTTED charactered SSID
+@pytest.mark.test_src_map_id('TC8102264692')
 def test_ant_bt_ble_wifi_connect2(wifi_dut, ble_client, wifi_access_point, bt_client):
     wifi_access_point.config["interfaces"]["wifi"]["ssid"] = ".........."
     with AntThread(wifi_dut),BtThread(wifi_dut, bt_client),BleThread(wifi_dut, ble_client),WifiThread(wifi_dut, wifi_access_point):
@@ -121,6 +123,7 @@ def test_ant_bt_ble_wifi_connect2(wifi_dut, ble_client, wifi_access_point, bt_cl
     }
 )
 # This case verifies the interop of ant,bt,ble,wifi connect to 32 bytes SSID
+@pytest.mark.test_src_map_id('TC8999454696')
 def test_ant_bt_ble_wifi_connect3(wifi_dut, ble_client, wifi_access_point, bt_client):
     wifi_access_point.config["interfaces"]["wifi"]["ssid"] = "asdfghjklkjhgfdsazxcvbhnjmkloiu"
     with AntThread(wifi_dut),BtThread(wifi_dut, bt_client),BleThread(wifi_dut, ble_client),WifiThread(wifi_dut, wifi_access_point):
@@ -134,6 +137,7 @@ def test_ant_bt_ble_wifi_connect3(wifi_dut, ble_client, wifi_access_point, bt_cl
     }
 )
 # This case verifies the interop of ant,bt,ble,wifi connect to 63 bytes lenght PSK
+@pytest.mark.test_src_map_id('TC4104727701')
 def test_ant_bt_ble_wifi_connect4(wifi_dut, ble_client, wifi_access_point, bt_client):
     wifi_access_point.config["interfaces"]["wifi"]["passphrase"] = "asdfghjklkjhgfdsazxcvbhnjmkloiupoiuytrewqasfdghjklmnbvcxsdert"
     with AntThread(wifi_dut),BtThread(wifi_dut, bt_client),BleThread(wifi_dut, ble_client),WifiThread(wifi_dut, wifi_access_point):
@@ -147,6 +151,7 @@ def test_ant_bt_ble_wifi_connect4(wifi_dut, ble_client, wifi_access_point, bt_cl
     }
 )
 # This case verifies the interop of ant,bt,ble,wifi connect and get dhcp IP of DUT
+@pytest.mark.test_src_map_id('TC9752838705')
 def test_ant_bt_ble_wifi_connect5(wifi_dut, ble_client, wifi_access_point, bt_client, wifi_associated_dut):
     wifi_access_point.config["interfaces"]["wifi"]["passphrase"] = "testdhcp"
     with AntThread(wifi_dut),BtThread(wifi_dut, bt_client),BleThread(wifi_dut, ble_client),WifiThread(wifi_dut, wifi_access_point):
@@ -165,6 +170,7 @@ def test_ant_bt_ble_wifi_connect5(wifi_dut, ble_client, wifi_access_point, bt_cl
     }
 )
 # This case verifies the interop of ant,bt,ble,wifi connect and verifies the ping
+@pytest.mark.test_src_map_id('TC8898372709')
 def test_ant_bt_ble_wifi_connect6(wifi_dut, ble_client, wifi_access_point, bt_client,wifi_networked_dut):
     wifi_access_point.config["interfaces"]["wifi"]["passphrase"] = "testping"
     with AntThread(wifi_dut),BtThread(wifi_dut, bt_client),BleThread(wifi_dut, ble_client),WifiThread(wifi_dut, wifi_access_point):
@@ -180,6 +186,7 @@ def test_ant_bt_ble_wifi_connect6(wifi_dut, ble_client, wifi_access_point, bt_cl
     }
 )
 # This case verifies the interop of ant,bt,ble,wifi connection to hidden mode AP
+@pytest.mark.test_src_map_id('TC4406444713')
 def test_ant_bt_ble_wifi_connect7(wifi_dut, ble_client, wifi_access_point, bt_client):
     wifi_access_point.config["interfaces"]["wifi"]["passphrase"] = "testhiddenmodeap"
     wifi_access_point.config["interfaces"]["wifi"]["broadcast_ssid"] = False

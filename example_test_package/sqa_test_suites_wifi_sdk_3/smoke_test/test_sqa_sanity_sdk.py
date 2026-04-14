@@ -200,6 +200,7 @@ class BleThreadFunctionality(ThreadBase):
     },
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C34753')
 def test_wifi_sdk_firmware_version_C34753(wifi_dut, sl_collections):
     try:
         expected_version = parse_version()
@@ -236,6 +237,7 @@ def test_wifi_sdk_firmware_version_C34753(wifi_dut, sl_collections):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable",  "disassociated"])
+@pytest.mark.test_src_map_id('C34788')
 def test_wifi_sdk_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client,
                                         protocol, sl_collections, utf_constants, request, sniffer_filter):
     try:
@@ -288,6 +290,7 @@ def test_wifi_sdk_join_WORLD_2_4_C34788(wifi_access_point, wifi_dut, net_perf_cl
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable",  "disassociated"])
+@pytest.mark.test_src_map_id('C34786')
 def test_wifi_sdk_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client,
                                      protocol, request, utf_constants, sniffer_filter, sl_collections):
     try:
@@ -338,6 +341,7 @@ def test_wifi_sdk_join_EU_2_4_C34786(wifi_access_point, wifi_dut, net_perf_clien
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable",  "disassociated"])
+@pytest.mark.test_src_map_id('C34785')
 def test_wifi_sdk_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_client, wifi_sniffer, wifi_client,
                                      protocol, request, utf_constants, sl_collections, sniffer_filter):
     try:
@@ -386,6 +390,7 @@ def test_wifi_sdk_join_US_2_4_C34785(wifi_access_point, wifi_dut, net_perf_clien
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '123456789'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable",  "disassociated"])
+@pytest.mark.test_src_map_id('C34757')
 def test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, wifi_dut, wifi_sniffer, net_perf_client,
                                                             protocol,
                                                             request, utf_constants, sl_collections,
@@ -441,6 +446,7 @@ def test_wifi_sdk_Connectivity_with_WPA2_security_AP_C34757(wifi_access_point, w
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '123456789'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv"])
+@pytest.mark.test_src_map_id('C34770')
 def test_wifi_sdk_ble_slave_C34770(wifi_access_point, wifi_dut,
                                    request, utf_constants, sl_collections, ble_client):
     try:
@@ -485,6 +491,7 @@ def test_wifi_sdk_ble_slave_C34770(wifi_access_point, wifi_dut,
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '123456789'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+@pytest.mark.test_src_map_id('C34771')
 def test_wifi_sdk_ble_master_C34771(wifi_access_point, wifi_dut,
                                    request, utf_constants, sl_collections, ble_client):
     try:
@@ -529,6 +536,7 @@ def test_wifi_sdk_ble_master_C34771(wifi_access_point, wifi_dut,
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '123456789'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C34774')
 def test_wifi_sdk_ble_dual_role_C34774(wifi_access_point, wifi_dut,
                                    request, utf_constants, sl_collections, ble_clients):
     try:
@@ -586,6 +594,7 @@ def test_wifi_sdk_ble_dual_role_C34774(wifi_access_point, wifi_dut,
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable",  "disassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C34778')
 def test_Coex_sdk_connectivity_ping_sta_ble_C34778(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                    request, utf_constants, sl_collections, wifi_client,
                                                    sniffer_filter):
@@ -659,6 +668,7 @@ def test_Coex_sdk_connectivity_ping_sta_ble_C34778(wifi_sniffer, wifi_access_poi
          }
 )
 @pytest.mark.wifi_clients(["raspi_wifi"])
+@pytest.mark.test_src_map_id('TC5582017851')
 def test_wifi_sdk_apmode_wpa2_aes_34765(wifi_sniffer, wifi_dut, request,
                                         wifi_clients, sl_collections, utf_constants, sniffer_filter):
     try:
@@ -732,6 +742,7 @@ def test_wifi_sdk_apmode_wpa2_aes_34765(wifi_sniffer, wifi_dut, request,
     }
 )
 @pytest.mark.wifi_clients(["raspi_wifi"])
+@pytest.mark.test_src_map_id('C34756')
 def test_wifi_sdk_concurrent_mode_sta_ap_C34756(wifi_access_point, wifi_dut, wifi_clients, wifi_sniffer, sniffer_filter,
                                                 request, utf_constants, sl_collections):
     """ To Verify Dut Behaviour in  STA and AP connection by enabling concurrent mode"""

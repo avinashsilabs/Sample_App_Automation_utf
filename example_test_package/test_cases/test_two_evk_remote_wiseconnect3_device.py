@@ -93,6 +93,7 @@ class power_number_output():
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
        },
 )
+@pytest.mark.test_src_map_id('TC0396769343')
 def test_two_evk_remote_wiseconnect3_device(bt_dut, remote_wiseconnect3):
     logger().info("get dut bt address.....")
     bt_dut_address = bt_dut.interfaces.bluetooth.bt_get_local_address()

@@ -264,6 +264,7 @@ class WLanThread(ThreadBase):
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557371')
 def test_wifi_sdk_check_dut_ap_beacons_after_enabling_aput_beacon_stop_tc557371(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter, wifi_client
                                                                       ):
@@ -314,6 +315,7 @@ def test_wifi_sdk_check_dut_ap_beacons_after_enabling_aput_beacon_stop_tc557371(
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557372')
 def test_wifi_sdk_verify_beacon_stop_after_3rd_party_sta_connect_tc557372(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,wifi_client,
                                                                       ):
@@ -365,6 +367,7 @@ def test_wifi_sdk_verify_beacon_stop_after_3rd_party_sta_connect_tc557372(wifi_d
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557373')
 def test_wifi_sdk_verify_beacon_stop_after_3rd_party_sta_disconnect_tc557373(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,wifi_client
                                                                       ):
@@ -425,6 +428,7 @@ def test_wifi_sdk_verify_beacon_stop_after_3rd_party_sta_disconnect_tc557373(wif
                }
          }
 )
+@pytest.mark.test_src_map_id('TC557374')
 def test_wifi_sdk_verify_beacon_resume_after_3rd_party_sta_reconnect_tc557374(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,wifi_client
                                                                       ):
@@ -497,6 +501,7 @@ def test_wifi_sdk_verify_beacon_resume_after_3rd_party_sta_reconnect_tc557374(wi
                }
     }
 )
+@pytest.mark.test_src_map_id('TC557375')
 def test_wifi_sdk_verify_beacon_stop_with_one_client_disconnection_in_multiclient_conn_tc557375(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,wifi_client
                                                                       ):
@@ -565,6 +570,7 @@ def test_wifi_sdk_verify_beacon_stop_with_one_client_disconnection_in_multiclien
                }
     }
 )
+@pytest.mark.test_src_map_id('TC557376')
 def test_wifi_sdk_verify_beacon_stop_with_all_clients_disconnection_in_multiclient_conn_tc557376(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients,utf_constants,sniffer_filter,wifi_client
                                                                       ):
@@ -641,6 +647,7 @@ def test_wifi_sdk_verify_beacon_stop_with_all_clients_disconnection_in_multiclie
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "ipv6_state": "0",}
 )
+@pytest.mark.test_src_map_id('TC557377')
 def test_wifi_sdk_verify_beacon_stop_with_in_concurrent_mode_with_dut_wlan_conn_tc557377(wifi_client, wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,wifi_access_point
                                                                       ):
@@ -706,6 +713,7 @@ def test_wifi_sdk_verify_beacon_stop_with_in_concurrent_mode_with_dut_wlan_conn_
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "ipv6_state": "1",}
 )
+@pytest.mark.test_src_map_id('TC557378')
 def test_wifi_sdk_verify_beacon_stop_with_in_concurrent_mode_with_dut_sta_disconn_tc557378(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,wifi_access_point,
                                                                       wifi_client):
@@ -763,6 +771,7 @@ def test_wifi_sdk_verify_beacon_stop_with_in_concurrent_mode_with_dut_sta_discon
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "ipv6_state": "1",}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('TC557379')
 def test_wifi_sdk_verify_beacon_stop_with_in_concurrent_mode_with_dut_sta_conn_disconn_tc557379(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,wifi_access_point, wifi_client
                                                                       ):
@@ -837,6 +846,7 @@ def test_wifi_sdk_verify_beacon_stop_with_in_concurrent_mode_with_dut_sta_conn_d
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "ipv6_state": "0",}
 )
+@pytest.mark.test_src_map_id('TC557380')
 def test_wifi_sdk_verify_3rd_party_sta_assoc_with_beacon_stop_enabled_with_sta_conn_tc557380(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,wifi_access_point,wifi_client
                                                                       ):
@@ -902,6 +912,7 @@ def test_wifi_sdk_verify_3rd_party_sta_assoc_with_beacon_stop_enabled_with_sta_c
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "ipv6_state": "0",}
 )
+@pytest.mark.test_src_map_id('TC557381')
 def test_wifi_sdk_verify_beacon_stop_with_3rd_party_sta_diconn_with_staut_conn_tc557381(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,
                                                                       wifi_access_point,wifi_client):
@@ -975,6 +986,7 @@ def test_wifi_sdk_verify_beacon_stop_with_3rd_party_sta_diconn_with_staut_conn_t
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "ipv6_state": "0",}
 )
+@pytest.mark.test_src_map_id('TC557382')
 def test_wifi_sdk_verify_beacon_stop_with_3rd_party_sta_conn_with_staut_reconn_tc557382(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,
                                                                       wifi_access_point,wifi_client):
@@ -1060,6 +1072,7 @@ def test_wifi_sdk_verify_beacon_stop_with_3rd_party_sta_conn_with_staut_reconn_t
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "ipv6_state": "0",}
 )
+@pytest.mark.test_src_map_id('TC557383')
 def test_wifi_sdk_verify_beacon_stop_staut_conn_with_one_3rd_party_sta_disconn_tc557383(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients, utf_constants,sniffer_filter,
                                                                       wifi_access_point, wifi_client):
@@ -1142,6 +1155,7 @@ def test_wifi_sdk_verify_beacon_stop_staut_conn_with_one_3rd_party_sta_disconn_t
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678", "ipv6_state": "0",}
 )
+@pytest.mark.test_src_map_id('TC557384')
 def test_wifi_sdk_verify_beacon_stop_staut_conn_with_all_3rd_party_sta_disconn_tc557384(wifi_dut, wifi_sniffer, sl_collections,
                                                                       wifi_clients,utf_constants,sniffer_filter,
                                                                       wifi_client, wifi_access_point):

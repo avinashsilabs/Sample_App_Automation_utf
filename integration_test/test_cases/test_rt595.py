@@ -16,6 +16,7 @@ def reset_dut():
     # override the reset_dut fixture to do nothing
     pass
 
+@pytest.mark.test_src_map_id('TC7249691589')
 def test_scan(wifi_dut):
     time.sleep(6)
     with TimeMeasurer() as t:
@@ -25,6 +26,7 @@ def test_scan(wifi_dut):
     logger().info(f"Scan in {t.duration} seconds")
 
 @pytest.mark.ble_client("nrf_53840_cli")
+@pytest.mark.test_src_map_id('TC7786430594')
 def test_nrf5340(ble_client):
     time.sleep(6)
     ble_client.interfaces.wifi.ble_init()

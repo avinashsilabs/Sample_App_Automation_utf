@@ -173,6 +173,7 @@ class DutBleScanning():
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19851')
 def test_ble_io_cap_displayonly_C19851(ble_dut, ble_client):
     try:
         logger().info("Initiate ble service in DUT")
@@ -258,6 +259,7 @@ def test_ble_io_cap_displayonly_C19851(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19852')
 def test_ble_io_cap_display_yesno_C19852(ble_dut, ble_client):
     try:
         logger().info("Initiate ble service in DUT")
@@ -341,6 +343,7 @@ def test_ble_io_cap_display_yesno_C19852(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19853')
 def test_ble_io_cap_keyboard_only_C19853(ble_dut, ble_client):
     try:
         logger().info("Initiate ble service in DUT")
@@ -424,6 +427,7 @@ def test_ble_io_cap_keyboard_only_C19853(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19854')
 def test_ble_io_cap_No_input_output_C19854(ble_dut, ble_client):
     try:
         logger().info("Initiate ble service in DUT")
@@ -511,6 +515,7 @@ def test_ble_io_cap_No_input_output_C19854(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19855')
 def test_ble_io_cap_displayonly_C19855(ble_dut, ble_client):
     try:
         logger().info("Initiating ble service in dut")
@@ -586,6 +591,7 @@ def test_ble_io_cap_displayonly_C19855(ble_dut, ble_client):
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19856')
 def test_ble_io_cap_display_yesno_C19856(ble_dut, ble_client):
     try:
         logger().info("Initiating ble service in dut")
@@ -666,6 +672,7 @@ def test_ble_io_cap_display_yesno_C19856(ble_dut, ble_client):
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                          ])
+@pytest.mark.test_src_map_id('C19857')
 def test_ble_io_cap_keyboard_only_C19857(ble_dut, ble_client):
     try:
         logger().info("Initiating ble service in dut")
@@ -745,6 +752,7 @@ def test_ble_io_cap_keyboard_only_C19857(ble_dut, ble_client):
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19858')
 def test_ble_io_cap_no_input_output_C19858(ble_dut, ble_client):
     try:
         ble_obj = DutBleScanning()
@@ -830,6 +838,7 @@ def test_ble_io_cap_no_input_output_C19858(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19805')
 def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
     try:
         logger().info("start ble...")
@@ -915,6 +924,7 @@ def test_ble_scan_connectable_undirected_adv_C19805(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19807')
 def test_ble_scan_non_connectable_undirected_adv_C19807(ble_dut, ble_client):
     try:
         count = 0
@@ -1018,6 +1028,7 @@ def test_ble_scan_non_connectable_undirected_adv_C19807(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19808')
 def test_ble_scannable_undirected_adv_C19808(ble_dut, ble_client):
     try:
         count = 0
@@ -1123,6 +1134,7 @@ def test_ble_scannable_undirected_adv_C19808(ble_dut, ble_client):
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable",
                                          "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19840')
 def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
     try:
         count = 0
@@ -1229,6 +1241,7 @@ def test_ble_adv_state_in_scan_C19840(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', "ble_stop_adv"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19832')
 def test_ble_dut_slave_connect_C19832(ble_dut, ble_client):
     try:
         logger().info("set dut in adv mode...")
@@ -1304,6 +1317,7 @@ def test_ble_dut_slave_connect_C19832(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', "ble_stop_adv"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19802')
 def test_directed_connectable_adv_C19802(ble_dut, ble_client, bt_logs):
     logger().info("start ble in dut....")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -1358,6 +1372,7 @@ def test_directed_connectable_adv_C19802(ble_dut, ble_client, bt_logs):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19821')
 def test_ble_scan_resp_8_bytes_C19821(ble_dut, ble_client):
     try:
         logger().info("start ble dut....")
@@ -1436,6 +1451,7 @@ def test_ble_scan_resp_8_bytes_C19821(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19822')
 def test_ble_scan_resp_20_bytes_C19822(ble_dut, ble_client):
     try:
         logger().info("start ble dut....")
@@ -1514,6 +1530,7 @@ def test_ble_scan_resp_20_bytes_C19822(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19823')
 def test_ble_scan_resp_30_bytes_C19823(ble_dut, ble_client):
     try:
         logger().info("start ble dut....")
@@ -1594,6 +1611,7 @@ def test_ble_scan_resp_30_bytes_C19823(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19824')
 def test_ble_scan_resp_39_bytes_C19824(ble_dut, ble_client):
     try:
         logger().info("start ble dut....")
@@ -1675,6 +1693,7 @@ def test_ble_scan_resp_39_bytes_C19824(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19848')
 def test_ble_adv_report_C19848(ble_dut, ble_client):
     try:
         logger().info("start ble...")
@@ -1740,6 +1759,7 @@ def test_ble_adv_report_C19848(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19819')
 def test_ble_continuous_scan_C19819(wifi_dut, ble_dut, ble_client):
     with TimeMeasurer() as t:
         ble_scan_window = 32  # 0x20 in hexadecimal
@@ -1796,6 +1816,7 @@ def test_ble_continuous_scan_C19819(wifi_dut, ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19820')
 def test_ble_continuous_scan_C19820(ble_dut, ble_client):
     with TimeMeasurer() as t:
         try:
@@ -1855,6 +1876,7 @@ def test_ble_continuous_scan_C19820(ble_dut, ble_client):
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_wlan_powersave_mode3_lp")
+@pytest.mark.test_src_map_id('C19831')
 def test_ble_power_save_connected_state_as_a_slave_C19831(firmware_loader, wifi_dut, ble_client):
     try:
         logger().info("Initiate ble service in DUT")
@@ -1931,6 +1953,7 @@ def test_ble_power_save_connected_state_as_a_slave_C19831(firmware_loader, wifi_
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19859')
 def test_thePowersavemode2_functionality_of_DUT_C19859(wifi_dut, ble_client):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_thePowersavemode2_functionality_of_DUT_C19859.log_{int(time.time())}"):
@@ -2033,6 +2056,7 @@ def test_thePowersavemode2_functionality_of_DUT_C19859(wifi_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC3067455107')
 def test_c19838_verify_ble_passive_scanning_on_dut(wifi_dut, ble_dut, ble_client):
     # test case to verify BLE Passive Scan on DUT
     with BleLogs(start_collecting_logs=True,
@@ -2056,6 +2080,7 @@ def test_c19838_verify_ble_passive_scanning_on_dut(wifi_dut, ble_dut, ble_client
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC3825257115')
 def test_c19837_verify_ble_active_scanning_on_dut(wifi_dut, ble_dut, ble_client):
     # test case to verify BLE Passive Scan on DUT
     with BleLogs(start_collecting_logs=True,
@@ -2079,6 +2104,7 @@ def test_c19837_verify_ble_active_scanning_on_dut(wifi_dut, ble_dut, ble_client)
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC8009365122')
 def test_c19835_c19836_ble_conn_discon_verification(wifi_dut, ble_client):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_c19835_c19836_ble_conn_discon_verification.log_{int(time.time())}"):
@@ -2163,6 +2189,7 @@ def test_c19835_c19836_ble_conn_discon_verification(wifi_dut, ble_client):
     },
 )
 @pytest.mark.test_wlan_powersave_mode3_ulp
+@pytest.mark.test_src_map_id('TC2225458130')
 def test_c19830_powersave3_dut_adv_mode(firmware_loader, wifi_dut, ble_dut, ble_client):
     # test case to verify BLE Passive Scan on DUT
     with BleLogs(start_collecting_logs=True,
@@ -2238,6 +2265,7 @@ def test_c19830_powersave3_dut_adv_mode(firmware_loader, wifi_dut, ble_dut, ble_
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', "ble_stop_adv"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19839')
 def test_verify_ble_scan_in_advertising_state_C19839(ble_dut, ble_clients):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_dut_master_remote_device_directed_connectable.logs_{int(time.time())}"):
@@ -2323,6 +2351,7 @@ def test_verify_ble_scan_in_advertising_state_C19839(ble_dut, ble_clients):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19833')
 def test_ble_dut_master_un_directed_connectable_c19833(ble_dut, ble_client, rs_helper_ble):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_dut_master_un_directed_connectable_c19833.logs_{int(time.time())}"):
@@ -2398,6 +2427,7 @@ def test_ble_dut_master_un_directed_connectable_c19833(ble_dut, ble_client, rs_h
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19806')
 def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
     try:
         logger().info("start ble...")
@@ -2521,6 +2551,7 @@ def test_ble_scan_connectable_directed_adv_C19806(ble_dut, ble_client):
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', 'ble_stop_scan'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19834')
 def test_ble_dut_master_rd_directed_connectable_c19834(ble_dut, ble_client, rs_helper_ble):
     with BleLogs(start_collecting_logs=True,
                  bt_log_path=f"reports/test_ble_dut_master_remote_device_directed_connectable.logs_{int(time.time())}"):
@@ -2611,6 +2642,7 @@ def test_ble_dut_master_rd_directed_connectable_c19834(ble_dut, ble_client, rs_h
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init', 'ble_disconnect', "ble_stop_adv"])
 @pytest.mark.end_state("wifi_dut", wifi=[ "ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19847')
 def test_ble_dut_slave_128_bit_uuid_c19847(ble_dut, ble_client):
     try:
         set_local_name = "DUT_SLAVE_CON"

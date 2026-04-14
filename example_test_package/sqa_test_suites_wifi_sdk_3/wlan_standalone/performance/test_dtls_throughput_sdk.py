@@ -341,6 +341,7 @@ class ble_notify(WifiJoinThread):
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 # @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C768255')
 def test_wifi_sdk_dtls_standalone_tx_C768255(wifi_access_point, sniffer_filter, sl_collections, wifi_dut,
                                              openssl, wifi_sniffer, request, wifi_client):
     testcase = request.node.name
@@ -358,6 +359,7 @@ def test_wifi_sdk_dtls_standalone_tx_C768255(wifi_access_point, sniffer_filter, 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 # @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C768257')
 def test_wifi_sdk_dtls_tx_with_ble_connected_C768257(wifi_access_point, sniffer_filter, sl_collections, wifi_dut,
                                                      utf_constants, openssl, wifi_sniffer, request, wifi_client,
                                                      ble_client, bt_dut):
@@ -377,6 +379,7 @@ def test_wifi_sdk_dtls_tx_with_ble_connected_C768257(wifi_access_point, sniffer_
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 # @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C768259')
 def test_wifi_sdk_dtls_tx_ble_conn_with_data_C768259(wifi_access_point, sniffer_filter, sl_collections, wifi_dut,
                                                      utf_constants, openssl, wifi_sniffer, request, wifi_client,
                                                      ble_client, bt_dut):

@@ -32,6 +32,7 @@ from utf.interfaces.mqtt.client import MqttClientInterface
         "ext_tcpip_features": RS9116ExtTCPIPFeatureBitMap.EnableMQTTFeature,
     },
 )
+@pytest.mark.test_src_map_id('TC5944268156')
 def test_mqtt_using_mqttt_client(
     mqtt_server, mqtt_client, wifi_client, wifi_access_point, logger, n
 ):
@@ -102,6 +103,7 @@ def test_mqtt_using_mqttt_client(
     },
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_ipv6")
+@pytest.mark.test_src_map_id('TC4940571161')
 def test_mqtt_using_wifi_dut(
     mqtt_server, wifi_access_point, wifi_dut, wifi_client, logger
 ):

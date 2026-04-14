@@ -22,6 +22,7 @@ setup requirement:
         4. Access Point(Third Party AP's)
     
 """
+@pytest.mark.test_src_map_id('TC5791672118')
 def test_bt_dut_as_slave_800bytes_data(wifi_dut, bt_client):
     send_text = "XanthomonacampestrishyacinthiLMG73915843241XanthomonacampestrishyacinthiLMG73915843241XanthomonacampestrishyacinthiLMG73915843241XanthomonacampestrishyacinthiLMG73915843241"
     with TimeMeasurer() as t:

@@ -131,6 +131,7 @@ class validation_sniffer:
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19292')
 def test_verify_static_ip_allocation_to_dut_c19292(
         wifi_sniffer, wifi_dut, wifi_access_point, utf_constants
 ):
@@ -203,6 +204,7 @@ def test_verify_static_ip_allocation_to_dut_c19292(
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19293')
 def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
         wifi_sniffer, wifi_dut, wifi_access_point, dhcp_lease, rs_helper, utf_constants
 ):
@@ -257,6 +259,7 @@ def test_dhcp_renewal_time_to_2_min_renewal_func_c19293(
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
     }
 )
+@pytest.mark.test_src_map_id('C19294')
 def test_dhcp_ip_change_notification_c19294(wifi_sniffer, wifi_dut, wifi_access_point,
                                             utf_constants, rs_helper):
     """============Configure DHCP renewal time to 2 min and verify DHCP renewal functionality============="""
@@ -319,6 +322,7 @@ def test_dhcp_ip_change_notification_c19294(wifi_sniffer, wifi_dut, wifi_access_
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19295')
 def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol,
         dhcp_lease, rs_helper, utf_constants
@@ -383,6 +387,7 @@ def test_tcp_tx_functionality_while_dhcp_renewal_c19295(
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19296')
 def test_tcp_rx_functionality_while_dhcp_renewal_c19296(
         wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, dhcp_lease,
         rs_helper, utf_constants

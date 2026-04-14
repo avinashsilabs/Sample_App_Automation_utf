@@ -98,6 +98,7 @@ def DUT_as_master_connection(ble_dut, ble_client, ble_dut_address, rs_helper_ble
         return ble_remote_address
 
 
+@pytest.mark.test_src_map_id('TC6996465294')
 def test_C91302_ble_connection_stability_dut_as_master(ble_dut, ble_client, rs_helper_ble):
 #test case to verify connection stability for 15 min with smp where DUT is performing Central role
     try:
@@ -118,6 +119,7 @@ def test_C91302_ble_connection_stability_dut_as_master(ble_dut, ble_client, rs_h
         ble_client.interfaces.bluetooth.close()
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.advertising})
         
+@pytest.mark.test_src_map_id('TC0094208301')
 def test_C91314_ble_connect_with_diff_adv_interval(ble_dut, ble_client, rs_helper_ble):
 #test case to verify BLE connection stability for 1 hr with different advertising  inverval where DUT is performing Peripheral role with adv interval 0x152
     try:
@@ -138,6 +140,7 @@ def test_C91314_ble_connect_with_diff_adv_interval(ble_dut, ble_client, rs_helpe
         ble_client.interfaces.bluetooth.close()
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
+@pytest.mark.test_src_map_id('TC9854609308')
 def test_C18792_verify_ble_adv_on_dut(ble_dut, ble_client, rs_helper_ble):
     #test case to verify BLE advertising  on DUT with advertising  interval is 20ms
     try:
@@ -154,6 +157,7 @@ def test_C18792_verify_ble_adv_on_dut(ble_dut, ble_client, rs_helper_ble):
     finally:
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.scanning})
 
+@pytest.mark.test_src_map_id('C18799')
 def test_verify_ble_passive_scan_C18799(ble_dut, ble_client, rs_helper_ble):
     #test case to verify BLE passive scanning
     with BleLogs(start_collecting_logs=True, bt_log_path=f"reports/HCI_log_test_C18799_verify_ble_passive_scan.log_{int(time.time())}"):
@@ -162,6 +166,7 @@ def test_verify_ble_passive_scan_C18799(ble_dut, ble_client, rs_helper_ble):
         rs_helper_ble.ble_scanning_on_dut(scan_device=ble_dut, ble_client_address=ble_remote_address, ble_scan_type=1, timeout=60)
         rs_helper_ble.ble_stop_scanning_on_dut(scan_device=ble_dut)
 
+@pytest.mark.test_src_map_id('TC0477753320')
 def test_C91303_ble_connect_disconnect_dut_as_slave(ble_dut, ble_client, rs_helper_ble):  
     #test case to verify connection stability where Dut is perfoming Peripheral/Slave role with multiple times connect disconnect
     try:
@@ -185,6 +190,7 @@ def test_C91303_ble_connect_disconnect_dut_as_slave(ble_dut, ble_client, rs_help
     finally:
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
+@pytest.mark.test_src_map_id('TC8417621328')
 def test_C91326_ble_connect_disconnect_dut_as_dual_role(ble_dut, ble_client, ble_clients, rs_helper_ble, order=(1,)):
 #test case to verify connection stability where Dut is perfoming Dual role with multiple times connect disconnect
     try:
@@ -240,6 +246,7 @@ def test_C91326_ble_connect_disconnect_dut_as_dual_role(ble_dut, ble_client, ble
             except:
                 pass
 
+@pytest.mark.test_src_map_id('TC9142332334')
 def test_C91320_verify_ble_quick_disconnect(ble_dut, ble_client, rs_helper_ble):
     #test case to verify BLE quick disconnect
     try:
@@ -264,6 +271,7 @@ def test_C91320_verify_ble_quick_disconnect(ble_dut, ble_client, rs_helper_ble):
     finally:
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
+@pytest.mark.test_src_map_id('TC3512893340')
 def test_C91277_dual_role_connection_stability_secure_and_unencrypted(ble_dut,ble_client, ble_clients, rs_helper_ble,order=(0,1)):
     #test case to verify Dual role connection stability with one secure connection and one unencrypted
     try:
@@ -348,6 +356,7 @@ def ble_static_activity(ble_dut, ble_remote_m1, ble_remote_m2, rs_helper_ble, ad
     else: assert "HCI Logs are not captured"
     return ble_dut_address
 
+@pytest.mark.test_src_map_id('C91315')
 def test_static_activity_C91315(ble_dut, ble_client, ble_clients, rs_helper_ble):
     #test case to verify 2 central connections with connection interval 45 ms
     try:
@@ -360,6 +369,7 @@ def test_static_activity_C91315(ble_dut, ble_client, ble_clients, rs_helper_ble)
         logger().info("\n\n\n ***** Initiating Clean UP....! ******\n\n\n")
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.connected, ble_clients[0]:BleDeviceState.connected})
 
+@pytest.mark.test_src_map_id('C91316')
 def test_static_activity_C91316(ble_dut, ble_clients, rs_helper_ble):
     #test case to verify 2 central connections with connection interval 45 ms and advertising interval is 0x152
     try:
@@ -373,6 +383,7 @@ def test_static_activity_C91316(ble_dut, ble_clients, rs_helper_ble):
         logger().info("\n\n\n ***** Initiating Clean UP....! ******\n\n\n")
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_clients[0]:BleDeviceState.connected, ble_clients[1]:BleDeviceState.connected})
 
+@pytest.mark.test_src_map_id('TC9475358352')
 def test_update_conn_param_in_loop_C91312_dut_as_slave(ble_dut, ble_client, rs_helper_ble):
     #test case to verify updating the connection parameter form remote in a loop for 10 min duration, where DUT is performing slave role
     test_duration = 600
@@ -409,6 +420,7 @@ def test_update_conn_param_in_loop_C91312_dut_as_slave(ble_dut, ble_client, rs_h
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address)
 
 
+@pytest.mark.test_src_map_id('C18795')
 def test_wrong_passkey_C18795(ble_dut, ble_client, rs_helper_ble):
     #test case to verify updating the connection parameter form remote in a loop for 10 min duration, where DUT is performing slave role
     try:
@@ -439,6 +451,7 @@ def test_wrong_passkey_C18795(ble_dut, ble_client, rs_helper_ble):
         logger().info("\n\n\n ***** Initiating Clean UP....! ******\n\n\n")
         rs_helper_ble.ble_cleanup(ble_dut=ble_dut, ble_dut_address=ble_dut_address, ble_remotes={ble_client:BleDeviceState.standby})
 
+@pytest.mark.test_src_map_id('TC9547754363')
 def test_C91278_dual_role_connection_stability_both_unsecure(rs_helper_ble, ble_dut, ble_client, ble_clients, order=(0,1)):
     #test case to verify Dual role unsecure connection stability
     try:
@@ -485,6 +498,7 @@ def test_C91278_dual_role_connection_stability_both_unsecure(rs_helper_ble, ble_
             except:
                 pass
 
+@pytest.mark.test_src_map_id('TC4657060371')
 def test_C91279_dual_role_connection_stability_both_secure(ble_dut,ble_client, ble_clients, rs_helper_ble, order=(0,1)):
     #test case to verify Dual role connection stability with one secure connection and one unencrypted
     try:
@@ -537,6 +551,7 @@ def test_C91279_dual_role_connection_stability_both_secure(ble_dut,ble_client, b
             except:
                 pass
 
+@pytest.mark.test_src_map_id('C91275')
 def test_two_slave_conn_stability_both_secure_C91275(ble_dut, ble_client, ble_clients, rs_helper_ble):
     #test case to verify connection stability with 2 slave smp connections
     try:
@@ -593,6 +608,7 @@ def test_two_slave_conn_stability_both_secure_C91275(ble_dut, ble_client, ble_cl
         i for i in [_ for i in range(1,6) for _ in  list(permutations([0,1,2,3,4],i))]
     ],
 )
+@pytest.mark.test_src_map_id('TC6882412381')
 def test_1_to_5_325_combination_remote_unsecure_conn_reconn(ble_dut, ble_client, ble_clients, rs_helper_ble, order):
     # test case to verify connection stability with 2 master connections and 2 slave connections and scanning from DUT
     #includes C91282 and C91283
@@ -650,6 +666,7 @@ def test_1_to_5_325_combination_remote_unsecure_conn_reconn(ble_dut, ble_client,
             except:
                 pass
 
+@pytest.mark.test_src_map_id('C91309')
 def test_secure_conn_disconn_for_255_itr_C91309(ble_dut,ble_client,rs_helper_ble,order=(0,)):
     try:
         connection_time = 5
@@ -680,6 +697,7 @@ def test_secure_conn_disconn_for_255_itr_C91309(ble_dut,ble_client,rs_helper_ble
             pass
 
 
+@pytest.mark.test_src_map_id('C91322')
 def test_ble_conn_disconn_with_resolve_list_C91322(ble_dut, ble_client, rs_helper_ble): #use latest hex file
     #Verifying the customer issue RSC-10396 : BLE connect-disconnect with resolving list
     try:

@@ -1047,6 +1047,7 @@ class BleThreadFunctionality(ThreadBase):
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C156991')
 def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
     wifi_sniffer,
     wifi_access_point,
@@ -1157,6 +1158,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C156992')
 def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
     wifi_sniffer,
     wifi_access_point,
@@ -1280,6 +1282,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_C156992(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C156989')
 def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156989(
     wifi_sniffer,
     wifi_access_point,
@@ -1408,6 +1411,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156989(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C156990')
 def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156990(
     wifi_sniffer,
     wifi_access_point,
@@ -1542,6 +1546,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_adv_scan_C156990(
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C538007')
 def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_C538007(
         wifi_sniffer,
         wifi_access_point,
@@ -1673,6 +1678,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_C538007(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C538020')
 def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_20ms_C538020(
         wifi_sniffer,
         wifi_access_point,
@@ -1799,6 +1805,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_20ms_C538020(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C538021')
 def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_112ms_C538021(
         wifi_sniffer,
         wifi_access_point,
@@ -1925,6 +1932,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_112ms_C538021(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C538022')
 def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_4000ms_C538022(
         wifi_sniffer,
         wifi_access_point,
@@ -2051,6 +2059,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_4000ms_C538022(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C538023')
 def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_20ms_C538023(
         wifi_sniffer,
         wifi_access_point,
@@ -2176,6 +2185,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_20ms_C538023(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C538024')
 def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_112ms_C538024(
         wifi_sniffer,
         wifi_access_point,
@@ -2303,6 +2313,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_112ms_C538024(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C538025')
 def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_4000ms_C538025(
         wifi_sniffer,
         wifi_access_point,
@@ -2430,6 +2441,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_4000ms_C538025(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C538027')
 def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_C538027(
         wifi_sniffer,
         wifi_access_point,
@@ -2567,6 +2579,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_C538027(
     ],
 )
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.test_src_map_id('C476962')
 def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_scan_C476962(
     wifi_sniffer,
     wifi_access_point,
@@ -2702,6 +2715,7 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_scan_C476962(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C538028')
 def test_Coex_sdk_WLAN_ipv6_tcp_tx_ble_tx_dle_100B_C538028(
         wifi_sniffer,
         wifi_access_point,
@@ -2852,6 +2866,7 @@ def test_Coex_sdk_WLAN_ipv6_tcp_tx_ble_tx_dle_100B_C538028(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C538029')
 def test_Coex_sdk_WLAN_ipv6_udp_tx_ble_tx_dle_240B_C538029(
         wifi_sniffer,
         wifi_access_point,
@@ -3005,6 +3020,7 @@ def test_Coex_sdk_WLAN_ipv6_udp_tx_ble_tx_dle_240B_C538029(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C156993')
 def test_Coex_sdk_WLAN_ipv6_http_download_BLE_adv_scan_C156993(
     wifi_sniffer,
     wifi_access_point,
@@ -3147,6 +3163,7 @@ def test_Coex_sdk_WLAN_ipv6_http_download_BLE_adv_scan_C156993(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
+@pytest.mark.test_src_map_id('C156994')
 def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_scan_C156994(
         wifi_sniffer,
         wifi_access_point,
@@ -3273,6 +3290,7 @@ def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_scan_C156994(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C538026')
 def test_Coex_sdk_WLAN_ipv6_ssl_rx_ble_rx_C538026(
         wifi_sniffer,
         wifi_access_point,
@@ -3369,6 +3387,7 @@ def test_Coex_sdk_WLAN_ipv6_ssl_rx_ble_rx_C538026(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C538032')
 def test_Coex_WLAN_ipv6_ssl_tx_GUA_ble_rx_C538032(
     wifi_sniffer,
     wifi_access_point,
@@ -3469,6 +3488,7 @@ def test_Coex_WLAN_ipv6_ssl_tx_GUA_ble_rx_C538032(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C538033')
 def test_Coex_WLAN_ipv6_ssl_rx_LL_ble_rx_C538033(
         wifi_sniffer,
         wifi_access_point,
@@ -3574,6 +3594,7 @@ def test_Coex_WLAN_ipv6_ssl_rx_LL_ble_rx_C538033(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "clear_certs"]
 )
+@pytest.mark.test_src_map_id('C538030')
 def test_Coex_sdk_WLAN_ipv6_http_download_ble_dual_role_140_on_c_240_on_p_C538030(
         wifi_sniffer,
         wifi_access_point,
@@ -3770,6 +3791,7 @@ def test_Coex_sdk_WLAN_ipv6_http_download_ble_dual_role_140_on_c_240_on_p_C53803
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "clear_certs"]
 )
+@pytest.mark.test_src_map_id('C538031')
 def test_Coex_sdk_WLAN_ipv6_http_download_ble_dual_role_240_on_c_140_on_p_C538031(
         wifi_sniffer,
         wifi_access_point,
@@ -3960,6 +3982,7 @@ def test_Coex_sdk_WLAN_ipv6_http_download_ble_dual_role_240_on_c_140_on_p_C53803
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780403')
 def test_Coex_sdk_WLAN_ipv6_BLE_slave_CI_30ms_C780403(
     wifi_sniffer,
     wifi_access_point,
@@ -4081,6 +4104,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_CI_30ms_C780403(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780404')
 def test_Coex_sdk_WLAN_ipv6_BLE_slave_CI_80ms_C780404(
     wifi_sniffer,
     wifi_access_point,
@@ -4202,6 +4226,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_CI_80ms_C780404(
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
+@pytest.mark.test_src_map_id('C780405')
 def test_Coex_sdk_WLAN_ipv6_BLE_slave_CI_150ms_C780405(
     wifi_sniffer,
     wifi_access_point,
@@ -4331,6 +4356,7 @@ def test_Coex_sdk_WLAN_ipv6_BLE_slave_CI_150ms_C780405(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780406')
 def test_Coex_sdk_WLAN_ipv6_WPA3_BLE_adv_scan_AI_50ms_SI_60ms_SW_20ms_C780406(
     wifi_sniffer,
     wifi_access_point,
@@ -4469,6 +4495,7 @@ def test_Coex_sdk_WLAN_ipv6_WPA3_BLE_adv_scan_AI_50ms_SI_60ms_SW_20ms_C780406(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780407')
 def test_Coex_sdk_WLAN_ipv6_WPA3_BLE_adv_scan_AI_80ms_SI_300ms_SW_100ms_C780407(
     wifi_sniffer,
     wifi_access_point,
@@ -4607,6 +4634,7 @@ def test_Coex_sdk_WLAN_ipv6_WPA3_BLE_adv_scan_AI_80ms_SI_300ms_SW_100ms_C780407(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780408')
 def test_Coex_sdk_WLAN_ipv6_WPA3_BLE_adv_scan_AI_120ms_SI_900ms_SW_300ms_C780408(
     wifi_sniffer,
     wifi_access_point,
@@ -4745,6 +4773,7 @@ def test_Coex_sdk_WLAN_ipv6_WPA3_BLE_adv_scan_AI_120ms_SI_900ms_SW_300ms_C780408
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C780409')
 def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_AI_50ms_SI_60ms_SW_20ms_C780409(
         wifi_sniffer,
         wifi_access_point,
@@ -4878,6 +4907,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_AI_50ms_SI_60ms_SW_20ms_C780409(
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C780410')
 def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_AI_80ms_SI_300ms_SW_100ms_C780410(
         wifi_sniffer,
         wifi_access_point,
@@ -5011,6 +5041,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_AI_80ms_SI_300ms_SW_100ms_C78041
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C780411')
 def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_AI_120ms_SI_900ms_SW_300ms_C780411(
         wifi_sniffer,
         wifi_access_point,
@@ -5145,6 +5176,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_TX_BLE_adv_scan_AI_120ms_SI_900ms_SW_300ms_C7804
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C780412')
 def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_CI_30ms_C780412(
         wifi_sniffer,
         wifi_access_point,
@@ -5273,6 +5305,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_CI_30ms_C780412(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C780413')
 def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_CI_80ms_C780413(
         wifi_sniffer,
         wifi_access_point,
@@ -5401,6 +5434,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_CI_80ms_C780413(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C780414')
 def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_CI_150ms_C780414(
         wifi_sniffer,
         wifi_access_point,
@@ -5529,6 +5563,7 @@ def test_Coex_sdk_WLAN_IPV6_TCP_RX_BLE_CI_150ms_C780414(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C780415')
 def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_30ms_C780415(
         wifi_sniffer,
         wifi_access_point,
@@ -5656,6 +5691,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_30ms_C780415(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C780416')
 def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_80ms_C780416(
         wifi_sniffer,
         wifi_access_point,
@@ -5785,6 +5821,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_80ms_C780416(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C780417')
 def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_150ms_C780417(
         wifi_sniffer,
         wifi_access_point,
@@ -5916,6 +5953,7 @@ def test_Coex_sdk_WLAN_IPV6_UDP_TX_BLE_CI_150ms_C780417(
     ],
 )
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.test_src_map_id('C780418')
 def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_AI_50ms_scan_SI_60ms_SW_20ms_C780418(
     wifi_sniffer,
     wifi_access_point,
@@ -6063,6 +6101,7 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_AI_50ms_scan_SI_60ms_SW_20ms_C7
     ],
 )
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.test_src_map_id('C780419')
 def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_AI_80ms_scan_SI_300ms_SW_100ms_C780419(
     wifi_sniffer,
     wifi_access_point,
@@ -6210,6 +6249,7 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_AI_80ms_scan_SI_300ms_SW_100ms_
     ],
 )
 @pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.test_src_map_id('C780420')
 def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_AI_120ms_scan_SI_900ms_SW_300ms_C780420(
     wifi_sniffer,
     wifi_access_point,
@@ -6351,6 +6391,7 @@ def test_Coex_sdk_ipv6_http_get_2048_url_BLE_adv_AI_120ms_scan_SI_900ms_SW_300ms
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
+@pytest.mark.test_src_map_id('C780421')
 def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_AI_50ms_scan_SI_60ms_SW_20ms_C780421(
     wifi_sniffer,
     wifi_access_point,
@@ -6500,6 +6541,7 @@ def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_AI_50ms_scan_SI_60ms_SW_20ms_
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
+@pytest.mark.test_src_map_id('C780422')
 def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_AI_80ms_scan_SI_300ms_SW_100ms_C780422(
     wifi_sniffer,
     wifi_access_point,
@@ -6647,6 +6689,7 @@ def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_AI_80ms_scan_SI_300ms_SW_100m
 @pytest.mark.end_state(
     "wifi_dut", wifi=["wifi_powersave_disable", "disassociated", "ble_stop_adv"]
 )
+@pytest.mark.test_src_map_id('C780423')
 def test_Coex_sdk_WLAN_ipv6_https_download_BLE_adv_AI_120ms_scan_SI_900ms_SW_300ms_C780423(
     wifi_sniffer,
     wifi_access_point,

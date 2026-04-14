@@ -129,6 +129,7 @@ class WLanThread(ThreadBase):
 @pytest.mark.config("http_server", auto_start=False)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C42042')
 def test_wifi_sdk_https_file_download_c42042(wifi_dut, wifi_access_point, sl_collections, http_server,
                                              wifi_client, wifi_sniffer):
 

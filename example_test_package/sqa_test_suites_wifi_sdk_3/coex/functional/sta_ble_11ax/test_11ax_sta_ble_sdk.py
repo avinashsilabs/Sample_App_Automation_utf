@@ -1641,6 +1641,7 @@ def test_wifi_sdk_11ax_ble_provisioning_c198666(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198675')
 def test_wifi_sdk_https_download_with_11ax_ble_connect_master_c198675(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, http_server, index_path, utf_constants):
@@ -1714,6 +1715,7 @@ def test_wifi_sdk_https_download_with_11ax_ble_connect_master_c198675(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198676')
 def test_wifi_sdk_https_download_with_11ax_ble_connect_slave_c198676(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, http_server, index_path, utf_constants):
@@ -1782,6 +1784,7 @@ def test_wifi_sdk_https_download_with_11ax_ble_connect_slave_c198676(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198689')
 def test_wifi_sdk_http_download_with_11ax_ble_dual_role_C198689(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_clients, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, http_server, index_path, utf_constants):
@@ -1858,6 +1861,7 @@ def test_wifi_sdk_http_download_with_11ax_ble_dual_role_C198689(
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point',
                     wifi={"standard": 'gnbax', "security": 'WPA2', "passphrase": 'thisisatestnetwork'})
+@pytest.mark.test_src_map_id('C198677')
 def test_wifi_sdk_https_download_with_11ax_ble_dual_role_C198677(
         wifi_sniffer, wifi_access_point, wifi_dut, ble_clients, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, http_server, index_path, utf_constants):

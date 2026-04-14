@@ -313,6 +313,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C129923')
 def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -419,6 +420,7 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C129923')
 def test_twt_power_30s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter, wifi_dut, wifi_access_point, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -524,6 +526,7 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_C129923(firmware_loader, power_meter,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C129923')
 def test_twt_power_60s_twt_int_wlan_ka_60s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -626,6 +629,7 @@ def test_twt_power_60s_twt_int_wlan_ka_60s_C129923(firmware_loader, power_meter,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C129923')
 def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -737,6 +741,7 @@ def test_twt_power_2s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C129923')
 def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name
@@ -847,6 +852,7 @@ def test_twt_power_30s_twt_int_wlan_ka_30s_tcp_ka_240s_C129923(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.test_src_map_id('C129923')
 def test_twt_power_60s_twt_int_wlan_ka_60s_tcp_ka_240s_C129923(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request, remote_socket, performance_data, custom_performance_fixture):
      performance_file_root_dir, perf_file_name = custom_performance_fixture
      obtained_test_name = request.node.name

@@ -65,6 +65,7 @@ def logger():
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768086')
 def test_8p_2c_connection_tx_notify_20_bytes_C768086(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]
@@ -305,6 +306,7 @@ def test_8p_2c_connection_tx_notify_20_bytes_C768086(ble_dut, ble_client, ble_cl
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768101')
 def test_8p_2c_connection_tx_notify_230_bytes_C768101(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]
@@ -550,6 +552,7 @@ def test_8p_2c_connection_tx_notify_230_bytes_C768101(ble_dut, ble_client, ble_c
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768083')
 def test_8p_2c_connection_tx_indicate_20_bytes_C768083(ble_dut, ble_client, ble_clients):
 
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
@@ -799,6 +802,7 @@ def test_8p_2c_connection_tx_indicate_20_bytes_C768083(ble_dut, ble_client, ble_
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768090')
 def test_8p_2c_connection_tx_write_no_resp_20_bytes_C768090(ble_dut, ble_client, ble_clients):
 
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
@@ -1021,6 +1025,7 @@ def test_8p_2c_connection_tx_write_no_resp_20_bytes_C768090(ble_dut, ble_client,
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768089')
 def test_8p_2c_connection_tx_write_with_resp_20_bytes_C768089(ble_dut, ble_client, ble_clients):
 
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
@@ -1256,6 +1261,7 @@ def test_8p_2c_connection_tx_write_with_resp_20_bytes_C768089(ble_dut, ble_clien
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768072')
 def test_8p_1c_adv_with_connections_C768072(ble_dut, ble_client, ble_clients):
     
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
@@ -1446,6 +1452,7 @@ def test_8p_1c_adv_with_connections_C768072(ble_dut, ble_client, ble_clients):
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768073')
 def test_7p_2c_scan_with_connections_C768073(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5]]
@@ -1639,6 +1646,7 @@ def test_7p_2c_scan_with_connections_C768073(ble_dut, ble_client, ble_clients):
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768074')
 def test_7p_1c_adv_scan_with_connections_C768074(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5]]
@@ -1859,6 +1867,7 @@ def test_7p_1c_adv_scan_with_connections_C768074(ble_dut, ble_client, ble_client
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768075')
 def test_2c_8p_diff_conn_intervals_C768075(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]
@@ -2068,6 +2077,7 @@ def test_2c_8p_diff_conn_intervals_C768075(ble_dut, ble_client, ble_clients):
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768076')
 def test_8p_2c_diff_conn_intervals_C768076(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]
@@ -2277,6 +2287,7 @@ def test_8p_2c_diff_conn_intervals_C768076(ble_dut, ble_client, ble_clients):
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768077')
 def test_8p_2c_conn_disconn_reconn_diff_ci_C768077(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]
@@ -2486,6 +2497,7 @@ def test_8p_2c_conn_disconn_reconn_diff_ci_C768077(ble_dut, ble_client, ble_clie
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768078')
 def test_8p_2c_just_works_pairing_C768078(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]
@@ -2659,6 +2671,7 @@ def test_8p_2c_just_works_pairing_C768078(ble_dut, ble_client, ble_clients):
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768068')
 def test_adv_211ms_scan_33ms_C768068(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]
@@ -2789,6 +2802,7 @@ def test_adv_211ms_scan_33ms_C768068(ble_dut, ble_client, ble_clients):
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768069')
 def test_adv_211ms_scan_si33_sw14_C768069(ble_dut, ble_client, ble_clients):
     
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
@@ -2920,6 +2934,7 @@ def test_adv_211ms_scan_si33_sw14_C768069(ble_dut, ble_client, ble_clients):
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768070')
 def test_adv_211ms_scan_si33_sw11_C768070(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]
@@ -3050,6 +3065,7 @@ def test_adv_211ms_scan_si33_sw11_C768070(ble_dut, ble_client, ble_clients):
                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
     },
 )
+@pytest.mark.test_src_map_id('C768071')
 def test_adv_211ms_scan_si6600_sw3300_C768071(ble_dut, ble_client, ble_clients):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]

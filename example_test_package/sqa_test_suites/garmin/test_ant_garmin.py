@@ -30,6 +30,7 @@ pytestmark = [
     ]
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 # The test case initiates the ant service in module
+@pytest.mark.test_src_map_id('TC8444104683')
 def test_ant_init(wifi_dut):
     with TimeMeasurer() as t:
         # This API initiates the Ant in dut

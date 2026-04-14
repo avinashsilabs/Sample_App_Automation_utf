@@ -450,6 +450,7 @@ pytestmark = [
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("ca_cert", ["ca-chain.cert.pem"])
 
+@pytest.mark.test_src_map_id('C575153')
 def test_Coex_sdk_ssl_tx_cipher_C575153(
         wifi_sniffer,
         wifi_access_point,
@@ -531,6 +532,7 @@ def test_Coex_sdk_ssl_tx_cipher_C575153(
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
+@pytest.mark.test_src_map_id('C575154')
 def test_Coex_sdk_ssl_tx_cipher_C575154(
         wifi_sniffer,
         wifi_access_point,
@@ -615,6 +617,7 @@ def test_Coex_sdk_ssl_tx_cipher_C575154(
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
+@pytest.mark.test_src_map_id('C575155')
 def test_Coex_sdk_ssl_tx_cipher_C575155(
         wifi_sniffer,
         wifi_access_point,
@@ -696,6 +699,7 @@ def test_Coex_sdk_ssl_tx_cipher_C575155(
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
+@pytest.mark.test_src_map_id('C575156')
 def test_Coex_sdk_ssl_tx_cipher_dual_role_C575156(
         wifi_sniffer,
         wifi_access_point,
@@ -819,6 +823,7 @@ def test_Coex_sdk_ssl_tx_cipher_dual_role_C575156(
                              "set_default_ssl_cipher", "set_default_extended_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256', 'TLS_EMPTY_RENEGOTIATION_INFO_SCSV']])
 @pytest.mark.parametrize("cert", [("ca_ecdsa.crt", "server_ecdsa.crt", "server_ecdsa.key")])
+@pytest.mark.test_src_map_id('C575157')
 def test_Coex_sdk_ssl_tx_cipher_C575157(
         wifi_sniffer,
         wifi_access_point,

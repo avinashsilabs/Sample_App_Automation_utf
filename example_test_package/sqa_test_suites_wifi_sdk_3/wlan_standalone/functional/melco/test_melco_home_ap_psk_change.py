@@ -278,6 +278,7 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_fe
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557333')
 def test_melco_sdk_home_ap_psk_change_C557333(sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer,
                                               sniffer_filter, wifi_access_point, wiseconnect_web, request):
     """
@@ -363,6 +364,7 @@ def test_melco_sdk_home_ap_psk_change_C557333(sl_collections, wifi_dut, wifi_cli
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557334')
 def test_melco_sdk_home_ap_psk_change_C557334(sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer,
                                               sniffer_filter, wifi_access_point, wiseconnect_web, request, utf_constants):
     """
@@ -448,6 +450,7 @@ def test_melco_sdk_home_ap_psk_change_C557334(sl_collections, wifi_dut, wifi_cli
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557335')
 def test_melco_sdk_home_ap_psk_change_C557335(sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer,
                                               sniffer_filter, wifi_access_point, wiseconnect_web, request,
                                               utf_constants):
@@ -540,6 +543,7 @@ def test_melco_sdk_home_ap_psk_change_C557335(sl_collections, wifi_dut, wifi_cli
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557336')
 def test_melco_sdk_home_ap_psk_change_C557336(sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer,
                                               sniffer_filter, wifi_access_point, wiseconnect_web, request,
                                               utf_constants):

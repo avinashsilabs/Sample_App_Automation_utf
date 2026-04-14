@@ -1,5 +1,7 @@
+import pytest
 import time
 
+@pytest.mark.test_src_map_id('TC4046285609')
 def test_wolfssl_server(wolfssl, logger):
     # Start the wolfssl server
     wolfssl.interfaces.server.start()

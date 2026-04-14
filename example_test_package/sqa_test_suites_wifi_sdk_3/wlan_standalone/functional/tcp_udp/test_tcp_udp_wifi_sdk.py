@@ -648,6 +648,7 @@ class WifiJoinThread(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19347')
 def test_wifi_sdk_tcp_open_send_close_socket_c19347(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client):
@@ -720,6 +721,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c19347(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19348')
 def test_wifi_sdk_udp_open_send_data_close_socket_c19348(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client):
@@ -778,6 +780,7 @@ def test_wifi_sdk_udp_open_send_data_close_socket_c19348(
 )
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19349')
 def test_wifi_sdk_tcp_socket_dut_client_c19349(
         sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
         remote_socket_factory, wifi_client):
@@ -862,6 +865,7 @@ def test_wifi_sdk_tcp_socket_dut_client_c19349(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19350')
 def test_wifi_sdk_udp_socket_dut_client_c19350(
         wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, request, sniffer_filter,
         remote_socket_factory, wifi_client):
@@ -930,6 +934,7 @@ def test_wifi_sdk_udp_socket_dut_client_c19350(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19352')
 def test_wifi_sdk_5tcp_5udp_socket_c19352(
         wifi_access_point, wifi_dut, remote_socket_factory, wifi_sniffer, sl_collections, request, sniffer_filter,
         wifi_client):
@@ -996,6 +1001,7 @@ def test_wifi_sdk_5tcp_5udp_socket_c19352(
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19356')
 def test_wifi_sdk_socket_tcp_Data_Transfer_mss_c19356(wifi_access_point, wifi_dut, sl_collections, wifi_sniffer,
                                                       sniffer_filter, protocol, net_perf_client,
                                                       wifi_client):
@@ -1081,6 +1087,7 @@ def test_wifi_sdk_socket_tcp_Data_Transfer_mss_c19356(wifi_access_point, wifi_du
                     net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19357')
 def test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19357(wifi_access_point, wifi_dut, sl_collections, wifi_sniffer,
                                                       sniffer_filter, protocol, net_perf_client,
                                                       wifi_client):
@@ -1198,6 +1205,7 @@ def test_wifi_sdk_tcp_TX_with_message_size_greater_size_than_tcp_window_size_c19
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19360')
 def test_wifi_sdk_tcp_data_receive_check_c19360(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                                 sniffer_filter, remote_socket_factory, wifi_client):
     """Validation of data and length by giving length in read command over TCP server socket"""
@@ -1294,6 +1302,7 @@ def test_wifi_sdk_tcp_data_receive_check_c19360(wifi_sniffer, wifi_dut, wifi_acc
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19361')
 def test_wifi_sdk_udp_receive_c19361(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                      sniffer_filter, remote_socket, wifi_client):
     """Validation of data and length by giving length in read command over udp"""
@@ -1377,6 +1386,7 @@ def test_wifi_sdk_udp_receive_c19361(wifi_sniffer, wifi_dut, wifi_access_point, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C71653')
 def test_wifi_sdk_tcp_udp_data_receive_WPA_TKIP_c71653(
         wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket_factory,
         remote_socket, wifi_client):
@@ -1503,6 +1513,7 @@ def test_wifi_sdk_tcp_udp_data_receive_WPA_TKIP_c71653(
                                                "standard": '11bg'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19365')
 def test_wifi_sdk_tcp_udp_data_tx_WPA_TKIP_c19365(
         wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket_factory,
         wifi_client):
@@ -1567,6 +1578,7 @@ def test_wifi_sdk_tcp_udp_data_tx_WPA_TKIP_c19365(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.test_src_map_id('C19351')
 def test_wifi_sdk_multi_tcp_socket_dut_server_c19351(
         wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket_factory,
         wifi_client):
@@ -1718,6 +1730,7 @@ def test_wifi_sdk_multi_tcp_socket_dut_server_c19351(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.test_src_map_id('C19353')
 def test_wifi_sdk_5tcp_5udp_dut_server_socket_c19353(
         wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket_factory,
         wifi_client, remote_multi_socket):
@@ -1867,6 +1880,7 @@ def test_wifi_sdk_5tcp_5udp_dut_server_socket_c19353(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19362')
 def test_wifi_sdk_tcp_remote_terminate_c19362(
         wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket,
         wifi_client):
@@ -1925,6 +1939,7 @@ def test_wifi_sdk_tcp_remote_terminate_c19362(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 12345678})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19354')
 def test_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket,
         wifi_client, switch):
     """ Verify TCP data transfer functionality while STA is in rejoin process. Send data packets 1000 with module size
@@ -2017,6 +2032,7 @@ def test_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_dut, wifi_access_poi
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": 12345678})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19366')
 def test_tcp_tx_rx_high_performance_socket_C19366(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                                   sniffer_filter, remote_socket_factory, wifi_client):
     """ Verify TCP tx and Rx by opening 8 TCP high performance socket."""
@@ -2110,6 +2126,7 @@ def test_tcp_tx_rx_high_performance_socket_C19366(wifi_sniffer, wifi_dut, wifi_a
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148603')
 def test_open_tcp_server_udp_client_C148603(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                             sniffer_filter, remote_socket_factory, wifi_client):
     """ Verify 10 sockets functionality open 5TCP server +5UDP client sockets."""
@@ -2235,6 +2252,7 @@ def test_open_tcp_server_udp_client_C148603(wifi_sniffer, wifi_dut, wifi_access_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19367')
 def test_tcp_socket_window_size_C19367(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                        sniffer_filter, remote_socket_factory, wifi_client):
     """ Open TCP socket with window size 7 in socket create command."""
@@ -2319,6 +2337,7 @@ def test_tcp_socket_window_size_C19367(wifi_sniffer, wifi_dut, wifi_access_point
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C584247')
 def test_udp_async_server_open_receive_close_C584247(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                                      sniffer_filter, remote_socket, wifi_client):
     """ Verify UDP async  server  socket is open, receive data, and close socket."""
@@ -2390,6 +2409,7 @@ def test_udp_async_server_open_receive_close_C584247(wifi_sniffer, wifi_dut, wif
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19364')
 def test_tcp_server_open_more_than_max_limit_C19364(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                                     sniffer_filter, remote_socket_factory, wifi_client):
     """ Open TCP severs socket more than maximum  and connect TCP clients."""
@@ -2499,6 +2519,7 @@ def test_tcp_server_open_more_than_max_limit_C19364(wifi_sniffer, wifi_dut, wifi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19359')
 def test_wifi_socket_limit_C19359(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket,
         wifi_client):
     """ Open more than one socket when only one socket is selected in opermode command."""
@@ -2596,6 +2617,7 @@ def test_wifi_socket_limit_C19359(wifi_sniffer, wifi_dut, wifi_access_point, req
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C586158')
 def test_wifi_sdk_verify_keep_alive_functionality_with_LI_500_900_1000ms_c586158(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket,
         wifi_client):
     """
@@ -2681,6 +2703,7 @@ def test_wifi_sdk_verify_keep_alive_functionality_with_LI_500_900_1000ms_c586158
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C586159')
 def test_wifi_sdk_verify_keep_alive_functionality_with_different_dtim_c586159(wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections, sniffer_filter, remote_socket,
         wifi_client):
     """
@@ -2778,6 +2801,7 @@ def test_wifi_sdk_verify_keep_alive_functionality_with_different_dtim_c586159(wi
 @pytest.mark.start_state("wifi_dut", wifi=["init", "net_init_client"])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C585534')
 def test_wifi_sdk_verify_tcp_server_functionality_with_tcp_ip_bypass_mode_c585534(firmware_loader, wifi_sniffer, wifi_dut, wifi_access_point, request, sl_collections,
                                                 net_perf_client, wifi_client, protocol):
     """
@@ -2866,6 +2890,7 @@ def test_wifi_sdk_verify_tcp_server_functionality_with_tcp_ip_bypass_mode_c58553
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.test_src_map_id('C780281')
 def test_wifi_sdk_raspi_ap_and_dut_tcp_data_receive_check_c780281(wifi_sniffer, wifi_dut, wifi_client, request, sl_collections,
                                                 sniffer_filter, remote_socket_factory):
     """Bring up Raspi in AP mode and DUT in station mode, Validation TCP data receive on DUT from Raspi AP."""

@@ -156,6 +156,7 @@ class WLanThread(ThreadBase):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19658')
 def test_wifi_zephyr_pmf_cap_c19658(wifi_sniffer, wifi_access_point, wifi_dut, wifi_client, zephyr_wifi_collections,
                                     request,
                                     sniffer_filter, net_perf_client, protocol):
@@ -205,6 +206,7 @@ def test_wifi_zephyr_pmf_cap_c19658(wifi_sniffer, wifi_access_point, wifi_dut, w
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19659')
 def test_wifi_zephyr_pmf_req_c19659(wifi_sniffer, wifi_access_point, wifi_dut, zephyr_wifi_collections, request,
                                     sniffer_filter, wifi_client, net_perf_client, protocol):
     test_name = request.node.name
@@ -255,6 +257,7 @@ def test_wifi_zephyr_pmf_req_c19659(wifi_sniffer, wifi_access_point, wifi_dut, z
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19661')
 def test_wifi_zephyr_pmf_req_ap_pmf_cap_dut_c19661(wifi_sniffer, wifi_access_point, wifi_dut, zephyr_wifi_collections,
                                                    request, sniffer_filter, wifi_client, net_perf_client, protocol):
     test_name = request.node.name
@@ -304,6 +307,7 @@ def test_wifi_zephyr_pmf_req_ap_pmf_cap_dut_c19661(wifi_sniffer, wifi_access_poi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19670')
 def test_wifi_zephyr_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wifi_access_point, wifi_dut,
                                                            zephyr_wifi_collections,
                                                            request, sniffer_filter, wifi_client, net_perf_client,
@@ -357,6 +361,7 @@ def test_wifi_zephyr_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wifi_ac
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19671')
 def test_wifi_zephyr_mgmt_pmf_enable_tx_data_c19671(wifi_sniffer, wifi_access_point, wifi_dut,
                                                     zephyr_wifi_collections,
                                                     request, sniffer_filter, wifi_client, net_perf_client,
@@ -408,6 +413,7 @@ def test_wifi_zephyr_mgmt_pmf_enable_tx_data_c19671(wifi_sniffer, wifi_access_po
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19665')
 def test_wifi_zephyr_unicast_frame_protection_bit_c19665(wifi_sniffer, wifi_access_point, wifi_dut,
                                                          zephyr_wifi_collections,
                                                          request, sniffer_filter, wifi_client, net_perf_client,
@@ -474,6 +480,7 @@ def test_wifi_zephyr_unicast_frame_protection_bit_c19665(wifi_sniffer, wifi_acce
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19667')
 def test_wifi_zephyr_action_frame_with_protection_bit_encrypted_c19667(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                        zephyr_wifi_collections, request, sniffer_filter,
                                                                        wifi_client, net_perf_client, protocol):
@@ -539,6 +546,7 @@ def test_wifi_zephyr_action_frame_with_protection_bit_encrypted_c19667(wifi_snif
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19672')
 def test_wifi_zephyr_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_point, wifi_dut, zephyr_wifi_collections,
                                                    request, sniffer_filter, wifi_client, net_perf_client, protocol):
     test_name = request.node.name
@@ -604,6 +612,7 @@ def test_wifi_zephyr_disconnection_with_pmf_c19672(wifi_sniffer, wifi_access_poi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C19671')
 def test_wifi_zephyr_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_point, wifi_sniffer,
                                                          zephyr_wifi_collections, request, sniffer_filter, wifi_client,
                                                          net_perf_client, protocol):
@@ -650,6 +659,7 @@ def test_wifi_zephyr_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_access_p
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19664')
 def test_wifi_zephyr_mgmt_pmf_req_connection_fail_c19664(wifi_access_point, wifi_dut):
     """ Verify the Connection between AP(PMF required) and DUT(PMF disable)"""
     '''	Check whether the device is not connecting to PMF Required AP when the device is not configured with PMF'''

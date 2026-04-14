@@ -14,6 +14,7 @@ def __print_throughput(throughput: dict):
         print_dict("##     ", throughput)
 
 @pytest.mark.spectrum_analyzer("keysight_spectrum_analyzer")
+@pytest.mark.test_src_map_id('TC2773840335')
 def test_measure_channel_power(spectrum_analyzer):
     # Initialize Instrument
     spectrum_analyzer.interfaces.spectrum_analyzer.initialize_instrument()

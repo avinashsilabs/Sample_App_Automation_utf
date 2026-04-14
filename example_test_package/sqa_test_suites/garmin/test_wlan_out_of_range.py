@@ -129,6 +129,7 @@ class Wlan_data_transfer_tx(ThreadBase):
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
     }
 )
+@pytest.mark.test_src_map_id('C21278')
 def test_join_ap_on_off_C21278(switch, rs_helper, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
 
     try:
@@ -177,6 +178,7 @@ def test_join_ap_on_off_C21278(switch, rs_helper, wifi_sniffer, wifi_access_poin
         "custom_features": RS9116CustomFeatureBitMap.AsyncStatusMessagesToHost,
     }
 )
+@pytest.mark.test_src_map_id('C21282')
 def test_join_ap_on_off_adaptive_ping_C21282(switch, rs_helper, wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
 
     try:
@@ -223,6 +225,7 @@ def test_join_ap_on_off_adaptive_ping_C21282(switch, rs_helper, wifi_sniffer, wi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C21279')
 def test_TCP_TX_data_transfer_while_ap_on_off_C21279(switch, net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
                                                         wifi_client, rs_helper, utf_constants):
     try:
@@ -287,6 +290,7 @@ def test_TCP_TX_data_transfer_while_ap_on_off_C21279(switch, net_perf_client, wi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C21280')
 def test_UDP_TX_data_transfer_while_ap_on_off_C21280(switch, net_perf_client, wifi_sniffer, wifi_access_point, wifi_dut,
                                                         wifi_client, rs_helper, utf_constants):
     try:

@@ -84,6 +84,7 @@ class WlanThread(ThreadBase):
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19297')
 def test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                         request, sniffer_filter,
                                                                         sl_collections):
@@ -162,6 +163,7 @@ def test_wifi_sdk_dns_server_obtaining_ip_through_dhcp_handshake_c19297(wifi_sni
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19299')
 def test_wifi_sdk_dns_server_dns_feature_disable_c19299(wifi_sniffer, wifi_access_point, wifi_dut, request,
                                                         sl_collections):
     """
@@ -215,6 +217,7 @@ def test_wifi_sdk_dns_server_dns_feature_disable_c19299(wifi_sniffer, wifi_acces
         "ble_custom_ext_features": 0,
     }
 )
+@pytest.mark.test_src_map_id('C19298')
 def test_wifi_sdk_dns_server_c19298(wifi_sniffer, wifi_access_point, wifi_dut, request, sniffer_filter, sl_collections):
     """
         Test steps:

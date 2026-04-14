@@ -878,6 +878,7 @@ class BleFunctionality(ThreadBase):
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
+@pytest.mark.test_src_map_id('C19860')
 def test_ble_sdk_fetch_profiles_from_RD1_C19860(ble_dut, ble_client, sl_collections):
     """verify slave connection and master connection from dut"""
     try:
@@ -947,6 +948,7 @@ def test_ble_sdk_fetch_profiles_from_RD1_C19860(ble_dut, ble_client, sl_collecti
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
+@pytest.mark.test_src_map_id('C19866')
 def test_ble_sdk_fetch_a_particular_value_of_descriptor_from_RD1_C19866(ble_dut, ble_client, sl_collections, utf_constants):
     """To fetch particular values of descriptor"""
     ble_obj = None
@@ -1020,6 +1022,7 @@ def test_ble_sdk_fetch_a_particular_value_of_descriptor_from_RD1_C19866(ble_dut,
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 
+@pytest.mark.test_src_map_id('C19865')
 def test_ble_sdk_fetch_desc_that_are_not_supported_C19865(ble_dut, ble_client, utf_constants, sl_collections):
     """Test fetching descriptors with unsupported/invalid handles - expects error 0x4a0a"""
     ble_obj = None
@@ -1067,6 +1070,7 @@ def test_ble_sdk_fetch_desc_that_are_not_supported_C19865(ble_dut, ble_client, u
                                        ble_dut_address=ble_obj.bt_dut_address)
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_disconnect"])
+@pytest.mark.test_src_map_id('C19867')
 def test_ble_sdk_read_value_of_descriptor_from_RD1_C19867(ble_dut, ble_client, sl_collections, utf_constants):
     """Read multiple attribute values from remote device"""
     ble_obj = None
@@ -1119,6 +1123,7 @@ def test_ble_sdk_read_value_of_descriptor_from_RD1_C19867(ble_dut, ble_client, s
             
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19869')
 def test_wifi_sdk_ble_dut_as_slave_to_set_attribute_value_to_descriptors_C19869(ble_dut, ble_client, sl_collections):
     """DUT as slave - write 30 bytes with response"""
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_C19869_{int(time.time())}.log")
@@ -1181,6 +1186,7 @@ def test_wifi_sdk_ble_dut_as_slave_to_set_attribute_value_to_descriptors_C19869(
                                        ble_dut_address=ble_dut_address)
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19870')
 def test_wifi_sdk_ble_dut_as_slave_to_set_different_attribute_value_to_descriptors_C19870(ble_dut, ble_client, sl_collections):
     """DUT as slave - write 50 bytes with response"""
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_C19870_{int(time.time())}.log")
@@ -1243,6 +1249,7 @@ def test_wifi_sdk_ble_dut_as_slave_to_set_different_attribute_value_to_descripto
                                        ble_dut_address=ble_dut_address)
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19871')
 def test_wifi_sdk_ble_dut_as_slave_prepare_execute_C19871(ble_dut, ble_client, sl_collections):
     """DUT as slave - prepare and execute write"""
     bt_mon_log_file_name = (f"reports/test_wifi_sdk_ble_dut_as_slave_C19871_{int(time.time())}.log")
@@ -1306,6 +1313,7 @@ def test_wifi_sdk_ble_dut_as_slave_prepare_execute_C19871(ble_dut, ble_client, s
                                        ble_dut_address=ble_dut_address)
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667635')
 def test_ble_slave_properties_of_a_characterstic_C667635(ble_dut, ble_client, sl_collections, utf_constants):
     """Validate characteristic properties in slave mode"""
     ble_dut_address = None
@@ -1382,6 +1390,7 @@ def test_ble_slave_properties_of_a_characterstic_C667635(ble_dut, ble_client, sl
                                        ble_dut_address=ble_dut_address)
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667637')
 def test_ble_sdk_enable_enable_disable_indication_C667637(ble_dut, ble_client, sl_collections):
     """Enable and disable indications in server role"""
     bt_dut_address = None
@@ -1622,6 +1631,7 @@ def service_discovery_on_remote_standalone(ble_dut, ble_client_address, service_
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19868')
 def test_ble_sdk_read_long_descriptor_from_RD1_C19868(ble_dut, remote_wiseconnect3, sl_collections):
     """Read long descriptor value from remote device"""
     ble_client_address = None
@@ -1675,6 +1685,7 @@ def test_ble_sdk_read_long_descriptor_from_RD1_C19868(ble_dut, remote_wiseconnec
 
 @wifi_dut_marker(ext_custom_bit=0)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C703319')
 def test_ble_hogp_smp_slave_mode_C703319(ble_dut, ble_client, sl_collections):
     """Test BLE HID over GATT Profile (HOGP) in slave mode with SMP"""
     ble_dut_address = None
@@ -1766,6 +1777,7 @@ def test_ble_hogp_smp_slave_mode_C703319(ble_dut, ble_client, sl_collections):
                                        ble_dut_address=ble_dut_address)
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19885')
 def test_ble_sdk_enable_health_thermometer_in_server_role_C19885(wifi_dut, ble_client, sl_collections):
     """ENABLE health thermometer IN SERVER ROLE"""
     bt_dut_address = None
@@ -1810,6 +1822,7 @@ def test_ble_sdk_enable_health_thermometer_in_server_role_C19885(wifi_dut, ble_c
 
 @wifi_dut_marker(ext_custom_bit=0)
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C703320')
 def test_ble_sdk_enable_heartrate_service_in_server_role_C703320(wifi_dut, ble_client, sl_collections):
     """ENABLE HEART RATE SERVICE IN SERVER ROLE"""
     bt_dut_address = None
@@ -1854,6 +1867,7 @@ def test_ble_sdk_enable_heartrate_service_in_server_role_C703320(wifi_dut, ble_c
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
+@pytest.mark.test_src_map_id('C19861')
 def test_ble_sdk_fetch_a_particular_profiles_from_RD1_C19861(wifi_dut, ble_client, sl_collections, utf_constants):
     ble_obj = None
     bt_client_address = None
@@ -1897,6 +1911,7 @@ def test_ble_sdk_fetch_a_particular_profiles_from_RD1_C19861(wifi_dut, ble_clien
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
+@pytest.mark.test_src_map_id('C19864')
 def test_ble_sdk_fetch_desc_from_RD1_C19864(wifi_dut, ble_client, sl_collections):
     ble_obj = None
     bt_client_address = None
@@ -1932,6 +1947,7 @@ def test_ble_sdk_fetch_desc_from_RD1_C19864(wifi_dut, ble_client, sl_collections
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19862')
 def test_ble_sdk_fetch_profiles_from_RD1_C19862(wifi_dut, ble_client, sl_collections):
     ble_obj = None
     bt_client_address = None
@@ -1983,6 +1999,7 @@ def test_ble_sdk_fetch_profiles_from_RD1_C19862(wifi_dut, ble_client, sl_collect
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667633')
 def test_ble_sdk_gatt_secondary_services_C667633(wifi_dut, ble_client, sl_collections):
     """
        1.initialize the ble in dut
@@ -2049,6 +2066,7 @@ def test_ble_sdk_gatt_secondary_services_C667633(wifi_dut, ble_client, sl_collec
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
+@pytest.mark.test_src_map_id('C19863')
 def test_ble_sdk_fetch_charecteristics_from_RD1_C19863(wifi_dut, ble_client, sl_collections):
     """Verify characterstics values from Dut"""
     ble_obj = None
@@ -2092,6 +2110,7 @@ def test_ble_sdk_fetch_charecteristics_from_RD1_C19863(wifi_dut, ble_client, sl_
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19880')
 def test_ble_sdk_enable_heartrate_service_in_client_role_C19880(wifi_dut, ble_client, sl_collections):
     """ENABLE HEART RATE SERVICE IN CLIENT ROLE"""
     bt_mon_log_file = "reports/test_ble_sdk_C19880"
@@ -2133,6 +2152,7 @@ def test_ble_sdk_enable_heartrate_service_in_client_role_C19880(wifi_dut, ble_cl
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19882')
 def test_ble_sdk_enable_battery_service_in_client_role_C19882(wifi_dut, ble_client, sl_collections):
     """ENABLE Battery SERVICE IN CLIENT ROLE"""
     bt_mon_log_file = "reports/test_ble_sdk_C19882"
@@ -2173,6 +2193,7 @@ def test_ble_sdk_enable_battery_service_in_client_role_C19882(wifi_dut, ble_clie
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19886')
 def test_ble_sdk_enable_health_thermomter_service_in_client_role_C19886(wifi_dut, ble_client, sl_collections):
     """ENABLE Blood pressure SERVICE IN CLIENT ROLE"""
     bt_mon_log_file = "reports/test_wifi_sdk_C19886"
@@ -2214,6 +2235,7 @@ def test_ble_sdk_enable_health_thermomter_service_in_client_role_C19886(wifi_dut
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19888')
 def test_ble_sdk_enable_glucose_service_in_client_role_C19888(wifi_dut, ble_client, sl_collections):
     """ENABLE Glucose SERVICE IN CLIENT ROLE"""
     bt_mon_log_file = "reports/test_wifi_sdk_C19888"
@@ -2257,6 +2279,7 @@ def test_ble_sdk_enable_glucose_service_in_client_role_C19888(wifi_dut, ble_clie
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
+@pytest.mark.test_src_map_id('C19875')
 def test_ble_sdk_connect_disconnect_multiple_times_from_RD1_C19875(wifi_dut, ble_client, sl_collections):
     """verify gatt connection and disconnection multiple times"""
     bt_dut_address = None
@@ -2316,6 +2339,7 @@ def test_ble_sdk_connect_disconnect_multiple_times_from_RD1_C19875(wifi_dut, ble
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19874')
 def test_ble_sdk_link_loss_profiles_from_rd1_c19874(wifi_dut, ble_client, sl_collections):
     bt_dut_address = None
     bt_client_address = None
@@ -2373,6 +2397,7 @@ def test_ble_sdk_link_loss_profiles_from_rd1_c19874(wifi_dut, ble_client, sl_col
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19879')
 def test_ble_sdk_enable_heartrate_service_in_server_role_C19879(wifi_dut, ble_client, utf_constants,
                                                                 sl_collections):
     """ENABLE HEART RATE SERVICE IN SERVER ROLE"""
@@ -2418,6 +2443,7 @@ def test_ble_sdk_enable_heartrate_service_in_server_role_C19879(wifi_dut, ble_cl
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19883')
 def test_ble_sdk_enable_blood_pressure_in_server_role_C19883(wifi_dut, ble_client, utf_constants, sl_collections):
     """ENABLE BLOOD PRESSURE IN SERVER ROLE"""
     bt_dut_address = None
@@ -2461,6 +2487,7 @@ def test_ble_sdk_enable_blood_pressure_in_server_role_C19883(wifi_dut, ble_clien
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19881')
 def test_ble_sdk_enable_battery_service_in_server_role_C19881(wifi_dut, ble_client, sl_collections):
     """ENABLE BATTERY SERVICE IN SERVER ROLE"""
     bt_dut_address = None
@@ -2505,6 +2532,7 @@ def test_ble_sdk_enable_battery_service_in_server_role_C19881(wifi_dut, ble_clie
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667636')
 def test_ble_sdk_enable_enable_notify_C667636(wifi_dut, ble_client, utf_constants, sl_collections):
     """ENABLE HEART RATE SERVICE IN SERVER ROLE"""
     bt_dut_address = None
@@ -2581,6 +2609,7 @@ def test_ble_sdk_enable_enable_notify_C667636(wifi_dut, ble_client, utf_constant
 
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19878')
 def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_client, sl_collections):
     bt_dut_address = None
     bt_client_address = None
@@ -2703,6 +2732,7 @@ def test_ble_sdk_validate_adding_service_in_slave_role_C19878(ble_dut, ble_clien
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667632')
 def test_ble_sdk_gatt_primary_services_C667632(wifi_dut, ble_client, sl_collections):
     """
     1.initialize the ble in dut
@@ -2801,6 +2831,7 @@ pytestmark = [
     )
 ]
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19873')
 def test_ble_dut_as_master_and_master_get_profiles_C19873(ble_dut, ble_clients, sl_collections):
     """DUT as master with dual connections, get profiles from both remotes"""
     ble_obj = None
@@ -3003,6 +3034,7 @@ def service_discovery_on_remote_for_blood_pressure(ble_dut, ble_client_address, 
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19884')
 def test_ble_sdk_enable_blood_pressure_service_in_client_role_C19884(ble_dut, remote_wiseconnect3, sl_collections):
     """Verify the BLE blood pressure service in client role with connection stability"""
     ble_client_address = None
@@ -3075,6 +3107,7 @@ pytestmark = [
     )
 ]
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C537616')
 def test_add_multiple_services_establish_connection_C537616(ble_dut, ble_client, sl_collections):
     """BLE Add 10 services, 80 attribute values and establish connections in slave mode"""
     bt_dut_address = None

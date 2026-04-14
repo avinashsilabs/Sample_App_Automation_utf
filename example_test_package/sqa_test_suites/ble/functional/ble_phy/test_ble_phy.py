@@ -119,6 +119,7 @@ def ble_phy_events(ble_dut, ble_client_address):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19932')
 def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -147,6 +148,7 @@ def test_ble_phy_change_tx_1_rx_1_lr_125_C19932(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19933')
 def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -175,6 +177,7 @@ def test_ble_phy_change_tx_1_rx_2_lr_125_C19933(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19934')
 def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -203,6 +206,7 @@ def test_ble_phy_change_tx_1_rx_lr_125_C19934(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19935')
 def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -231,6 +235,7 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19935(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19936')
 def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -259,6 +264,7 @@ def test_ble_phy_change_tx_2_rx_2_lr_125_C19936(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19937')
 def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -287,6 +293,7 @@ def test_ble_phy_change_tx_2_rx_1_lr_125_C19937(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19938')
 def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -315,6 +322,7 @@ def test_ble_phy_change_tx_rx_1_lr_125_C19938(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19939')
 def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -343,6 +351,7 @@ def test_ble_phy_change_tx_rx_2_lr_125_C19939(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19940')
 def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -371,6 +380,7 @@ def test_ble_phy_change_tx_rx_lr_125_C19940(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19941')
 def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -399,6 +409,7 @@ def test_ble_phy_change_tx_1_rx_lr_500_C19941(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19942')
 def test_ble_phy_change_tx_2_rx_lr_500_C19942(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -427,6 +438,7 @@ def test_ble_phy_change_tx_2_rx_lr_500_C19942(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19943')
 def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -455,6 +467,7 @@ def test_ble_phy_change_tx_rx_1_lr_500_C19943(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19944')
 def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")
@@ -483,6 +496,7 @@ def test_ble_phy_change_tx_rx_2_lr_500_C19944(ble_dut, ble_client):
 @pytest.mark.ble_client("bt_wiseconnect")
 @pytest.mark.end_state("ble_dut", bluetooth=["ble_disconnect", "wifi_powersave_disable", "bt_powersave_disable",
                                              "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19945')
 def test_ble_phy_change_tx_rx_lr_500_C19945(ble_dut, ble_client):
     ble_client_address, bt_dut_address = ble_connection(ble_dut, ble_client)
     logger().info("set phy in dut")

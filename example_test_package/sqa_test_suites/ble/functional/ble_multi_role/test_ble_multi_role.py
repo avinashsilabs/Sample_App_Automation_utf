@@ -45,6 +45,7 @@ remote_le_devices = 2
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.test_src_map_id('C19911')
 def test_ble_dual_role_SI160ms_SW50ms_AImin160ms_AImax320ms_C19911(ble_dut, ble_client):
     logger().info("start ble in dut")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -111,6 +112,7 @@ def test_ble_dual_role_SI160ms_SW50ms_AImin160ms_AImax320ms_C19911(ble_dut, ble_
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.test_src_map_id('C19912')
 def test_ble_dual_role_SI500ms_SW400ms_AImin200ms_AImax200ms_C19912(ble_dut, ble_client):
     logger().info("start ble in dut")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -179,6 +181,7 @@ def test_ble_dual_role_SI500ms_SW400ms_AImin200ms_AImax200ms_C19912(ble_dut, ble
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.test_src_map_id('C19913')
 def test_ble_dual_role_SI1000ms_SW500ms_AImin500ms_AImax500ms_C19913(ble_dut, ble_client):
     logger().info("start ble in dut")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -255,6 +258,7 @@ def test_ble_dual_role_SI1000ms_SW500ms_AImin500ms_AImax500ms_C19913(ble_dut, bl
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.test_src_map_id('C19914')
 def test_ble_dual_role_SI5000ms_SW3000ms_AImin1000ms_AImax1000ms_C19914(ble_dut, ble_client):
     logger().info("start ble in dut")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -332,6 +336,7 @@ def test_ble_dual_role_SI5000ms_SW3000ms_AImin1000ms_AImax1000ms_C19914(ble_dut,
         "config_features": RS9116ConfigFeatureBitMap.Default | RS9116ConfigFeatureBitMap.EnahanceMaxPsp | RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.test_src_map_id('C19915')
 def test_ble_dual_role_SI10240ms_SW5s_AImin10240ms_AImax10240ms_C19915(ble_dut, ble_clients):
     assert len(ble_clients) >= remote_le_devices
 

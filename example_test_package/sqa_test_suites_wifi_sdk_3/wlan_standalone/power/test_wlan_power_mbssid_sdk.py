@@ -794,6 +794,7 @@ class StandBy_Associated(ThreadBase):
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219305')
 def test_wlan_standby_conn_DTIM_based_with_T_profile_C219305(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                              sl_collections, dtim, wifi_sniffer, sniffer_filter,
                                                              request, performance_data, custom_performance_fixture, power_analyzer):
@@ -890,6 +891,7 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219305(firmware_loader, po
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219306')
 def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219306(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                               sl_collections, dtim, wifi_sniffer, sniffer_filter,
                                                               request, performance_data, custom_performance_fixture, power_analyzer):
@@ -986,6 +988,7 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219306(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219307')
 def test_wlan_standby_conn_DTIM_based_with_T_profile_C219307(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                              sl_collections, dtim, wifi_sniffer, sniffer_filter,
                                                              request, performance_data, custom_performance_fixture, power_analyzer):
@@ -1082,6 +1085,7 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219307(firmware_loader, po
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219308')
 def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219308(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                               sl_collections, dtim, wifi_sniffer, sniffer_filter,
                                                               request, performance_data, custom_performance_fixture, power_analyzer):
@@ -1178,6 +1182,7 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219308(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219309')
 def test_wlan_standby_conn_DTIM_based_with_T_profile_C219309(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                              sl_collections, dtim, wifi_sniffer, sniffer_filter,
                                                              request, performance_data, custom_performance_fixture, power_analyzer):
@@ -1274,6 +1279,7 @@ def test_wlan_standby_conn_DTIM_based_with_T_profile_C219309(firmware_loader, po
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219310')
 def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219310(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                               sl_collections, dtim, wifi_sniffer, sniffer_filter,
                                                               request, performance_data, custom_performance_fixture, power_analyzer):
@@ -1369,6 +1375,7 @@ def test_wlan_standby_conn_DTIM_based_with_NT_profile_C219310(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219303')
 def test_wlan_standby_con_Listen_based_with_T_profile_C219303(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                              sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture, power_analyzer):
     '''
@@ -1463,6 +1470,7 @@ def test_wlan_standby_con_Listen_based_with_T_profile_C219303(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219304')
 def test_wlan_standby_con_Listen_based_with_NT_profile_C219304(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                               sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture, power_analyzer):
     '''
@@ -1557,6 +1565,7 @@ def test_wlan_standby_con_Listen_based_with_NT_profile_C219304(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219311')
 def test_wlan_standby_con_Listen_based_with_T_profile_C219311(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                              sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture, power_analyzer):
     '''
@@ -1651,6 +1660,7 @@ def test_wlan_standby_con_Listen_based_with_T_profile_C219311(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219312')
 def test_wlan_standby_con_Listen_based_with_NT_profile_C219312(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                               sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture, power_analyzer):
     '''
@@ -1745,6 +1755,7 @@ def test_wlan_standby_con_Listen_based_with_NT_profile_C219312(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219313')
 def test_wlan_standby_con_Listen_based_with_T_profile_C219313(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                              sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture, power_analyzer):
     '''
@@ -1839,6 +1850,7 @@ def test_wlan_standby_con_Listen_based_with_T_profile_C219313(firmware_loader, p
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.power_analyzer("keysight_analyzer")
+@pytest.mark.test_src_map_id('C219314')
 def test_wlan_standby_con_Listen_based_with_NT_profile_C219314(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                               sl_collections, wifi_sniffer, sniffer_filter, request, performance_data, custom_performance_fixture, power_analyzer):
     '''

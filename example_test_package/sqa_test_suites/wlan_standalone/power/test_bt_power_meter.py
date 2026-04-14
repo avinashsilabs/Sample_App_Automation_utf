@@ -99,6 +99,7 @@ class ppk_power_number_output():
             "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
         },
 )
+@pytest.mark.test_src_map_id('TC7858630095')
 def test_bt_spp_dut_as_master(power_meter, wifi_dut, bt_client):
     sniff_max_interval = 800
     sniff_min_interval = 800
@@ -163,6 +164,7 @@ def test_bt_spp_dut_as_master(power_meter, wifi_dut, bt_client):
            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
        },
 )
+@pytest.mark.test_src_map_id('TC7667598100')
 def test_bt_per_tx(power_meter, bt_dut, bt_client):
     pkt_len = 679
     pkt_type = 14
@@ -230,6 +232,7 @@ def test_bt_per_tx(power_meter, bt_dut, bt_client):
            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
        },
 )
+@pytest.mark.test_src_map_id('C20583')
 def test_bt_per_tx_GFSCK_C20583(power_meter, bt_dut, bt_client):
     pkt_len = 339
     pkt_type = 15
@@ -298,6 +301,7 @@ def test_bt_per_tx_GFSCK_C20583(power_meter, bt_dut, bt_client):
            "bt_features": RS9116BTFeatureBitMap.RFTypeSelection,
        },
 )
+@pytest.mark.test_src_map_id('C20585')
 def test_bt_per_tx_EDR_HP_C20585(power_meter, bt_dut, bt_client):
     pkt_len = 679
     pkt_type = 14

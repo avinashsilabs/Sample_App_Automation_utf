@@ -746,6 +746,7 @@ class MQTTClientThread(ThreadBase):
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876776')
 def test_mqtt_subscribe_publish_with_qos0_on_host_lwip_C876776(
     wifi_dut,
     wifi_access_point,
@@ -819,6 +820,7 @@ def test_mqtt_subscribe_publish_with_qos0_on_host_lwip_C876776(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876777')
 def test_mqtts_subscribe_publish_with_qos0_on_host_lwip_C876777(
     wifi_dut,
     wifi_access_point,
@@ -891,6 +893,7 @@ def test_mqtts_subscribe_publish_with_qos0_on_host_lwip_C876777(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876778')
 def test_mqtt_subscribe_publish_with_qos1_on_host_lwip_C876778(
     wifi_dut,
     wifi_access_point,
@@ -964,6 +967,7 @@ def test_mqtt_subscribe_publish_with_qos1_on_host_lwip_C876778(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876779')
 def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
     wifi_dut,
     wifi_access_point,
@@ -1037,6 +1041,7 @@ def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
     },
 )
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C876780')
 def test_mqtt_subscribe_publish_with_qos2_on_host_lwip_C876780(
     wifi_dut,
     wifi_access_point,
@@ -1110,6 +1115,7 @@ def test_mqtt_subscribe_publish_with_qos2_on_host_lwip_C876780(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876781')
 def test_mqtts_subscribe_publish_with_qos2_on_host_lwip_C876781(
     wifi_dut,
     wifi_access_point,
@@ -1183,6 +1189,7 @@ def test_mqtts_subscribe_publish_with_qos2_on_host_lwip_C876781(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876782')
 def test_mqtts_publish_using_qos1_on_diff_topics_using_threads_C876782(
     wifi_dut,
     wifi_access_point,
@@ -1286,6 +1293,7 @@ def test_mqtts_publish_using_qos1_on_diff_topics_using_threads_C876782(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876783')
 def test_mqtts_publish_using_qos2_on_diff_topics_using_threads_C876783(
     wifi_dut,
     wifi_access_point,
@@ -1391,6 +1399,7 @@ def test_mqtts_publish_using_qos2_on_diff_topics_using_threads_C876783(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876784')
 def test_mqtts_publish_subscribe_using_different_topics_C876784(
     wifi_dut,
     wifi_access_point,
@@ -1491,6 +1500,7 @@ def test_mqtts_publish_subscribe_using_different_topics_C876784(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876785')
 def test_mqtts_publish_with_max_supported_length_qos2_C876785(
     wifi_dut,
     wifi_access_point,
@@ -1569,6 +1579,7 @@ def test_mqtts_publish_with_max_supported_length_qos2_C876785(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876786')
 def test_mqtts_keepalive_functionality_with_zero_keepalive_time_C876786(
     wifi_dut,
     wifi_access_point,
@@ -1648,6 +1659,7 @@ def test_mqtts_keepalive_functionality_with_zero_keepalive_time_C876786(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876787')
 def test_mqtt_keepalive_functionality_with_30sec_keepalive_time_C876787(
     wifi_dut,
     wifi_access_point,
@@ -1772,6 +1784,7 @@ def test_mqtt_keepalive_functionality_with_30sec_keepalive_time_C876787(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876791')
 def test_mqtts_publish_after_rejoin_successful_C876791(
     wifi_dut,
     wifi_access_point,
@@ -1895,6 +1908,7 @@ def test_mqtts_publish_after_rejoin_successful_C876791(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876792')
 def test_mqtts_connection_after_rejoin_error_event_C876792(
     wifi_dut,
     wifi_access_point,
@@ -2046,6 +2060,7 @@ def test_mqtts_connection_after_rejoin_error_event_C876792(
         "lan_lease_time": 120,
     },
 )
+@pytest.mark.test_src_map_id('C876793')
 def test_mqtts_subscribe_publish_with_dhcp_lease_120_secs_c876793(
     wifi_dut,
     wifi_access_point,
@@ -2126,6 +2141,7 @@ def test_mqtts_subscribe_publish_with_dhcp_lease_120_secs_c876793(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876794')
 def test_mqtt_connection_with_last_will_and_retained_bit_set_c876794(
     wifi_dut,
     wifi_access_point,
@@ -2255,6 +2271,7 @@ def test_mqtt_connection_with_last_will_and_retained_bit_set_c876794(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876795')
 def test_mqtts_subscription_with_single_and_multilevel_wild_characters_c876795(
     wifi_dut,
     wifi_access_point,
@@ -2351,6 +2368,7 @@ def test_mqtts_subscription_with_single_and_multilevel_wild_characters_c876795(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876798')
 def test_mqtts_connection_with_persistent_and_clean_session_c876798(
     wifi_dut,
     wifi_access_point,
@@ -2434,6 +2452,7 @@ def test_mqtts_connection_with_persistent_and_clean_session_c876798(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876799')
 def test_mqtts_negative_scenario_publish_1400_bytes_message_c876799(
     wifi_dut,
     wifi_access_point,
@@ -2523,6 +2542,7 @@ def test_mqtts_negative_scenario_publish_1400_bytes_message_c876799(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876800')
 def test_mqtts_connection_with_empty_client_id_c876800(
     wifi_dut,
     wifi_access_point,
@@ -2598,6 +2618,7 @@ def test_mqtts_connection_with_empty_client_id_c876800(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876801')
 def test_mqtts_connection_failure_with_invalid_expired_certs_c876801(
     wifi_dut,
     wifi_access_point,
@@ -2683,6 +2704,7 @@ def test_mqtts_connection_failure_with_invalid_expired_certs_c876801(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C876803')
 def test_mqtts_subscription_over_4_topics_with_retain_c876803(
     wifi_dut,
     wifi_access_point,

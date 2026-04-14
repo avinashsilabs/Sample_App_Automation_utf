@@ -42,6 +42,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.test_src_map_id('TC5750306906')
 def test_BT_classic_slave_role_with_powersave(wifi_dut, wifi_access_point, bt_client):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
@@ -87,6 +88,7 @@ def test_BT_classic_slave_role_with_powersave(wifi_dut, wifi_access_point, bt_cl
             bt_server_socket.close()
 
 
+@pytest.mark.test_src_map_id('TC4663023910')
 def test_BT_classic_master_role_with_powersave(wifi_dut, wifi_access_point, bt_client):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
@@ -144,6 +146,7 @@ def test_BT_classic_master_role_with_powersave(wifi_dut, wifi_access_point, bt_c
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC1922147915')
 def test_ble_gatt_BLE_connection_stability(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(
@@ -186,6 +189,7 @@ def test_ble_gatt_BLE_connection_stability(wifi_dut, wifi_access_point, ble_clie
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.DualBluetoothBLE,
     },
 )
+@pytest.mark.test_src_map_id('TC1141048919')
 def test_ble_gatt_server_master(wifi_dut, wifi_access_point, ble_client):
     if not isinstance(wifi_dut.interfaces.wifi, RSSAPICommands):
         raise NotImplementedError(

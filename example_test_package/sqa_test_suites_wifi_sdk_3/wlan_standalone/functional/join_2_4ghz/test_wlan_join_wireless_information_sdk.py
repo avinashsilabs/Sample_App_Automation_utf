@@ -75,6 +75,7 @@ def logger():
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C777564')
 def test_wifi_sdk_wireless_get_info_in_wpa2_11n_c777564(wifi_dut,request, wifi_access_point, sl_collections,utf_constants):
     """Verify whether the device is able to get the
        wireless information in WAP2 security-station mode)"""
@@ -202,6 +203,7 @@ def test_wifi_sdk_wireless_get_info_in_wpa2_11n_c777564(wifi_dut,request, wifi_a
                                                "protected_management_frame": "Capable", })
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C777565')
 def test_wifi_sdk_wireless_get_info_in_wpa3_personal_11ax_c777565(wifi_dut, request, utf_constants, wifi_sniffer,
                                                              sniffer_filter, wifi_access_point, sl_collections):
     """Verify whether the device is able to get the
@@ -345,6 +347,7 @@ def test_wifi_sdk_wireless_get_info_in_wpa3_personal_11ax_c777565(wifi_dut, requ
                        wifi=["unassociated", "wifi_powersave_disable", "bt_powersave_disable", "clear_certs"])
 
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C777567')
 def test_wifi_sdk_wireless_get_info_in_wpa3_enterprise_11ax_c777567(wifi_dut, wifi_access_point,
                                                              radius_server, sl_collections, request,
                                                               wifi_client):
@@ -488,6 +491,7 @@ def test_wifi_sdk_wireless_get_info_in_wpa3_enterprise_11ax_c777567(wifi_dut, wi
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C777566')
 def test_wifi_sdk_wireless_get_info_in_open_11b_c777566(wifi_dut,wifi_client,request, sl_collections,utf_constants):
     """Verify whether the device is able to get the
        wireless information in open security-station and 802.11b mode"""
@@ -632,6 +636,7 @@ def test_wifi_sdk_wireless_get_info_in_open_11b_c777566(wifi_dut,wifi_client,req
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "bt_powersave_disable"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C777568')
 def test_wifi_sdk_wireless_get_info_in_wpa2_11g_c777568(wifi_dut,wifi_client,request, sl_collections,utf_constants):
     """Verify whether the device is able to get the
        wireless information in WAP2 security-station and 802.11g mode)"""

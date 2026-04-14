@@ -131,6 +131,7 @@ def arp_packet_decrypt(wifi_sniffer, logger, decryption_key: str, mac_address, p
 @pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19746')
 def test_request_timeout_keep_alive_10sec_c19746(wifi_sniffer, wifi_dut, wifi_access_point, channel):
     """=============================this test_case to validate keep-alive for 10secs=========================="""
     logger().info("*** Open security validation *****")
@@ -243,6 +244,7 @@ def test_request_timeout_keep_alive_10sec_c19746(wifi_sniffer, wifi_dut, wifi_ac
 @pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19750')
 def test_request_timeout_keep_alive_30sec_C19750(wifi_sniffer, wifi_dut, wifi_access_point):
     """=============================this test_case to validate keep-alive for 30secs=========================="""
     time_delta = 30
@@ -347,6 +349,7 @@ def test_request_timeout_keep_alive_30sec_C19750(wifi_sniffer, wifi_dut, wifi_ac
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19748')
 def test_request_timeout_scan_100misc_C19748(wifi_sniffer, wifi_dut, wifi_access_point):
     """=============================this test_case to validate scan for 100 Milli seconds=========================="""
     scan_timeout = 2
@@ -419,6 +422,7 @@ def test_request_timeout_scan_100misc_C19748(wifi_sniffer, wifi_dut, wifi_access
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19751')
 def test_request_timeout_scan_500misc_C19751(wifi_sniffer, wifi_dut, wifi_access_point):
     """=============================this test_case to validate scan for 500 Milliseconds=========================="""
     scan_timeout = 2
@@ -496,6 +500,7 @@ def test_request_timeout_scan_500misc_C19751(wifi_sniffer, wifi_dut, wifi_access
 @pytest.mark.config("wifi_access_point", wifi={"channel": 4, "security": 'OPEN'})
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19637')
 def test_sta_keep_alive_10sec_with_traffic_C19637(wifi_sniffer, wifi_dut, wifi_access_point, channel, wifi_client):
     """=============================this test_case to validate keep-alive for 10secs=========================="""
     logger().info("*** Open security validation *****")

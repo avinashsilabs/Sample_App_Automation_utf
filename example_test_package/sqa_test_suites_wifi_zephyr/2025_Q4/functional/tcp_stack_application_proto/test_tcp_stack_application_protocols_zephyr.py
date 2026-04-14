@@ -686,6 +686,7 @@ class WifiJoinThread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19347')
 def test_wifi_sdk_tcp_open_send_close_socket_c19347(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
@@ -737,6 +738,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c19347(
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C39347')
 def test_wifi_sdk_udp_open_send_close_socket_c39347(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
@@ -789,6 +791,7 @@ def test_wifi_sdk_udp_open_send_close_socket_c39347(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19360')
 def test_wifi_sdk_tcp_server_socket_open_listen_accept_receive_close_c19360(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                             request,
                                                                             zephyr_wifi_collections,
@@ -877,6 +880,7 @@ def test_wifi_sdk_tcp_server_socket_open_listen_accept_receive_close_c19360(wifi
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C39348')
 def test_wifi_sdk_udp_open_receive_close_socket_c39348(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
@@ -930,6 +934,7 @@ def test_wifi_sdk_udp_open_receive_close_socket_c39348(
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C29347')
 def test_wifi_sdk_tcp_open_send_close_socket_for_30_min_c29347(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
@@ -988,6 +993,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_for_30_min_c29347(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C29360')
 def test_wifi_sdk_tcp_server_socket_open_listen_accept_receive_close_for_30_min_c29360(wifi_sniffer, wifi_dut,
                                                                                        wifi_access_point,
                                                                                        request,
@@ -1084,6 +1090,7 @@ def test_wifi_sdk_tcp_server_socket_open_listen_accept_receive_close_for_30_min_
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C50001')
 def test_wifi_icmp_ipv4_c50001(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections,
         wifi_sniffer, request, wifi_client):
@@ -1185,6 +1192,7 @@ def test_wifi_icmp_ipv4_c50001(
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C60003')
 def test_wifi_sntp_multiple_queries_c60003(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections,
         wifi_sniffer, request, wifi_client):
@@ -1354,6 +1362,7 @@ def test_wifi_sntp_multiple_queries_c60003(
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C19347')
 def test_wifi_sdk_dns_c19347(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
@@ -1423,6 +1432,7 @@ def test_wifi_sdk_dns_c19347(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C50002')
 def test_wifi_igmp_ipv4_multicast_data_rx_c50002(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections,
         wifi_sniffer, request, wifi_client, multicast_client, net_perf_client, protocol):
@@ -1561,6 +1571,7 @@ def test_wifi_igmp_ipv4_multicast_data_rx_c50002(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C70002')
 def test_wifi_igmp_ipv4_multicast_data_rx_after_group_leave_c70002(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections,
         wifi_sniffer, request, wifi_client, multicast_client, net_perf_client, protocol):
@@ -1732,6 +1743,7 @@ def test_wifi_igmp_ipv4_multicast_data_rx_after_group_leave_c70002(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC127757')
 def test_wifi_sdk_mqtt_qos0_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter):
@@ -1785,6 +1797,7 @@ def test_wifi_sdk_mqtt_qos0_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC127757')
 def test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter):
@@ -1838,6 +1851,7 @@ def test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC127757')
 def test_wifi_sdk_mqtt_qos2_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter):
@@ -1892,6 +1906,7 @@ def test_wifi_sdk_mqtt_qos2_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC127757')
 def test_wifi_sdk_mqtt_check_keep_alive_0_ipv4_TC127757(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter):
@@ -1967,6 +1982,7 @@ def test_wifi_sdk_mqtt_check_keep_alive_0_ipv4_TC127757(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 240)])
+@pytest.mark.test_src_map_id('TC327757')
 def test_wifi_sdk_mqtt_check_keep_alive_60_ipv4_TC327757(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter, keep_alive_time, idle_time):
@@ -2051,6 +2067,7 @@ def test_wifi_sdk_mqtt_check_keep_alive_60_ipv4_TC327757(
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC8604418607')
 def test_wifi_zephyr_websocket_tx_and_rx(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
                                          utf_constants,
                                          request, zephyr_wifi_collections, sniffer_filter, wifi_client):
@@ -2112,6 +2129,7 @@ def test_wifi_zephyr_websocket_tx_and_rx(wifi_dut, wifi_access_point, wifi_sniff
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC3856041615')
 def test_wifi_zephyr_http_get(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
                               utf_constants,
                               request, zephyr_wifi_collections, sniffer_filter, wifi_client, index_path, http_client):
@@ -2175,6 +2193,7 @@ def test_wifi_zephyr_http_get(wifi_dut, wifi_access_point, wifi_sniffer, http_se
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC7848068622')
 def test_wifi_zephyr_http_post(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
                                utf_constants,
                                request, zephyr_wifi_collections, sniffer_filter, wifi_client, index_path, http_client):
@@ -2238,6 +2257,7 @@ def test_wifi_zephyr_http_post(wifi_dut, wifi_access_point, wifi_sniffer, http_s
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('TC9411598629')
 def test_wifi_zephyr_http_put(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
                               utf_constants,
                               request, zephyr_wifi_collections, sniffer_filter, wifi_client, index_path, http_client):
@@ -2303,6 +2323,7 @@ def test_wifi_zephyr_http_put(wifi_dut, wifi_access_point, wifi_sniffer, http_se
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.skip()
+@pytest.mark.test_src_map_id('C19354')
 def test_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_dut, wifi_access_point, request, zephyr_wifi_collections,
                                          sniffer_filter, remote_socket,
                                          wifi_client, switch):

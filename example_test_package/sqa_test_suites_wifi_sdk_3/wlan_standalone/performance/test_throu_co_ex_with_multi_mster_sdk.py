@@ -3,6 +3,7 @@ import pytest
 from utf.utils.logger import get_logger
 from utf.utils.time_measurer import TimeMeasurer
 from utf.interfaces.iperf.iperf_device_output_parser import Result
+from utf_wifi_zephyr.devices.si91x import Si91xBLEFeatureBitMap
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBitMap, Si91xConfigFeatureBitMap, \
     Si91xCustomFeatureBitMap, Si91xOperatingMode, Si91xExtCustomFeatureBitMap, Si91xTCPIPFeatureBitMap, Si91xExtTCPIPFeatureBitMap
 from utf.interfaces.wifi import WlanError

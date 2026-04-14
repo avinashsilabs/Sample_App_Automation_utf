@@ -258,6 +258,7 @@ class Cleanup:
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C133475')
 def test_Verify_UDP_Tx_and_TCP_Tx_after_BLE_as_slave_C133475(wifi_dut, ble_client, wifi_access_point, utf_constants,
                                                              wifi_client, wifi_sniffer, net_perf_client, rs_helper):
     logger().info("*******************C133475************************")
@@ -340,6 +341,7 @@ def test_Verify_UDP_Tx_and_TCP_Tx_after_BLE_as_slave_C133475(wifi_dut, ble_clien
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C133476')
 def test_Verify_UDP_rx_and_TCP_rx_after_BLE_as_slave_C133476(wifi_dut, wifi_access_point, wifi_sniffer, ble_client,
                                                              rs_helper, utf_constants, wifi_client, net_perf_client):
     logger().info("*******************C133476************************")
@@ -420,6 +422,7 @@ def test_Verify_UDP_rx_and_TCP_rx_after_BLE_as_slave_C133476(wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C133449')
 def test_sta_Throughputs_in_open_security_mode_when_ble_is_in_connection_C133449(wifi_dut, wifi_access_point,
                                                                                  wifi_sniffer, utf_constants, rs_helper,
                                                                                  wifi_client, ble_client,
@@ -503,6 +506,7 @@ def test_sta_Throughputs_in_open_security_mode_when_ble_is_in_connection_C133449
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '1234567890'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C133469')
 def test_TCP_Rx_packet_loss_with_LE_advertising_C133469(wifi_dut, wifi_access_point, wifi_client, wifi_sniffer,
                                                         rs_helper, utf_constants, ble_client, net_perf_client):
     logger().info("*******************C133469************************")
@@ -576,6 +580,7 @@ def test_TCP_Rx_packet_loss_with_LE_advertising_C133469(wifi_dut, wifi_access_po
 @pytest.mark.config('wifi_access_point', wifi={"security": "WPA2", "cipher": 'AES'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C133450')
 def test_sta_Throughputs_in_wpa2_aes_mode_when_ble_is_in_connection_C133450(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                             utf_constants, rs_helper, wifi_client,
                                                                             ble_client, net_perf_client):

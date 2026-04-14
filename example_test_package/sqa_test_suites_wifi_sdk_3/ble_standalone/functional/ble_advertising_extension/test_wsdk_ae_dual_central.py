@@ -678,6 +678,7 @@ class BLEThread:
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC6706378409')
 def test_tx_notification(remote_wiseconnect3, remote_wiseconnect3s, ble_dut, ble_sniffer, sl_collections, pri_adv_phy,
                          sec_adv_phy, test_case_id, k, char_uid, service_uid):
     try:
@@ -878,6 +879,7 @@ def test_tx_notification(remote_wiseconnect3, remote_wiseconnect3s, ble_dut, ble
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC1709838415')
 def test_tx_indications(remote_wiseconnect3,
                             remote_wiseconnect3s,
                             ble_dut, ble_sniffer,

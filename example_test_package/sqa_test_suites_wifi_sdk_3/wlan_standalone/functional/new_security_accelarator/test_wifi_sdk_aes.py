@@ -228,6 +228,7 @@ pytestmark = [
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215179')
 def test_wifi_sdk_aes_encryption_with_key_size_128_c215179(wifi_dut, sl_collections):
     """This test case verify aes encryption with aes key size 128 """
     try:
@@ -239,6 +240,7 @@ def test_wifi_sdk_aes_encryption_with_key_size_128_c215179(wifi_dut, sl_collecti
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215180')
 def test_wifi_sdk_aes_encryption_with_key_size_256_c215180(wifi_dut, sl_collections):
     """This test case verify aes encryption with aes key size 256 """
     try:
@@ -250,6 +252,7 @@ def test_wifi_sdk_aes_encryption_with_key_size_256_c215180(wifi_dut, sl_collecti
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215181')
 def test_wifi_sdk_aes_encryption_with_key_size_192_c215181(wifi_dut, sl_collections):
     """This test case verify aes encryption with aes key size 192 """
     try:
@@ -261,6 +264,7 @@ def test_wifi_sdk_aes_encryption_with_key_size_192_c215181(wifi_dut, sl_collecti
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215182')
 def test_wifi_sdk_aes_decryption_with_key_size_128_c215182(wifi_dut, sl_collections):
     """This test case verify aes decryption with aes key size 128 """
     try:
@@ -272,6 +276,7 @@ def test_wifi_sdk_aes_decryption_with_key_size_128_c215182(wifi_dut, sl_collecti
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215183')
 def test_wifi_sdk_aes_decryption_with_key_size_256_c215183(wifi_dut, sl_collections):
     """This test case verify aes decryption with aes key size 256 """
     try:
@@ -283,6 +288,7 @@ def test_wifi_sdk_aes_decryption_with_key_size_256_c215183(wifi_dut, sl_collecti
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215184')
 def test_wifi_sdk_aes_decryption_with_key_size_192_c215184(wifi_dut, sl_collections):
     """This test case verify aes decryption with aes key size 192 """
     try:

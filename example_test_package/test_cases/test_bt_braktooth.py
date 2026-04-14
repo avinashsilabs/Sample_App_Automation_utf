@@ -23,6 +23,7 @@ from utf.utils.logger import get_logger
         "bt_exploit_type": "au_rand_flooding"
     },
 )
+@pytest.mark.test_src_map_id('TC3610209758')
 def test_bt_vulnerability_sniffer(
     wifi_dut, bt_client, wifi_access_point, bt_vulnerability_sniffer, logger
 ):

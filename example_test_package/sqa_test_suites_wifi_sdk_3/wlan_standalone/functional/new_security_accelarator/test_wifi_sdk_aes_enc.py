@@ -237,6 +237,7 @@ pytestmark = [
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537626')
 def test_wifi_sdk_aes_encryption_with_key_size_192_c537626(wifi_dut, sl_collections):
     """ Verify AES Encryption with wrapped key enable,AES_KEY_SIZE_192."""
     try:
@@ -248,6 +249,7 @@ def test_wifi_sdk_aes_encryption_with_key_size_192_c537626(wifi_dut, sl_collecti
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537627')
 def test_wifi_sdk_aes_encryption_with_key_size_128_c537627(wifi_dut, sl_collections):
     """ Verify AES Encryption with wrapped key enable,AES_KEY_SIZE_128."""
     try:
@@ -259,6 +261,7 @@ def test_wifi_sdk_aes_encryption_with_key_size_128_c537627(wifi_dut, sl_collecti
 
 
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C215185')
 def test_wifi_sdk_aes_encrypt_decrypt_with_wrapped_key_size_256_c215185(wifi_dut, sl_collections):
     """ Verify AES Encryption and decryption with wrapped key enable,AES_KEY_SIZE_256."""
     try:
@@ -270,6 +273,7 @@ def test_wifi_sdk_aes_encrypt_decrypt_with_wrapped_key_size_256_c215185(wifi_dut
 
 
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C215186')
 def test_wifi_sdk_aes_encrypt_with_wrapped_key_with_size_256_invalid_input_c215186(wifi_dut, sl_collections):
     """ Verify AES Encryption and Decryption with wrapped key enable,AES_KEY_SIZE_256 with wrong input."""
     try:
@@ -280,6 +284,7 @@ def test_wifi_sdk_aes_encrypt_with_wrapped_key_with_size_256_invalid_input_c2151
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C708767')
 def test_wifi_sdk_aes_encrypt_with_wrapped_key_with_size_192_invalid_input_c708767(wifi_dut, sl_collections):
     """ Verify AES Encryption and Decryption with wrapped key enable,AES_KEY_SIZE_192 with wrong input."""
     try:

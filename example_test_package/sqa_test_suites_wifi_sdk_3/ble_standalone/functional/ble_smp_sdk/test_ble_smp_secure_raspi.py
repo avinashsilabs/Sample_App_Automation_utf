@@ -329,6 +329,7 @@ pytestmark = [
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663314')
 def test_ble_smp_passkey_entry_pairing_Initiator_display_only_responder_keyboard_only_C663314(wifi_dut, ble_client,
                                                                                               pin_code,
                                                                                               client_capability,
@@ -387,6 +388,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_display_only_responder_keyboard
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663315')
 def test_ble_smp_passkey_entry_pairing_Initiator_display_yesno_responder_keyboard_only_C663315(wifi_dut, ble_client,
                                                                                                pin_code,
                                                                                                client_capability,
@@ -444,6 +446,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_display_yesno_responder_keyboar
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663318')
 def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_display_responder_keyboard_only_C663318(wifi_dut, ble_client,
                                                                                                   pin_code,
                                                                                                   client_capability,
@@ -501,6 +504,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_display_responder_keyb
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663324')
 def test_ble_smp_passkey_entry_pairing_Initiator_display_only_responder_keyboard_display_C663324(wifi_dut, ble_client,
                                                                                                  pin_code,
                                                                                                  client_capability,
@@ -558,6 +562,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_display_only_responder_keyboard
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663339')
 def test_ble_smp_passkey_entry_pairing_Initiator_display_only_responder_keyboard_only_C663339(wifi_dut, ble_client,
                                                                                               pin_code,
                                                                                               client_capability,
@@ -616,6 +621,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_display_only_responder_keyboard
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663340')
 def test_ble_smp_passkey_entry_pairing_Initiator_display_yesno_responder_keyboard_only_C663340(wifi_dut, ble_client,
                                                                                                pin_code,
                                                                                                client_capability,
@@ -674,6 +680,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_display_yesno_responder_keyboar
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663343')
 def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_display_responder_keyboard_only_C663343(wifi_dut, ble_client,
                                                                                                   pin_code,
                                                                                                   client_capability,
@@ -732,6 +739,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_display_responder_keyb
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663349')
 def test_ble_smp_passkey_entry_pairing_Initiator_display_only_responder_keyboard_display_C663349(wifi_dut, ble_client,
                                                                                                  pin_code,
                                                                                                  client_capability,
@@ -790,6 +798,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_display_only_responder_keyboard
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663316')
 def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_keyboard_only_C663316(
         wifi_dut, ble_client, pin_code, client_capability, dut_capability, ble_sniffer, sl_collections):
     """ Verify PasskeyEntry Pairing method for IOCap, Initiator : KeyBoardOnly , Responder : KeyboardOnly."""
@@ -843,6 +852,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_keyboar
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663341')
 def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_keyboard_only_C663341(
         wifi_dut, ble_client, pin_code, client_capability, dut_capability, ble_sniffer, sl_collections):
     """ Verify PasskeyEntry Pairing method for IOCap, Initiator : KeyBoardOnly , Responder : KeyboardOnly."""
@@ -896,6 +906,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_keyboard_only_responder_keyboar
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663325')
 def test_ble_smp_NumericComparision_pairing_Initiator_display_yesno_responder_keyboard_display_C663325(
         wifi_dut, ble_client, pin_code, client_capability, dut_capability, ble_sniffer, sl_collections):
     try:
@@ -944,6 +955,7 @@ def test_ble_smp_NumericComparision_pairing_Initiator_display_yesno_responder_ke
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663328')
 def test_ble_smp_NumericComparision_pairing_Initiator_keyboard_display_responder_keyboard_display_C663328(
         wifi_dut, ble_client, pin_code, client_capability, dut_capability, ble_sniffer, sl_collections):
     try:
@@ -991,6 +1003,7 @@ def test_ble_smp_NumericComparision_pairing_Initiator_keyboard_display_responder
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663350')
 def test_ble_smp_NumericComparision_pairing_Initiator_display_yes_no_responder_keyboard_display_C663350(
         wifi_dut, ble_client, pin_code, client_capability, dut_capability, ble_sniffer, sl_collections):
     try:
@@ -1039,6 +1052,7 @@ def test_ble_smp_NumericComparision_pairing_Initiator_display_yes_no_responder_k
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663353')
 def test_ble_smp_NumericComparision_pairing_Initiator_keyboard_display_responder_keyboard_display_C663353(
         wifi_dut, ble_client, pin_code, client_capability, dut_capability, ble_sniffer, sl_collections):
     try:
@@ -1087,6 +1101,7 @@ def test_ble_smp_NumericComparision_pairing_Initiator_keyboard_display_responder
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C557268')
 def test_verify_numeric_comparision_pairing_method_DUT_as_peripheral_random_address_C557268(
         wifi_dut, ble_client, pin_code, client_capability, dut_capability, ble_sniffer, sl_collections):
     """Verify numeric comparision pairing method for DUT as peripheral with random address"""
@@ -1137,6 +1152,7 @@ def test_verify_numeric_comparision_pairing_method_DUT_as_peripheral_random_addr
     ],
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C165699')
 def test_ble_smp_timeout_C165699(
         wifi_dut, ble_client, pin_code, client_capability, dut_capability, ble_sniffer, sl_collections):
     """ Verify ble SMP timeout if the the remote device doesn't confirm the pairing popup within a couple of seconds."""

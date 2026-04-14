@@ -503,6 +503,7 @@ class mqtt_sniffer_validation:
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19548')
 def test_wifi_sdk_aws_connect_sub_publish_c19548(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                  sniffer_filter, sl_collections, aws_iot_client, utf_constants):
     """
@@ -585,6 +586,7 @@ def test_wifi_sdk_aws_connect_sub_publish_c19548(wifi_sniffer, wifi_access_point
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19566')
 def test_wifi_sdk_aws_publish_message_in_thread1_and_receive_message_in_thread2_c19566(wifi_sniffer,
                                                                                        sniffer_filter,
                                                                                        wifi_access_point,
@@ -675,6 +677,7 @@ def test_wifi_sdk_aws_publish_message_in_thread1_and_receive_message_in_thread2_
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19555')
 def test_wifi_sdk_aws_tx_after_rejoin_qos0_C19555(switch, wifi_sniffer, wifi_access_point, wifi_dut,
                                                   sniffer_filter, logger, sl_collections, aws_iot_client):
     client_id = 'client_c19555'
@@ -774,6 +777,7 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos0_C19555(switch, wifi_sniffer, wifi_acc
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19556')
 def test_wifi_sdk_aws_tx_after_rejoin_qos1_c19556(switch, wifi_sniffer, wifi_access_point, wifi_dut,
                                                   sniffer_filter, logger, sl_collections, aws_iot_client):
     client_id = 'client_c19556'
@@ -873,6 +877,7 @@ def test_wifi_sdk_aws_tx_after_rejoin_qos1_c19556(switch, wifi_sniffer, wifi_acc
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19549')
 def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(wifi_sniffer, switch,
                                                                        sniffer_filter, sl_collections, aws_iot_client,
                                                                        logger, wifi_dut, wifi_access_point, iterations):
@@ -988,6 +993,7 @@ def test_wifi_sdk_aws_check_rejoin_failure_functionality_of_dut_c19549(wifi_snif
                        wifi=["wifi_powersave_disable", "#aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19567')
 def test_wifi_sdk_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567(wifi_dut, logger,
                                                                                  sniffer_filter, wifi_sniffer,
                                                                                  wifi_access_point, aws_iot_client,
@@ -1075,6 +1081,7 @@ def test_wifi_sdk_aws_publish_a_message_on_the_topic_for_every_10_minutes_c19567
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19553')
 def test_wifi_sdk_aws_publish_data_with_different_length_c19553(wifi_sniffer, wifi_access_point,
                                                                 wifi_dut, logger, sl_collections, aws_iot_client,
                                                                 sniffer_filter):
@@ -1161,6 +1168,7 @@ def test_wifi_sdk_aws_publish_data_with_different_length_c19553(wifi_sniffer, wi
                              "disassociated"])
 @pytest.mark.parametrize("test_run_time", [1800])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19552')
 def test_wifi_sdk_aws_connect_disconnect_sequence_c19552(wifi_sniffer, wifi_access_point, wifi_dut,
                                                          logger, sl_collections, aws_iot_client, test_run_time,
                                                          sniffer_filter):
@@ -1249,6 +1257,7 @@ def test_wifi_sdk_aws_connect_disconnect_sequence_c19552(wifi_sniffer, wifi_acce
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19558')
 def test_wifi_sdk_aws_connection_when_client_id_is_null_c19558(wifi_sniffer, wifi_access_point,
                                                                wifi_dut, logger, sl_collections, sniffer_filter):
     """
@@ -1310,6 +1319,7 @@ def test_wifi_sdk_aws_connection_when_client_id_is_null_c19558(wifi_sniffer, wif
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C19546')
 def test_wifi_sdk_aws_tcp_shutdown_c19546(wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client,
                                           logger, sl_collections, sniffer_filter, utf_constants):
     """
@@ -1398,6 +1408,7 @@ def test_wifi_sdk_aws_tcp_shutdown_c19546(wifi_sniffer, wifi_access_point, wifi_
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19554')
 def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_c19554(wifi_sniffer,
                                                                                        wifi_access_point, wifi_dut,
                                                                                        aws_iot_client, logger,
@@ -1481,6 +1492,7 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_different_lengths_
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19559')
 def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(switch, wifi_sniffer, wifi_access_point,
                                                                         wifi_dut, aws_iot_client,
                                                                         logger, sl_collections, sniffer_filter):
@@ -1586,6 +1598,7 @@ def test_wifi_sdk_aws_rx_over_subscribed_topic_after_rejoin_qos1_c19559(switch, 
                        wifi=["wifi_powersave_disable", "#aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19561')
 def test_wifi_sdk_aws_receive_func_while_receiving_100_msgs_continuously_c19561(wifi_access_point,
                                                                                 wifi_sniffer, sniffer_filter, logger,
                                                                                 wifi_dut, aws_iot_client, utf_constants,
@@ -1685,6 +1698,7 @@ def test_wifi_sdk_aws_receive_func_while_receiving_100_msgs_continuously_c19561(
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19563')
 def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(wifi_sniffer,
                                                                                 wifi_access_point, sniffer_filter,
                                                                                 wifi_dut, sl_collections,
@@ -1785,6 +1799,7 @@ def test_wifi_sdk_aws_receive_100_mqtt_messages_over_2_subscribed_topics_c19563(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_disconnect", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19564')
 def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(wifi_sniffer, logger,
                                                                             wifi_access_point, wifi_dut, sniffer_filter,
                                                                             aws_iot_client, sl_collections, publish_len,
@@ -1894,6 +1909,7 @@ def test_wifi_sdk_aws_data_integrity_check_after_sending_1mb_of_data_c19564(wifi
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19562')
 def test_wifi_sdk_aws_data_integrity_check_after_receiving_1mb_of_data_c19562(wifi_dut, sniffer_filter,
                                                                               wifi_sniffer, sl_collections, iterations,
                                                                               aws_iot_client, wifi_access_point,
@@ -2000,6 +2016,7 @@ def test_wifi_sdk_aws_data_integrity_check_after_receiving_1mb_of_data_c19562(wi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
+@pytest.mark.test_src_map_id('C4053')
 def test_wifi_sdk_aws_connect_after_wifi_reconnection_c4053(wifi_sniffer, wifi_access_point, wifi_dut,
                                                             logger, sl_collections, aws_iot_client, sniffer_filter):
     """
@@ -2086,6 +2103,7 @@ def test_wifi_sdk_aws_connect_after_wifi_reconnection_c4053(wifi_sniffer, wifi_a
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
+@pytest.mark.test_src_map_id('C4062')
 def test_wifi_sdk_aws_server_not_respond_c4062(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                sl_collections, aws_iot_client, sniffer_filter):
     """
@@ -2336,6 +2354,7 @@ def test_wifi_sdk_aws_server_not_respond_c4062(wifi_sniffer, wifi_access_point, 
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 # # @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537615')
 def test_wifi_sdk_aws_internet_connection_disconnection_c537615(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                               sniffer_filter, sl_collections, aws_iot_client,
                                                               utf_constants):
@@ -2480,6 +2499,7 @@ def test_wifi_sdk_aws_internet_connection_disconnection_c537615(wifi_sniffer, wi
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C537713')
 def test_wifi_sdk_aws_internet_connection_disconnection_c537713(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                               sniffer_filter, sl_collections, aws_iot_client,
                                                               utf_constants):
@@ -2604,6 +2624,7 @@ def test_wifi_sdk_aws_internet_connection_disconnection_c537713(wifi_sniffer, wi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537896')
 def test_wifi_sdk_aws_connect_will_message_negative_c537896(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                             sniffer_filter, sl_collections, aws_iot_client,
                                                             utf_constants):
@@ -2667,6 +2688,7 @@ def test_wifi_sdk_aws_connect_will_message_negative_c537896(wifi_sniffer, wifi_a
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537897')
 def test_wifi_sdk_aws_change_port_number_negative_c537897(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                           sl_collections):
     """
@@ -2731,6 +2753,7 @@ def test_wifi_sdk_aws_change_port_number_negative_c537897(wifi_sniffer, wifi_acc
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537899')
 def test_wifi_sdk_aws_connection_tcp_data_transfer_c537899(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                            sl_collections, aws_iot_client):
     """
@@ -2797,6 +2820,7 @@ def test_wifi_sdk_aws_connection_tcp_data_transfer_c537899(wifi_sniffer, wifi_ac
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537910')
 def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                              sl_collections, aws_iot_client):
     """
@@ -2890,6 +2914,7 @@ def test_wifi_sdk_aws_2000_bytes_rx_data_send_to_dut_c537910(wifi_sniffer, wifi_
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537911')
 def test_wifi_sdk_aws_2000_bytes_tx_data_send_to_dut_c537911(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                              sl_collections, aws_iot_client, utf_constants):
     """
@@ -2970,6 +2995,7 @@ def test_wifi_sdk_aws_2000_bytes_tx_data_send_to_dut_c537911(wifi_sniffer, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
+@pytest.mark.test_src_map_id('C661500')
 def test_wifi_sdk_aws_change_port_number_443_tx_c661500(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                      sl_collections, aws_iot_client, utf_constants):
     """
@@ -3054,6 +3080,7 @@ def test_wifi_sdk_aws_change_port_number_443_tx_c661500(wifi_sniffer, wifi_acces
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C661501')
 def test_wifi_sdk_aws_change_port_number_443_rx_c661501(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                         sl_collections, aws_iot_client, utf_constants):
     """
@@ -3167,6 +3194,7 @@ def test_wifi_sdk_aws_change_port_number_443_rx_c661501(wifi_sniffer, wifi_acces
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C537912')
 def test_wifi_sdk_aws_wake_on_wireless_C537912(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                sl_collections, aws_iot_client, utf_constants):
     """
@@ -3284,6 +3312,7 @@ def test_wifi_sdk_aws_wake_on_wireless_C537912(wifi_sniffer, wifi_access_point, 
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537894')
 def test_wifi_sdk_aws_2_subscribers_rx_c537894(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                sl_collections, aws_iot_client, utf_constants):
     """
@@ -3404,6 +3433,7 @@ def test_wifi_sdk_aws_2_subscribers_rx_c537894(wifi_sniffer, wifi_access_point, 
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537895')
 def test_wifi_sdk_aws_2_publisher_tx_c537895(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                              sl_collections, aws_iot_client, utf_constants):
     """
@@ -3522,6 +3552,7 @@ def test_wifi_sdk_aws_2_publisher_tx_c537895(wifi_sniffer, wifi_access_point, wi
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C687529')
 def test_wifi_sdk_aws_ca1_cert_tx_c687529(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
                                           aws_iot_client):
     """
@@ -3603,6 +3634,7 @@ def test_wifi_sdk_aws_ca1_cert_tx_c687529(wifi_sniffer, wifi_access_point, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C688527')
 def test_wifi_sdk_aws_combined_cert_tx_c688527(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
                                                aws_iot_client):
     """
@@ -3685,6 +3717,7 @@ def test_wifi_sdk_aws_combined_cert_tx_c688527(wifi_sniffer, wifi_access_point, 
                        wifi=["wifi_powersave_disable", "disassociated", "set_default_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384']])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C688520')
 def test_wifi_sdk_aws_ca3_cert_tx_c688520(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
                                           aws_iot_client, cipher_list):
     """
@@ -3775,6 +3808,7 @@ def test_wifi_sdk_aws_ca3_cert_tx_c688520(wifi_sniffer, wifi_access_point, wifi_
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C687530')
 def test_wifi_sdk_aws_ca1_cert_rx_c687530(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
                                           aws_iot_client):
     """
@@ -3873,6 +3907,7 @@ def test_wifi_sdk_aws_ca1_cert_rx_c687530(wifi_sniffer, wifi_access_point, wifi_
                              "disassociated", "set_default_ssl_cipher"])
 @pytest.mark.parametrize("cipher_list", [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384']])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C688521')
 def test_wifi_sdk_aws_ca3_cert_rx_c688521(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
                                           aws_iot_client, cipher_list):
     """
@@ -3975,6 +4010,7 @@ def test_wifi_sdk_aws_ca3_cert_rx_c688521(wifi_sniffer, wifi_access_point, wifi_
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C688528')
 def test_wifi_sdk_aws_combined_cert_rx_c688528(wifi_sniffer, wifi_access_point, wifi_dut, logger, sl_collections,
                                                aws_iot_client):
     """
@@ -4102,6 +4138,7 @@ def test_wifi_sdk_aws_combined_cert_rx_c688528(wifi_sniffer, wifi_access_point, 
 @pytest.mark.end_state("remote_wiseconnect3",
                        wifi=["wifi_powersave_disable", "disassociated", "aws_unsubscribe", "aws_disconnect"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537898')
 def test_wifi_sdk_aws_two_client_with_same_client_id_c537898(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                              sl_collections, aws_iot_client, remote_wiseconnect3):
     """
@@ -4209,6 +4246,7 @@ def test_wifi_sdk_aws_two_client_with_same_client_id_c537898(wifi_sniffer, wifi_
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C703343')
 def test_wifi_sdk_aws_ca1_cert_tx_with_internal_clk_c703343(wifi_sniffer, wifi_access_point, wifi_dut, logger,
                                                             sl_collections, aws_iot_client):
     """
@@ -4289,6 +4327,7 @@ def test_wifi_sdk_aws_ca1_cert_tx_with_internal_clk_c703343(wifi_sniffer, wifi_a
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated", "clear_certs"])
+@pytest.mark.test_src_map_id('C537900')
 def test_wifi_sdk_aws_connect_sub_publish_and_http_c537900(wifi_sniffer, wifi_access_point, wifi_dut, logger, http_server, index_path,
                                                  sniffer_filter, sl_collections, aws_iot_client, utf_constants):
     """
@@ -4384,6 +4423,7 @@ def test_wifi_sdk_aws_connect_sub_publish_and_http_c537900(wifi_sniffer, wifi_ac
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
 
+@pytest.mark.test_src_map_id('C708581')
 def test_wifi_sdk_aws_publish_data_with_more_data_lengths_c708581(wifi_sniffer, wifi_access_point,
                                                                   wifi_dut, logger, sl_collections, aws_iot_client,
                                                                   sniffer_filter):
@@ -4476,6 +4516,7 @@ def test_wifi_sdk_aws_publish_data_with_more_data_lengths_c708581(wifi_sniffer, 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "aws_unsubscribe", "aws_disconnect",
                              "disassociated"])
+@pytest.mark.test_src_map_id('C708787')
 def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_more_data_lengths_c708787(
     wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, logger, sl_collections, sniffer_filter
 ):

@@ -48,6 +48,7 @@ class ThreadC(ThreadBase):
                         logger().info(f"Event Data {event.event_data} Event Type {event.event_type}")
                 time.sleep(0.5)
 
+@pytest.mark.test_src_map_id('TC6277877451')
 def test_wiseconnect_3_without_using_threads(wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.scan(ssid=None)
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -57,11 +58,13 @@ def test_wiseconnect_3_without_using_threads(wifi_dut, wifi_access_point):
     "wifi_dut",
      wifi={ "thread_config": { "wifi":{ "count": 3, "stack_len": 2048 }, "ble":{ "count": 3, "stack_len": 2048 }  } }
 )
+@pytest.mark.test_src_map_id('TC1344977456')
 def test_wiseconnect_3_with_using_threads(wifi_dut, wifi_access_point):
     with ThreadA(wifi_dut, wifi_access_point), ThreadB(wifi_dut):
         time.sleep(30)
 
 
+@pytest.mark.test_src_map_id('TC3459945461')
 def test_wiseconnect_3_with_or_without_threads(wifi_dut, wifi_access_point):
     wifi_dut.interfaces.wifi.init()
     time.sleep(2)
@@ -70,6 +73,7 @@ def test_wiseconnect_3_with_or_without_threads(wifi_dut, wifi_access_point):
     time.sleep(2)
 
 #@pytest.mark.wifi_access_point("dlink810_ap")
+@pytest.mark.test_src_map_id('TC6996924468')
 def test_async_rejoin_errors(wifi_dut, wifi_access_point, logger):
     # verify ping
     wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -95,20 +99,24 @@ def test_async_rejoin_errors(wifi_dut, wifi_access_point, logger):
             assert False, "Did not receive an expected rejoin error event"
     logger.info(f"Received rejoin error event after {t.duration:.2f}s")
     
+@pytest.mark.test_src_map_id('TC2858434473')
 def test_wiseconnect_3_get_async_messages_with_threads(wifi_dut, wifi_access_point):
     time.sleep(2)
     with ThreadA(wifi_dut, wifi_access_point), ThreadC(wifi_dut):
             time.sleep(5)
     time.sleep(2)
 
+@pytest.mark.test_src_map_id('TC1855170479')
 def test_wiseconnect_3_ncp(wifi_dut):
     wifi_dut.interfaces.wifi.scan(ssid=None)
 
+@pytest.mark.test_src_map_id('TC2319225484')
 def test_wiseconnect_3_soc_secure(wifi_dut):
     wifi_dut.interfaces.wifi.version()
     wifi_dut.interfaces.wifi.scan(ssid=None)
 
 @pytest.mark.firmware_app("test_firmware_loadder")
+@pytest.mark.test_src_map_id('TC5390725490')
 def test_wiseconnect_3_with_two_efrs(firmware_loader, wifi_dut, remote_wiseconnect3):
     logger().info("Testing wifi_dut scan")
     with TimeMeasurer() as t:

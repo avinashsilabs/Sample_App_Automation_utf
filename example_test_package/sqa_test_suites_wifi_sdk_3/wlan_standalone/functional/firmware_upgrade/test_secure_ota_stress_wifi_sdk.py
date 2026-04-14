@@ -113,6 +113,7 @@ class WifiJoin(ThreadBase):
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
     }
 )
+@pytest.mark.test_src_map_id('C510706')
 def test_wifi_sdk_tcp_fw_upgrade_full_security_overnight_c510706(firmware_loader, wifi_client, sdk_server,
                                                                  wifi_access_point, wifi_dut, wifi_sniffer,
                                                                  sl_collections, utf_constants):
@@ -166,6 +167,7 @@ def test_wifi_sdk_tcp_fw_upgrade_full_security_overnight_c510706(firmware_loader
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
     }
 )
+@pytest.mark.test_src_map_id('C510728')
 def test_wifi_sdk_tcp_fw_upgrade_combine_image_overnight_c510728(firmware_loader, wifi_client, sdk_server,
                                                                  wifi_access_point, wifi_dut, wifi_sniffer,
                                                                  sl_collections, utf_constants):

@@ -423,6 +423,7 @@ class ApModeClientConnections(ThreadBase):
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19454')
 def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, wifi_sniffer,
                                                    sl_collections, wifi_client, utf_constants, sniffer_filter):
     """ Verify Ap mode connection when region selected is US and region
@@ -496,6 +497,7 @@ def test_wifi_sdk_ap_mode_tx_rules_us_region_c19454(wifi_dut, wifi_clients, wifi
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19432')
 def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi_dut, wifi_clients,
                                                               sl_collections, utf_constants,
                                                               sniffer_filter):
@@ -547,6 +549,7 @@ def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi
 )
 @pytest.mark.parametrize("dtim_count", [1, 2, 3, 6, 10])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19444')
 def test_wifi_sdk_various_dtim_intervals_c19444(wifi_sniffer, wifi_dut, wifi_clients,
                                                 utf_constants, sl_collections,
                                                 sniffer_filter, dtim_count):
@@ -603,6 +606,7 @@ def test_wifi_sdk_various_dtim_intervals_c19444(wifi_sniffer, wifi_dut, wifi_cli
 )
 @pytest.mark.parametrize("beacon", [100, 200, 600, 1000])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19443')
 def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_dut, beacon,
                                                      wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify beacon intervals by configuring different beacon intervals(100,200,600,1000)"""
@@ -683,6 +687,7 @@ def test_wifi_sdk_dutap_diff_beacon_intervals_c19443(wifi_sniffer, wifi_dut, bea
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19442')
 def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer,  wifi_dut,
                                                           wifi_clients, sl_collections, utf_constants,  sniffer_filter):
     """AP Sequence with many STAS connected"""
@@ -734,6 +739,7 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer,  wifi_du
 )
 @pytest.mark.parametrize("channel", [14])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19458')
 def test_wifi_sdk_dutap_korean_region_unsupported_channel_c19458(wifi_dut, wifi_sniffer, channel, sl_collections):
     """Try to configure Channel 14 in AP with Country Korea and check the DUT behavior"""
     try:
@@ -783,6 +789,7 @@ def test_wifi_sdk_dutap_korean_region_unsupported_channel_c19458(wifi_dut, wifi_
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19437')
 def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sniffer_filter,
                                                                 utf_constants, wifi_dut, wifi_clients, sl_collections):
     try:
@@ -858,6 +865,7 @@ def test_wifi_sdk_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer, sn
 )
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19456')
 def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter,
                                                     wifi_sniffer,
                                                     wifi_clients, sl_collections, utf_constants):
@@ -948,6 +956,7 @@ def test_wifi_sdk_ap_mode_tx_rules_jp_region_c19456(wifi_dut, sniffer_filter,
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19455')
 def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, wifi_sniffer,
                                                     wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify whether DUT is obeying transmission rules(Transmitting with only given power as per channel) according to
@@ -1016,6 +1025,7 @@ def test_wifi_sdk_ap_mode_tx_rules_eu_region_c19455(wifi_dut, wifi_sniffer,
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.parametrize("beacon", [100, 200, 300])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19447')
 def test_wifi_sdk_dutap_tcp_tx_rx_c19447(wifi_sniffer, net_perf_client, wifi_dut, wifi_client,
                                          wifi_clients, protocol, utf_constants, sl_collections, sniffer_filter, beacon):
     """Data transfer TX and RX by enabling HT CAPs in AP mode"""
@@ -1085,6 +1095,7 @@ def test_wifi_sdk_dutap_tcp_tx_rx_c19447(wifi_sniffer, net_perf_client, wifi_dut
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19436')
 def test_wifi_sdk_dutap_verify_beacon_format_c19436(wifi_sniffer, wifi_dut, wifi_access_point,
                                                     utf_constants, sl_collections, wifi_clients, sniffer_filter, request):
     """Verify beacon format sent by APUT"""
@@ -1167,6 +1178,7 @@ def test_wifi_sdk_dutap_verify_beacon_format_c19436(wifi_sniffer, wifi_dut, wifi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19446')
 def test_wifi_sdk_dut_apmode_11n_htcaps_support_c19446(wifi_sniffer, wifi_dut, channel, protocol,
                                                        sl_collections, wifi_clients, utf_constants, sniffer_filter, net_perf_client):
     """HT CAP Functionality ,High through put capabilities in AP mode"""
@@ -1241,6 +1253,7 @@ def test_wifi_sdk_dut_apmode_11n_htcaps_support_c19446(wifi_sniffer, wifi_dut, c
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19449')
 def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_clients, channel,
                                                   wifi_access_point,
                                                   utf_constants, sl_collections, sniffer_filter):
@@ -1342,6 +1355,7 @@ def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_c
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19450')
 def test_wifi_sdk_dut_ap_mode_soft_reset_ap_to_sta_c19450(wifi_sniffer, wifi_dut, wifi_clients,  channel,
                                                           wifi_access_point, utf_constants, sl_collections, sniffer_filter
                                                           ):
@@ -1438,6 +1452,7 @@ def test_wifi_sdk_dut_ap_mode_soft_reset_ap_to_sta_c19450(wifi_sniffer, wifi_dut
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19441')
 def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
                                                wifi_clients, sl_collections, utf_constants, sniffer_filter,
                                                net_perf_client, protocol):
@@ -1510,6 +1525,7 @@ def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C477826')
 def test_wifi_sdk_dutap_korea_region_ap_mode_rx_c477826(wifi_dut, wifi_sniffer, sl_collections, wifi_clients, utf_constants, net_perf_client, protocol):
     """Verify whether 3rd party STA  is able to connect or not when DUT is bring up AP in Korea Region"""
     try:
@@ -1558,6 +1574,7 @@ def test_wifi_sdk_dutap_korea_region_ap_mode_rx_c477826(wifi_dut, wifi_sniffer, 
 )
 @pytest.mark.parametrize("channel", [14])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C477827')
 def test_wifi_sdk_dutap_europe_region_unsupported_channel_c477827(wifi_dut, wifi_sniffer, channel, sl_collections):
     """Try to configure Channel 14 in AP with Country europe and check the DUT behavior"""
     try:
@@ -1602,6 +1619,7 @@ def test_wifi_sdk_dutap_europe_region_unsupported_channel_c477827(wifi_dut, wifi
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C477825')
 def test_wifi_sdk_dutap_korean_region_ap_mode_c477825(wifi_dut, wifi_sniffer, sl_collections, sniffer_filter):
     """Verify whether DUT is able bringup in AP mode with Korea Country and check the region field in Beacon"""
     try:
@@ -1665,6 +1683,7 @@ def test_wifi_sdk_dutap_korean_region_ap_mode_c477825(wifi_dut, wifi_sniffer, sl
          }
 )
 @pytest.mark.parametrize("channel", [1])
+@pytest.mark.test_src_map_id('C37595')
 def test_wifi_sdk_dut_socket_info_udp_client_socket_c37595(wifi_sniffer, wifi_dut, channel,
                                                        sl_collections, wifi_clients, utf_constants, sniffer_filter, remote_socket):
     """Verify socket ID info/number remains same at all stages while running UDP client in AP mode"""
@@ -1739,6 +1758,7 @@ def test_wifi_sdk_dut_socket_info_udp_client_socket_c37595(wifi_sniffer, wifi_du
          }
 )
 @pytest.mark.parametrize("channel", [1])
+@pytest.mark.test_src_map_id('C37594')
 def test_wifi_sdk_dut_socket_info_udp_server_socket_c37594(wifi_sniffer, wifi_dut, channel,
                                                        sl_collections, wifi_clients, utf_constants, sniffer_filter, remote_socket):
     try:
@@ -1802,6 +1822,7 @@ def test_wifi_sdk_dut_socket_info_udp_server_socket_c37594(wifi_sniffer, wifi_du
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C535822')
 def test_wifi_sdk_sta_association_to_aput_hidden_ssid_c535822(wifi_sniffer, wifi_dut,
                                                     utf_constants, sl_collections, wifi_client, sniffer_filter, request):
     """Check the 3rd party STA Association to APUT with Hidden SSID Mode"""
@@ -1890,6 +1911,7 @@ def test_wifi_sdk_sta_association_to_aput_hidden_ssid_c535822(wifi_sniffer, wifi
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C37589')
 def test_wifi_sdk_dutap_verify_channel_0_c37589(wifi_sniffer, wifi_dut,
                                                     utf_constants, sl_collections, wifi_client, sniffer_filter, net_perf_client, protocol):
     """Verify AP functionality in ACS (CH as 0) mode in 2G"""
@@ -1966,6 +1988,7 @@ def test_wifi_sdk_dutap_verify_channel_0_c37589(wifi_sniffer, wifi_dut,
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551262')
 def test_wifi_sdk_dutap_verify_5g_channel_in_2_4_ghz_c551262(wifi_sniffer, wifi_dut,
                                                     utf_constants, sl_collections, wifi_client, sniffer_filter
                                                  ):
@@ -2017,6 +2040,7 @@ def test_wifi_sdk_dutap_verify_5g_channel_in_2_4_ghz_c551262(wifi_sniffer, wifi_
 )
 @pytest.mark.parametrize("beacon", [1200])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551268')
 def test_wifi_sdk_dutap_beacon_interval_1200_c551268(wifi_sniffer, wifi_dut, beacon,
                                                      wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Configure beacon interval more than 1000ms and verify"""
@@ -2066,6 +2090,7 @@ def test_wifi_sdk_dutap_beacon_interval_1200_c551268(wifi_sniffer, wifi_dut, bea
 )
 @pytest.mark.parametrize("dtim_period", [260])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551261')
 def test_wifi_sdk_dutap_dtim_count_260_c551261(wifi_sniffer, wifi_dut, dtim_period,
                                                      wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify AP beacon when DIM count configured more than 255"""
@@ -2116,6 +2141,7 @@ def test_wifi_sdk_dutap_dtim_count_260_c551261(wifi_sniffer, wifi_dut, dtim_peri
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551265')
 def test_wifi_sdk_dutap_eu_region_c551265(wifi_sniffer, wifi_dut,
                                                      wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """verify APUT beacon with region EU, WPA security, Channel 13, DTIM 3 , Beacon interval 500ms configurations"""
@@ -2169,6 +2195,7 @@ def test_wifi_sdk_dutap_eu_region_c551265(wifi_sniffer, wifi_dut,
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551267')
 def test_wifi_sdk_dutap_us_region_enable_11w_c551267(wifi_sniffer, wifi_dut,
                                                      wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify APUT beacon with region US, WPA2 security, Channel 11, DTIM 1 , Beacon interval 100ms configurations,11w enable"""
@@ -2221,6 +2248,7 @@ def test_wifi_sdk_dutap_us_region_enable_11w_c551267(wifi_sniffer, wifi_dut,
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551264')
 def test_wifi_sdk_dutap_us_region_wpa2_security_c551264(wifi_sniffer, wifi_dut,
                                                      wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """Verify APUT beacon with region US, WPA2 security, Channel 11, DTIM 1 , Beacon interval 100ms configurations,11w enable"""
@@ -2289,6 +2317,7 @@ def test_wifi_sdk_dutap_us_region_wpa2_security_c551264(wifi_sniffer, wifi_dut,
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551271')
 def test_wifi_sdk_sta_supports_aggreration_to_aput_c551271(wifi_sniffer, wifi_dut,
                                                    sl_collections, utf_constants, wifi_clients, sniffer_filter):
         """Connect 3rd party STA which supports aggregation to APUT (APUT doesn't support aggregation) and check the behavior"""
@@ -2341,6 +2370,7 @@ def test_wifi_sdk_sta_supports_aggreration_to_aput_c551271(wifi_sniffer, wifi_du
 )
 @pytest.mark.parametrize("channel", [1, 6, 11, 13])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C551263')
 def test_wifi_sdk_sta_different_channels_aput_c551263(wifi_sniffer, wifi_dut,
                                                    sl_collections, utf_constants, wifi_clients, sniffer_filter, channel):
      "Configure APUT in 2.4Ghz in the following channels 1,6,11,13,14 and verify connectivity with the 3rd party STAs"
@@ -2383,6 +2413,7 @@ def test_wifi_sdk_sta_different_channels_aput_c551263(wifi_sniffer, wifi_dut,
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C563999')
 def test_wifi_sdk_beacon_stop_functionality_c563999(wifi_sniffer, wifi_dut,
                                                    sl_collections, sniffer_filter):
     try:
@@ -2461,6 +2492,7 @@ def test_wifi_sdk_beacon_stop_functionality_c563999(wifi_sniffer, wifi_dut,
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C586186')
 def test_wifi_sdk_sta_association_to_ap_hidden_ssid_c586186(wifi_sniffer, wifi_dut,
                                                     sl_collections, wifi_client, sniffer_filter):
     """Check the 3rd party STA Association to APUT with Hidden SSID Mode (OPEN SECURITY)"""
@@ -2543,6 +2575,7 @@ def test_wifi_sdk_sta_association_to_ap_hidden_ssid_c586186(wifi_sniffer, wifi_d
 )
 @pytest.mark.parametrize("channel", [149])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19457')
 def test_wifi_sdk_dut_as_ap_japan_region_unsupported_channel_c19457(wifi_dut, wifi_sniffer, channel, sl_collections):
     """Try to configure Channel 149 in AP with Country japan and check the DUT behavior"""
     try:
@@ -2603,6 +2636,7 @@ def test_wifi_sdk_dut_as_ap_japan_region_unsupported_channel_c19457(wifi_dut, wi
          }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C662091')
 def test_wifi_sdk_dutap_china_region_c662091(wifi_sniffer, wifi_dut,
                                                      wifi_clients, sl_collections, utf_constants, sniffer_filter):
     """verify  beacon with region China, Channel 13 Beacon interval 100ms configurations"""
@@ -2705,6 +2739,7 @@ def test_wifi_sdk_dutap_china_region_c662091(wifi_sniffer, wifi_dut,
         "device": {"TCP": {"port": 6201, "data_len": 1380}, "UDP": {"port": 6202, "data_len": 1390}},
         })
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C662092')
 def test_wifi_sdk_dutap_region_china_data_transfer_2clients_c662092(wifi_sniffer, wifi_dut, wifi_clients,
                                                                     sl_collections, utf_constants, net_perf_client,
                                                                     net_perf_server, sniffer_filter):
@@ -2773,6 +2808,7 @@ def test_wifi_sdk_dutap_region_china_data_transfer_2clients_c662092(wifi_sniffer
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C793715')
 def test_wifi_sdk_APUT_disabling_short_GI_C793715(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants,
                                                   sl_collections, sniffer_filter, request, wifi_clients):
     """
@@ -2819,6 +2855,7 @@ def test_wifi_sdk_APUT_disabling_short_GI_C793715(wifi_dut, wifi_access_point, w
 
 @pytest.mark.start_state("wifi_dut", wifi=["reset"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C793717')
 def test_wifi_sdk_dutap_singapore_unsupported_region_c793717(wifi_dut, wifi_sniffer, sl_collections):
     """Try to configure unsupported region Country singapore in AP with  and check the DUT behavior"""
     try:
@@ -2860,6 +2897,7 @@ def test_wifi_sdk_dutap_singapore_unsupported_region_c793717(wifi_dut, wifi_snif
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C770034')
 def test_wifi_sdk_long_icmp_packet_functionality_ipv4_c770034(wifi_dut, wifi_sniffer,
                                                          sl_collections, sniffer_filter, request, wifi_client):
     power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -2960,6 +2998,7 @@ def test_wifi_sdk_long_icmp_packet_functionality_ipv4_c770034(wifi_dut, wifi_sni
 )
 @pytest.mark.start_state("wifi_dut", wifi=["reset", "init"])
 @pytest.mark.end_state("wifi_dut", wifi="reset")
+@pytest.mark.test_src_map_id('C19439')
 def test_wifi_sdk_sta_inactive_for_5_minutes_c19439(wifi_sniffer, wifi_dut, wifi_clients,
                                                     sl_collections, sniffer_filter, switch):
     """APUT's functionality when the station is inactive for 5 minutes"""
@@ -3043,6 +3082,7 @@ def test_wifi_sdk_sta_inactive_for_5_minutes_c19439(wifi_sniffer, wifi_dut, wifi
     },
 )
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C919363')
 def test_wifi_sdk_aput_extended_scan_and_client_connect_c919363(
     wifi_dut, wifi_client, wifi_sniffer, sl_collections, utf_constants, request,
 ):
@@ -3162,6 +3202,7 @@ def test_wifi_sdk_aput_extended_scan_and_client_connect_c919363(
     },
 )
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C919364')
 def test_wifi_sdk_Extended_Scan_AP_mode_beacon_stop_hidden_ssid_c919364(
     wifi_dut, wifi_clients, wifi_sniffer, sl_collections, utf_constants, sniffer_filter, request,
 ):
@@ -3342,6 +3383,7 @@ def test_wifi_sdk_Extended_Scan_AP_mode_beacon_stop_hidden_ssid_c919364(
     },
 )
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C922636')
 def test_wifi_sdk_DNS_server_functionality_AP_mode_c922636(
     wifi_dut, wifi_client, wifi_sniffer, sl_collections, utf_constants, request,
 ):

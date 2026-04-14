@@ -663,6 +663,7 @@ class Iperf(WifiJoinThread, ThreadBase):
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C794056')
 def test_wifi_sdk_ble_slave_notify_and_tcp_tx_traffic_C794056(
         ble_dut, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -791,6 +792,7 @@ def test_wifi_sdk_ble_slave_notify_and_tcp_tx_traffic_C794056(
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C794056')
 def test_wifi_sdk_ble_master_notify_and_tcp_tx_traffic_C794056(
         ble_dut, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -919,6 +921,7 @@ def test_wifi_sdk_ble_master_notify_and_tcp_tx_traffic_C794056(
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C794067')
 def test_wifi_sdk_ble_slave_notify_and_tcp_tx_traffic_without_ps_C794067(
         ble_dut, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -1047,6 +1050,7 @@ def test_wifi_sdk_ble_slave_notify_and_tcp_tx_traffic_without_ps_C794067(
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C794068')
 def test_wifi_sdk_ble_master_notify_and_tcp_tx_traffic_without_ps_C794068(
         ble_dut, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -1175,6 +1179,7 @@ def test_wifi_sdk_ble_master_notify_and_tcp_tx_traffic_without_ps_C794068(
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C794065')
 def test_wifi_sdk_ble_slave_notify_tcp_tx_traffic_without_ps_1m_phy_C794065(
         ble_dut, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):
@@ -1303,6 +1308,7 @@ def test_wifi_sdk_ble_slave_notify_tcp_tx_traffic_without_ps_1m_phy_C794065(
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C794064')
 def test_wifi_sdk_ble_master_notify_tcp_tx_traffic_without_ps_2m_phy_C794064(
         ble_dut, sl_collections, wifi_dut, request, wifi_access_point, remote_wiseconnect3,
         wifi_sniffer, sniffer_filter, wifi_client, net_perf_client, protocol):

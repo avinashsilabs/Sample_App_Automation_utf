@@ -51,6 +51,7 @@ gateway = '192.168.100.76'
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.test_src_map_id('TC8951653924')
 def test_version_testcase_id1(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
@@ -73,6 +74,7 @@ def test_version_testcase_id1(wifi_dut):
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.test_src_map_id('TC8128884928')
 def test_version_testcase_id2(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
@@ -95,6 +97,7 @@ def test_version_testcase_id2(wifi_dut):
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.test_src_map_id('TC8359680933')
 def test_wifi_connect_testcase_id6(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         result = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -126,6 +129,7 @@ def test_wifi_connect_testcase_id6(wifi_dut, wifi_access_point):
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.test_src_map_id('TC7141029938')
 def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
     # Set up DUT for BLE advertising
     bt_dut_address = wifi_dut.interfaces.wifi.ble_start()
@@ -171,6 +175,7 @@ def test_ble_connect_testcase_id_19(wifi_dut, ble_client):
         }
     )
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.test_src_map_id('TC7616941942')
 def test_wifi_ble_connect_testcase_id_27(wifi_dut, wifi_access_point, ble_client):
     # Join Wi-Fi Access Point
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -226,6 +231,7 @@ def __print_throughput(iperf_throughput: dict):
     )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE, "protocol": IperfConstants.TCP})
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.test_src_map_id('TC2533793947')
 def test_throughput_tcp_tx_2_4_channel1(net_perf_client, wifi_access_point, wifi_dut, wifi_client):
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -268,6 +274,7 @@ def test_throughput_tcp_tx_2_4_channel1(net_perf_client, wifi_access_point, wifi
     )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE, "protocol":IperfConstants.UDP})
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.test_src_map_id('TC8551539952')
 def test_throughput_udp_rx_2_4_channel1(net_perf_client, wifi_access_point, wifi_dut, wifi_client):
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -314,6 +321,7 @@ def test_throughput_udp_rx_2_4_channel1(net_perf_client, wifi_access_point, wifi
         }
     )
 # This test case verifies the spp connection in keyboardonly mode
+@pytest.mark.test_src_map_id('TC8360707956')
 def test_bt_master_ssp_keyboardonly(wifi_dut, bt_client):
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_master_ssp_display(pair_mode="1", capability="2")
@@ -351,6 +359,7 @@ def test_bt_master_ssp_keyboardonly(wifi_dut, bt_client):
         "coex_mode": RS9116CoexMode.WLAN | RS9116CoexMode.Bluetooth,
         }
     )
+@pytest.mark.test_src_map_id('C19983')
 def test_bt_standard_inquiry_C19983(wifi_dut, bt_client):
 
     with TimeMeasurer() as t:

@@ -833,6 +833,7 @@ pytestmark = [
 #---------------------------------------------------------------------------------#
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663329')
 def test_ble_smp_just_works_displayonly_on_both_sides_pairing_using_random_addr_C663329(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """VVerify JustWorks Pairing method for IOCap , Initiator : DisplayOnly and Responder : DisplayOnly with random addr"""
     ble_obj = None
@@ -869,6 +870,7 @@ def test_ble_smp_just_works_displayonly_on_both_sides_pairing_using_random_addr_
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663330')
 def test_ble_smp_just_works_pairing_method_Initiator_displayyesno_responsder_displayonly_using_random_C663330(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator: Displayyesorno and Responder: DisplayOnly  with random addr"""
     ble_obj = None
@@ -905,6 +907,7 @@ def test_ble_smp_just_works_pairing_method_Initiator_displayyesno_responsder_dis
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663332')
 def test_ble_smp_just_works_pairing_Initiator_NoInput_NoOutput_responder_displayonly_using_random_addr_C663332(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator :  No Input No Output  and Responder : DisplayOnly with random addr"""
     ble_obj = None
@@ -941,6 +944,7 @@ def test_ble_smp_just_works_pairing_Initiator_NoInput_NoOutput_responder_display
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663334')
 def test_ble_smp_just_works_pairing_Initiator_displayonly_responder_displayyesorno_using_random_addr_C663334(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : Display onlu and Responder : Display yes/no with random addr"""
     ble_obj = None
@@ -983,6 +987,7 @@ def test_ble_smp_just_works_pairing_Initiator_displayonly_responder_displayyesor
         (1, "DisplayYesNo", "-8"),  # -8 to wait for pass_key
     ],
 )
+@pytest.mark.test_src_map_id('C663335')
 def test_ble_smp_just_works_pairing_Initiator_displayyesorno_responder_displayyesno_using_random_addr_C663335(dut_capability, client_capability, pin_code, wifi_dut, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : Display yes/no and Responder : Display yes/no"""
     ble_obj = None
@@ -1019,6 +1024,7 @@ def test_ble_smp_just_works_pairing_Initiator_displayyesorno_responder_displayye
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663337')
 def test_ble_smp_just_works_pairing_Initiator_no_input_no_output__responder_displayyesorno_using_random_addr_C663337(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No Input No Output  and Responder : DisplayyesorNo"""
     ble_obj = None
@@ -1055,6 +1061,7 @@ def test_ble_smp_just_works_pairing_Initiator_no_input_no_output__responder_disp
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663344')
 def test_ble_smp_just_works_pairing_initiator_displayonly_responder_no_input_no_output_using_random_addr_C663344(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator :Display Only and Responder : No Input No Output using random addr"""
     ble_obj = None
@@ -1091,6 +1098,7 @@ def test_ble_smp_just_works_pairing_initiator_displayonly_responder_no_input_no_
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663345')
 def test_ble_smp_just_works_pairing_initiator_displayyeorno_responder_using_random_addr_C663345(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : Display yes/no and Responder : No Input No Output using random addr"""
     ble_obj = None
@@ -1127,6 +1135,7 @@ def test_ble_smp_just_works_pairing_initiator_displayyeorno_responder_using_rand
 
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C663347')
 def test_ble_smp_just_works_pairing_initiator_No_Input_No_Output_responder_No_Input_No_Output_using_random_addr_C663347(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify PasskeyEntry Pairing method for IOCap, Initiator : No Input No Output ,and Responder : No Input No Output using random addr"""
     ble_obj = None
@@ -1167,6 +1176,7 @@ def test_ble_smp_just_works_pairing_initiator_No_Input_No_Output_responder_No_In
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664767')
 def test_ble_smp_pairing_Initiator_display_yes_or_no_responder_keyboard_using_public_addr_C664767(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Pairing method for IOCap, Initiator : Display yes or no and Responder : keyboardonly with public addr"""
     ble_obj = None
@@ -1204,6 +1214,7 @@ def test_ble_smp_pairing_Initiator_display_yes_or_no_responder_keyboard_using_pu
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664766')
 def test_ble_smp_pairing_initiator_displayonly_responder_keyboard_using_public_addr_C664766(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Pairing method for IOCap, Initiator : Display only and Responder : keyboardonly with public addr"""
     ble_obj = None
@@ -1241,6 +1252,7 @@ def test_ble_smp_pairing_initiator_displayonly_responder_keyboard_using_public_a
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664791')
 def test_ble_smp_pairing_Initiator_displayonly_responder_keyboard_using_random_addr_C664791(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Pairing method for IOCap, Initiator : Display only and Responder : keyboardonly with random addr"""
     ble_obj = None
@@ -1278,6 +1290,7 @@ def test_ble_smp_pairing_Initiator_displayonly_responder_keyboard_using_random_a
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664792')
 def test_ble_smp_pairing_Initiator_display_yes_or_no_responder_keyboard_using_random_addr_C664792(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Pairing method for IOCap, Initiator : Display yes or no and Responder : keyboardonly with random addr"""
     ble_obj = None
@@ -1315,6 +1328,7 @@ def test_ble_smp_pairing_Initiator_display_yes_or_no_responder_keyboard_using_ra
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664777')
 def test_ble_smp_pairing_Initiator_display_yes_or_no_responder_keyboard_display_using_public_addr_C664777(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Pairing method for IOCap, Initiator : Display yes or no and Responder : keyboard display with public addr"""
     ble_obj = None
@@ -1353,6 +1367,7 @@ def test_ble_smp_pairing_Initiator_display_yes_or_no_responder_keyboard_display_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664776')
 def test_ble_smp_pairing_initiator_displayonly_responder_keyboard_using_public_addr_C664776(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Pairing method for IOCap, Initiator : Display only and Responder : keyboard display with public addr"""
     ble_obj = None
@@ -1392,6 +1407,7 @@ def test_ble_smp_pairing_initiator_displayonly_responder_keyboard_using_public_a
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664802')
 def test_ble_smp_pairing_Initiator_display_yes_or_no_responder_keyboard_display_using_random_addr_C664802(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify Pairing method for IOCap, Initiator : Display yes or no and Responder : keyboard display with random addr"""
     ble_obj = None
@@ -1429,6 +1445,7 @@ def test_ble_smp_pairing_Initiator_display_yes_or_no_responder_keyboard_display_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664801')
 def test_ble_smp_pairing_initiator_displayonly_responder_keyboard_display_using_random_addr_C664801(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify  Pairing method for IOCap, Initiator : Display only and Responder : keyboard display with random addr"""
     ble_obj = None
@@ -1467,6 +1484,7 @@ def test_ble_smp_pairing_initiator_displayonly_responder_keyboard_display_using_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663321')
 def test_ble_smp_just_works_pairing_Initiator_keyboard_only_responder_No_input_No_output_using_public_addr_C663321(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboardOnly with public addr"""
     ble_obj = None
@@ -1504,6 +1522,7 @@ def test_ble_smp_just_works_pairing_Initiator_keyboard_only_responder_No_input_N
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663323')
 def test_ble_smp_just_works_pairing_initiator_keyboard_display_responder_No_input_No_output_using_public_addr_C663323(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : keyboard display and Responder : No input No output with public addr"""
     ble_obj = None
@@ -1541,6 +1560,7 @@ def test_ble_smp_just_works_pairing_initiator_keyboard_display_responder_No_inpu
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663317')
 def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keyboard_only_using_public_addr_C663317(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboardOnly with public addr"""
     ble_obj = None
@@ -1578,6 +1598,7 @@ def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keybo
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663327')
 def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keyboard_display_using_public_addr_C663327(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboard Display with public addr"""
     ble_obj = None
@@ -1614,6 +1635,7 @@ def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keybo
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663346')
 def test_ble_smp_just_works_pairing_Initiator_keyboard_only_responder_No_input_No_output_using_random_addr_C663346(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboardOnly with random addr"""
     ble_obj = None
@@ -1651,6 +1673,7 @@ def test_ble_smp_just_works_pairing_Initiator_keyboard_only_responder_No_input_N
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663348')
 def test_ble_smp_just_works_pairing_initiator_keyboard_display_responder_No_input_No_output_using_random_addr_C663348(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboardOnly with random addr"""
     ble_obj = None
@@ -1688,6 +1711,7 @@ def test_ble_smp_just_works_pairing_initiator_keyboard_display_responder_No_inpu
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663342')
 def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keyboard_only_using_random_addr_C663342(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboardOnly with random addr"""
     ble_obj = None
@@ -1725,6 +1749,7 @@ def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keybo
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663352')
 def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keyboard_display_using_random_addr_C663352(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboard Display with random addr"""
     ble_obj = None
@@ -1764,6 +1789,7 @@ def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keybo
 ###############################dut as slave passkey entry###########################
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663306')
 def test_ble_smp_pairing_Initiator_keyboard_only_responder_display_only_using_public_addr_C663306(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : keyboard only and Responder : displayOnly with public addr"""
     ble_obj = None
@@ -1804,6 +1830,7 @@ def test_ble_smp_pairing_Initiator_keyboard_only_responder_display_only_using_pu
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663308')
 def test_ble_smp_pairing_Initiator_keyboard_display_responder_display_only_using_public_addr_C663308(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : keyboard only and Responder : displayOnly with public addr"""
     ble_obj = None
@@ -1845,6 +1872,7 @@ def test_ble_smp_pairing_Initiator_keyboard_display_responder_display_only_using
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663311')
 def test_ble_smp_pairing_Initiator_keyboard_only_responder_display_yes_or_no_using_public_addr_C663311(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : keyboard only and Responder : displayOnly with public addr"""
     ble_obj = None
@@ -1891,6 +1919,7 @@ def test_ble_smp_pairing_Initiator_keyboard_only_responder_display_yes_or_no_usi
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663313')
 def test_ble_smp_pairing_Initiator_keyboard_display_responder_display_yes_or_no_using_public_addr_C663313(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify JustWorks Pairing method for IOCap, Initiator : keyboard only and Responder : displayOnly with public addr"""
     ble_obj = None
@@ -1931,6 +1960,7 @@ def test_ble_smp_pairing_Initiator_keyboard_display_responder_display_yes_or_no_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663331')
 def test_ble_smp_pairing_Initiator_keyboard_only_responder_display_only_using_random_addr_C663331(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : keyboard only and Responder : displayOnly with public addr"""
     ble_obj = None
@@ -1971,6 +2001,7 @@ def test_ble_smp_pairing_Initiator_keyboard_only_responder_display_only_using_ra
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663333')
 def test_ble_smp_pairing_Initiator_keyboard_display_responder_display_only_using_random_addr_C663333(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : keyboard only and Responder : displayOnly with public addr"""
     ble_obj = None
@@ -2011,6 +2042,7 @@ def test_ble_smp_pairing_Initiator_keyboard_display_responder_display_only_using
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663336')
 def test_ble_smp_pairing_Initiator_keyboard_only_responder_display_yes_or_no_using_random_addr_C663336(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : keyboard only and Responder : displayOnly with public addr"""
     ble_obj = None
@@ -2057,6 +2089,7 @@ def test_ble_smp_pairing_Initiator_keyboard_only_responder_display_yes_or_no_usi
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663338')
 def test_ble_smp_pairing_Initiator_keyboard_display_responder_display_yes_or_no_using_random_addr_C663338(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify JustWorks Pairing method for IOCap, Initiator : keyboard only and Responder : displayOnly with public addr"""
     ble_obj = None
@@ -2096,6 +2129,7 @@ def test_ble_smp_pairing_Initiator_keyboard_display_responder_display_yes_or_no_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664804')
 def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keyboard_display_using_random_addr_C664804(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : No input No output and Responder : keyboarddisplay with random addr"""
     ble_obj = None
@@ -2132,6 +2166,7 @@ def test_ble_smp_just_works_pairing_Initiator_No_input_No_output_responder_keybo
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664769')
 def test_ble_smp_pairing_Initiator_None_responder_keyboard_only_C664769(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator :None and Responder : Keyboardonly with random addr"""
     ble_obj = None
@@ -2174,6 +2209,7 @@ def test_ble_smp_pairing_Initiator_None_responder_keyboard_only_C664769(wifi_dut
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664773')
 def test_ble_smp_pairing_Initiator_Keyboard_only_responder_none_C664773(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator :Keyboardonly and Responder : None Keyboardonly with random addr"""
     ble_obj = None
@@ -2214,6 +2250,7 @@ def test_ble_smp_pairing_Initiator_Keyboard_only_responder_none_C664773(wifi_dut
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664775')
 def test_ble_smp_pairing_Initiator_keyboarddisplay_responder_None_C664775(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator :Keyboard display and Responder : None with random addr"""
     ble_obj = None
@@ -2256,6 +2293,7 @@ def test_ble_smp_pairing_Initiator_keyboarddisplay_responder_None_C664775(wifi_d
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664779')
 def test_ble_smp_pairing_Initiator_None_responder_keyboard_display_C664779(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : None and Responder : keyboarddisplay with random addr"""
     ble_obj = None
@@ -2296,6 +2334,7 @@ def test_ble_smp_pairing_Initiator_None_responder_keyboard_display_C664779(wifi_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664794')
 def test_ble_smp_pairing_Initiator_None_responder_keyboard_only_using_random_C664794(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : None and Responder : Keyboardonly with random addr"""
     ble_obj = None
@@ -2335,6 +2374,7 @@ def test_ble_smp_pairing_Initiator_None_responder_keyboard_only_using_random_C66
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664800')
 def test_ble_smp_pairing_Initiator_Keyboard_display_responder_None_using_random_C664800(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : Keyboard_display and Responder : None with random addr"""
     ble_obj = None
@@ -2375,6 +2415,7 @@ def test_ble_smp_pairing_Initiator_Keyboard_display_responder_None_using_random_
 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664798')
 def test_ble_smp_pairing_Initiator_Keyboard_only_responder_None_using_random_C664798(wifi_dut, nrf_ble_client, ble_sniffer, sl_collections, ble_client):
     """Verify JustWorks Pairing method for IOCap, Initiator : Keyboard_display and Responder : None with random addr"""
     ble_obj = None
@@ -2423,6 +2464,7 @@ def test_ble_smp_pairing_Initiator_Keyboard_only_responder_None_using_random_C66
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663310')
 def test_ble_smp_pairing_Initiator_display_yes_or_no_responder_display_yes_no_using_public_addr_C663310(wifi_dut, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     """Verify Pairing method for IOCap, Initiator : Display yes or no and Responder : keyboard display with public addr"""
     ble_obj = None

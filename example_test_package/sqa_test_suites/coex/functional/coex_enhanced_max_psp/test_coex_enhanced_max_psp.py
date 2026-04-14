@@ -1136,6 +1136,7 @@ class FilterPacket:
 
     },
 )
+@pytest.mark.test_src_map_id('C34467')
 def test_wlan_dual_mode_c34467(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+DUAL mode """
@@ -1250,6 +1251,7 @@ def test_wlan_dual_mode_c34467(wifi_sniffer, wifi_access_point, wifi_dut, net_pe
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
+@pytest.mark.test_src_map_id('C34468')
 def test_wlan_bt_mode_c34468(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
     '''Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+BT mode '''
@@ -1364,6 +1366,7 @@ def test_wlan_bt_mode_c34468(wifi_sniffer, wifi_access_point, wifi_dut, net_perf
         "tcpip_features": RS9116TCPIPFeatureBitMap.DHCPv4Client
     },
 )
+@pytest.mark.test_src_map_id('C34469')
 def test_wlan_ble_mode_c34469(wifi_sniffer, wifi_access_point, wifi_dut, net_perf_client, protocol):
     '''Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+BLE mode '''
@@ -1482,6 +1485,7 @@ def test_wlan_ble_mode_c34469(wifi_sniffer, wifi_access_point, wifi_dut, net_per
 
     },
 )
+@pytest.mark.test_src_map_id('C34470')
 def test_coex_bt_master_wlan_dual_mode_c34470(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+DUAL mode and BT is in connected state as a master """
@@ -1612,6 +1616,7 @@ def test_coex_bt_master_wlan_dual_mode_c34470(wifi_sniffer, wifi_access_point, w
 
     },
 )
+@pytest.mark.test_src_map_id('C34471')
 def test_coex_bt_wlan_data_transfer_c34471(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+DUAL mode with BT and WLAN data transfer """
@@ -1741,6 +1746,7 @@ def test_coex_bt_wlan_data_transfer_c34471(wifi_sniffer, wifi_access_point, wifi
 
     },
 )
+@pytest.mark.test_src_map_id('C34472')
 def test_coex_bt_slave_wlan_data_transfer_c34472(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
      WLAN+DUAL mode and BT is in connected state as a slave """
@@ -1872,6 +1878,7 @@ def test_coex_bt_slave_wlan_data_transfer_c34472(wifi_sniffer, wifi_access_point
 
     },
 )
+@pytest.mark.test_src_map_id('C34473')
 def test_coex_wlan_data_transfer_bt_connect_disconnect_c34473(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+DUAL mode with while doing WLAN data transfer do BT connect and disconnect
@@ -2006,6 +2013,7 @@ def test_coex_wlan_data_transfer_bt_connect_disconnect_c34473(wifi_sniffer, wifi
 
     },
 )
+@pytest.mark.test_src_map_id('C34474')
 def test_coex_wlan_datatransfer_ble_master_c34474(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
       WLAN+DUAL mode and BLE is in connected state as master """
@@ -2135,6 +2143,7 @@ def test_coex_wlan_datatransfer_ble_master_c34474(wifi_sniffer, wifi_access_poin
 
     },
 )
+@pytest.mark.test_src_map_id('C34475')
 def test_coex_wlan_datatransfer_ble_slave_c34475(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+DUAL mode and BLE is in connected state as slave"""
@@ -2263,6 +2272,7 @@ def test_coex_wlan_datatransfer_ble_slave_c34475(wifi_sniffer, wifi_access_point
 
     },
 )
+@pytest.mark.test_src_map_id('C34476')
 def test_coex_ble_wlan_datatransfer_c34476(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+DUAL mode with BLE and WLAN data transfer"""
@@ -2390,6 +2400,7 @@ def test_coex_ble_wlan_datatransfer_c34476(wifi_sniffer, wifi_access_point, wifi
 
     },
 )
+@pytest.mark.test_src_map_id('C34477')
 def test_ble_connect_disconnect_wlan_datatransfer_c34477(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+DUAL mode with while doing BLE connect and disconnect """
@@ -2517,6 +2528,7 @@ def test_ble_connect_disconnect_wlan_datatransfer_c34477(wifi_sniffer, wifi_acce
 
     },
 )
+@pytest.mark.test_src_map_id('C34478')
 def test_coex_wlan_datatransfer_ble_connect_disconnect_c34478(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
     WLAN+DUAL mode with while doing BLE connect and disconnect with DTIM based and monitor interval 70 """
@@ -2642,6 +2654,7 @@ def test_coex_wlan_datatransfer_ble_connect_disconnect_c34478(wifi_sniffer, wifi
 
     },
 )
+@pytest.mark.test_src_map_id('C34479')
 def test_coex_ble_wlan_datatransfer_dtim_based_c34479(wifi_sniffer, wifi_access_point, wifi_dut, ble_client, net_perf_client, protocol):
     time_delta_for_listen_interval = 1120
     filter_pack_obj = FilterPacket()
@@ -2748,6 +2761,7 @@ def test_coex_ble_wlan_datatransfer_dtim_based_c34479(wifi_sniffer, wifi_access_
 
     },
 )
+@pytest.mark.test_src_map_id('C34485')
 def test_coex_wlan_datatransfer_bt_enable_disable_c34485(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     time_delta_for_listen_interval = 1120
     filter_pack_obj = FilterPacket()
@@ -2860,6 +2874,7 @@ def test_coex_wlan_datatransfer_bt_enable_disable_c34485(wifi_sniffer, wifi_acce
 
     },
 )
+@pytest.mark.test_src_map_id('C34486')
 def test_bt_wlan_datatransfer_monitor_interval_10_c34486(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     time_delta_for_listen_interval = 1120
     filter_pack_obj = FilterPacket()
@@ -2986,6 +3001,7 @@ def test_bt_wlan_datatransfer_monitor_interval_10_c34486(wifi_sniffer, wifi_acce
 
     },
 )
+@pytest.mark.test_src_map_id('C34488')
 def test_ble_connect_disconnect_wlan_datatransfer_c34488(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                          net_perf_client, protocol):
     """ Verify whether DUT is coming out of power save or not if AP is not responding to the PS-POLL for 10msec in
@@ -3118,6 +3134,7 @@ def test_ble_connect_disconnect_wlan_datatransfer_c34488(wifi_sniffer, wifi_acce
 
     },
 )
+@pytest.mark.test_src_map_id('C34490')
 def test_coex_enhance_max_psp_C34490(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     time_delta_for_listen_interval = 1120
     filter_pack_obj = FilterPacket()
@@ -3246,6 +3263,7 @@ def test_coex_enhance_max_psp_C34490(wifi_sniffer, wifi_access_point, wifi_dut, 
 
     },
 )
+@pytest.mark.test_src_map_id('C34493')
 def test_bt_wlan_datatransfer_beacon_misscount_80_C34493(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     time_delta_for_listen_interval = 1120
     filter_pack_obj = FilterPacket()
@@ -3376,6 +3394,7 @@ def test_bt_wlan_datatransfer_beacon_misscount_80_C34493(wifi_sniffer, wifi_acce
 
     },
 )
+@pytest.mark.test_src_map_id('C34494')
 def test_bt_wlan_datatransfer_beacon_misscount_40_C34494(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     time_delta_for_listen_interval = 1120
     filter_pack_obj = FilterPacket()
@@ -3506,6 +3525,7 @@ def test_bt_wlan_datatransfer_beacon_misscount_40_C34494(wifi_sniffer, wifi_acce
         "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
     },
 )
+@pytest.mark.test_src_map_id('C34495')
 def test_bt_wlan_datatransfer_5g_mode_C34495(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     time_delta_for_listen_interval = 1120
     filter_pack_obj = FilterPacket()
@@ -3634,6 +3654,7 @@ def test_bt_wlan_datatransfer_5g_mode_C34495(wifi_sniffer, wifi_access_point, wi
         "bt_features": RS9116BTFeatureBitMap.Default | RS9116BTFeatureBitMap.A2DPProfileEnable | RS9116BTFeatureBitMap.A2DPSourceRoleEnable,
     },
 )
+@pytest.mark.test_src_map_id('C34496')
 def test_ble_slave_wlan_5g_dual_mode_C34496(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     time_delta_for_listen_interval = 1120
     filter_pack_obj = FilterPacket()
@@ -3762,6 +3783,7 @@ def test_ble_slave_wlan_5g_dual_mode_C34496(wifi_sniffer, wifi_access_point, wif
 
     },
 )
+@pytest.mark.test_src_map_id('C34502')
 def test_coex_wlan_bt_enquiry_ap_on_off_c34502(wifi_sniffer, wifi_access_point, wifi_dut, bt_client, net_perf_client, protocol):
     monitor_interval = 50
     '''Verify enhanced max psp functionality if AP is not responding to the PS-POLL for 10msec in WLAN+DUAL mode and 

@@ -90,6 +90,7 @@ pytestmark = [
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C119345')
 def test_dut_ipv6_check_C119345(wifi_sniffer, wifi_dut, wifi_access_point, utf_constants):
     try:
         validation = True
@@ -136,6 +137,7 @@ def test_dut_ipv6_check_C119345(wifi_sniffer, wifi_dut, wifi_access_point, utf_c
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C119348')
 def test_verify_stateless_dhcpv6_protocol_C119348(wifi_sniffer, wifi_dut, wifi_access_point):
     try:
         validation = True
@@ -180,6 +182,7 @@ def test_verify_stateless_dhcpv6_protocol_C119348(wifi_sniffer, wifi_dut, wifi_a
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C119403')
 def test_ping_functionality_linklocaladdr_stateful_C119403(wifi_sniffer, wifi_dut, wifi_access_point, wifi_client, utf_constants):
     try:
         validation = True
@@ -243,6 +246,7 @@ def test_ping_functionality_linklocaladdr_stateful_C119403(wifi_sniffer, wifi_du
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C119394')
 def test_ping_functionality_global_unicast_address_stateful_C119394(wifi_sniffer, wifi_dut, wifi_access_point, utf_constants):
     try:
         validation = True
@@ -289,6 +293,7 @@ def test_ping_functionality_global_unicast_address_stateful_C119394(wifi_sniffer
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C119393')
 def test_ping_functionality_global_unicast_address_stateless_C119393(wifi_sniffer, wifi_dut, wifi_access_point, utf_constants):
     try:
         validation = True
@@ -335,6 +340,7 @@ def test_ping_functionality_global_unicast_address_stateless_C119393(wifi_sniffe
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C119362')
 def test_ping_functionality_shortest_ipv6_address_C119362(wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, utf_constants):
     try:
         validation = True
@@ -380,6 +386,7 @@ def test_ping_functionality_shortest_ipv6_address_C119362(wifi_sniffer, wifi_dut
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C119349')
 def test_verify_stateful_dhcpv6_protocol_C119349(wifi_sniffer, wifi_dut, wifi_access_point):
     try:
         validation = True

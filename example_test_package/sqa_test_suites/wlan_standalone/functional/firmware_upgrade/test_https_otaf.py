@@ -65,6 +65,7 @@ timeout = 60
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19757')
 def test_fw_upgrade_failure_when_STA_is_not_connected_C19757(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                              utf_constants, wifi_client):
     """ ******* SERVER CHECKS ******* """
@@ -124,6 +125,7 @@ def test_fw_upgrade_failure_when_STA_is_not_connected_C19757(http_server, wifi_d
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19758')
 def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server, wifi_sniffer, wifi_access_point,
                                                                     wifi_dut, wifi_client, utf_constants):
     """ ******* SERVER CHECKS ******* """
@@ -229,6 +231,7 @@ def test_https_fw_upgrade_in_STA_alone_mode_and_measure_time_C19758(http_server,
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19759')
 def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wifi_dut, wifi_access_point,
                                                                  wifi_sniffer, wifi_client, utf_constants):
 
@@ -333,6 +336,7 @@ def test_https_fw_upgrade_in_STA_BT_mode_and_measure_time_C19759(http_server, wi
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19760')
 def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, wifi_dut, wifi_access_point,
                                                                   wifi_sniffer, wifi_client, utf_constants):
 
@@ -438,6 +442,7 @@ def test_https_fw_upgrade_in_STA_BLE_mode_and_measure_time_C19760(http_server, w
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19761')
 def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server, wifi_dut, wifi_access_point,
                                                                      wifi_sniffer, wifi_client, utf_constants):
     """ ******* SERVER CHECKS ******* """
@@ -541,6 +546,7 @@ def test_https_fw_upgrade_in_STA_BT_BLE_mode_and_measure_time_C19761(http_server
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11g'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('TC5848963605')
 def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -624,6 +630,7 @@ def test_https_otaf_ap_11g_testcase7(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11g'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('TC3310320611')
 def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -704,6 +711,7 @@ def test_https_otaf_ap_11n_testcase8(http_server, wifi_dut, wifi_access_point):
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
+@pytest.mark.test_src_map_id('C19767')
 def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                                wifi_client, utf_constants):
 
@@ -806,6 +814,7 @@ def test_https_fw_upgrade_in_UART_mode_and_measure_time_C19767(http_server, wifi
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19768')
 def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_dut, wifi_access_point):
     """ ******* SERVER CHECKS ******* """
     logger().info("checking weather server is running....")
@@ -892,6 +901,7 @@ def test_https_fw_upgrade_in_ps_mode_and_measure_time_C19768(http_server, wifi_d
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
+@pytest.mark.test_src_map_id('C19770')
 def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                               wifi_client, utf_constants):
 
@@ -994,6 +1004,7 @@ def test_https_fw_upgrade_in_Q7_board_and_measure_time_C19770(http_server, wifi_
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19778')
 def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                         wifi_client):
     """ ******* SERVER CHECKS ******* """
@@ -1061,6 +1072,7 @@ def test_https_fw_upgrade_failure_with_empty_rps_C19778(http_server, wifi_dut, w
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19775')
 def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                        wifi_client):
     """ ******* SERVER CHECKS ******* """
@@ -1141,6 +1153,7 @@ def test_https_fw_upgrade_failure_with_junk_rps_C19775(http_server, wifi_dut, wi
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19777')
 def test_https_fw_upgrade_failure_without_enabling_http_C19777(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                                wifi_client):
     """ ******* SERVER CHECKS ******* """
@@ -1201,6 +1214,7 @@ def test_https_fw_upgrade_failure_without_enabling_http_C19777(http_server, wifi
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
+@pytest.mark.test_src_map_id('C19770')
 def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_dut, wifi_access_point, wifi_sniffer,
                                                               wifi_client, utf_constants):
 
@@ -1323,6 +1337,7 @@ def test_https_fw_upgrade_in_A7_board_and_measure_time_C19770(http_server, wifi_
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19762')
 def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, http_server, wifi_sniffer,
                                                               wifi_dut, wifi_access_point, wifi_client, utf_constants):
     try:
@@ -1467,6 +1482,7 @@ def test_http_fw_upgrade_in_conc_mode_and_measure_time_C19762(firmware_loader, h
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
+@pytest.mark.test_src_map_id('C19766')
 def test_https_fw_upgrade_in_rejoin_and_measure_time_C19766(http_server, wifi_dut, wifi_access_point,
                                                             wifi_sniffer, switch, wifi_client, utf_constants):
     ''' Verify Rejoin Functionality in otaf functionality'''
@@ -1610,6 +1626,7 @@ def test_https_fw_upgrade_in_rejoin_and_measure_time_C19766(http_server, wifi_du
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
+@pytest.mark.test_src_map_id('C19765')
 def test_https_fw_upgrade_on_off_ethernet_and_measure_time_C19765(http_server, wifi_dut, wifi_access_point,
                                                                   wifi_sniffer, wifi_client, utf_constants):
 

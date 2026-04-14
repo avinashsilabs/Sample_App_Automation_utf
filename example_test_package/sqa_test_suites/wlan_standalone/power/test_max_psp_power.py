@@ -114,6 +114,7 @@ class Pingthread(ThreadBase):
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C40151')
 def test_wlan_max_psp_listen_interval_C40151(wifi_access_point, wifi_dut, wifi_sniffer, power_meter, request):
     with TimeMeasurer() as t:
         ping_count = 150
@@ -202,6 +203,7 @@ def test_wlan_max_psp_listen_interval_C40151(wifi_access_point, wifi_dut, wifi_s
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C40159')
 def test_wlan_pw_mode2_max_psp_listen_interval_C40159(wifi_access_point, wifi_dut, wifi_sniffer, power_meter, request):
     with TimeMeasurer() as t:
         ping_count = 150
@@ -294,6 +296,7 @@ def test_wlan_pw_mode2_max_psp_listen_interval_C40159(wifi_access_point, wifi_du
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C40167')
 def test_wlan_pwmode3_max_psp_listen_interval_C40167(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer,
                                                      power_meter, request):
     with TimeMeasurer() as t:
@@ -383,6 +386,7 @@ def test_wlan_pwmode3_max_psp_listen_interval_C40167(firmware_loader, wifi_acces
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C113951')
 def test_wlan_power_mode1_enh_max_psp_li_C113951(wifi_access_point, wifi_dut, wifi_sniffer, power_meter, request):
     with TimeMeasurer() as t:
         ping_count = 150
@@ -468,6 +472,7 @@ def test_wlan_power_mode1_enh_max_psp_li_C113951(wifi_access_point, wifi_dut, wi
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C113953')
 def test_wlan_power_mode2_enhmax_psp_li_C113953(wifi_access_point, wifi_dut, wifi_sniffer, power_meter, request):
     with TimeMeasurer() as t:
         ping_count = 150
@@ -553,6 +558,7 @@ def test_wlan_power_mode2_enhmax_psp_li_C113953(wifi_access_point, wifi_dut, wif
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C113955')
 def test_wlan_power_mode3_enh_max_psp_li_C113955(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer,
                                                  power_meter, request):
     with TimeMeasurer() as t:
@@ -639,6 +645,7 @@ def test_wlan_power_mode3_enh_max_psp_li_C113955(firmware_loader, wifi_access_po
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C40166')
 def test_wlan_power_mode3_enh_max_psp_li_C40166(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer,
                                                  power_meter, request):
     with TimeMeasurer() as t:
@@ -724,6 +731,7 @@ def test_wlan_power_mode3_enh_max_psp_li_C40166(firmware_loader, wifi_access_poi
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C113954')
 def test_wlan_power_mode3_enh_lp_max_psp_li_C113954(firmware_loader, wifi_access_point, wifi_dut, wifi_sniffer,
                                                  power_meter, request):
     with TimeMeasurer() as t:

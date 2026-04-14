@@ -527,6 +527,7 @@ class BleThreadFunctionality(ThreadBase):
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C537935')
 def test_wifi_sdk_ble_tx_with_1m_phy_and_iperf_c537935(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, protocol, net_perf_client, remote_wiseconnect3):
@@ -636,6 +637,7 @@ def test_wifi_sdk_ble_tx_with_1m_phy_and_iperf_c537935(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C537936')
 def test_wifi_sdk_ble_rx_with_phy_and_iperf_c537936(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, protocol, net_perf_client, remote_wiseconnect3):
@@ -746,6 +748,7 @@ def test_wifi_sdk_ble_rx_with_phy_and_iperf_c537936(
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"10MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C537937')
 def test_wifi_sdk_ble_phy_with_http_download_c537937(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, remote_wiseconnect3, http_server, index_path):
@@ -861,6 +864,7 @@ def test_wifi_sdk_ble_phy_with_http_download_c537937(
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"10MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C537938')
 def test_wifi_sdk_ble_phy_with_https_download_c537938(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, remote_wiseconnect3, http_server, index_path):
@@ -972,6 +976,7 @@ def test_wifi_sdk_ble_phy_with_https_download_c537938(
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C537939')
 def test_wifi_sdk_ble_phy_with_ssl_tx_c537939(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, remote_wiseconnect3, ssl_server):
@@ -1082,6 +1087,7 @@ def test_wifi_sdk_ble_phy_with_ssl_tx_c537939(
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C537940')
 def test_wifi_sdk_ble_phy_with_ssl_rx_c537940(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, remote_wiseconnect3, ssl_server):

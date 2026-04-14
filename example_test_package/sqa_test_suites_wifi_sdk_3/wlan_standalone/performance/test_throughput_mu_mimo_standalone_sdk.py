@@ -559,6 +559,7 @@ class WifiJoinThread(ThreadBase):
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401890')
 def test_wlan_mu_mimo_tcp_rx_C401890(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, protocol,
                                                 net_perf_clients, request, utf_constants, sl_collections,
                                                 remote_wiseconnect3):
@@ -617,6 +618,7 @@ def test_wlan_mu_mimo_tcp_rx_C401890(wifi_sniffer, wifi_access_point, wifi_clien
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401891')
 def test_wlan_mu_mimo_udp_rx_C401891(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, sl_collections,
                                                 net_perf_clients, protocol, utf_constants, request, remote_wiseconnect3):
     ping_count = utf_constants.get("ping_count")
@@ -673,6 +675,7 @@ def test_wlan_mu_mimo_udp_rx_C401891(wifi_sniffer, wifi_access_point, wifi_clien
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401892')
 def test_wlan_mu_mimo_rtt_tcp_rx_C401892(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3):
@@ -737,6 +740,7 @@ def test_wlan_mu_mimo_rtt_tcp_rx_C401892(wifi_sniffer, wifi_access_point, wifi_c
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
     }
 )
+@pytest.mark.test_src_map_id('C401893')
 def test_wlan_mu_mimo_rtt_udp_rx_C401893(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     net_perf_clients, protocol, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3):
@@ -808,6 +812,7 @@ def test_wlan_mu_mimo_rtt_udp_rx_C401893(wifi_sniffer, wifi_access_point, wifi_c
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
     }
 )
+@pytest.mark.test_src_map_id('C401894')
 def test_wlan_standalone_mu_mimo_ssl_rx_C401894(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                 ssl_server, request, utf_constants, sl_collections,
                                                 remote_wiseconnect3):
@@ -873,6 +878,7 @@ def test_wlan_standalone_mu_mimo_ssl_rx_C401894(wifi_sniffer, wifi_access_point,
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
     }
 )
+@pytest.mark.test_src_map_id('C401895')
 def test_wlan_standalone_mu_mimo_rtt_ssl_rx_C401895(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                     ssl_server, utf_constants, request, sl_collections,
                                                     remote_wiseconnect3):

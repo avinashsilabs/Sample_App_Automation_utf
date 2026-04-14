@@ -20,6 +20,7 @@ from utf_wiseconnect.devices.rs911x import RS9116OperatingMode, RS9116Band, RS91
     wifi={"security": "WPA2", "ssid": "RS9116_AP", "passphrase": "12345678", "channel": 1}
 )
 @pytest.mark.firmware_app("test_concurrent_mode")
+@pytest.mark.test_src_map_id('TC0630333422')
 def test_concurrent_mode(firmware_loader, wifi_access_point, wifi_dut, wifi_client, protocol, logger):
     #preparing wifi_dut as STA - STA Mode
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)

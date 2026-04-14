@@ -222,6 +222,7 @@ class http_download(WifiJoinThread):
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C537887')
 def test_wlan_ssl_rx_with_10_mb_async_soc_C537887(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, utf_constants,
                                                   request, sl_collections, ssl_server, index_path, http_server):
     """WLAN_Alone_2.4G_SSL Rx_16K Record file(10MB) download with async socket_11ax"""
@@ -278,6 +279,7 @@ def test_wlan_ssl_rx_with_10_mb_async_soc_C537887(wifi_sniffer, wifi_access_poin
         "thread_config": {"wifi": {"count": 2, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C537885')
 def test_wlan_ssl_rx_with_100_mb_async_soc_C537885(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                                    utf_constants,
                                                    request, sl_collections, ssl_server, index_path, http_server):

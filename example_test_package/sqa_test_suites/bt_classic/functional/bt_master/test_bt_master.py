@@ -67,6 +67,7 @@ pytestmark = [
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(100, 100, 5, 3)])
+@pytest.mark.test_src_map_id('C20070')
 def test_bt_physical_level_conn_master_mode_c20070(bt_dut, bt_client, sniff_max_interval, sniff_min_interval,
                                                    sniff_attempt, sniff_time_out):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_bt_master_spp()
@@ -125,6 +126,7 @@ def test_bt_physical_level_conn_master_mode_c20070(bt_dut, bt_client, sniff_max_
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(100, 100, 5, 3)])
+@pytest.mark.test_src_map_id('C20071')
 def test_bt_master_ssp_display_only_c20071(bt_dut, bt_client, sniff_max_interval, sniff_min_interval, sniff_attempt,
                                            sniff_time_out):
     bt_dut_address, pin_code = bt_dut.interfaces.bluetooth.start_master_ssp_display(pair_mode="1", capability="0")
@@ -196,6 +198,7 @@ def test_bt_master_ssp_display_only_c20071(bt_dut, bt_client, sniff_max_interval
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(100, 100, 5, 3)])
+@pytest.mark.test_src_map_id('C43168')
 def test_bt_master_spp_connection_data_transfer_display_yes_no_c43168(bt_dut, bt_client, sniff_max_interval,
                                                                       sniff_min_interval, sniff_attempt,
                                                                       sniff_time_out):
@@ -268,6 +271,7 @@ def test_bt_master_spp_connection_data_transfer_display_yes_no_c43168(bt_dut, bt
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.parametrize("sniff_max_interval, sniff_min_interval, sniff_attempt, sniff_time_out", [(100, 100, 5, 3)])
+@pytest.mark.test_src_map_id('C43169')
 def test_bt_master_spp_connection_datatransfer_keyboard_only_c43169(bt_dut, bt_client, sniff_max_interval,
                                                                     sniff_min_interval, sniff_attempt, sniff_time_out):
     send_text = text_generator()
@@ -338,6 +342,7 @@ def test_bt_master_spp_connection_datatransfer_keyboard_only_c43169(bt_dut, bt_c
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20074')
 def test_bt_master_with_wrong_pin_c20074(bt_dut, bt_client):
     logger().info("configuring dut in spp master role")
     bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_master_spp(bt_pin_code="1234")
@@ -375,6 +380,7 @@ def test_bt_master_with_wrong_pin_c20074(bt_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20073')
 def test_bt_master_dut_behaviour_when_remote_device_not_responding_c20073(bt_dut, bt_client):
     logger().info("Verify the behaviour of DUT(Master) when remote BT device is not responding to SSP connection")
 

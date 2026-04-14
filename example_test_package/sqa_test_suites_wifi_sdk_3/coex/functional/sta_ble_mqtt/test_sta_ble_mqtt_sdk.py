@@ -920,6 +920,7 @@ class BleThreadFunctionality(ThreadBase):
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C538049')
 def test_wifi_sdk_mqtt_conn_subs_disconn_loop_when_ble_rx_smp_c538049(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_clients, mqtt_client, mqtt_server):
@@ -1014,6 +1015,7 @@ def test_wifi_sdk_mqtt_conn_subs_disconn_loop_when_ble_rx_smp_c538049(
 )
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C538050')
 def test_wifi_sdk_mqtt_single_multi_wildcard_when_ble_tx_smp_c538050(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_clients, mqtt_client, mqtt_server):
@@ -1110,6 +1112,7 @@ def test_wifi_sdk_mqtt_single_multi_wildcard_when_ble_tx_smp_c538050(
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C538051')
 def test_wifi_sdk_mqtt_check_rejoin_hit_with_wildcard_and_ble_rx_smp_c538051(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_clients, mqtt_client, mqtt_server, switch):
@@ -1204,6 +1207,7 @@ def test_wifi_sdk_mqtt_check_rejoin_hit_with_wildcard_and_ble_rx_smp_c538051(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
+@pytest.mark.test_src_map_id('C538052')
 def test_wifi_sdk_mqtt_subs_two_topic_ble_conn_disconn_loop_c538052(
         wifi_access_point, wifi_dut, request, sl_collections, wifi_client, wifi_sniffer,
         ble_dut, utf_constants, ble_clients, mqtt_client, mqtt_server):
@@ -1300,6 +1304,7 @@ def test_wifi_sdk_mqtt_subs_two_topic_ble_conn_disconn_loop_c538052(
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
+@pytest.mark.test_src_map_id('C538055')
 def test_wifi_sdk_mqtt_subs_ble_dual_conn_c538055(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_clients, mqtt_client, mqtt_server):
@@ -1402,6 +1407,7 @@ def test_wifi_sdk_mqtt_subs_ble_dual_conn_c538055(
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C538056')
 def test_wifi_sdk_mqtt_multi_wildcard_when_ble_tx_smp_c538056(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_clients, mqtt_client, mqtt_server):
@@ -1488,6 +1494,7 @@ def test_wifi_sdk_mqtt_multi_wildcard_when_ble_tx_smp_c538056(
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C538053')
 def test_wifi_sdk_mqtt_iperf_ble_multi_thread_c538053(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, mqtt_client, mqtt_server, protocol, net_perf_client):
@@ -1574,6 +1581,7 @@ def test_wifi_sdk_mqtt_iperf_ble_multi_thread_c538053(
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", "wifi_sniffer", wifi=['init', 'ap_enabled'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C538054')
 def test_wifi_sdk_mqtt_sntp_ble_multi_thread_c538054(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client,
         ble_dut, utf_constants, ble_client, mqtt_client, mqtt_server):

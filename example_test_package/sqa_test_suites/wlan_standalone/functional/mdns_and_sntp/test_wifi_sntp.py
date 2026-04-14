@@ -166,6 +166,7 @@ pytestmark = [
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19015')
 def test_sntp_unicast_c19015(wifi_sniffer, wifi_dut, wifi_access_point, logger):
     capture_filename = "test_sntp_unicast_TC19015"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -247,6 +248,7 @@ def test_sntp_unicast_c19015(wifi_sniffer, wifi_dut, wifi_access_point, logger):
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(30, 600)])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19016')
 def test_sntp_keepalive_c19016(wifi_sniffer, wifi_dut, wifi_access_point, keep_alive_time, idle_time, logger):
     capture_filename = "test_sntp_keepalive_TC19016"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)
@@ -340,6 +342,7 @@ def test_sntp_keepalive_c19016(wifi_sniffer, wifi_dut, wifi_access_point, keep_a
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19017')
 def test_sntp_ludp_coexit_c19017(wifi_sniffer, wifi_dut, wifi_access_point, remote_socket, logger):
     capture_filename = "test_sntp_ludp_coexit_TC19017"
     dut_mac_address = join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, logger)

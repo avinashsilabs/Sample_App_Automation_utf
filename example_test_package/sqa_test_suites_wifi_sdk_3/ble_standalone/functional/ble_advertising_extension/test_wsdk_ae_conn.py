@@ -156,6 +156,7 @@ def calculate_sync_offset(df):
     )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528555')
 def test_verify_Ext_legacy_connection_dut_as_slave_C528553_to_C528555(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                         adv_type, test_case_id, adv_filter_policy):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=0)
@@ -239,6 +240,7 @@ def test_verify_Ext_legacy_connection_dut_as_slave_C528553_to_C528555(ble_dut, b
     )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528556')
 def test_verify_Ext_legacy_connection_dut_as_master_C528556(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                         adv_type, test_case_id, adv_filter_policy):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=0)
@@ -324,6 +326,7 @@ def test_verify_Ext_legacy_connection_dut_as_master_C528556(ble_dut, ble_sniffer
     )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528559')
 def test_verify_Ext_legacy_connection_with_random_addr_C528557_C528558_C528559(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                         adv_type, test_case_id, adv_filter_policy, pri_adv_phy, sec_adv_phy):
     random_address = "11:33:33:33:33:11"
@@ -419,6 +422,7 @@ def test_verify_Ext_legacy_connection_with_random_addr_C528557_C528558_C528559(b
     )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528565')
 def test_verify_Ext_connection_dut_as_master_C528560_C528565(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                         adv_type, min_interval, max_interval, test_case_id, pri_adv_phy, sec_adv_phy, random_address):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=0)
@@ -543,6 +547,7 @@ def test_verify_Ext_connection_dut_as_master_C528560_C528565(ble_dut, ble_sniffe
     )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528657')
 def test_verify_Ext_connection_dut_as_Slave_C528652_C528657(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                         adv_type, min_interval, max_interval, test_case_id, pri_adv_phy, sec_adv_phy, random_address):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=0)
@@ -688,6 +693,7 @@ def test_verify_Ext_connection_dut_as_Slave_C528652_C528657(ble_dut, ble_sniffer
     )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528568')
 def test_verify_Ext_connection_dut_as_Slave__directed_C528566_to_C528568(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                         adv_type, min_interval, max_interval, test_case_id, pri_adv_phy, sec_adv_phy, random_address):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=0)
@@ -832,6 +838,7 @@ def test_verify_Ext_connection_dut_as_Slave__directed_C528566_to_C528568(ble_dut
     )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528574')
 def test_verify_Ext_connection_with_initiating_filter_policy_C528569_to_C528574(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                         adv_type, min_interval, max_interval, test_case_id, pri_adv_phy, sec_adv_phy, random_address, adv_filter_policy, scanning_filter_policy, initiator_filter_policy, init_phys):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=0)
@@ -979,6 +986,7 @@ def test_verify_Ext_connection_with_initiating_filter_policy_C528569_to_C528574(
     )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C538062')
 def test_verify_Ext_connection_with_diff_min_max_interval_C528646_to_C528648_C538061_C538062(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections, ConnIntervalMin, ConnIntervalMax,
                                         adv_type, test_case_id, pri_adv_phy, sec_adv_phy, random_address, init_phys, connection_time):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=0)

@@ -159,6 +159,7 @@ class ppk_power_number_output():
 )
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv","wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20564')
 def test_wlan_ble_coex_DTIM10_BLE_adv_1_28_C20564(power_meter, wifi_dut, wifi_access_point, ble_client, dtim, rs_helper,
                                                   utf_constants):
     with BleLogs(
@@ -221,6 +222,7 @@ def test_wlan_ble_coex_DTIM10_BLE_adv_1_28_C20564(power_meter, wifi_dut, wifi_ac
 )
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20565')
 def test_wlan_ble_coex_DTIM10_BLE_connect_200ms_C20565(power_meter, wifi_dut, wifi_access_point, ble_client, dtim,
                                                        rs_helper, utf_constants):
     with BleLogs(
@@ -313,6 +315,7 @@ def test_wlan_ble_coex_DTIM10_BLE_connect_200ms_C20565(power_meter, wifi_dut, wi
 )
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets","disassociated"])
+@pytest.mark.test_src_map_id('C20557')
 def test_wlan_ble_coex_DTIM10_BLE_SSL_connect_200ms_C20557(power_meter, wifi_dut, wifi_access_point, ssl_server, ble_client, utf_constants, rs_helper,dtim):
     with BleLogs(
             start_collecting_logs=True,
@@ -421,6 +424,7 @@ def test_wlan_ble_coex_DTIM10_BLE_SSL_connect_200ms_C20557(power_meter, wifi_dut
 )
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets","disassociated"])
+@pytest.mark.test_src_map_id('C20566')
 def test_wlan_ble_coex_DTIM10_BLE_SSL_connect_200ms_without_traffic_C20566(power_meter, wifi_dut, wifi_access_point, ble_client, utf_constants, rs_helper,dtim):
     with BleLogs(
             start_collecting_logs=True,

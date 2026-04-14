@@ -182,6 +182,7 @@ pytestmark = [
 # initializes the BLE GATT task in DUT, and starts BLE advertising. It then validates the iBeacon advertising data
 # parameters such as mac_address, type, uuid, major, minor, and tx_power.
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19947')
 def test_ble_validate_ibeacon_adv_data_parameters_c19947(ble_dut, ble_client, sl_collections):
     with BleLogs(
             start_collecting_logs=True,
@@ -204,6 +205,7 @@ def test_ble_validate_ibeacon_adv_data_parameters_c19947(ble_dut, ble_client, sl
 # initializes the BLE GATT task in DUT, and starts BLE advertising. It then scans for the DUT from a client device,
 # connects to the DUT, and validates the HID data sent from the DUT.
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19948')
 def test_ble_hogp_smp_slave_mode_c19948(ble_dut, ble_client, sl_collections):
     with BleLogs(
             start_collecting_logs=True,

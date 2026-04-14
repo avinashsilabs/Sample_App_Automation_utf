@@ -55,6 +55,7 @@ def logger():
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C528658')
 def test_verify_incorrect_handle_value_C528658(ble_dut, ble_sniffer, sl_collections):
     """ Verifying the 0x12 for incorrect adv handle value in set ext adv parameters."""
     try:
@@ -92,6 +93,7 @@ def test_verify_incorrect_handle_value_C528658(ble_dut, ble_sniffer, sl_collecti
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C528659')
 def test_verify_limited_duration_in_le_ext_adv_enable_command_C528659(ble_dut, ble_sniffer, sl_collections):
     """ Verifying limited duration Ext Advertisng by changing the duration parameter in the LE_EXT_ADV_Enable command."""
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
@@ -206,6 +208,7 @@ def test_verify_limited_duration_in_le_ext_adv_enable_command_C528659(ble_dut, b
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C528661')
 def test_verify_non_existing_adv_handle_C528661(ble_dut, ble_sniffer, sl_collections):
     """Verifying 0x42 error code for non-existing adv_hdle in le_set_ext_adv_data command.Checking the same for
     LE_Set_Ext_Scan_Response_data command. Check the same for LE_Set_Ext_Adv_Enable command."""
@@ -244,6 +247,7 @@ def test_verify_non_existing_adv_handle_C528661(ble_dut, ble_sniffer, sl_collect
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C528662')
 def test_verify_scan_enable_without_random_address_C528662(ble_dut, ble_sniffer, sl_collections):
     """Test case: This test case will verify error 0x4e12 after setting scan enable with own add type as random and not setting random add prior"""
     sl_collections.verify_ae_scan(central=ble_dut, own_addr_type=1,
@@ -271,6 +275,7 @@ def test_verify_scan_enable_without_random_address_C528662(ble_dut, ble_sniffer,
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C528663')
 def test_verify_error_duration_period_equal_in_le_ext_scan_enable_C528663(ble_dut, ble_sniffer, sl_collections):
     """ Verifying that 0x12 error is observed when duration is equal or greater than period in LE_EXT_SCAN_ENABLE
     command."""
@@ -299,6 +304,7 @@ def test_verify_error_duration_period_equal_in_le_ext_scan_enable_C528663(ble_du
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C528664')
 def test_verify_error_filter_duplicate_in_le_ext_scan_enable_C528664(ble_dut, ble_sniffer, sl_collections):
     """ Verifying the 0x4e12 error is observed when filter_duplicate = 0x02 and duration/period is zero in
     LE_EXT_SCAN_ENABLE command."""

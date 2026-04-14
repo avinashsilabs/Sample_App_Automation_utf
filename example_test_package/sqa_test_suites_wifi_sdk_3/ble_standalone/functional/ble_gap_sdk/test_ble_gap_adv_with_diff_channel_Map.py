@@ -226,6 +226,7 @@ pytestmark = [
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663393')
 def test_ble_undir_adv_with_adv_channel_map_0x01_C663393(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=128, ble_adv_channel_map=1, capture_file="C663393")
@@ -236,6 +237,7 @@ def test_ble_undir_adv_with_adv_channel_map_0x01_C663393(ble_dut, sl_collections
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663394')
 def test_ble_dir_adv_with_adv_channel_map_0x01_C663394(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=129, ble_adv_channel_map=1, capture_file="C663394")
@@ -246,6 +248,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x01_C663394(ble_dut, sl_collections, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663395')
 def test_ble_scannable_adv_with_adv_channel_map_0x01_C663395(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=130, ble_adv_channel_map=1, capture_file="C663395")
@@ -256,6 +259,7 @@ def test_ble_scannable_adv_with_adv_channel_map_0x01_C663395(ble_dut, sl_collect
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663396')
 def test_ble_noncon_adv_with_adv_channel_map_0x01_C663396(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=131, ble_adv_channel_map=1, capture_file="C663396")
@@ -266,6 +270,7 @@ def test_ble_noncon_adv_with_adv_channel_map_0x01_C663396(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663397')
 def test_ble_undir_adv_with_adv_channel_map_0x03_C663397(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=128, ble_adv_channel_map=3, capture_file="C663397")
@@ -276,6 +281,7 @@ def test_ble_undir_adv_with_adv_channel_map_0x03_C663397(ble_dut, sl_collections
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663398')
 def test_ble_dir_adv_with_adv_channel_map_0x03_C663398(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=129, ble_adv_channel_map=3, capture_file="C663398")
@@ -286,6 +292,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x03_C663398(ble_dut, sl_collections, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663399')
 def test_ble_scannable_adv_with_adv_channel_map_0x03_C663399(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=130, ble_adv_channel_map=3, capture_file="C663399")
@@ -296,6 +303,7 @@ def test_ble_scannable_adv_with_adv_channel_map_0x03_C663399(ble_dut, sl_collect
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663400')
 def test_ble_noncon_adv_with_adv_channel_map_0x03_C663400(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=131, ble_adv_channel_map=3, capture_file="C663400")
@@ -306,6 +314,7 @@ def test_ble_noncon_adv_with_adv_channel_map_0x03_C663400(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664340')
 def test_ble_undir_adv_with_adv_channel_map_0x02_C664340(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=128, ble_adv_channel_map=2, capture_file="C664340")
@@ -316,6 +325,7 @@ def test_ble_undir_adv_with_adv_channel_map_0x02_C664340(ble_dut, sl_collections
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664341')
 def test_ble_dir_adv_with_adv_channel_map_0x02_C664341(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=129, ble_adv_channel_map=2, capture_file="C664341")
@@ -326,6 +336,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x02_C664341(ble_dut, sl_collections, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664342')
 def test_ble_scannable_adv_with_adv_channel_map_0x02_C664342(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=130, ble_adv_channel_map=2, capture_file="C664342")
@@ -336,6 +347,7 @@ def test_ble_scannable_adv_with_adv_channel_map_0x02_C664342(ble_dut, sl_collect
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664343')
 def test_ble_noncon_adv_with_adv_channel_map_0x02_C664343(ble_dut, sl_collections, ble_sniffer):
     try:
         adv_channel_map(ble_sniffer, ble_dut, ble_adv_type=131, ble_adv_channel_map=2, capture_file="C664343")
@@ -346,6 +358,7 @@ def test_ble_noncon_adv_with_adv_channel_map_0x02_C664343(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664344')
 def test_ble_undirected_adv_with_adv_channel_map_0x04_C664344(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -361,6 +374,7 @@ def test_ble_undirected_adv_with_adv_channel_map_0x04_C664344(ble_dut, sl_collec
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664345')
 def test_ble_dir_adv_with_adv_channel_map_0x04_C664345(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -376,6 +390,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x04_C664345(ble_dut, sl_collections, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664346')
 def test_ble_scan_adv_with_adv_channel_map_0x04_C664346(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -391,6 +406,7 @@ def test_ble_scan_adv_with_adv_channel_map_0x04_C664346(ble_dut, sl_collections,
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664347')
 def test_ble_noncon_adv_with_adv_channel_map_0x04_C664347(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -406,6 +422,7 @@ def test_ble_noncon_adv_with_adv_channel_map_0x04_C664347(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664348')
 def test_ble_undirected_adv_with_adv_channel_map_0x06_C664348(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -421,6 +438,7 @@ def test_ble_undirected_adv_with_adv_channel_map_0x06_C664348(ble_dut, sl_collec
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664349')
 def test_ble_dir_adv_with_adv_channel_map_0x06_C664349(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -436,6 +454,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x06_C664349(ble_dut, sl_collections, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664350')
 def test_ble_scan_adv_with_adv_channel_map_0x06_C664350(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -451,6 +470,7 @@ def test_ble_scan_adv_with_adv_channel_map_0x06_C664350(ble_dut, sl_collections,
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664351')
 def test_ble_noncon_adv_with_adv_channel_map_0x06_C664351(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -466,6 +486,7 @@ def test_ble_noncon_adv_with_adv_channel_map_0x06_C664351(ble_dut, sl_collection
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664352')
 def test_ble_undirected_adv_with_adv_channel_map_0x05_C664352(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -481,6 +502,7 @@ def test_ble_undirected_adv_with_adv_channel_map_0x05_C664352(ble_dut, sl_collec
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664353')
 def test_ble_dir_adv_with_adv_channel_map_0x05_C664353(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -496,6 +518,7 @@ def test_ble_dir_adv_with_adv_channel_map_0x05_C664353(ble_dut, sl_collections, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664354')
 def test_ble_scan_adv_with_adv_channel_map_0x05_C664354(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -511,6 +534,7 @@ def test_ble_scan_adv_with_adv_channel_map_0x05_C664354(ble_dut, sl_collections,
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C664355')
 def test_ble_noncon_adv_with_adv_channel_map_0x05_C664355(ble_dut, sl_collections, ble_sniffer):
     """
     est -Validate BLE undirected advertisement in specific channels
@@ -525,6 +549,7 @@ def test_ble_noncon_adv_with_adv_channel_map_0x05_C664355(ble_dut, sl_collection
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663373')
 def test_ble_noncon_adv_and_conn_C663373(ble_dut, ble_client, sl_collections):
     try:
         logger().info(" ======= set local name")
@@ -576,6 +601,7 @@ def test_ble_noncon_adv_and_conn_C663373(ble_dut, ble_client, sl_collections):
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C663366')
 def test_ble_adv_10250ms_interval_C663366(ble_dut):
     try:
         logger().info("Initiate ble service in DUT")
@@ -594,6 +620,7 @@ def test_ble_adv_10250ms_interval_C663366(ble_dut):
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C663370')
 def test_ble_adv_2ms_interval_C663370(ble_dut):
     try:
         logger().info("Initiate ble service in DUT")
@@ -612,6 +639,7 @@ def test_ble_adv_2ms_interval_C663370(ble_dut):
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663372')
 def test_ble_master_conn_with_5ms_C663372(ble_dut, ble_client, sl_collections):
     """
     Configure DUT in Master and verify connectivity with Undirected connectable devices
@@ -666,6 +694,7 @@ def test_ble_master_conn_with_5ms_C663372(ble_dut, ble_client, sl_collections):
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663371')
 def test_ble_master_conn_with_4500ms_C663371(ble_dut, ble_client, sl_collections):
     """
     Configure DUT in Master and verify connectivity with Undirected connectable devices
@@ -720,6 +749,7 @@ def test_ble_master_conn_with_4500ms_C663371(ble_dut, ble_client, sl_collections
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+@pytest.mark.test_src_map_id('C663368')
 def test_ble_scan_with_2ms_C663368(ble_dut, ble_client, sl_collections):
     try:
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -760,6 +790,7 @@ def test_ble_scan_with_2ms_C663368(ble_dut, ble_client, sl_collections):
 # test agent dependant JIRA WIFI_BT_UTFHELP-5412: once the jira is fixed increase the sleep time to 180 seconds
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_scan"])
+@pytest.mark.test_src_map_id('C663367')
 def test_ble_scan_with_10250ms_C663367(ble_dut, ble_client, sl_collections):
     try:
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -797,6 +828,7 @@ def test_ble_scan_with_10250ms_C663367(ble_dut, ble_client, sl_collections):
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C663369')
 def test_ble_scan_window_greater_than_scan_interval_C663369(ble_dut):
     try:
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -811,6 +843,7 @@ def test_ble_scan_window_greater_than_scan_interval_C663369(ble_dut):
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C663406')
 def test_ble_scan_with_random_addr_C663406(ble_dut):
     try:
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_start()
@@ -825,6 +858,7 @@ def test_ble_scan_with_random_addr_C663406(ble_dut):
 
 
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C663407')
 def test_ble_adv_with_random_addr_C663407(ble_dut):
     try:
         logger().info("Initiate ble service in DUT")

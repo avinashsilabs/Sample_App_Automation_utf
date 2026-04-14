@@ -63,6 +63,7 @@ This test case needs a sqa_test_agent_multi_gatt.hex file to be loaded on EFR me
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19860')
 def test_fetch_profiles_from_RD1_C19860(firmware_loader, ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
     # Start GATT Services in DUT
@@ -131,6 +132,7 @@ def test_fetch_profiles_from_RD1_C19860(firmware_loader, ble_dut, ble_client):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19861')
 def test_fetch_a_particular_profiles_from_RD1_C19861(firmware_loader, ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
     # Start DUT
@@ -208,6 +210,7 @@ def test_fetch_a_particular_profiles_from_RD1_C19861(firmware_loader, ble_dut, b
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19863')
 def test_fetch_characteristis_from_RD1_C19863(firmware_loader, ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
     # Start DUT
@@ -296,6 +299,7 @@ def test_fetch_characteristis_from_RD1_C19863(firmware_loader, ble_dut, ble_clie
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19867')
 def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C19866_C19867(firmware_loader,
                                                                                           ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
@@ -362,6 +366,7 @@ def test_to_read_particular_value_and_get_all_values_of_descriptor_from_RD1_C198
         RS9116ConfigFeatureBitMap.WakeupIndicationUULPGPIO0,
     },
 )
+@pytest.mark.test_src_map_id('C19878')
 def test_validate_add_services_in_server_slave_C19878(ble_dut, ble_client):
     service_uid = "0000180d-0000-1000-8000-00805f9b34fb"
     char_uid1 = "00002a37-0000-1000-8000-00805f9b34fb"
@@ -469,6 +474,7 @@ def test_validate_add_services_in_server_slave_C19878(ble_dut, ble_client):
 }
                     )
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19874')
 def test_link_loss_profiles_from_rd1_c19872_c19874(firmware_loader, ble_dut, ble_client):
     service_uid = "00001803-0000-1000-8000-00805f9b34fb"
     char_uid = "00002a06-0000-1000-8000-00805f9b34fb"
@@ -547,6 +553,7 @@ def test_link_loss_profiles_from_rd1_c19872_c19874(firmware_loader, ble_dut, ble
         "features": RS9116FeatureBitMap.ULPGPIOHandshake,
     }
 )
+@pytest.mark.test_src_map_id('C19875')
 def test_ble_multi_connect_disconnect_C19875(ble_dut, ble_client):
     # Start BLE Service
     logger().info(".....Starting BLE Service.....")
@@ -612,6 +619,7 @@ def test_ble_multi_connect_disconnect_C19875(ble_dut, ble_client):
 @pytest.mark.firmware_app("test_multi_gatt_conn")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_advertising",
                                          "ble_stop_scan"])
+@pytest.mark.test_src_map_id('C19862')
 def test_fetch_profiles_from_rd1_c19862(firmware_loader, ble_dut, ble_client):
     logger().info(" ******* Start BLE GATT Service ******* ")
     # Start GATT Services in DUT
@@ -681,6 +689,7 @@ def test_fetch_profiles_from_rd1_c19862(firmware_loader, ble_dut, ble_client):
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19882')
 def test_battery_service_connection_stability_in_client_role_c19882(firmware_loader, ble_dut, ble_client):
     bt_mon_log_file = "reports/test_ble_C19882"
     with BleLogs(start_collecting_logs=True,
@@ -806,6 +815,7 @@ pytestmark = [
 ]
 
 
+@pytest.mark.test_src_map_id('C19879')
 def test_gatt_server_conn_stability_HeartRateService_C19879(ble_dut, ble_client, rs_helper_ble):
     # test case to verify GATT connection stability in server role with HeartRateService
     service_uuid = "0000180d-0000-1000-8000-00805f9b34fb"  # HeartRateService
@@ -818,6 +828,7 @@ def test_gatt_server_conn_stability_HeartRateService_C19879(ble_dut, ble_client,
 
 
 # Not working
+@pytest.mark.test_src_map_id('C19881')
 def test_gatt_server_conn_stability_BatteryService_C19881(ble_dut, ble_client, rs_helper_ble):
     # test case to verify GATT connection stability in server role with BatteryService
     service_uuid = "0000180f-0000-1000-8000-00805f9b34fb"  # BatteryService
@@ -829,6 +840,7 @@ def test_gatt_server_conn_stability_BatteryService_C19881(ble_dut, ble_client, r
                         rs_helper_ble=rs_helper_ble)
 
 
+@pytest.mark.test_src_map_id('C19883')
 def test_gatt_server_conn_stability_BloodPressureService_C19883(ble_dut, ble_client, rs_helper_ble):
     # test case to verify GATT connection stability in server role with BloodPressureService
     service_uuid = "00001810-0000-1000-8000-00805f9b34fb"  # BloodPressureService
@@ -840,6 +852,7 @@ def test_gatt_server_conn_stability_BloodPressureService_C19883(ble_dut, ble_cli
                         rs_helper_ble=rs_helper_ble)
 
 
+@pytest.mark.test_src_map_id('C19885')
 def test_gatt_server_conn_stability_health_thermometer_service_C19885(ble_dut, ble_client, rs_helper_ble):
     # test case to verify GATT connection stability in server role with health_thermometer_service
     service_uuid = "00001809-0000-1000-8000-00805f9b34fb"  # health_thermometer_service
@@ -851,6 +864,7 @@ def test_gatt_server_conn_stability_health_thermometer_service_C19885(ble_dut, b
                         rs_helper_ble=rs_helper_ble)
 
 
+@pytest.mark.test_src_map_id('C19887')
 def test_gatt_server_conn_stability_glucose_service_C19887(ble_dut, ble_client, rs_helper_ble):
     # test case to verify GATT connection stability in server role with glucose service
     service_uuid = "00001808-0000-1000-8000-00805f9b34fb"  # glucose_service
@@ -882,6 +896,7 @@ def test_gatt_server_conn_stability_glucose_service_C19887(ble_dut, ble_client, 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19884')
 def test_blood_pressure_connection_stability_in_client_role_c19884(firmware_loader, ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
     assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
@@ -991,6 +1006,7 @@ def test_blood_pressure_connection_stability_in_client_role_c19884(firmware_load
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19886')
 def test_health_thermometer_service_stability_in_client_role_c19886(firmware_loader, ble_dut, ble_client):
     bt_mon_log_file = "reports/test_ble_C19886"
     with BleLogs(start_collecting_logs=True,
@@ -1095,6 +1111,7 @@ def test_health_thermometer_service_stability_in_client_role_c19886(firmware_loa
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19865')
 def test_to_fetch_descriptors_from_rd1_c19865(firmware_loader, ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
     assert bt_dut_address is not None, "unable to start BLE GATT on DUT"
@@ -1151,6 +1168,7 @@ def test_to_fetch_descriptors_from_rd1_c19865(firmware_loader, ble_dut, ble_clie
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19864')
 def test_to_fetch_descriptors_from_rd1_c19864(firmware_loader, ble_dut, ble_client):
     bt_dut_address = ble_dut.interfaces.wifi.ble_gatt_start()
     assert bt_dut_address is not None, "unable to start BLE GATT on DUT"

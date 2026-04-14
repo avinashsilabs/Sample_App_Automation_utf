@@ -218,6 +218,7 @@ class ThreadC(ThreadBase):
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217772')
 def test_wifi_sdk_iot_socket_tcp_tx_c217772(wifi_access_point, wifi_dut, utf_constants,
                                          sl_collections, net_perf_client, wifi_sniffer, wifi_client):
     time_period = utf_constants.get("time_period")
@@ -263,6 +264,7 @@ def test_wifi_sdk_iot_socket_tcp_tx_c217772(wifi_access_point, wifi_dut, utf_con
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217773')
 def test_wifi_sdk_iot_socket_udp_tx_c217773(wifi_access_point, wifi_dut, utf_constants,
                                          sl_collections, net_perf_client, wifi_sniffer, wifi_client):
     time_period = utf_constants.get("time_period")
@@ -306,6 +308,7 @@ def test_wifi_sdk_iot_socket_udp_tx_c217773(wifi_access_point, wifi_dut, utf_con
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217774')
 def test_wifi_sdk_iot_socket_tcp_rx_c217774(wifi_access_point, wifi_dut, utf_constants,
                                             sl_collections, wifi_sniffer, remote_socket_factory, wifi_client):
     time_period = utf_constants.get("time_period")
@@ -365,6 +368,7 @@ def test_wifi_sdk_iot_socket_tcp_rx_c217774(wifi_access_point, wifi_dut, utf_con
     },
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C217775')
 def test_wifi_sdk_iot_socket_udp_rx_c217775(wifi_access_point, wifi_dut, utf_constants,
                                          sl_collections, wifi_sniffer, remote_socket, wifi_client):
     time_period = utf_constants.get("time_period")

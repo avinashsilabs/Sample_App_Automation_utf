@@ -179,6 +179,7 @@ def calculate_sync_offset(df):
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C535821')
 def test_verify_periodic_scanning_by_adding_ref_device_in_periodic_list_C535821(ble_dut, ble_sniffer, sl_collections,  remote_wiseconnect3, adv_type, periodic_data_len, adv_handle,test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
     try:
@@ -307,6 +308,7 @@ def test_verify_periodic_scanning_by_adding_ref_device_in_periodic_list_C535821(
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C539208')
 def test_verify_periodic_scanning_by_enabling_Duplicate_filtering_bit_C539208(ble_dut, ble_sniffer, sl_collections,  remote_wiseconnect3, adv_type, periodic_data_len, adv_handle,test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
     try:
@@ -469,6 +471,7 @@ def test_verify_periodic_scanning_by_enabling_Duplicate_filtering_bit_C539208(bl
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C539209')
 def test_Verify_periodic_scanning_by_disabling_reporting_bit_C539209(ble_dut, ble_sniffer, sl_collections,  remote_wiseconnect3, adv_type, periodic_data_len, adv_handle,test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
     try:
@@ -617,6 +620,7 @@ def test_Verify_periodic_scanning_by_disabling_reporting_bit_C539209(ble_dut, bl
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C539207')
 def test_verify_periodic_scanning_by_disabling_Duplicate_filtering_bit_C539207(ble_dut, ble_sniffer, sl_collections,  remote_wiseconnect3, adv_type, periodic_data_len, adv_handle,test_case_id, pri_adv_phy,
                                                                                sec_adv_phy ):
     try:
@@ -1074,6 +1078,7 @@ def skip_test_Verify_BLE_AE_Periodic_scanning_by_configuring_the_max_Sync_Timeou
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C539212')
 def test_Verify_the_functionality_of_LE_Periodic_Advertising_Create_cancel_Sync_when_advertising_is_disabled_C539212(ble_dut, ble_sniffer, sl_collections,  remote_wiseconnect3, adv_type, periodic_data_len, adv_handle,test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
     try:
@@ -1216,6 +1221,7 @@ def test_Verify_the_functionality_of_LE_Periodic_Advertising_Create_cancel_Sync_
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C539213')
 def test_Verify_the_functionality_of_LE_Periodic_Advertising_Create_terminate_Sync_when_advertising_is_disabled_C539213(ble_dut, ble_sniffer, sl_collections,  remote_wiseconnect3, adv_type, periodic_data_len, adv_handle,test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
     try:
@@ -1365,6 +1371,7 @@ def test_Verify_the_functionality_of_LE_Periodic_Advertising_Create_terminate_Sy
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C656067')
 def test_Verify_the_functionality_of_LE_Periodic_Advertising_Create_Cancel_Sync_when_advertising_is_enabled_C656067(ble_dut, ble_sniffer, sl_collections,  remote_wiseconnect3, adv_type, periodic_data_len, adv_handle,test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
     try:
@@ -1507,6 +1514,7 @@ def test_Verify_the_functionality_of_LE_Periodic_Advertising_Create_Cancel_Sync_
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.parametrize("periodic_data_len, adv_handle", [(30, 0)])
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C656068')
 def test_Verify_the_functionality_of_LE_Periodic_Advertising_Create_terminate_Sync_when_advertising_is_enabled_C656068(ble_dut, ble_sniffer, sl_collections,  remote_wiseconnect3, adv_type, periodic_data_len, adv_handle,test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
 

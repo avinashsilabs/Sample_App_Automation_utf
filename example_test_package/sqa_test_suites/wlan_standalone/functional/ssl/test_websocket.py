@@ -186,6 +186,7 @@ ping_count = 20
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C37479')
 def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper, utf_constants):
     validation = True
     rejoin_max = 10
@@ -289,6 +290,7 @@ def test_web_socket_C37479(wifi_dut, wifi_access_point, wifi_sniffer, http_serve
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19345')
 def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcode_9_C19345(wifi_dut, wifi_access_point,
                                                                                            wifi_sniffer, http_server,
                                                                                            rs_helper, utf_constants):
@@ -386,6 +388,7 @@ def test_module_sends_ping_request_or_not_when_web_socket_opened_by_giving_opcod
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19341')
 def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                         http_server, rs_helper, utf_constants):
     validation = True
@@ -497,6 +500,7 @@ def test_web_socket_close_functionality_using_websocketclose_API_C19341(wifi_dut
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19342')
 def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper,
                                                utf_constants):
     validation = True
@@ -606,6 +610,7 @@ def test_web_socket_opcode8_socketclose_C19342(wifi_dut, wifi_access_point, wifi
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19344')
 def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper,
                                                  utf_constants):
     validation = True
@@ -713,6 +718,7 @@ def test_rx_over_websocket_disable_finbit_C19344(wifi_dut, wifi_access_point, wi
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19346')
 def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper,
                                        utf_constants):
     validation = True
@@ -822,6 +828,7 @@ def test_max_websocket_over_ssl_C19346(wifi_dut, wifi_access_point, wifi_sniffer
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19340')
 def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, wifi_sniffer, http_server, rs_helper,
                                                   utf_constants):
     validation = True
@@ -927,6 +934,7 @@ def test_tx_max_data_length_over_websocket_C19340(wifi_dut, wifi_access_point, w
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19343')
 def test_tx_over_web_socket_over_SSL_with_maximum_data_length_C19343(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                      http_server, rs_helper, utf_constants):
     validation = True

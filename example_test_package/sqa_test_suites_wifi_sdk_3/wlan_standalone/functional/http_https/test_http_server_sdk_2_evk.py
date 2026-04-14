@@ -133,6 +133,7 @@ class WifiJoin(ThreadBase):
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C547019')
 def test_wifi_sdk_verify_http_functionality_with_GET_PUT_POST_using_our_Device_as_http_client_C547019(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                                                       http_server, http_client, remote_wiseconnect3, sniffer_filter,
                                                                                                       sl_collections):
@@ -242,6 +243,7 @@ def test_wifi_sdk_verify_http_functionality_with_GET_PUT_POST_using_our_Device_a
         "ble_custom_ext_features": 0,
     },
 )
+@pytest.mark.test_src_map_id('C641378')
 def test_wifi_sdk_verify_http_functionality_long_duration_GET_PUT_POST_using_our_Device_as_http_client_C641378(wifi_sniffer, wifi_dut, wifi_access_point,
                                                                                                                remote_wiseconnect3, sl_collections, utf_constants):
     """WiFi SDK Test: Verify HTTP functionality long duration with GET, PUT, POST using our Device as HTTP client."""

@@ -212,6 +212,7 @@ pytestmark = [pytest.mark.firmware_app("test_416K_M4SS_256K")]
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C402879')
 def test_wlan_sta_alone_rvr_tcp_tx_C402879(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                            net_perf_client, protocol, utf_constants, request, sl_collections,
                                            rf_attenuator):
@@ -257,6 +258,7 @@ def test_wlan_sta_alone_rvr_tcp_tx_C402879(firmware_loader, wifi_sniffer, wifi_a
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C402880')
 def test_wlan_sta_alone_rvr_tcp_rx_C402880(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                            net_perf_client, protocol, utf_constants, request, sl_collections,
                                            rf_attenuator):
@@ -301,6 +303,7 @@ def test_wlan_sta_alone_rvr_tcp_rx_C402880(firmware_loader, wifi_sniffer, wifi_a
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C402881')
 def test_wlan_sta_alone_rvr_udp_tx_C402881(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                            net_perf_client, protocol, utf_constants, request, sl_collections,
                                            rf_attenuator):
@@ -345,6 +348,7 @@ def test_wlan_sta_alone_rvr_udp_tx_C402881(firmware_loader, wifi_sniffer, wifi_a
         "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
+@pytest.mark.test_src_map_id('C402882')
 def test_wlan_sta_alone_rvr_udp_rx_C402882(firmware_loader, wifi_sniffer, wifi_access_point, wifi_client, wifi_dut,
                                            net_perf_client, protocol, utf_constants, request, sl_collections,
                                            rf_attenuator):

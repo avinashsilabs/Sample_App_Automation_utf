@@ -174,6 +174,7 @@ class WifiJoinThread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C20742')
 def test_wifi_sdk_ssl_standalone_tx_480_192K_c20742(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request):
     testcase = request.node.name
@@ -215,6 +216,7 @@ def test_wifi_sdk_ssl_standalone_tx_480_192K_c20742(firmware_loader, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20743')
 def test_wifi_sdk_ssl_standalone_rx_480_192K_C20743(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer):
     testcase = request.node.name
@@ -255,6 +257,7 @@ def test_wifi_sdk_ssl_standalone_rx_480_192K_C20743(firmware_loader, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C537718')
 def test_wifi_sdk_ssl_11N_standalone_tx_480_192K_C537718(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request):
     testcase = request.node.name
@@ -296,6 +299,7 @@ def test_wifi_sdk_ssl_11N_standalone_tx_480_192K_C537718(firmware_loader, wifi_a
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C537719')
 def test_wifi_sdk_ssl_11N_standalone_rx_480_192K_C537719(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer):
     testcase = request.node.name
@@ -336,6 +340,7 @@ def test_wifi_sdk_ssl_11N_standalone_rx_480_192K_C537719(firmware_loader, wifi_a
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C532894')
 def test_wifi_sdk_ssl_standalone_tx_416_256K_C532894(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request):
     testcase = request.node.name
@@ -377,6 +382,7 @@ def test_wifi_sdk_ssl_standalone_tx_416_256K_C532894(firmware_loader, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C532895')
 def test_wifi_sdk_ssl_standalone_rx416_256K_C532895(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer):
     testcase = request.node.name
@@ -417,6 +423,7 @@ def test_wifi_sdk_ssl_standalone_rx416_256K_C532895(firmware_loader, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C537724')
 def test_wifi_sdk_ssl_11n_standalone_tx416_256K_C537724(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request):
     testcase = request.node.name
@@ -458,6 +465,7 @@ def test_wifi_sdk_ssl_11n_standalone_tx416_256K_C537724(firmware_loader, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C537725')
 def test_wifi_sdk_ssl_11n_standalone_rx416_256K_C537725(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer):
     testcase = request.node.name
@@ -498,6 +506,7 @@ def test_wifi_sdk_ssl_11n_standalone_rx416_256K_C537725(firmware_loader, wifi_ac
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C532928')
 def test_wifi_sdk_ssl_standalone_tx_352_320K_C532928(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request):
     testcase = request.node.name
@@ -539,6 +548,7 @@ def test_wifi_sdk_ssl_standalone_tx_352_320K_C532928(firmware_loader, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C532929')
 def test_wifi_sdk_ssl_standalone_rx_352_320K_C532929(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer):
     testcase = request.node.name
@@ -579,6 +589,7 @@ def test_wifi_sdk_ssl_standalone_rx_352_320K_C532929(firmware_loader, wifi_acces
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'n'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C537730')
 def test_wifi_sdk_ssl_11n_standalone_tx_352_320K_C537730(firmware_loader, wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request):
     testcase = request.node.name
@@ -620,6 +631,7 @@ def test_wifi_sdk_ssl_11n_standalone_tx_352_320K_C537730(firmware_loader, wifi_a
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C537731')
 def test_wifi_sdk_ssl_11n_standalone_rx_352_320K_C537731(firmware_loader, wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer):
     testcase = request.node.name
@@ -661,6 +673,7 @@ def test_wifi_sdk_ssl_11n_standalone_rx_352_320K_C537731(firmware_loader, wifi_a
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C512088')
 def test_wifi_sdk_ssl_standalone_tx_480_192K_with_long_imcp_C512088(firmware_loader, wifi_access_point, sniffer_filter,
                                                                    sl_collections, wifi_dut, ssl_server, logger,
                                                                    wifi_sniffer, request):
@@ -704,6 +717,7 @@ def test_wifi_sdk_ssl_standalone_tx_480_192K_with_long_imcp_C512088(firmware_loa
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C512089')
 def test_wifi_sdk_ssl_standalone_rx_480_192K_with_long_imcp_C512089(firmware_loader, wifi_access_point, sniffer_filter,
                                                                    request, sl_collections, wifi_dut, ssl_server,
                                                                    logger, utf_constants, wifi_sniffer):
@@ -745,6 +759,7 @@ def test_wifi_sdk_ssl_standalone_rx_480_192K_with_long_imcp_C512089(firmware_loa
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C146659')
 def test_wlan_with_rtt_40_ssl_tx_C146659(wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request, wifi_client):
     testcase = request.node.name
@@ -791,6 +806,7 @@ def test_wlan_with_rtt_40_ssl_tx_C146659(wifi_access_point, sniffer_filter, sl_c
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C146660')
 def test_wlan_with_rtt_40_rx_C146660(wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer, wifi_client):
     testcase = request.node.name
@@ -836,6 +852,7 @@ def test_wlan_with_rtt_40_rx_C146660(wifi_access_point, sniffer_filter, request,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"standard": 'gnbax'})
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "disassociated"])
+@pytest.mark.test_src_map_id('C146661')
 def test_wlan_with_rtt_80_ssl_tx_C146661(wifi_access_point, sniffer_filter, sl_collections, wifi_dut, ssl_server,
                                            logger, wifi_sniffer, request, wifi_client):
     testcase = request.node.name
@@ -882,6 +899,7 @@ def test_wlan_with_rtt_80_ssl_tx_C146661(wifi_access_point, sniffer_filter, sl_c
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut",
                        wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C146662')
 def test_wlan_with_rtt_80_ssl_rx_C146662(wifi_access_point, sniffer_filter, request, sl_collections, wifi_dut,
                                            ssl_server, logger, utf_constants, wifi_sniffer, wifi_client):
     testcase = request.node.name

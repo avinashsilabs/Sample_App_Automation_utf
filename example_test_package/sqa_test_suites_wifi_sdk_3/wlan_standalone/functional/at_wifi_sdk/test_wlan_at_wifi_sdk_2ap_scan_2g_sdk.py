@@ -53,6 +53,7 @@ def logger():
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C778450')
 def test_at_wifi_sdk_2aps_same_security_c778450(wifi_dut, wifi_access_points, sl_collections):
     '''Verify scan response when 2 Aps having same SSID and same security mode'''
 
@@ -115,6 +116,7 @@ def test_at_wifi_sdk_2aps_same_security_c778450(wifi_dut, wifi_access_points, sl
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C778451')
 def test_at_wifi_sdk_2aps_diff_security_c778451(wifi_dut, wifi_access_points, sl_collections):
     '''Verify scan response when 2 Aps having same SSID and different security mode'''
     try:

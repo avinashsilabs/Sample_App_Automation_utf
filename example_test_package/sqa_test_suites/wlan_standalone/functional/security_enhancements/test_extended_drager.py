@@ -85,6 +85,7 @@ ping_count = 1
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 
+@pytest.mark.test_src_map_id('C113884')
 def test_wpa2_personal_wrong_password_c113884(wifi_dut, wifi_access_point, wifi_sniffer, rs_helper, utf_constants):
     validation = True
     '''test case executes to validate wpa2 personal security when wr0ng password is issued '''
@@ -142,6 +143,7 @@ def test_wpa2_personal_wrong_password_c113884(wifi_dut, wifi_access_point, wifi_
 
     }
 )
+@pytest.mark.test_src_map_id('C113885')
 def test_wpa3_personal_wrong_password_C113885(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants):
     '''test case executes to validate wpa3 personal security when wrong password is issued '''
     validation = True

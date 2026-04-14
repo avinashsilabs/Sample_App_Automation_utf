@@ -122,6 +122,7 @@ wifi_obj = None
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", 
                                          "bt_powersave_disable", "clear_certs", "reset_wifi_conn_stats"])
+@pytest.mark.test_src_map_id('C914914')
 def test_wpa3_eap_tls1_0_tcp_tx_ble_peripheral_tx_C914914(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                   wifi_client, radius_server, sl_collections, request,
                                                   net_perf_client, protocol, ble_client, utf_constants):
@@ -378,6 +379,7 @@ def test_wpa3_eap_tls1_0_tcp_tx_ble_peripheral_tx_C914914(wifi_dut, wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated", "wifi_powersave_disable", 
                                          "bt_powersave_disable", "clear_certs", "reset_wifi_conn_stats"])
+@pytest.mark.test_src_map_id('C914915')
 def test_wpa3_eap_tls1_2_tcp_rx_ble_central_rx_C914915(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                 wifi_client, radius_server, sl_collections, request,
                                                 net_perf_client, protocol, ble_client, utf_constants):
@@ -634,6 +636,7 @@ def test_wpa3_eap_tls1_2_tcp_rx_ble_central_rx_C914915(wifi_dut, wifi_access_poi
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.skip(reason="SI91X-20697")
+@pytest.mark.test_src_map_id('C914916')
 def test_wpa3_transition_wpa2_to_wpa3_viceversa_ble_scan_si30_sw10_C914916(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                    sniffer_filter, wifi_client, sl_collections,
                                                                    request, utf_constants, ble_client):
@@ -871,6 +874,7 @@ def test_wpa3_transition_wpa2_to_wpa3_viceversa_ble_scan_si30_sw10_C914916(wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.skip(reason="SI91X-20697")
+@pytest.mark.test_src_map_id('C914917')
 def test_wpa3_transition_wpa2_to_wpa3_viceversa_ble_peripheral_ci30_C914917(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                     sniffer_filter, wifi_client, sl_collections,
                                                                     request, utf_constants, ble_client):
@@ -1104,6 +1108,7 @@ def test_wpa3_transition_wpa2_to_wpa3_viceversa_ble_peripheral_ci30_C914917(wifi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C914918')
 def test_wpa3_h2e_transition_hunting_pecking_ble_scan_adv_C914918(wifi_dut, wifi_access_point, wifi_sniffer,
                                                           sniffer_filter, wifi_client, sl_collections,
                                                           request, utf_constants, ble_client):

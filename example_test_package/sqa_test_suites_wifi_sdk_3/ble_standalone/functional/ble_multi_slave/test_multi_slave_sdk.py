@@ -351,6 +351,7 @@ pytestmark = [
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19917')
 def test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917(wifi_dut, ble_clients, utf_constants, sl_collections):
     """verify slave connection and master connection from dut"""
     try:
@@ -391,6 +392,7 @@ def test_ble_sdk_dual_role_1slave_1master_conn_disconn_reconn_C19917(wifi_dut, b
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19918')
 def test_ble_sdk_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_c19918(wifi_dut, ble_clients, bt_logs, sl_collections, utf_constants):
     """verify dual role connection from dut with 15ms minimum and maximum interval"""
     try:
@@ -431,6 +433,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_15ms_1master_conn_with_200ms_c19918(
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19919')
 def test_ble_sdk_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_c19919(wifi_dut, ble_clients, bt_logs, sl_collections, utf_constants):
     """verify dual role connection from dut with 200ms minimum and maximum interval"""
     try:
@@ -471,6 +474,7 @@ def test_ble_sdk_dual_role_1slave_conn_with_20ms_1master_conn_with_200ms_c19919(
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663247')
 def test_ble_sdk_dual_ble_connection_C663247(wifi_dut, ble_clients, ble_sniffer, sl_collections):
     """1.Initilize the dut in (0,13) opermode
        2.Start the ble in dut
@@ -492,6 +496,7 @@ def test_ble_sdk_dual_ble_connection_C663247(wifi_dut, ble_clients, ble_sniffer,
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663248')
 def test_ble_sdk_dual_ble_connection_C663248(wifi_dut, ble_clients,ble_sniffer, sl_collections):
     """1.Initilize the dut in (0,13) opermode
          2.Start the ble in dut
@@ -513,6 +518,7 @@ def test_ble_sdk_dual_ble_connection_C663248(wifi_dut, ble_clients,ble_sniffer, 
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663235')
 def test_ble_sdk_active_scanning_with_random_address_advertising_with_random_address_C663235(wifi_dut, ble_clients, ble_sniffer, sl_collections):
     """1.Initilize the dut in (0,13) opermode
            2.Start the ble in dut
@@ -537,6 +543,7 @@ def test_ble_sdk_active_scanning_with_random_address_advertising_with_random_add
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663236')
 def test_ble_sdk_active_scanning_with_public_address_advertising_with_random_address_C663236(wifi_dut, ble_clients, ble_sniffer, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -562,6 +569,7 @@ def test_ble_sdk_active_scanning_with_public_address_advertising_with_random_add
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663237')
 def test_ble_sdk_active_scanning_with_random_address_advertising_with_public_address_C663237(wifi_dut, ble_clients, ble_sniffer, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -587,6 +595,7 @@ def test_ble_sdk_active_scanning_with_random_address_advertising_with_public_add
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663238')
 def test_ble_sdk_passive_scanning_with_random_address_advertising_with_random_address_C663238(wifi_dut, ble_clients, ble_sniffer,sl_collections):
     """1.Initilize the dut in (0,13) opermode
            2.Start the ble in dut
@@ -611,6 +620,7 @@ def test_ble_sdk_passive_scanning_with_random_address_advertising_with_random_ad
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663239')
 def test_ble_sdk_passive_scanning_with_public_address_advertising_with_random_address_C663239(wifi_dut, ble_clients, ble_sniffer, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -636,6 +646,7 @@ def test_ble_sdk_passive_scanning_with_public_address_advertising_with_random_ad
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663240')
 def test_ble_sdk_passive_scanning_with_random_address_advertising_with_public_address_C663240(wifi_dut, ble_clients, ble_sniffer, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -659,6 +670,7 @@ def test_ble_sdk_passive_scanning_with_random_address_advertising_with_public_ad
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663245')
 def test_verify_dual_role_connection_using_conn_interval_100_200_ms_C663245(wifi_dut, ble_clients, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -704,6 +716,7 @@ def test_verify_dual_role_connection_using_conn_interval_100_200_ms_C663245(wifi
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663246')
 def test_verify_dual_role_connection_using_conn_interval_500_1280_ms_C663246(wifi_dut, ble_clients, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -747,6 +760,7 @@ def test_verify_dual_role_connection_using_conn_interval_500_1280_ms_C663246(wif
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663249')
 def test_verify_ble_scanning_5ms_DUT_connected_as_peripheral_C663249(wifi_dut, ble_clients, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -783,6 +797,7 @@ def test_verify_ble_scanning_5ms_DUT_connected_as_peripheral_C663249(wifi_dut, b
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663250')
 def test_verify_ble_scanning_10240ms_DUT_connected_as_peripheral_C663250(wifi_dut, ble_clients, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -819,6 +834,7 @@ def test_verify_ble_scanning_10240ms_DUT_connected_as_peripheral_C663250(wifi_du
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663244')
 def test_verify_BLE_central_connection_with_random_addr_peripheral_connection_with_public_addr_C663244(wifi_dut, ble_clients, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut
@@ -862,6 +878,7 @@ def test_verify_BLE_central_connection_with_random_addr_peripheral_connection_wi
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C663243')
 def test_verify_BLE_central_connection_with_public_addr_peripheral_connection_with_random_addr_C663243(wifi_dut, ble_clients, sl_collections):
     """1.Initilize the dut in (0,13) opermode
               2.Start the ble in dut

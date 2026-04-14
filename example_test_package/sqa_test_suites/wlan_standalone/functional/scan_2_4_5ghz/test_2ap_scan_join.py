@@ -58,6 +58,7 @@ ping_count = 60
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19065')
 def test_same_2aps_same_security_c19065(wifi_dut, wifi_access_points):
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -121,6 +122,7 @@ def test_same_2aps_same_security_c19065(wifi_dut, wifi_access_points):
 
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19066')
 def test_same_2aps_diff_security_c19066(wifi_dut, wifi_access_points):
     # Enables the wifi power save in DUT
     logger().info("Setting DUT in wlan power save...")
@@ -178,6 +180,7 @@ def test_same_2aps_diff_security_c19066(wifi_dut, wifi_access_points):
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19069')
 def test_regional_scan_in_EU_region_C19069(wifi_dut, wifi_access_point, wifi_sniffer):
     validation = True
     # Enables the wifi power save in DUT
@@ -254,6 +257,7 @@ def test_regional_scan_in_EU_region_C19069(wifi_dut, wifi_access_point, wifi_sni
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19075')
 def test_scan_and_connect_in_world_domain_c19075(wifi_dut, wifi_access_points, wifi_sniffer):
         logger().info(" Enabling rejoin...")
         wifi_dut.interfaces.wifi.rejoin()
@@ -337,6 +341,7 @@ def test_scan_and_connect_in_world_domain_c19075(wifi_dut, wifi_access_points, w
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19078')
 def test_scan_and_connect_in_world_domain_c19078(wifi_dut, wifi_access_point, wifi_sniffer):
         logger().info(" Enabling rejoin...")
         wifi_dut.interfaces.wifi.rejoin()

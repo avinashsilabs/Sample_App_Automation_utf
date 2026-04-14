@@ -565,6 +565,7 @@ class FilterPacket:
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20741')
 def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -601,6 +602,7 @@ def test_wlan_standalone_tcp_rx_c20741(wifi_sniffer, wifi_access_point, wifi_cli
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20740')
 def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -636,6 +638,7 @@ def test_wlan_standalone_tcp_tx_c20740(wifi_sniffer, wifi_access_point, wifi_cli
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20739')
 def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -672,6 +675,7 @@ def test_wlan_standalone_udp_rx_c20739(wifi_sniffer, wifi_access_point, wifi_cli
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20738')
 def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_client, wifi_dut, net_perf_client,
                                        protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -707,6 +711,7 @@ def test_wlan_standalone_udp_tx_c20738(wifi_sniffer, wifi_access_point, wifi_cli
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20751')
 def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -774,6 +779,7 @@ def test_wlan_bt_connected_tcp_rx_c20751(wifi_sniffer, bt_client, bt_dut, wifi_a
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20750')
 def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut,
                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -835,6 +841,7 @@ def test_wlan_bt_connected_tcp_tx_c20750(wifi_sniffer, bt_client, wifi_access_po
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20749')
 def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut,
                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -898,6 +905,7 @@ def test_wlan_bt_connected_udp_rx_c20749(wifi_sniffer, bt_client, wifi_access_po
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20748')
 def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_point, wifi_client, wifi_dut,
                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -959,6 +967,7 @@ def test_wlan_bt_connected_udp_tx_c20748(wifi_sniffer, bt_client, wifi_access_po
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20747')
 def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client,
                                           wifi_dut, net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -1047,6 +1056,7 @@ def test_wlan_ble_connected_tcp_rx_c20747(wifi_sniffer, bt_dut, ble_client, wifi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20746')
 def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut,
                                           net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -1125,6 +1135,7 @@ def test_wlan_ble_connected_tcp_tx_c20746(wifi_sniffer, bt_dut, ble_client, wifi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20745')
 def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut,
                                           net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -1205,6 +1216,7 @@ def test_wlan_ble_connected_udp_rx_c20745(wifi_sniffer, bt_dut, ble_client, wifi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20744')
 def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi_access_point, wifi_client, wifi_dut,
                                           net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -1283,6 +1295,7 @@ def test_wlan_ble_connected_udp_tx_c20744(wifi_sniffer, bt_dut, ble_client, wifi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20759')
 def test_wlan_bt_data_transfer_tcp_rx_c20759(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -1361,6 +1374,7 @@ def test_wlan_bt_data_transfer_tcp_rx_c20759(wifi_sniffer, bt_client, bt_dut, wi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20758')
 def test_wlan_bt_data_transfer_tcp_tx_c20758(wifi_sniffer, bt_dut, bt_client, wifi_access_point, wifi_client, wifi_dut,
                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -1431,6 +1445,7 @@ def test_wlan_bt_data_transfer_tcp_tx_c20758(wifi_sniffer, bt_dut, bt_client, wi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20757')
 def test_wlan_bt_data_transfer_udp_rx_c20757(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -1508,6 +1523,7 @@ def test_wlan_bt_data_transfer_udp_rx_c20757(wifi_sniffer, bt_client, bt_dut, wi
         "features": RS9116FeatureBitMap.Aggregation | RS9116FeatureBitMap.ULPGPIOHandshake
     },
 )
+@pytest.mark.test_src_map_id('C20756')
 def test_wlan_bt_data_transfer_udp_tx_c20756(wifi_sniffer, bt_client, bt_dut, wifi_access_point, wifi_client, wifi_dut,
                                          net_perf_client, protocol, utf_constants):
     filter_pack_obj = FilterPacket()
@@ -1584,6 +1600,7 @@ def test_wlan_bt_data_transfer_udp_tx_c20756(wifi_sniffer, bt_client, bt_dut, wi
         "ca_cert": "ca-chain.cert.pem",
     },
 )
+@pytest.mark.test_src_map_id('C20777')
 def test_ssl_standalone_testcase_tx_C20777(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, utf_constants):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1672,6 +1689,7 @@ def test_ssl_standalone_testcase_tx_C20777(
         "set_send_feature_frame": True,
     }
 )
+@pytest.mark.test_src_map_id('C20778')
 def test_ssl_standalone_testcase_rx_C20778(wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, utf_constants):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
     time.sleep(2)
@@ -1752,6 +1770,7 @@ def test_ssl_standalone_testcase_rx_C20778(wifi_sniffer, wifi_access_point, wifi
         "ca_cert": "ca-chain.cert.pem",
     },
 )
+@pytest.mark.test_src_map_id('C20760')
 def test_ssl_wlan_bt_data_transfer_tcp_tx_C20760(
         wifi_sniffer, bt_client, wifi_access_point, wifi_dut, ssl_server):
     wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1846,6 +1865,7 @@ def test_ssl_wlan_bt_data_transfer_tcp_tx_C20760(
         "ca_cert": "ca-chain.cert.pem",
     },
 )
+@pytest.mark.test_src_map_id('C20761')
 def test_ssl_wlan_bt_data_transfer_tcp_rx_C20761(
         wifi_sniffer, bt_client, wifi_access_point, wifi_dut, ssl_server):
     with BleLogs(start_collecting_logs=True,

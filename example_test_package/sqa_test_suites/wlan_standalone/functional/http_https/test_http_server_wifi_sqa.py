@@ -154,6 +154,7 @@ def join_get_ip(wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, log
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat", [10])
+@pytest.mark.test_src_map_id('C19235')
 def test_wifi_http_server_c19235(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, logger, repeat):
     current_time = time.time()
     capture_filename = "test_wifi_http_server_TC3595"
@@ -210,6 +211,7 @@ def test_wifi_http_server_c19235(wifi_sniffer, wifi_dut, wifi_access_point, http
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("repeat", [10])
+@pytest.mark.test_src_map_id('C19236')
 def test_wifi_https_server_c19236(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client, logger, repeat):
     current_time = time.time()
     capture_filename = "test_wifi_https_server_TC19236"
@@ -265,6 +267,7 @@ def test_wifi_https_server_c19236(wifi_sniffer, wifi_dut, wifi_access_point, htt
 @pytest.mark.http_server("raspi_lighttpd_tls_dut")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19238')
 def test_wifi_enable1_http_https_server_c19238(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
                                                 logger):
     current_time = time.time()
@@ -321,6 +324,7 @@ def test_wifi_enable1_http_https_server_c19238(wifi_sniffer, wifi_dut, wifi_acce
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19238')
 def test_wifi_enable2_http_https_server_c19238(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
                                                 logger):
     capture_filename = "test_wifi_enable2_http_https_server_TC19238"
@@ -370,6 +374,7 @@ def test_wifi_enable2_http_https_server_c19238(wifi_sniffer, wifi_dut, wifi_acce
 @pytest.mark.http_server("raspi_lighttpd_tls_dut")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19237')
 def test_wifi_https_server_erase_cert_c19237(wifi_sniffer, wifi_dut, wifi_access_point, http_server, http_client,
                                               logger):
     capture_filename = "test_wifi_https_server_erase_cert_TC19237"
@@ -416,6 +421,7 @@ def test_wifi_https_server_erase_cert_c19237(wifi_sniffer, wifi_dut, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("timeout", [100])
+@pytest.mark.test_src_map_id('C19239')
 def test_wifi_http_server_timeout_c19239(remote_socket_factory, wifi_sniffer, wifi_dut, wifi_access_point, http_server,
                                           http_client, logger, timeout):
     bssid = wifi_access_point.interfaces.wifi.bssid
@@ -487,6 +493,7 @@ def test_wifi_http_server_timeout_c19239(remote_socket_factory, wifi_sniffer, wi
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19240')
 def test_wifi_http_server_handle_multiple_clients_c19240(remote_socket_factory, wifi_sniffer, wifi_dut,
                                                           wifi_access_point, http_server,
                                                           http_client, logger):

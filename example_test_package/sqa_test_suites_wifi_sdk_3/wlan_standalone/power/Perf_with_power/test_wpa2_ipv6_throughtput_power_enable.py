@@ -375,6 +375,7 @@ class WLanThread(ThreadBase):
 
     }
 )
+@pytest.mark.test_src_map_id('C119377')
 def test_sdk_WLAN_IPV6_TCP_TX_C119377(
         firmware_loader,
         wifi_sniffer,
@@ -456,6 +457,7 @@ def test_sdk_WLAN_IPV6_TCP_TX_C119377(
 
     }
 )
+@pytest.mark.test_src_map_id('C119376')
 def test_sdk_WLAN_IPV6_TCP_RX_C119376(
         firmware_loader,
         wifi_sniffer,
@@ -538,6 +540,7 @@ def test_sdk_WLAN_IPV6_TCP_RX_C119376(
 
     }
 )
+@pytest.mark.test_src_map_id('C119380')
 def test_sdk_WLAN_IPV6_UDP_TX_C119380(
         firmware_loader,
         wifi_sniffer,
@@ -619,6 +622,7 @@ def test_sdk_WLAN_IPV6_UDP_TX_C119380(
 
     }
 )
+@pytest.mark.test_src_map_id('C119379')
 def test_sdk_WLAN_IPV6_UDP_RX_C119379(
         firmware_loader,
         wifi_sniffer,
@@ -698,6 +702,7 @@ def test_sdk_WLAN_IPV6_UDP_RX_C119379(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C119382')
 def test_sdk_WLAN_SSL_IPV6_TX_C119382(
         firmware_loader,
         wifi_sniffer,
@@ -773,6 +778,7 @@ def test_sdk_WLAN_SSL_IPV6_TX_C119382(
         "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
     }
 )
+@pytest.mark.test_src_map_id('C119384')
 def test_sdk_WLAN_SSL_IPV6_RX_C119384(
         firmware_loader,
         wifi_sniffer,

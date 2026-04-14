@@ -231,6 +231,7 @@ class SslConnectThread(ThreadBase):
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"6kb.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC7191558763')
 def test_download_data_from_https_server_C42042_1(wifi_sniffer, wifi_dut, utf_constants, wifi_access_point, ssl_server, http_server, index_path, remote_socket):
     iter_count = utf_constants.get("iter_count")
     logger().info("********** configuring the sniffer with access point channel **********")
@@ -280,6 +281,7 @@ def test_download_data_from_https_server_C42042_1(wifi_sniffer, wifi_dut, utf_co
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"1MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC0637544769')
 def test_download_data_from_https_server_C42042_2(wifi_sniffer, wifi_dut, utf_constants, wifi_access_point, ssl_server, http_server, index_path, remote_socket):
     iter_count = utf_constants.get("iter_count")
     logger().info("********** configuring the sniffer with access point channel **********")
@@ -328,6 +330,7 @@ def test_download_data_from_https_server_C42042_2(wifi_sniffer, wifi_dut, utf_co
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"10MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC8471013775')
 def test_download_data_from_https_server_C42042_3(wifi_sniffer, wifi_dut, utf_constants, wifi_access_point, ssl_server, http_server, index_path, remote_socket):
     device_port = 5001
     iter_count = utf_constants.get("iter_count")
@@ -379,6 +382,7 @@ def test_download_data_from_https_server_C42042_3(wifi_sniffer, wifi_dut, utf_co
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"100MB.htm"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC9412518780')
 def test_download_data_from_https_server_C42042_4(wifi_dut, wifi_access_point, wifi_sniffer, utf_constants, ssl_server, http_server, index_path):
     iter_count = utf_constants.get("iter_count")
     logger().info("********** configuring the sniffer with access point channel **********")
@@ -429,6 +433,7 @@ def test_download_data_from_https_server_C42042_4(wifi_dut, wifi_access_point, w
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C42044')
 def test_allegion_aws_fw_download_C42044(wifi_sniffer, wifi_access_point, wifi_dut, aws_s3, http_server, utf_constants):
     logger().info(f"****************************C42044**********************")
     logger().info("********** configuring the sniffer with access point channel **********")
@@ -473,6 +478,7 @@ def test_allegion_aws_fw_download_C42044(wifi_sniffer, wifi_access_point, wifi_d
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C42045')
 def test_aws_connection_fw_download_C42045(wifi_sniffer, wifi_access_point, wifi_dut, aws_s3, http_server, aws_iot_dut, utf_constants):
     logger().info(f"*******************C42045***********************")
     logger().info("********** configuring the sniffer with access point channel **********")
@@ -516,6 +522,7 @@ def test_aws_connection_fw_download_C42045(wifi_sniffer, wifi_access_point, wifi
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C42046')
 def test_aws_connection_unsecure_connection_fw_download_C42046(wifi_sniffer, wifi_access_point, wifi_dut, aws_s3, http_server, aws_iot_dut, utf_constants):
     logger().info(f"***************C42046********************")
     logger().info("********** configuring the sniffer with access point channel **********")

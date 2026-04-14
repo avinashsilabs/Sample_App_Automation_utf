@@ -55,6 +55,7 @@ def logger():
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C113907')
 def test_conn_STA_AP_in_H2E_mode_C113907(rs_helper, utf_constants, wifi_sniffer, net_perf_client, wifi_access_point,
                                          wifi_dut, wifi_client):
     validation = True
@@ -116,6 +117,7 @@ def test_conn_STA_AP_in_H2E_mode_C113907(rs_helper, utf_constants, wifi_sniffer,
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C113911')
 def test_thpt_STA_AP_in_H2E_mode_C113911(rs_helper, utf_constants, wifi_sniffer, net_perf_client,
                                                              wifi_access_point, wifi_dut, wifi_client, protocol):
     validation = True
@@ -186,6 +188,7 @@ def test_thpt_STA_AP_in_H2E_mode_C113911(rs_helper, utf_constants, wifi_sniffer,
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C113912')
 def test_conn_STA_AP_in_Transition_mode_C113912(rs_helper, utf_constants, wifi_sniffer, net_perf_client,
                                                 wifi_access_point, wifi_dut, wifi_client, protocol):
     validation = True
@@ -242,6 +245,7 @@ def test_conn_STA_AP_in_Transition_mode_C113912(rs_helper, utf_constants, wifi_s
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C113913')
 def test_data_transfer_STA_in_Transition_mode_C113913(rs_helper, utf_constants, wifi_sniffer, net_perf_client,
                                                       wifi_access_point, wifi_dut, wifi_client, protocol):
     validation = True
@@ -306,6 +310,7 @@ def test_data_transfer_STA_in_Transition_mode_C113913(rs_helper, utf_constants, 
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C113909')
 def test_DUT_behaviour_rejoin_H2E_C113909(rs_helper, utf_constants, wifi_sniffer, net_perf_client,
                                       wifi_access_point, wifi_dut, wifi_client, protocol):
     validation = True
@@ -400,6 +405,7 @@ def test_DUT_behaviour_rejoin_H2E_C113909(rs_helper, utf_constants, wifi_sniffer
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C113910')
 def test_behaviour_of_DUT_when_AP_without_H2E_C113910(rs_helper, utf_constants, wifi_sniffer, net_perf_client,
                                                       wifi_access_points, wifi_dut, wifi_client, protocol):
     validation = True
@@ -487,6 +493,7 @@ def test_behaviour_of_DUT_when_AP_without_H2E_C113910(rs_helper, utf_constants, 
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C113908')
 def test_DUT_reconnection_hunting_pecking_C113908(rs_helper, utf_constants, wifi_sniffer, net_perf_client,
                                                       wifi_access_points, wifi_dut, wifi_client, protocol):
     validation = True
@@ -575,6 +582,7 @@ def test_DUT_reconnection_hunting_pecking_C113908(rs_helper, utf_constants, wifi
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C113916')
 def test_DUT_rejoin_AP1_H2E_AP2_hunting_pecking_C113916(rs_helper, utf_constants, wifi_sniffer, net_perf_client,
                                                       wifi_access_points, wifi_dut, wifi_client, protocol):
     validation = True

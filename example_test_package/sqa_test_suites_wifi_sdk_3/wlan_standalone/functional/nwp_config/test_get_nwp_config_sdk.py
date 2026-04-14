@@ -41,6 +41,7 @@ def logger():
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C693668')
 def test_wifi_sdk_vali_opn_part_num_with_sl_si91x_get_nwp_config_C693668(wifi_sniffer, wifi_access_point, wifi_dut,
                                                                          request, sniffer_filter, sl_collections):
     """

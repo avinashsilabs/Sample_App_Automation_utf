@@ -71,6 +71,7 @@ pytestmark = [
                          [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19616')
 def test_advertise_ciphers_ssl_tx_c19616(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, cert
 ):
@@ -92,6 +93,7 @@ def test_advertise_ciphers_ssl_tx_c19616(
                          [['TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384', 'TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256']])
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19617')
 def test_advertise_ciphers_ssl_rx_c19617(
         wifi_sniffer, wifi_access_point, wifi_dut, ssl_server, cipher_list, logger, cert
 ):

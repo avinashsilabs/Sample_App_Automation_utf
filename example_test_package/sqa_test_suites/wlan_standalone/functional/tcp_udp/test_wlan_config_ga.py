@@ -116,6 +116,7 @@ def rts_cts_data_sequence_check(wifi_sniffer, dut_mac, ap_bssid, rts_threshold=0
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.firmware_app("test_wlan_rts")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19511')
 def test_rts_c19511(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, wifi_client,
                     rs_helper):
     validation = True
@@ -198,6 +199,7 @@ def test_rts_c19511(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.firmware_app("test_wlan_rts")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19512')
 def test_rts_c19512(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, wifi_client,
                     rs_helper):
     validation = True
@@ -280,6 +282,7 @@ def test_rts_c19512(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.firmware_app("test_wlan_rts")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C19513')
 def test_rts_c19513(firmware_loader, wifi_dut, wifi_access_point, wifi_sniffer, net_perf_client, wifi_client,
                     rs_helper):
     validation = True

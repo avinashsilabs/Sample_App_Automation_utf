@@ -462,6 +462,7 @@ class WifiJoin(ThreadBase):
 @wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19769')
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_c19769(aws_s3, wifi_sniffer, wifi_access_point,
                                                            wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server.
@@ -485,6 +486,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c19769(aws_s3, wifi_sniffer,
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C652581')
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_ext_header_c652581(aws_s3, wifi_sniffer, wifi_access_point,
                                                                        wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server with extender header enable"""
@@ -506,6 +508,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_ext_header_c652581(aws_s3, w
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C652416')
 def test_wifi_sdk_https_fw_upgrade_using_azure_server_c652416(azure_blob, wifi_sniffer,
                                                               wifi_access_point, wifi_dut, sl_collections,
                                                               utf_constants):
@@ -528,6 +531,7 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_c652416(azure_blob, wifi_s
 @wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C498662')
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_c498662(aws_s3, wifi_sniffer, wifi_access_point,
                                                             wifi_dut, sl_collections, utf_constants):
     """TVerify M4 firmware update functionlaity using HTTPS otaf (port 443)with aws server"""
@@ -550,6 +554,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_c498662(aws_s3, wifi_sniffer
 @wifi_dut_marker(ca_cert=["silabs_dgcert_ca.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('TC3123435656')
 def test_wifi_sdk_https_fw_upgrade_using_azure_server_498663(azure_blob, wifi_sniffer,
                                                              wifi_access_point, wifi_dut, sl_collections,
                                                              utf_constants):
@@ -571,6 +576,7 @@ def test_wifi_sdk_https_fw_upgrade_using_azure_server_498663(azure_blob, wifi_sn
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C500496')
 def test_wifi_sdk_https_fw_url_length_800_c500496(aws_s3, wifi_sniffer, wifi_access_point,
                                                   wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server"""
@@ -592,6 +598,7 @@ def test_wifi_sdk_https_fw_url_length_800_c500496(aws_s3, wifi_sniffer, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C500497')
 def test_wifi_sdk_https_fw_url_length_1080_c500497(aws_s3, wifi_sniffer, wifi_access_point,
                                                    wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server"""
@@ -614,6 +621,7 @@ def test_wifi_sdk_https_fw_url_length_1080_c500497(aws_s3, wifi_sniffer, wifi_ac
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C510789')
 def test_wifi_sdk_https_M4_fw_url_length_1500_disable_http_url_c510789(aws_s3, wifi_sniffer, wifi_access_point,
                                                                        wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ M4 update functionality with URL length is more than 1024 (i-e ~1500) and disable long http bit"""
@@ -636,6 +644,7 @@ def test_wifi_sdk_https_M4_fw_url_length_1500_disable_http_url_c510789(aws_s3, w
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C500498')
 def test_wifi_sdk_https_fw_url_length_2048_enable_http_url_c500498(aws_s3, wifi_sniffer, wifi_access_point,
                                                                    wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ update functionality with URL length is more than 2048 (i-e ~2048) and enable long http bit"""
@@ -658,6 +667,7 @@ def test_wifi_sdk_https_fw_url_length_2048_enable_http_url_c500498(aws_s3, wifi_
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C500499')
 def test_wifi_sdk_https_fw_url_length_2048_disable_http_url_c500499(aws_s3, wifi_sniffer, wifi_access_point,
                                                                     wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ update functionality with URL length is more than 2048 (i-e ~2048) and disable long http bit"""
@@ -707,6 +717,7 @@ def test_wifi_sdk_https_fw_url_length_2048_disable_http_url_c500499(aws_s3, wifi
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw", "clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C687580')
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_combined_root_ca_c687580(aws_s3, wifi_sniffer, wifi_access_point,
                                                                              wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server"""
@@ -757,6 +768,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_combined_root_ca_c687580(aws
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw","clear_certs"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C687579')
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_intermediate_root_ca_c687579(aws_s3, wifi_sniffer, wifi_access_point,
                                                            wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server"""
@@ -778,6 +790,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_intermediate_root_ca_c687579
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C876840')
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_30min_delay_after_connect_to_ap_c876840(aws_s3,
                                                                                             wifi_sniffer,
                                                                                             wifi_access_point,
@@ -803,6 +816,7 @@ def test_wifi_sdk_https_fw_upgrade_using_aws_server_30min_delay_after_connect_to
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C501263')
 def test_wifi_sdk_https_fw_url_length_1500_c501263(aws_s3,
                                                    wifi_sniffer, wifi_access_point,
                                                    wifi_dut, sl_collections, utf_constants):
@@ -825,6 +839,7 @@ def test_wifi_sdk_https_fw_url_length_1500_c501263(aws_s3,
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @wifi_dut_marker_http_longer_url()
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C510788')
 def test_wifi_sdk_https_M4_fw_url_length_1080_enable_http_url_c510788(aws_s3, wifi_sniffer, wifi_access_point,
                                                                       wifi_dut, sl_collections, utf_constants):
     """HTTP(S) OTAFÂ M4 update functionality with URL length is more than 1024 (i-e ~1500) and enable long http bit"""
@@ -874,6 +889,7 @@ def test_wifi_sdk_https_M4_fw_url_length_1080_enable_http_url_c510788(aws_s3, wi
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw", "clear_certs"])
 @pytest.mark.config('aws_s3', s3={"use_accelerate_endpoint": True})
+@pytest.mark.test_src_map_id('C696374')
 def test_wifi_sdk_https_fw_upgrade_using_CA1_CA3_cert_c696374(aws_s3, wifi_sniffer, wifi_access_point,
                                                            wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using CA1+CA3 certificate and aws Transfer accelerate server"""
@@ -904,6 +920,7 @@ def test_wifi_sdk_https_fw_upgrade_using_CA1_CA3_cert_c696374(aws_s3, wifi_sniff
 )
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
+@pytest.mark.test_src_map_id('C500495')
 def test_wifi_sdk_https_fw_url_length_1024_c500495(aws_s3, wifi_sniffer, wifi_access_point,
                                                    wifi_dut, sl_collections, utf_constants):
     """This Test case is validating Firmware upgrade using aws server"""
@@ -926,6 +943,7 @@ def test_wifi_sdk_https_fw_url_length_1024_c500495(aws_s3, wifi_sniffer, wifi_ac
 @wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
+@pytest.mark.test_src_map_id('C782609')
 def test_wifi_sdk_tls13_sni_extension_verification_during_http_otaf_upgrade_C782609(
     aws_s3, wifi_sniffer, wifi_access_point, wifi_dut, sl_collections, utf_constants,sniffer_filter):
     """

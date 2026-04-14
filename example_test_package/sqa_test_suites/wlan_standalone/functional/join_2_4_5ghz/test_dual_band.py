@@ -67,6 +67,7 @@ def logger():
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19011')
 def test_dual_band_scan_with_US_regions_c19011(wifi_access_points, wifi_dut):
     logger().info("DUT region is set to US")
     channel_list = [12, 13, 14]
@@ -129,6 +130,7 @@ def test_dual_band_scan_with_US_regions_c19011(wifi_access_points, wifi_dut):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19012')
 def test_dual_band_scan_with_EU_regions_c19012(wifi_access_points, wifi_dut):
     # Enables the wifi power save in DUT
     channel_list = [14, 149, 151, 157, 161, 165]
@@ -193,6 +195,7 @@ def test_dual_band_scan_with_EU_regions_c19012(wifi_access_points, wifi_dut):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19013')
 def test_dual_band_scan_with_JP_regions_c19013(wifi_access_points, wifi_dut):
     channel_list = [149, 153, 157, 161, 165]
     # Enables the wifi power save in DUT
@@ -256,6 +259,7 @@ def test_dual_band_scan_with_JP_regions_c19013(wifi_access_points, wifi_dut):
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19014')
 def test_dual_band_scan_with_World_regions_c19014(wifi_access_points, wifi_dut):
 
     # Enables the wifi power save in DU
@@ -306,6 +310,7 @@ ping_count = 10
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19010')
 def test_dual_band_connection_with_country_IE_Mismatch_C19010(wifi_access_point, wifi_dut, remote_socket_factory):
     sock_port = 5001
     scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)

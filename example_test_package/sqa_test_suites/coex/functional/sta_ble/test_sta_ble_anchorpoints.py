@@ -41,6 +41,7 @@ def logger():
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20122')
 def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x06 0x00"
@@ -176,6 +177,7 @@ def test_sta_ble_slave_latency_C20122(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20123')
 def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x0C 0x00"
@@ -311,6 +313,7 @@ def test_sta_ble_slave_latency_C20123(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20124')
 def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x80 0x0C"
@@ -446,6 +449,7 @@ def test_sta_ble_slave_latency_C20124(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20125')
 def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x06 0x00"
@@ -581,6 +585,7 @@ def test_sta_ble_slave_latency_C20125(http_server, wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C20126')
 def test_sta_ble_slave_latency_C20126(http_server, wifi_sniffer, wifi_dut, wifi_access_point, ble_client, index_path, http_client):
     Connection_Handle       = "0x61 0x00"
     Connection_Interval_Min = "0x80 0x0C"

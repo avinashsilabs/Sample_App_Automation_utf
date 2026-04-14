@@ -26,6 +26,7 @@ def __print_throughput(iperf_throughput: dict):
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.test_src_map_id('TC3959635066')
 def test_device_as_server_ap(net_perf_client, wifi_dut, wifi_client, protocol):
     wifi_dut.interfaces.wifi.start_ap()
     wifi_client.interfaces.wifi.join()
@@ -75,6 +76,7 @@ def test_device_as_server_ap(net_perf_client, wifi_dut, wifi_client, protocol):
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.test_src_map_id('TC1568662072')
 def test_host_as_server_ap(net_perf_client, wifi_dut, wifi_client, protocol):
     wifi_dut.interfaces.wifi.start_ap()
     wifi_client.interfaces.wifi.join()
@@ -105,6 +107,7 @@ def test_host_as_server_ap(net_perf_client, wifi_dut, wifi_client, protocol):
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}} })
 @pytest.mark.config("secondary_net_perf_client", net_perf={"device": {"TCP": {"port": 5201,"data_len": 1460},"UDP": {"port": 5202, "data_len": 1460}}})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP,IperfConstants.UDP])
+@pytest.mark.test_src_map_id('TC4293394079')
 def test_device_as_ap_with_two_sta_connected_primary_raspi_as_server(net_perf_client, secondary_net_perf_client, wifi_dut, wifi_clients, protocol):
     host_ips = []
     wifi_dut.interfaces.wifi.start_ap()
@@ -141,6 +144,7 @@ def test_device_as_ap_with_two_sta_connected_primary_raspi_as_server(net_perf_cl
 @pytest.mark.config("secondary_net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}} })
 @pytest.mark.config("net_perf_client", net_perf={"device": {"TCP": {"port": 5201,"data_len": 1460},"UDP": {"port": 5202, "data_len": 1460}}})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.test_src_map_id('TC7133799087')
 def test_device_as_ap_with_two_sta_connected_secondary_raspi_as_server(net_perf_client, secondary_net_perf_client, wifi_dut, wifi_clients, protocol):
     host_ips = []
     wifi_dut.interfaces.wifi.start_ap()

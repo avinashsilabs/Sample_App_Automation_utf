@@ -45,6 +45,7 @@ def logger():
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC7871370888')
 def test_sta_bt_ble_18929(wifi_dut, wifi_access_point, ble_dut, ble_clients, rs_helper_ble, ble_client):
     remote_devices_count = 3
     test_case_no = 18929
@@ -82,6 +83,7 @@ def test_sta_bt_ble_18929(wifi_dut, wifi_access_point, ble_dut, ble_clients, rs_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('TC3839278892')
 def test_sta_bt_ble_18935(wifi_dut, wifi_access_point, ble_dut, ble_clients, rs_helper_ble, ble_client):
     remote_devices_count = 2
     test_case_no = 18935

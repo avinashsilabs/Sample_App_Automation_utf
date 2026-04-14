@@ -58,6 +58,7 @@ def logger():
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661446')
 def test_wifi_sdk_scan_no_ap_bea_on_channels_12_13_14_c661446(wifi_access_point, wifi_dut, wifi_sniffer, wifi_client,
                                                               sl_collections, utf_constants, sniffer_filter):
     """Verify scan behavior when no AP is beaconing in 12, 13, and 14 channels"""
@@ -156,6 +157,7 @@ def test_wifi_sdk_scan_no_ap_bea_on_channels_12_13_14_c661446(wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661447')
 def test_wifi_sdk_verify_scan_and_conn_third_party_ap_cha_12_c661447(wifi_access_point, wifi_dut, wifi_sniffer,
                                                                      wifi_client,
                                                                      sl_collections, utf_constants, sniffer_filter):
@@ -255,6 +257,7 @@ def test_wifi_sdk_verify_scan_and_conn_third_party_ap_cha_12_c661447(wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661448')
 def test_wifi_sdk_verify_scan_and_conn_third_party_ap_cha_13_c661448(wifi_access_point, wifi_dut, wifi_sniffer,
                                                                      wifi_client,
                                                                      sl_collections, utf_constants, sniffer_filter):
@@ -353,6 +356,7 @@ def test_wifi_sdk_verify_scan_and_conn_third_party_ap_cha_13_c661448(wifi_access
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661454')
 def test_wifi_sdk_verify_scan_no_ap_beacon_specific_channel_c661454(wifi_access_point, wifi_dut, wifi_sniffer,
                                                                     wifi_client, request,
                                                                     sl_collections, utf_constants, sniffer_filter):
@@ -403,6 +407,7 @@ def test_wifi_sdk_verify_scan_no_ap_beacon_specific_channel_c661454(wifi_access_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661451')
 def test_wifi_sdk_ver_probe_req_chan_1_13_bg_scan_api_eu_regi_ap_c661451(wifi_access_point, wifi_dut, wifi_sniffer,
                                                                          wifi_client, sl_collections, utf_constants,
                                                                          sniffer_filter):
@@ -530,6 +535,7 @@ def test_wifi_sdk_ver_probe_req_chan_1_13_bg_scan_api_eu_regi_ap_c661451(wifi_ac
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'auto_953', "security": 'WPA2', "region": "Europe", "channel": 11})
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661453')
 def test_wifi_sdk_verify_scan_behavior_dut_rejoin_c661453(wifi_sniffer, wifi_access_point, wifi_dut, switch,
                                                           utf_constants, request, sl_collections, sniffer_filter,
                                                           net_perf_client, protocol, wifi_client):
@@ -608,6 +614,7 @@ def test_wifi_sdk_verify_scan_behavior_dut_rejoin_c661453(wifi_sniffer, wifi_acc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661450')
 def test_wifi_sdk_ver_probe_req_chan_1_11_bg_scan_api_us_regi_ap_c661450(wifi_access_point, wifi_dut, wifi_sniffer,
                                                                          wifi_client, sl_collections, utf_constants,
                                                                          sniffer_filter):
@@ -727,6 +734,7 @@ def test_wifi_sdk_ver_probe_req_chan_1_11_bg_scan_api_us_regi_ap_c661450(wifi_ac
     },
 )
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661449')
 def test_wifi_sdk_verify_scan_and_conn_third_party_ap_conf_jp_region_c661449( wifi_dut,sl_collections, remote_wiseconnect3, wifi_sniffer, request, sniffer_filter):
     """Verify scan and connection when third party AP is configured Japan in 13 channel"""
     try:
@@ -844,6 +852,7 @@ def test_wifi_sdk_verify_scan_and_conn_third_party_ap_conf_jp_region_c661449( wi
     },
 )
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661451')
 def test_wifi_sdk_ver_prob_req_cha_1_14_bg_scan_api_jp_region_c661451( wifi_dut,sl_collections, remote_wiseconnect3, wifi_sniffer, request, sniffer_filter):
     """Verify whether DUT is able to send probe request in 1-14 channels
        when BG scan API is called and DUT is connected to JP region AP"""

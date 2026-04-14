@@ -17,6 +17,7 @@ def __print_throughput(iperf_throughput: dict):
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.config("wifi_client", wifi={"interface": "eth0"})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('TC0367047050')
 def test_run_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol, utf_constants,
                     rs_helper):
     timeout = 60
@@ -28,6 +29,7 @@ def test_run_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, p
 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.test_src_map_id('TC2798021055')
 def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -68,6 +70,7 @@ def test_device_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_cli
 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE, "tos_value": IperfTrafficType.Video, "mss_value": '32k', "tcp_window_size": '32k'})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP, IperfConstants.UDP])
+@pytest.mark.test_src_map_id('TC9397341061')
 def test_host_as_server(net_perf_client, wifi_access_point, wifi_dut, wifi_client, protocol):
     # preparing wifi_dut
     wifi_dut.interfaces.wifi.join_ap(wifi_access_point)

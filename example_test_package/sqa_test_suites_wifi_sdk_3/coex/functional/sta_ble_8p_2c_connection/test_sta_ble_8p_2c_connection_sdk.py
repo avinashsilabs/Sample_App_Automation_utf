@@ -184,6 +184,7 @@ pytestmark = [
 ]
 @pytest.mark.end_state(
     "wifi_dut", wifi=['ble_stop_adv', 'ble_stop_scan'])
+@pytest.mark.test_src_map_id('C769615')
 def test_Coex_sdk_ble_adv_scan_wlan_scan_C769615(wifi_dut, utf_constants, sl_collections, ble_client, ble_dut):
     """
     Test Steps:
@@ -217,6 +218,7 @@ def test_Coex_sdk_ble_adv_scan_wlan_scan_C769615(wifi_dut, utf_constants, sl_col
 
 @pytest.mark.end_state(
     "wifi_dut", wifi=['ble_stop_adv', 'ble_stop_scan'])
+@pytest.mark.test_src_map_id('C769616')
 def test_Coex_sdk_ble_adv_scan_wlan_ping_C769616(wifi_dut, utf_constants, sl_collections, ble_client, ble_dut,
                                                  wifi_access_point, wifi_client, sniffer_filter):
     """
@@ -251,6 +253,7 @@ def test_Coex_sdk_ble_adv_scan_wlan_ping_C769616(wifi_dut, utf_constants, sl_col
 
 @pytest.mark.end_state(
     "wifi_dut", wifi=['ble_stop_adv', 'ble_stop_scan'])
+@pytest.mark.test_src_map_id('C769617')
 def test_Coex_sdk_ble_adv_scan_then_wlan_ping_C769617(wifi_dut, utf_constants, sl_collections, ble_client, ble_dut,
                                                  wifi_access_point, wifi_client, sniffer_filter):
     """
@@ -286,6 +289,7 @@ def test_Coex_sdk_ble_adv_scan_then_wlan_ping_C769617(wifi_dut, utf_constants, s
 
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C769618')
 def test_Coex_sdk_ble_adv_scan_check_during_TCP_Tx_C769618(
         wifi_dut, utf_constants, sl_collections, ble_client, ble_dut, wifi_access_point, wifi_client, wifi_sniffer,
         net_perf_client, protocol):

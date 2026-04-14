@@ -37,6 +37,7 @@ pytestmark = [
                                                        test_case_name='test_version1',
                                                        test_case_id='test_version1::1',
                                                        notes='test notes'))
+@pytest.mark.test_src_map_id('TC5531851364')
 def test_version(wifi_dut):
     expected_version = parse_version()
     if expected_version is None:
@@ -48,6 +49,7 @@ def test_version(wifi_dut):
     assert result == expected_version
 
 
+@pytest.mark.test_src_map_id('TC5388683371')
 def test_scan(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None)
@@ -56,6 +58,7 @@ def test_scan(wifi_dut, wifi_access_point):
     logger().info(f"Scan in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC2823405377')
 def test_wifi_join(wifi_dut, wifi_access_point):
     with TimeMeasurer() as t:
         result = wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
@@ -63,6 +66,7 @@ def test_wifi_join(wifi_dut, wifi_access_point):
     logger().info(f"Associated in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC9312202382')
 def test_wifi_dhcp(wifi_associated_dut):
     with TimeMeasurer() as t:
         result = wifi_associated_dut.interfaces.wifi.start_ip()
@@ -72,18 +76,21 @@ def test_wifi_dhcp(wifi_associated_dut):
     logger().info(f"Got {result} via DHCP in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC1155657387')
 def test_wifi_ping(wifi_networked_dut):
     with TimeMeasurer() as t:
         wifi_networked_dut.interfaces.wifi.ping()
     logger().info(f"Ping completed in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC2612876392')
 def test_wifi_leave(wifi_networked_dut):
     with TimeMeasurer() as t:
         wifi_networked_dut.interfaces.wifi.leave()
     logger().info(f"Leave completed in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC9739056396')
 def test_wifi_join_1(utf_constants, wifi_dut, wifi_access_point, rs_helper):
     device_ip, device_mac = rs_helper.check_wifi_connectivity(utf_constants, wifi_dut, wifi_access_point)
     logger().info(f"device_ip, device_mac : {device_ip}, {device_mac}")
@@ -93,6 +100,7 @@ def test_wifi_join_1(utf_constants, wifi_dut, wifi_access_point, rs_helper):
     "wifi_dut",
     wifi={"oper_mode": RS9116OperatingMode.AccessPoint},
 )
+@pytest.mark.test_src_map_id('TC7197772400')
 def test_wifi_start_ap(wifi_dut):
     wifi_dut.interfaces.wifi.start_ap()
 
@@ -101,6 +109,7 @@ def test_wifi_start_ap(wifi_dut):
     "wifi_dut",
     wifi={"oper_mode": RS9116OperatingMode.AccessPoint},
 )
+@pytest.mark.test_src_map_id('TC6895323404')
 def test_wifi_join_9116_ap(wifi_ap_dut, wifi_client):
     wifi_client.interfaces.wifi.join()
     assert (
@@ -132,6 +141,7 @@ def test_wifi_join_9116_ap(wifi_ap_dut, wifi_client):
         "channel": 36,
     },
 )
+@pytest.mark.test_src_map_id('TC7313708409')
 def test_wifi_join_9116_ap_5g(wifi_dut, wifi_client):
     wifi_dut.interfaces.wifi.start_ap()
     wifi_client.interfaces.wifi.join()
@@ -143,6 +153,7 @@ def test_wifi_join_9116_ap_5g(wifi_dut, wifi_client):
     )
 
 
+@pytest.mark.test_src_map_id('TC2793408413')
 def test_parse_verion_from_web_server(http_server, http_client):
     server_stat = http_server.interfaces.http.started
     assert server_stat, "server not started"
@@ -154,6 +165,7 @@ def test_parse_verion_from_web_server(http_server, http_client):
     assert version == '1610.2.5.0.0.4'
 
 @pytest.mark.wifi_access_point("android_ap")
+@pytest.mark.test_src_map_id('TC6727947417')
 def test_access_point_android(wifi_access_point):
     """
     Test to check connectivity to the access point

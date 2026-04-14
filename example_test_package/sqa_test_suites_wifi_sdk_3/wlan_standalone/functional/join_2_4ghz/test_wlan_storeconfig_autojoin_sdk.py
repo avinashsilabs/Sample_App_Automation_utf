@@ -829,6 +829,7 @@ Map_security = {
 )
 @pytest.mark.deployed_25q4
 @pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('C769960')
 def test_RAM_autojoin_with_one_profile_and_one_credential_C769960(
     wifi_dut,
     wifi_access_point,
@@ -962,6 +963,7 @@ def test_RAM_autojoin_with_one_profile_and_one_credential_C769960(
     ],
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769961')
 def test_RAM_autojoin_with_wpa2_wpa_two_profiles_c769961(
     wifi_dut,
     wifi_access_point,
@@ -1131,6 +1133,7 @@ def test_RAM_autojoin_with_wpa2_wpa_two_profiles_c769961(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C769962')
 def test_RAM_autojoin_auto_join_with_wpa2_open_two_profiles_c769962(
     wifi_dut,
     wifi_access_point,
@@ -1235,6 +1238,7 @@ def test_RAM_autojoin_auto_join_with_wpa2_open_two_profiles_c769962(
     },
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769967')
 def test_RAM_autojoin_with_wpa3_enterprise_tls_peap_security_c769967(
     wifi_dut,
     radius_server,
@@ -1436,6 +1440,7 @@ def test_RAM_autojoin_with_wpa3_enterprise_tls_peap_security_c769967(
     },
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769968')
 def test_RAM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769968(
     wifi_dut,
     radius_server,
@@ -1581,6 +1586,7 @@ def test_RAM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769968(
     ],
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769963')
 def test_RAM_autojoin_after_sl_net_deinit_with_wpa3_C769963(
     wifi_dut,
     wifi_access_point,
@@ -1704,6 +1710,7 @@ def test_RAM_autojoin_after_sl_net_deinit_with_wpa3_C769963(
     ],
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769974')
 def test_RAM_autojoin_while_doing_SNTP_data_transfer_c769974(
     wifi_dut,
     wifi_access_point,
@@ -1825,6 +1832,7 @@ def test_RAM_autojoin_while_doing_SNTP_data_transfer_c769974(
     ],
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769975')
 def test_RAM_autojoin_while_doing_MQTTS_data_transfer_c769975(
     wifi_dut,
     wifi_access_point,
@@ -1943,6 +1951,7 @@ def test_RAM_autojoin_while_doing_MQTTS_data_transfer_c769975(
     },
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769980')
 def test_RAM_autojoin_with_incorrect_psk_first_try_C769980(
     wifi_dut,
     wifi_access_point,
@@ -2071,6 +2080,7 @@ def test_RAM_autojoin_with_incorrect_psk_first_try_C769980(
     },
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769982')
 def test_RAM_autojoin_with_two_profiles_mbssid_c769982(
     wifi_dut,
     wifi_access_point,
@@ -2193,6 +2203,7 @@ def test_RAM_autojoin_with_two_profiles_mbssid_c769982(
     ],
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769984')
 def test_RAM_autojoin_error_with_invalid_credential_C769984(
     wifi_dut, profiles, sl_collections
 ):
@@ -2258,6 +2269,7 @@ def test_RAM_autojoin_error_with_invalid_credential_C769984(
     ],
 )
 @pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C769985')
 def test_RAM_autojoin_error_with_three_profiles_and_credentials_C769985(
     wifi_dut, profiles, sl_collections
 ):
@@ -2328,6 +2340,7 @@ def test_RAM_autojoin_error_with_three_profiles_and_credentials_C769985(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C769987')
 def test_NVM_autojoin_with_one_profile_and_one_credential_C769987(
     firmware_loader,
     wifi_dut,
@@ -2462,6 +2475,7 @@ def test_NVM_autojoin_with_one_profile_and_one_credential_C769987(
         "net_down",
     ],
 )
+@pytest.mark.test_src_map_id('C769988')
 def test_NVM_autojoin_with_wpa2_wpa_two_profiles_c769988(
     firmware_loader,
     wifi_dut,
@@ -2634,6 +2648,7 @@ def test_NVM_autojoin_with_wpa2_wpa_two_profiles_c769988(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C769989')
 def test_NVM_autojoin_auto_join_with_wpa2_open_two_profiles_c769989(
     firmware_loader,
     wifi_dut,
@@ -2733,6 +2748,7 @@ def test_NVM_autojoin_auto_join_with_wpa2_open_two_profiles_c769989(
         "net_down",
     ],
 )
+@pytest.mark.test_src_map_id('C769990')
 def test_NVM_autojoin_after_sl_net_deinit_with_wpa3_C769990(
     firmware_loader,
     wifi_dut,
@@ -2856,6 +2872,7 @@ def test_NVM_autojoin_after_sl_net_deinit_with_wpa3_C769990(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C769994')
 def test_NVM_autojoin_with_wpa3_enterprise_tls_peap_security_c769994(
     firmware_loader,
     wifi_dut,
@@ -3058,6 +3075,7 @@ def test_NVM_autojoin_with_wpa3_enterprise_tls_peap_security_c769994(
         "channel": 1,
     },
 )
+@pytest.mark.test_src_map_id('C769995')
 def test_NVM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769995(
     firmware_loader,
     wifi_dut,
@@ -3211,6 +3229,7 @@ def test_NVM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769995(
         "net_down",
     ],
 )
+@pytest.mark.test_src_map_id('C770001')
 def test_NVM_autojoin_while_doing_SNTP_data_transfer_c770001(
     firmware_loader,
     wifi_dut,
@@ -3333,6 +3352,7 @@ def test_NVM_autojoin_while_doing_SNTP_data_transfer_c770001(
         "net_down",
     ],
 )
+@pytest.mark.test_src_map_id('C770002')
 def test_NVM_autojoin_while_doing_MQTTS_data_transfer_c770002(
     firmware_loader,
     wifi_dut,
@@ -3452,6 +3472,7 @@ def test_NVM_autojoin_while_doing_MQTTS_data_transfer_c770002(
         "channel": 6,
     },
 )
+@pytest.mark.test_src_map_id('C770007')
 def test_NVM_autojoin_with_incorrect_psk_first_try_C770007(
     firmware_loader,
     wifi_dut,
@@ -3581,6 +3602,7 @@ def test_NVM_autojoin_with_incorrect_psk_first_try_C770007(
         ],
     },
 )
+@pytest.mark.test_src_map_id('C770009')
 def test_NVM_autojoin_with_two_profiles_mbssid_c770009(
     firmware_loader,
     wifi_dut,
@@ -3704,6 +3726,7 @@ def test_NVM_autojoin_with_two_profiles_mbssid_c770009(
         ),
     ],
 )
+@pytest.mark.test_src_map_id('C770011')
 def test_NVM_autojoin_error_with_invalid_credential_C770011(
     firmware_loader, wifi_dut, profiles, sl_collections
 ):
@@ -3769,6 +3792,7 @@ def test_NVM_autojoin_error_with_invalid_credential_C770011(
         ),
     ],
 )
+@pytest.mark.test_src_map_id('C770012')
 def test_NVM_autojoin_error_with_three_profiles_and_credentials_C770012(
     wifi_dut, profiles, sl_collections
 ):

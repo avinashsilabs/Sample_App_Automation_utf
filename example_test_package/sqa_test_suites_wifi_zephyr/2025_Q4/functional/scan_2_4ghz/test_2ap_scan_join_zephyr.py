@@ -52,6 +52,7 @@ setup requirement:
             'channel': 1}
     }
 )
+@pytest.mark.test_src_map_id('C19065')
 def test_wifi_zephyr_2aps_same_security_c19065(wifi_dut, wifi_access_points, zephyr_wifi_collections):
     """ The test case verifies scan results of the DUT when two APs configured with same SSID, and same security"""
     try:
@@ -109,6 +110,7 @@ def test_wifi_zephyr_2aps_same_security_c19065(wifi_dut, wifi_access_points, zep
         }
     }
 )
+@pytest.mark.test_src_map_id('C19066')
 def test_wifi_sdk_2aps_diff_security_c19066(wifi_dut, wifi_access_points, zephyr_wifi_collections):
     """ The test case verifies scan results of the DUT when two APs configured with same SSID,but with different security"""
     try:
@@ -168,6 +170,7 @@ def test_wifi_sdk_2aps_diff_security_c19066(wifi_dut, wifi_access_points, zephyr
             'channel': 1}
     }
 )
+@pytest.mark.test_src_map_id('C19175')
 def test_wifi_zephyr_wifi_connect_to_AP_with_best_rssi_value_c19175(wifi_dut, wifi_access_points, wifi_sniffer,
                                                                     zephyr_wifi_collections,
                                                                     request,

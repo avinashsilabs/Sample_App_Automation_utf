@@ -1334,6 +1334,7 @@ def wifi_dut_marker(psp_type=Si91xConfigFeatureBitMap.EnahanceMaxPsp):
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C34469')
 def test_wifi_ble_sdk_wlan_udp_rx_ble_conn_disconn_C34469(wifi_sniffer, wifi_access_point, wifi_dut, ble_client,
                                                           request, utf_constants, sl_collections, wifi_client,
                                                           sniffer_filter, net_perf_client, protocol):
@@ -1426,6 +1427,7 @@ def test_wifi_ble_sdk_wlan_udp_rx_ble_conn_disconn_C34469(wifi_sniffer, wifi_acc
         "disassociated"
     ],
 )
+@pytest.mark.test_src_map_id('C34483')
 def test_wifi_ble_sdk_wlan_fast_ping_ble_commissioning_C34483(wifi_sniffer, wifi_access_point, ble_dut, wifi_dut,
                                                               ble_client,
                                                               request, utf_constants, sl_collections, sniffer_filter):
@@ -1493,6 +1495,7 @@ def test_wifi_ble_sdk_wlan_fast_ping_ble_commissioning_C34483(wifi_sniffer, wifi
         "disassociated"
     ],
 )
+@pytest.mark.test_src_map_id('C34484')
 def test_wifi_ble_sdk_wlan_fast_ping_ble_anchorpoints_C34484(
         wifi_sniffer, wifi_access_point,
         wifi_dut,
@@ -1600,6 +1603,7 @@ def test_wifi_ble_sdk_wlan_fast_ping_ble_anchorpoints_C34484(
     ],
 )
 # ENHANCED MAX PSP_34488:
+@pytest.mark.test_src_map_id('C34488')
 def test_wifi_ble_sdk_wlan_fast_ping_ble_dual_C34488(
         wifi_sniffer, wifi_access_point,
         wifi_dut,
@@ -1716,6 +1720,7 @@ def test_wifi_ble_sdk_wlan_fast_ping_ble_dual_C34488(
         "ble_stop_adv",
     ],
 )
+@pytest.mark.test_src_map_id('C148606')
 def test_wifi_ble_sdk_wlan_max_psp_ble_slave_conn_C148606(
     wifi_sniffer,
     wifi_access_point,

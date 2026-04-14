@@ -260,6 +260,7 @@ def wifi_dut_marker(ext_custom_bit=0, tcp_feat_bit=0, ext_tcp_feat_bit=0, eap_ce
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C133461')
 def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_C133461(
     wifi_sniffer,
     wifi_access_point,
@@ -345,6 +346,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_C133461(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C133462')
 def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_C133462(
     wifi_sniffer,
     wifi_access_point,
@@ -430,6 +432,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_C133462(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C133463')
 def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_C133463(
     wifi_sniffer,
     wifi_access_point,
@@ -519,6 +522,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_C133463(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133451')
 def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_C133451(
     radius_server,
     wifi_sniffer,
@@ -629,6 +633,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_C133451(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133452')
 def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_C133452(
     radius_server,
     wifi_sniffer,
@@ -735,6 +740,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_C133452(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C133497')
 def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_C133497(
     wifi_sniffer,
     wifi_access_point,
@@ -821,6 +827,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_C133497(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C133498')
 def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_C133498(
     wifi_sniffer,
     wifi_access_point,
@@ -908,6 +915,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_C133498(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C133499')
 def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_C133499(
     wifi_sniffer,
     wifi_access_point,
@@ -992,6 +1000,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_C133499(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133489')
 def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_C133489(
     wifi_sniffer,
     wifi_access_point,
@@ -1072,6 +1081,7 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_C133489(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133490')
 def test_Coex_sdk_sel_chan_scan_time_BLE_slave_bypass_C133490(
     wifi_sniffer,
     wifi_access_point,
@@ -1151,6 +1161,7 @@ def test_Coex_sdk_sel_chan_scan_time_BLE_slave_bypass_C133490(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133494')
 def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_C133494(
     wifi_sniffer,
     wifi_access_point,
@@ -1226,6 +1237,7 @@ def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_C133494(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133496')
 def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_bypass_C133496(
     wifi_sniffer,
     wifi_access_point,
@@ -1307,6 +1319,7 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_bypass_C133496(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780256')
 def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_AI_50ms_C780256(
     wifi_sniffer,
     wifi_access_point,
@@ -1394,6 +1407,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_AI_50ms_C780256(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780257')
 def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_AI_80ms_C780257(
     wifi_sniffer,
     wifi_access_point,
@@ -1481,6 +1495,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_AI_80ms_C780257(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780258')
 def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_AI_120ms_C780258(
     wifi_sniffer,
     wifi_access_point,
@@ -1569,6 +1584,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_AI_120ms_C780258(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780260')
 def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_AI_50ms_C780260(
     wifi_sniffer,
     wifi_access_point,
@@ -1655,6 +1671,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_AI_50ms_C780260(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780261')
 def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_AI_80ms_C780261(
     wifi_sniffer,
     wifi_access_point,
@@ -1741,6 +1758,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_AI_80ms_C780261(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780262')
 def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_AI_120ms_C780262(
     wifi_sniffer,
     wifi_access_point,
@@ -1827,6 +1845,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_AI_120ms_C780262(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780263')
 def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_AI_50ms_C780263(
     wifi_sniffer,
     wifi_access_point,
@@ -1913,6 +1932,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_AI_50ms_C780263(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780264')
 def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_AI_80ms_C780264(
     wifi_sniffer,
     wifi_access_point,
@@ -1999,6 +2019,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_AI_80ms_C780264(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780265')
 def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_AI_120ms_C780265(
     wifi_sniffer,
     wifi_access_point,
@@ -2090,6 +2111,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_AI_120ms_C780265(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780266')
 def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_CI_30ms_C780266(
     radius_server,
     wifi_sniffer,
@@ -2200,6 +2222,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_CI_30ms_C780266(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780267')
 def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_CI_80ms_C780267(
     radius_server,
     wifi_sniffer,
@@ -2311,6 +2334,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_CI_80ms_C780267(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780268')
 def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_CI_150ms_C780268(
     radius_server,
     wifi_sniffer,
@@ -2422,6 +2446,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TLS_BLE_Central_CI_150ms_C780268(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780269')
 def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_CI_30ms_C780269(
     radius_server,
     wifi_sniffer,
@@ -2533,6 +2558,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_CI_30ms_C780269(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780270')
 def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_CI_80ms_C780270(
     radius_server,
     wifi_sniffer,
@@ -2644,6 +2670,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_CI_80ms_C780270(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780271')
 def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_CI_150ms_C780271(
     radius_server,
     wifi_sniffer,
@@ -2753,6 +2780,7 @@ def test_Coex_sdk_WLAN_throughput_EAP_TTLS_BLE_Central_CI_150ms_C780271(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780272')
 def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_AI_50ms_C780272(
     wifi_sniffer,
     wifi_access_point,
@@ -2840,6 +2868,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_AI_50ms_C780272(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780273')
 def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_AI_80ms_C780273(
     wifi_sniffer,
     wifi_access_point,
@@ -2927,6 +2956,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_AI_80ms_C780273(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780274')
 def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_AI_120ms_C780274(
     wifi_sniffer,
     wifi_access_point,
@@ -3015,6 +3045,7 @@ def test_sdk_coex_WLAN_conn_eap_tls_BLE_adv_tcp_bypass_AI_120ms_C780274(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780275')
 def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_AI_50ms_C780275(
     wifi_sniffer,
     wifi_access_point,
@@ -3104,6 +3135,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_AI_50ms_C780275(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780276')
 def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_AI_80ms_C780276(
     wifi_sniffer,
     wifi_access_point,
@@ -3193,6 +3225,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_AI_80ms_C780276(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780277')
 def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_AI_120ms_C780277(
     wifi_sniffer,
     wifi_access_point,
@@ -3283,6 +3316,7 @@ def test_sdk_coex_WLAN_conn_eap_ttls_BLE_adv_tcp_bypass_AI_120ms_C780277(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780278')
 def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_AI_50ms_C780278(
     wifi_sniffer,
     wifi_access_point,
@@ -3372,6 +3406,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_AI_50ms_C780278(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780279')
 def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_AI_80ms_C780279(
     wifi_sniffer,
     wifi_access_point,
@@ -3461,6 +3496,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_AI_80ms_C780279(
         "clear_certs",
     ],
 )
+@pytest.mark.test_src_map_id('C780280')
 def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_AI_120ms_C780280(
     wifi_sniffer,
     wifi_access_point,
@@ -3547,6 +3583,7 @@ def test_sdk_coex_WLAN_conn_eap_peap_BLE_adv_tcp_bypass_AI_120ms_C780280(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780282')
 def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_AI_50ms_C780282(
     wifi_sniffer,
     wifi_access_point,
@@ -3625,6 +3662,7 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_AI_50ms_C780282(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780283')
 def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_AI_80ms_C780283(
     wifi_sniffer,
     wifi_access_point,
@@ -3703,6 +3741,7 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_AI_80ms_C780283(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780284')
 def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_AI_120ms_C780284(
     wifi_sniffer,
     wifi_access_point,
@@ -3784,6 +3823,7 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_bypass_AI_120ms_C780284(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780285')
 def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_AI_50ms_C780285(
     wifi_sniffer,
     wifi_access_point,
@@ -3866,6 +3906,7 @@ def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_AI_50ms_C780285(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780286')
 def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_AI_80ms_C780286(
     wifi_sniffer,
     wifi_access_point,
@@ -3948,6 +3989,7 @@ def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_AI_80ms_C780286(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780287')
 def test_Coex_sdk_join_time_WPA2_AES_BLE_ADV_bypass_AI_120ms_C780287(
     wifi_sniffer,
     wifi_access_point,

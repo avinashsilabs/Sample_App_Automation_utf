@@ -51,6 +51,7 @@ timeout = 60
     )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated", "load_default_fw"])
+@pytest.mark.test_src_map_id('C19793')
 def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_point, wifi_sniffer, wifi_client, utf_constants):
     time_duration = utf_constants.get("time_duration")
     sw = Stopwatch()
@@ -157,6 +158,7 @@ def test_http_fw_upgrade_over_night_C19793(http_server, wifi_dut, wifi_access_po
     )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19794')
 def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_dut, wifi_access_point, wifi_sniffer, utf_constants):
     time_duration = utf_constants.get("time_duration")
     sw = Stopwatch()
@@ -245,6 +247,7 @@ def test_http_fw_upgrade_with_corrupted_rps_over_night_C19794(http_server, wifi_
     )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
+@pytest.mark.test_src_map_id('C19795')
 def test_http_fw_upgrade_non_rps_over_night_C19795(http_server, wifi_dut, wifi_access_point, wifi_sniffer, utf_constants):
     time_duration = utf_constants.get("time_duration")
     sw = Stopwatch()

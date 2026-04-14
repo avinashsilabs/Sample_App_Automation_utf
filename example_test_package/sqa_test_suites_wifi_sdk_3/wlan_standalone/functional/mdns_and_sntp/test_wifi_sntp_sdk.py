@@ -127,6 +127,7 @@ def delta_between_sntp_packet():
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19015')
 def test_wifi_sdk_sntp_unicast_c19015(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                       sl_collections):
     """
@@ -197,6 +198,7 @@ def test_wifi_sdk_sntp_unicast_c19015(wifi_sniffer, wifi_dut, wifi_access_point,
 @pytest.mark.config('wifi_access_point', wifi={"channel": 1, "security": 'OPEN'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19016')
 def test_wifi_sdk_sntp_keepalive_c19016(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                         sl_collections):
     """
@@ -282,6 +284,7 @@ def test_wifi_sdk_sntp_keepalive_c19016(wifi_sniffer, wifi_dut, wifi_access_poin
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19017')
 def test_wifi_sdk_sntp_ludp_coexit_c19017(wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, request,
                                           sniffer_filter, sl_collections, remote_socket):
     """
@@ -345,6 +348,7 @@ def test_wifi_sdk_sntp_ludp_coexit_c19017(wifi_sniffer, wifi_dut, wifi_client, w
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C37580')
 def test_wifi_sdk_sntp_client_functionality_c37580(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                       sl_collections):
     """
@@ -424,6 +428,7 @@ def test_wifi_sdk_sntp_client_functionality_c37580(wifi_sniffer, wifi_dut, wifi_
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C538048')
 def test_wifi_sdk_sntp_client_functionality_loop_c538048(wifi_sniffer, wifi_dut, wifi_access_point, request, sniffer_filter,
                                                    sl_collections):
     """
@@ -498,6 +503,7 @@ def test_wifi_sdk_sntp_client_functionality_loop_c538048(wifi_sniffer, wifi_dut,
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C585584')
 def test_wifi_sdk_ping_and_sntp_functionality_threaded_c585584(wifi_access_point, wifi_dut, request, utf_constants, wifi_client,
                                                            wifi_sniffer, sniffer_filter, sl_collections):
     """Verify ping from DUT (ping Tx) in one thread and SNTP functionality in another thread."""
@@ -578,6 +584,7 @@ def test_wifi_sdk_ping_and_sntp_functionality_threaded_c585584(wifi_access_point
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C192280')
 def test_wifi_sdk_verify_sntp_time_and_date_every_second_c192280(wifi_access_point, wifi_dut, request, utf_constants,
                                                                  wifi_client,
                                                                  wifi_sniffer, sniffer_filter, sl_collections):

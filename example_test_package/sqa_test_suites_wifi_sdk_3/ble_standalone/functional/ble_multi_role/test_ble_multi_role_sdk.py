@@ -122,6 +122,7 @@ pytestmark = [
   ]
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19911')
 def test_ble_sdk_dual_role_SI160ms_SW50ms_AImin160ms_AImax320ms_c19911(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 160ms and Advertising maximum interval 320ms
        2.verify ble master connection with scan interval 160ms and scan window 50ms"""
@@ -145,6 +146,7 @@ def test_ble_sdk_dual_role_SI160ms_SW50ms_AImin160ms_AImax320ms_c19911(wifi_dut,
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19912')
 def test_ble_sdk_dual_role_SI500ms_SW400ms_AImin200ms_AImax200ms_c19912(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 200ms and Advertising maximum interval 200ms
           2.verify ble master connection with scan interval 500ms and scan window 400ms"""
@@ -173,6 +175,7 @@ def test_ble_sdk_dual_role_SI500ms_SW400ms_AImin200ms_AImax200ms_c19912(wifi_dut
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19913')
 def test_ble_sdk_dual_role_SI1000ms_SW500ms_AImin500ms_AImax500ms_c19913(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 500ms and Advertising maximum interval 500ms
           2.verify ble master connection with scan interval 1000ms and scan window 500ms"""
@@ -200,6 +203,7 @@ def test_ble_sdk_dual_role_SI1000ms_SW500ms_AImin500ms_AImax500ms_c19913(wifi_du
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19914')
 def test_ble_dual_role_SI5000ms_SW3000ms_AImin1000ms_AImax1000ms_c19914(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 1000ms and Advertising maximum interval 1000ms
           2.verify ble master connection with scan interval 5000ms and scan window 3000ms"""
@@ -227,6 +231,7 @@ def test_ble_dual_role_SI5000ms_SW3000ms_AImin1000ms_AImax1000ms_c19914(wifi_dut
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19915')
 def test_ble_sdk_dual_role_SI10240ms_SW5s_AImin10240ms_AImax10240ms_c19915(wifi_dut, ble_client, sl_collections):
     """1.verify ble slave connection with Advertising minimum interval 10240ms and Advertising maximum interval 10240ms
           2.verify ble master connection with scan interval 240ms and scan window 5000ms"""
@@ -252,6 +257,7 @@ def test_ble_sdk_dual_role_SI10240ms_SW5s_AImin10240ms_AImax10240ms_c19915(wifi_
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C537605')
 def test_ble_sdk_dual_role_SI1000ms_SW500ms_AImin20ms_AImax20ms_C537605(wifi_dut, ble_client, sl_collections):
     try:
         ble_obj_adv = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=True,
@@ -278,6 +284,7 @@ def test_ble_sdk_dual_role_SI1000ms_SW500ms_AImin20ms_AImax20ms_C537605(wifi_dut
 
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_adv", "ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C537606')
 def test_ble_sdk_dual_role_SI7_5ms_SW2_5ms_AImin20ms_AImax1000ms_C537606(wifi_dut, ble_client, sl_collections):
     try:
         ble_obj_adv = BleFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, ble_adv=True,

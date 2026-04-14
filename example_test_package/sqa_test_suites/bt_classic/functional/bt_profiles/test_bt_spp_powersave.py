@@ -46,6 +46,7 @@ Step5 : Send data from dut to bt_client
 
 """
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C20043')
 def test_DUT_Slave_bt_spp_Tx_and_Rx_powersave_enabled_C20043(bt_dut, bt_client):
         logger().info("Configuring DUT as SPP Slave")
         bt_dut_address, pin_code = bt_dut.interfaces.wifi.start_bt_slave_spp()

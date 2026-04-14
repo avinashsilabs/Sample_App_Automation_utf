@@ -273,6 +273,7 @@ def wifi_dut_marker(ext_custom_bit=0, thread_count=1, tcp_feat_bit=0, ext_tcp_fe
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557337')
 def test_melco_sdk_APUT_off_3rd_party_AP_off_C557337(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                      wifi_sniffer, sniffer_filter, wifi_access_point,
                                                      wiseconnect_web, request):
@@ -351,6 +352,7 @@ def test_melco_sdk_APUT_off_3rd_party_AP_off_C557337(sl_collections, wifi_dut, w
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
 # @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4742")
+@pytest.mark.test_src_map_id('C557338')
 def test_melco_sdk_all_channel_scan_AP_off_C557338(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                    wifi_sniffer, sniffer_filter, wifi_access_point,
                                                    wiseconnect_web, request):
@@ -431,6 +433,7 @@ def test_melco_sdk_all_channel_scan_AP_off_C557338(sl_collections, wifi_dut, wif
 @pytest.mark.parametrize("ap_channel", [6])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557339')
 def test_melco_sdk_APUT_STAUT_after_AP_off_C557339(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                      wifi_sniffer, sniffer_filter, wifi_access_point,
                                                      wiseconnect_web, request):
@@ -529,6 +532,7 @@ def test_melco_sdk_APUT_STAUT_after_AP_off_C557339(sl_collections, wifi_dut, wif
 @pytest.mark.parametrize("ap_channel", [6])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557340')
 def test_melco_sdk_APUT_resume_after_AP_off_C557340(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                      wifi_sniffer, sniffer_filter, wifi_access_point,
                                                      wiseconnect_web, request, remote_socket):
@@ -629,6 +633,7 @@ def test_melco_sdk_APUT_resume_after_AP_off_C557340(sl_collections, wifi_dut, wi
 @pytest.mark.parametrize("ap_channel", [6])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 11})
 @pytest.mark.start_state("wifi_dut", wifi=['reset'])
+@pytest.mark.test_src_map_id('C557341')
 def test_melco_sdk_STA_conn_after_AP_off_C557341(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                  wifi_sniffer, sniffer_filter, wifi_access_point,
                                                  wiseconnect_web, request, remote_socket):
@@ -738,6 +743,7 @@ def test_melco_sdk_STA_conn_after_AP_off_C557341(sl_collections, wifi_dut, wifi_
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C557342')
 def test_melco_sdk_STA_IPV6_TCP_TX_after_AP_off_C557342(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                  wifi_sniffer, sniffer_filter, wifi_access_point,
                                                  wiseconnect_web, request, net_perf_client, protocol):
@@ -879,6 +885,7 @@ def test_melco_sdk_STA_IPV6_TCP_TX_after_AP_off_C557342(sl_collections, wifi_dut
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C557343')
 def test_melco_sdk_STA_IPV6_TCP_TX_after_AP_off_C557343(sl_collections, wifi_dut, wifi_client, ap_channel,
                                                  wifi_sniffer, sniffer_filter, wifi_access_point,
                                                  wiseconnect_web, request, net_perf_client, protocol):

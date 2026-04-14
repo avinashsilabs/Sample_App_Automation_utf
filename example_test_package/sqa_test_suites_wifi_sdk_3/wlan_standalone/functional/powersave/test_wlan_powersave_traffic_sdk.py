@@ -203,6 +203,7 @@ class UDPDataTransfer(ThreadBase):
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19500')
 def test_power_mode_switching_before_assoc_C19500(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                   sniffer_filter, sl_collections):
     """
@@ -263,6 +264,7 @@ def test_power_mode_switching_before_assoc_C19500(wifi_sniffer, wifi_access_poin
 @pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19501')
 def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wifi_dut, wifi_sniffer, rs_helper,
                                                            sniffer_filter, sl_collections):
     """
@@ -408,6 +410,7 @@ def test_powersave_disable_functionality_powersave1_C19501(wifi_access_point, wi
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["multicast_leave", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19507')
 def test_send_multicast_broadcast_data_sdk_C19507(multicast_client, net_perf_client, protocol,
                                                   wifi_sniffer, wifi_dut, wifi_client, wifi_access_point, utf_constants,
                                                   sl_collections, sniffer_filter):
@@ -524,6 +527,7 @@ def test_send_multicast_broadcast_data_sdk_C19507(multicast_client, net_perf_cli
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19509')
 def test_powersave_mode_2_enterprise_sdk_C19509(wifi_dut, wifi_access_point, wifi_sniffer, sniffer_filter,
                                                 radius_server, sl_collections, request, utf_constants,
                                                 net_perf_client, wifi_client, protocol):
@@ -608,6 +612,7 @@ def test_powersave_mode_2_enterprise_sdk_C19509(wifi_dut, wifi_access_point, wif
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.parametrize("test_run_time", [1800])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19485')
 def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_dut, wifi_access_point, wifi_sniffer,
                                                                          test_run_time, sl_collections, sniffer_filter,
                                                                          utf_constants):
@@ -712,6 +717,7 @@ def test_connect_and_disconnect_when_module_is_in_power_save_mode_C19485(wifi_du
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19494')
 def test_TCP_UDP_bidi_in_powersave_mode2_ulp_sdk_C19494(wifi_sniffer, remote_socket, wifi_dut,
                                                         wifi_access_point, utf_constants,
                                                         sl_collections, sniffer_filter, net_perf_client, wifi_client):
@@ -794,6 +800,7 @@ def test_TCP_UDP_bidi_in_powersave_mode2_ulp_sdk_C19494(wifi_sniffer, remote_soc
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19508')
 def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, wifi_dut, wifi_access_point,
                                                          utf_constants, sniffer_filter,
                                                          sl_collections):
@@ -932,6 +939,7 @@ def test_powersave_functionality_after_rejoin_sdk_C19508(switch, wifi_sniffer, w
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C34780')
 def test_wifi_sdk_sta_check_basic_per_transmit_and_receive_two_evk_c34780(wifi_dut, wifi_access_point,
                                                                           remote_wiseconnect3, sl_collections,
                                                                           wifi_sniffer, request, sniffer_filter):

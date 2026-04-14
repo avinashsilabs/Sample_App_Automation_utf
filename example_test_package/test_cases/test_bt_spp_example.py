@@ -28,6 +28,7 @@ def logger():
     return get_logger(__name__)
 
 
+@pytest.mark.test_src_map_id('TC6801325763')
 def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
     send_text = "yAbdcUK0tAOSMhCT4d6U"
     recv_text = "9cDKpYOnOJeqYPsL987v"
@@ -91,6 +92,7 @@ def test_bt_spp_dut_as_slave(wifi_dut, wifi_access_point, bt_client):
             wifi_dut.interfaces.wifi.leave()
     logger().info(f"Scan in {t.duration} seconds")
 
+@pytest.mark.test_src_map_id('TC6400624769')
 def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
     send_text = "sA0L9b1xEgGuUqN5YOlx"
     recv_text = "H2D7yZKRhKULU9Xil5Yv"
@@ -164,6 +166,7 @@ def test_bt_spp_dut_as_master(wifi_dut, wifi_access_point, bt_client):
     logger().info(f"Scan in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC8533827774')
 def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point
@@ -200,6 +203,7 @@ def test_bt_spp_dut_as_slave_wrong_pin(wifi_dut, wifi_access_point, bt_client):
     logger().info(f"Scan in {t.duration} seconds")
 
 
+@pytest.mark.test_src_map_id('TC6513364778')
 def test_bt_spp_dut_as_master_wrong_pin(wifi_dut, wifi_access_point, bt_client):
     with TimeMeasurer() as t:
         # Join Wi-Fi Access Point

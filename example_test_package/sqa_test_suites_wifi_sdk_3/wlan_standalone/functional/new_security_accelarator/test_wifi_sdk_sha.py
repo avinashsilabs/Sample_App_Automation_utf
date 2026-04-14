@@ -166,6 +166,7 @@ pytestmark = [
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215174')
 def test_wifi_sdk_sha_mode_256_digest_length_32_c215174(wifi_dut, sl_collections):
     """Verify sha output with sha mode 256 digest length 32"""
     try:
@@ -177,6 +178,7 @@ def test_wifi_sdk_sha_mode_256_digest_length_32_c215174(wifi_dut, sl_collections
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215175')
 def test_wifi_sdk_sha_mode_384_digest_length_48_c215175(wifi_dut, sl_collections):
     """Verify sha output with sha mode 384 digest length 48"""
     try:
@@ -188,6 +190,7 @@ def test_wifi_sdk_sha_mode_384_digest_length_48_c215175(wifi_dut, sl_collections
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215176')
 def test_wifi_sdk_sha_mode_512_digest_length_64_c215176(wifi_dut, sl_collections):
     """Verify sha output with sha mode 512 digest length 64"""
     try:
@@ -199,6 +202,7 @@ def test_wifi_sdk_sha_mode_512_digest_length_64_c215176(wifi_dut, sl_collections
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215177')
 def test_wifi_sdk_sha_mode_224_digest_length_28_c215177(wifi_dut, sl_collections):
     """Verify sha output with sha mode 224 digest length 28"""
     try:
@@ -210,6 +214,7 @@ def test_wifi_sdk_sha_mode_224_digest_length_28_c215177(wifi_dut, sl_collections
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C215178')
 def test_wifi_sdk_sha_mode_1_digest_length_20_c215178(wifi_dut, sl_collections):
     """Verify sha output with sha mode 1 digest length 20"""
     try:
@@ -221,6 +226,7 @@ def test_wifi_sdk_sha_mode_1_digest_length_20_c215178(wifi_dut, sl_collections):
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537621')
 def test_wifi_sdk_sha_mode_6_digest_length_64_c537621(wifi_dut, sl_collections):
     """Verify sha output with sha mode 6 digest length 64"""
     try:
@@ -232,6 +238,7 @@ def test_wifi_sdk_sha_mode_6_digest_length_64_c537621(wifi_dut, sl_collections):
 
 
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C537622')
 def test_wifi_sdk_sha_mode_0_digest_length_64_c537622(wifi_dut, sl_collections):
     """Verify sha output with sha mode 0 digest length 64"""
     try:

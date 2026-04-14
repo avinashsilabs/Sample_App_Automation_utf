@@ -233,6 +233,7 @@ class ConnectDisconnectSTA(ThreadBase):
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148564')
 def test_wifi_sdk_https_get_func_when_two_clients_connected_c148564(sl_collections, wifi_access_point, index_path,
                                                                     wifi_dut, wifi_clients, wifi_sniffer, http_server,
                                                                     sniffer_filter, http_client):
@@ -320,6 +321,7 @@ def test_wifi_sdk_https_get_func_when_two_clients_connected_c148564(sl_collectio
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148582')
 def test_wifi_sdk_concurrent_mode_with_mqtt_c148582(wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut,
                                                     sl_collections, sniffer_filter, wifi_clients):
     """QOS1: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""
@@ -434,6 +436,7 @@ def test_wifi_sdk_concurrent_mode_with_mqtt_c148582(wifi_sniffer, mqtt_server, m
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148575')
 def test_wifi_sdk_concurrent_mode_connect_2_clients_and_run_udp_rx_c148575(sl_collections, wifi_dut, wifi_clients,
                                                                            wifi_access_point, sniffer_filter, protocol,
                                                                            wifi_sniffer, net_perf_client, wifi_client):
@@ -529,6 +532,7 @@ def test_wifi_sdk_concurrent_mode_connect_2_clients_and_run_udp_rx_c148575(sl_co
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148572')
 def test_wifi_sdk_concurrent_mode_with_chinese_char_ssid_and_2_clients_c148572(sl_collections, wifi_access_point,
                                                                                net_perf_client, protocol, wifi_sniffer,
                                                                                wifi_dut, wifi_clients, sniffer_filter):
@@ -638,6 +642,7 @@ def test_wifi_sdk_concurrent_mode_with_chinese_char_ssid_and_2_clients_c148572(s
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148578')
 def test_wifi_sdk_concurrent_mode_with_chinese_char_ssid_and_4_clients_c148578(sl_collections, sniffer_filter, wifi_dut,
                                                                                net_perf_client, wifi_sniffer, protocol,
                                                                                wifi_access_point, wifi_clients):
@@ -730,6 +735,7 @@ def test_wifi_sdk_concurrent_mode_with_chinese_char_ssid_and_4_clients_c148578(s
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148585')
 def test_wifi_sdk_connect_disconnect_sta_module_of_dut_c148585(sl_collections, wifi_access_point, sniffer_filter,
                                                                wifi_clients, wifi_dut, wifi_sniffer, utf_constants):
     """
@@ -839,6 +845,7 @@ def test_wifi_sdk_connect_disconnect_sta_module_of_dut_c148585(sl_collections, w
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148576')
 def test_wifi_sdk_transfer_data_from_client1_to_client2_in_concurrent_mode_c148576(sl_collections, wifi_access_point,
                                                                                    wifi_dut, wifi_clients, wifi_sniffer,
                                                                                    sniffer_filter, net_perf_server,
@@ -917,6 +924,7 @@ def test_wifi_sdk_transfer_data_from_client1_to_client2_in_concurrent_mode_c1485
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148573')
 def test_wifi_sdk_transfer_udp_data_from_client1_to_client2_in_concurrent_mode_c148573(sl_collections, wifi_clients,
                                                                                        wifi_access_point, wifi_dut,
                                                                                        wifi_sniffer, net_perf_client,
@@ -996,6 +1004,7 @@ def test_wifi_sdk_transfer_udp_data_from_client1_to_client2_in_concurrent_mode_c
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148588')
 def test_wifi_sdk_rejoin_func_of_dut_sta_in_concurrent_mode_c148588(switch, sl_collections, wifi_clients, wifi_sniffer,
                                                                     wifi_access_point, wifi_dut, net_perf_client,
                                                                     protocol, net_perf_server, sniffer_filter):
@@ -1098,6 +1107,7 @@ def test_wifi_sdk_rejoin_func_of_dut_sta_in_concurrent_mode_c148588(switch, sl_c
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148589')
 def test_wifi_sdk_tcp_tx_with_wpa3_and_11n_mode_in_concurrent_mode_c148589(sl_collections, wifi_dut, wifi_clients,
                                                                            wifi_access_point, sniffer_filter, protocol,
                                                                            wifi_sniffer, net_perf_client, wifi_client):
@@ -1186,6 +1196,7 @@ def test_wifi_sdk_tcp_tx_with_wpa3_and_11n_mode_in_concurrent_mode_c148589(sl_co
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148590')
 def test_wifi_sdk_tcp_rx_func_in_concurrent_mode_c148590(sl_collections, wifi_dut, wifi_clients,
                                                          wifi_access_point, sniffer_filter, protocol,
                                                          wifi_sniffer, net_perf_client, wifi_client):
@@ -1303,6 +1314,7 @@ def test_wifi_sdk_tcp_rx_func_in_concurrent_mode_c148590(sl_collections, wifi_du
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148591')
 def test_wifi_sdk_udp_tx_func_4_clients_connected_in_conc_mode_when_c148591(sl_collections, wifi_dut, wifi_clients,
                                                                             wifi_access_point, sniffer_filter,
                                                                             protocol, wifi_sniffer, net_perf_client,
@@ -1403,6 +1415,7 @@ def test_wifi_sdk_udp_tx_func_4_clients_connected_in_conc_mode_when_c148591(sl_c
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148592')
 def test_wifi_sdk_udp_rx_in_wpa3_when_remote_clients_conn_disconect_in_conc_mode_c148592(sl_collections, wifi_dut,
                                                                                          wifi_clients, wifi_sniffer,
                                                                                          wifi_access_point, protocol,
@@ -1511,6 +1524,7 @@ def test_wifi_sdk_udp_rx_in_wpa3_when_remote_clients_conn_disconect_in_conc_mode
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148593')
 def test_wifi_sdk_ssl_rx_func_when_tcp_trf_btwn_clients_in_conc_mode_c148593(sl_collections, wifi_access_point,
                                                                              wifi_dut, wifi_clients, wifi_sniffer,
                                                                              sniffer_filter, protocol, net_perf_server,
@@ -1630,6 +1644,7 @@ def test_wifi_sdk_ssl_rx_func_when_tcp_trf_btwn_clients_in_conc_mode_c148593(sl_
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148594')
 def test_wifi_sdk_ssl_tx_func_when_udp_trf_btwn_clients_in_conc_mode_c148594(sl_collections, wifi_access_point,
                                                                              wifi_dut, wifi_clients, wifi_sniffer,
                                                                              sniffer_filter, protocol, net_perf_server,
@@ -1748,6 +1763,7 @@ def test_wifi_sdk_ssl_tx_func_when_udp_trf_btwn_clients_in_conc_mode_c148594(sl_
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148558')
 def test_wifi_sdk_ssl_tx_with_tls_v1_2_in_when_2_clients_connected_in_conc_mode_c148558(sl_collections, sniffer_filter,
                                                                                         wifi_access_point, wifi_sniffer,
                                                                                         wifi_clients, utf_constants,
@@ -1879,6 +1895,7 @@ def test_wifi_sdk_ssl_tx_with_tls_v1_2_in_when_2_clients_connected_in_conc_mode_
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148560')
 def test_wifi_sdk_ssl_tx_with_tls_v1_0_rejoin_when_two_clients_connected_in_conc_mode_c148560(switch, sl_collections,
                                                                                               wifi_sniffer, wifi_dut,
                                                                                               sniffer_filter,
@@ -2057,6 +2074,7 @@ def test_wifi_sdk_ssl_tx_with_tls_v1_0_rejoin_when_two_clients_connected_in_conc
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148561')
 def test_wifi_sdk_ssl_rx_with_tls_v1_2_in_when_4_clients_connected_in_conc_mode_c148561(sl_collections, sniffer_filter,
                                                                                         wifi_access_point, wifi_sniffer,
                                                                                         wifi_clients, utf_constants,
@@ -2195,6 +2213,7 @@ def test_wifi_sdk_ssl_rx_with_tls_v1_2_in_when_4_clients_connected_in_conc_mode_
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148562')
 def test_wifi_sdk_ssl_tx_with_rejoin_when_2_clients_connected_in_conc_mode_c148562(switch, sl_collections, wifi_clients,
                                                                                    sniffer_filter, wifi_access_point,
                                                                                    wifi_sniffer, utf_constants,
@@ -2347,6 +2366,7 @@ def test_wifi_sdk_ssl_tx_with_rejoin_when_2_clients_connected_in_conc_mode_c1485
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148563')
 def test_wifi_sdk_https_post_func_when_2_clients_connected_in_conc_mode_c148563(sl_collections, sniffer_filter,
                                                                                 wifi_access_point, wifi_sniffer,
                                                                                 http_server, wifi_dut, index_path,
@@ -2463,6 +2483,7 @@ def test_wifi_sdk_https_post_func_when_2_clients_connected_in_conc_mode_c148563(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148579')
 def test_wifi_sdk_mqtt_with_qos0_when_3_clients_connected_in_conc_mode_c148579(wifi_sniffer, mqtt_server, mqtt_client,
                                                                                wifi_access_point, sl_collections,
                                                                                wifi_dut, sniffer_filter,
@@ -2616,6 +2637,7 @@ def test_wifi_sdk_mqtt_with_qos0_when_3_clients_connected_in_conc_mode_c148579(w
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148580')
 def test_wifi_sdk_mqtt_with_qos1_when_3_clients_connected_in_conc_mode_c148580(wifi_sniffer, mqtt_server, mqtt_client,
                                                                                wifi_access_point, sl_collections,
                                                                                wifi_dut, sniffer_filter,
@@ -2775,6 +2797,7 @@ def test_wifi_sdk_mqtt_with_qos1_when_3_clients_connected_in_conc_mode_c148580(w
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148569')
 def test_wifi_sdk_tcp_tx_when_4_clients_connected_in_conc_mode_c148569(sl_collections, sniffer_filter, wifi_sniffer,
                                                                        wifi_access_point, wifi_clients, utf_constants,
                                                                        remote_socket, wifi_dut):
@@ -2920,6 +2943,7 @@ def test_wifi_sdk_tcp_tx_when_4_clients_connected_in_conc_mode_c148569(sl_collec
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148571')
 def test_wifi_sdk_tcp_rx_when_4_clients_connected_in_conc_mode_c148571(sl_collections, sniffer_filter, wifi_sniffer,
                                                                        wifi_access_point, wifi_clients, utf_constants,
                                                                        remote_socket_factory, wifi_dut):
@@ -3055,6 +3079,7 @@ def test_wifi_sdk_tcp_rx_when_4_clients_connected_in_conc_mode_c148571(sl_collec
     }
 )
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148557')
 def test_wifi_sdk_ssl_tx_with_tls_v1_0_when_two_clients_connected_in_conc_mode_c148557(sl_collections, sniffer_filter,
                                                                                        wifi_sniffer, wifi_access_point,
                                                                                        wifi_dut, openssl, wifi_client,
@@ -3193,6 +3218,7 @@ def test_wifi_sdk_ssl_tx_with_tls_v1_0_when_two_clients_connected_in_conc_mode_c
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end("wifi_dut", wifi=['clear_certs'])
+@pytest.mark.test_src_map_id('C148581')
 def test_wifi_sdk_concurrent_mode_with_mqtt_connect_disconnect_for_30_times_c148581(wifi_sniffer, mqtt_server,
                                                                                     mqtt_client, wifi_access_point,
                                                                                     wifi_dut, sl_collections,
@@ -3324,6 +3350,7 @@ def test_wifi_sdk_concurrent_mode_with_mqtt_connect_disconnect_for_30_times_c148
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C148584')
 def test_wifi_sdk_https_get_func_when_two_clients_connected_c148584(sl_collections, wifi_access_point, index_path,
                                                                     wifi_dut, wifi_client, wifi_sniffer, http_server,
                                                                     sniffer_filter, http_client):
@@ -3423,6 +3450,7 @@ def test_wifi_sdk_https_get_func_when_two_clients_connected_c148584(sl_collectio
 )
 @pytest.mark.http_server("raspi_lighttpd_tls")
 @pytest.mark.parametrize("index_path", {"index_long_lf.html"})
+@pytest.mark.test_src_map_id('C148565')
 def test_wifi_sdk_http_put_func_when_2_clients_connected_in_conc_mode_c148565(sl_collections, sniffer_filter,
                                                                               wifi_access_point, wifi_sniffer,
                                                                               http_server, wifi_dut, index_path,
@@ -3527,6 +3555,7 @@ def test_wifi_sdk_http_put_func_when_2_clients_connected_in_conc_mode_c148565(sl
         }
     }
 )
+@pytest.mark.test_src_map_id('C463708')
 def test_wifi_sdk_ping_bw_2_3rd_party_client_when_sta_is_connecting_disconnecting_c463708(sl_collections,
                                                                                           wifi_sniffer, wifi_dut,
                                                                                           wifi_access_point,

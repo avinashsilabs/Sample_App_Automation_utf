@@ -1,3 +1,4 @@
+import pytest
 from utf.utils.logger import get_logger
 import paramiko
 import os
@@ -6,6 +7,7 @@ def logger():
     return get_logger(__name__)
 
 
+@pytest.mark.test_src_map_id('TC4770357152')
 def test_capture_to_file(logic_analyzer):
     digital = [0,1,2,3,4]
     analog = [0,1]

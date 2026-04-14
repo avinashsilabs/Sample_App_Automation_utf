@@ -50,6 +50,7 @@ def logger():
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19922')
 def test_ble_slave_data_length_100_bytes_tx_rx_C19922(ble_dut, ble_client, utf_constants):
     try:
         with BleLogs(start_collecting_logs=True,
@@ -183,6 +184,7 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19922(ble_dut, ble_client, utf_c
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19920')
 def test_ble_slave_data_length_20_bytes_C19920(ble_dut, ble_client, utf_constants):
     try:
         with BleLogs(start_collecting_logs=True, bt_log_path="./reports/test_ble_slave_data_length_20_bytes_C19920.log"):
@@ -299,6 +301,7 @@ def test_ble_slave_data_length_20_bytes_C19920(ble_dut, ble_client, utf_constant
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19923')
 def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client, utf_constants):
     try:
         with BleLogs(start_collecting_logs=True,
@@ -416,6 +419,7 @@ def test_ble_slave_data_length_230_bytes_tx_C19923(ble_dut, ble_client, utf_cons
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19926')
 def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client, utf_constants):
     try:
         with BleLogs(start_collecting_logs=True,
@@ -539,6 +543,7 @@ def test_ble_slave_data_length_20_bytes_duty_cycle_C19926(ble_dut, ble_client, u
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19929')
 def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client, utf_constants):
     try:
         with BleLogs(start_collecting_logs=True,
@@ -658,6 +663,7 @@ def test_ble_slave_data_length_230_bytes_duty_cycle_C19929(ble_dut, ble_client, 
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_adv"])
+@pytest.mark.test_src_map_id('C19928')
 def test_ble_slave_data_length_100_bytes_tx_rx_C19928(ble_dut, ble_client, utf_constants):
     try:
         with BleLogs(start_collecting_logs=True,
@@ -784,6 +790,7 @@ def test_ble_slave_data_length_100_bytes_tx_rx_C19928(ble_dut, ble_client, utf_c
     },
 )
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19921')
 def test_ble_master_rx_230_bytes_C19921(firmware_loader, ble_dut, ble_client):
     logger().info("======= initializing ble in dut")
     bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start()
@@ -863,6 +870,7 @@ def test_ble_master_rx_230_bytes_C19921(firmware_loader, ble_dut, ble_client):
     },
 )
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19924')
 def test_ble_master_rx_100_bytes_C19924(firmware_loader, ble_dut, ble_client):
     data = "hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarx"
 
@@ -944,6 +952,7 @@ def test_ble_master_rx_100_bytes_C19924(firmware_loader, ble_dut, ble_client):
     },
 )
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19925')
 def test_ble_master_tx_rx_230_bytes_C19925(firmware_loader, ble_dut, ble_client):
     data = "hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarx"
 
@@ -1027,6 +1036,7 @@ def test_ble_master_tx_rx_230_bytes_C19925(firmware_loader, ble_dut, ble_client)
     },
 )
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19927')
 def test_ble_master_rx_230_bytes_C19927(firmware_loader, ble_dut, ble_client):
     data = "hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarx"
 
@@ -1110,6 +1120,7 @@ def test_ble_master_rx_230_bytes_C19927(firmware_loader, ble_dut, ble_client):
     },
 )
 @pytest.mark.firmware_app("test_multi_gatt_conn")
+@pytest.mark.test_src_map_id('C19930')
 def test_ble_master_rx_100_bytes_duty_cycle_C19930(firmware_loader, ble_dut, ble_client):
     data = "hundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarxhundredbytesofdatarx"
 

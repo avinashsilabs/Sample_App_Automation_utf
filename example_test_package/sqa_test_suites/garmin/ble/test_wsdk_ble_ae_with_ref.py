@@ -42,6 +42,7 @@ pytestmark = [
 ]
 
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163687')
 def test_verify_legacy_adv_connectable_dir_C163687(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE LEGACY ADVERTISING
@@ -54,6 +55,7 @@ def test_verify_legacy_adv_connectable_dir_C163687(ble_dut, ble_client, rs_helpe
                                     print_all_adv_devices=0, ble_dut_address=ble_dut_address)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163688')
 def test_verify_legacy_adv_connectable_dir_high_duty_cycle_C163688(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE LEGACY ADVERTISING
@@ -66,6 +68,7 @@ def test_verify_legacy_adv_connectable_dir_high_duty_cycle_C163688(ble_dut, ble_
                                     print_all_adv_devices=0, ble_dut_address=ble_dut_address)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163689')
 def test_verify_legacy_adv_scanable_undir_31byte_C163689(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE LEGACY ADVERTISING
@@ -78,6 +81,7 @@ def test_verify_legacy_adv_scanable_undir_31byte_C163689(ble_dut, ble_client, rs
                                     print_all_adv_devices=0, ble_dut_address=ble_dut_address)
 
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163690')
 def test_verify_legacy_adv_connectable_scanable_undir_1byte_c163690(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE LEGACY ADVERTISING
@@ -90,6 +94,7 @@ def test_verify_legacy_adv_connectable_scanable_undir_1byte_c163690(ble_dut, ble
                                     print_all_adv_devices=0, ble_dut_address=ble_dut_address)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163691')
 def test_verify_legacy_adv_connectable_scanable_undir_0byte_c163691(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE LEGACY ADVERTISING
@@ -103,6 +108,7 @@ def test_verify_legacy_adv_connectable_scanable_undir_0byte_c163691(ble_dut, ble
                                       print_all_adv_devices=0)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163692')
 def test_verify_legacy_adv_connectable_scanable_undir_31byte_c163692(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE LEGACY ADVERTISING
@@ -118,6 +124,7 @@ def test_verify_legacy_adv_connectable_scanable_undir_31byte_c163692(ble_dut, bl
 # ##LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan undirected 
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163726')
 def test_perodic_adv_C163726(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan undirected 
@@ -130,6 +137,7 @@ def test_perodic_adv_C163726(ble_dut, ble_client, rs_helper_ble):
                                     print_all_adv_devices=0)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163727')
 def test_perodic_adv_C163727(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan undirected 
@@ -143,6 +151,7 @@ def test_perodic_adv_C163727(ble_dut, ble_client, rs_helper_ble):
 
 @pytest.mark.skip("with LE coded ADV report is not getting received")    
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163728')
 def test_perodic_adv_C163728(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan undirected 
@@ -157,6 +166,7 @@ def test_perodic_adv_C163728(ble_dut, ble_client, rs_helper_ble):
 ##LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan directed     
 
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163729')
 def test_perodic_adv_C163729(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan directed 
@@ -169,6 +179,7 @@ def test_perodic_adv_C163729(ble_dut, ble_client, rs_helper_ble):
                                     print_all_adv_devices=0)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163730')
 def test_perodic_adv_C163730(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan directed 
@@ -182,6 +193,7 @@ def test_perodic_adv_C163730(ble_dut, ble_client, rs_helper_ble):
 
 @pytest.mark.skip("with LE coded ADV report is not getting received")                           
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163731')
 def test_perodic_adv_C163731(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan directed 
@@ -194,6 +206,7 @@ def test_perodic_adv_C163731(ble_dut, ble_client, rs_helper_ble):
                                     print_all_adv_devices=0)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163732')
 def test_perodic_adv_C163732(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : LE Periodic Advertising - Synchronization on DUT for adv type = non con non scan directed 
@@ -209,6 +222,7 @@ def test_perodic_adv_C163732(ble_dut, ble_client, rs_helper_ble):
 ## BLE Extended Scan 
 
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163747')
 def test_verify_EXT_Scan_C163747(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -220,6 +234,7 @@ def test_verify_EXT_Scan_C163747(ble_dut, ble_client, rs_helper_ble):
                                     print_all_adv_devices=0, ble_dut_address=ble_dut_address, scanning_phys=1)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163749')
 def test_verify_EXT_Scan_C163749(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -232,6 +247,7 @@ def test_verify_EXT_Scan_C163749(ble_dut, ble_client, rs_helper_ble):
                                     dont_cleanup=True)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163750')
 def test_verify_EXT_Scan_C163750(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -243,6 +259,7 @@ def test_verify_EXT_Scan_C163750(ble_dut, ble_client, rs_helper_ble):
                                     print_all_adv_devices=0, ble_dut_address=ble_dut_address, scanning_filter_policy=2, scanning_whitelist=True)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163751')
 def test_verify_EXT_Scan_C163751(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -254,6 +271,7 @@ def test_verify_EXT_Scan_C163751(ble_dut, ble_client, rs_helper_ble):
                                     print_all_adv_devices=0, ble_dut_address=ble_dut_address, scanning_filter_policy=3, scanning_whitelist=True)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163752')
 def test_verify_EXT_Scan_C163752(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -265,6 +283,7 @@ def test_verify_EXT_Scan_C163752(ble_dut, ble_client, rs_helper_ble):
                                     print_all_adv_devices=0, ble_dut_address=ble_dut_address, filter_duplicates=0, dont_cleanup=True)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163753')
 def test_verify_EXT_Scan_C163753(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -277,6 +296,7 @@ def test_verify_EXT_Scan_C163753(ble_dut, ble_client, rs_helper_ble):
 
 @pytest.mark.skip("need to understand test case req from manual poc")    
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163754')
 def test_verify_EXT_Scan_C163754(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -289,6 +309,7 @@ def test_verify_EXT_Scan_C163754(ble_dut, ble_client, rs_helper_ble):
                                     scanning_whitelist=True)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163755')
 def test_verify_EXT_Scan_Passive_C163755(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -302,6 +323,7 @@ def test_verify_EXT_Scan_Passive_C163755(ble_dut, ble_client, rs_helper_ble):
                                     scan_window_pri=1600, scan_window_sec=1600, scan_set_2=1)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163756')
 def test_verify_EXT_Scan_Passive_C163756(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -315,6 +337,7 @@ def test_verify_EXT_Scan_Passive_C163756(ble_dut, ble_client, rs_helper_ble):
                                     scan_window_pri=592, scan_window_sec=592, scan_set_2=1)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163757')
 def test_verify_EXT_Scan_Passive_C163757(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -328,6 +351,7 @@ def test_verify_EXT_Scan_Passive_C163757(ble_dut, ble_client, rs_helper_ble):
                                     scan_window_pri=1280, scan_window_sec=1280, scan_set_2=1)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163758')
 def test_verify_EXT_Passive_Scan_C163758(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -342,6 +366,7 @@ def test_verify_EXT_Passive_Scan_C163758(ble_dut, ble_client, rs_helper_ble):
     
 @pytest.mark.skip("LE coded scan is not working")
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163759')
 def test_verify_EXT_Passive_Scan_C163759(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -355,6 +380,7 @@ def test_verify_EXT_Passive_Scan_C163759(ble_dut, ble_client, rs_helper_ble):
                                     scan_window_pri=16, scan_window_sec=16, scan_set_2=1)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163763')
 def test_verify_EXT_Scan_Active_C163763(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -368,6 +394,7 @@ def test_verify_EXT_Scan_Active_C163763(ble_dut, ble_client, rs_helper_ble):
                                     scan_window_pri=1600, scan_window_sec=1600, scan_set_2=1)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163764')
 def test_verify_EXT_Scan_Active_C163764(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -381,6 +408,7 @@ def test_verify_EXT_Scan_Active_C163764(ble_dut, ble_client, rs_helper_ble):
                                     scan_window_pri=592, scan_window_sec=592, scan_set_2=1)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163765')
 def test_verify_EXT_Scan_Active_C163765(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -394,6 +422,7 @@ def test_verify_EXT_Scan_Active_C163765(ble_dut, ble_client, rs_helper_ble):
                                     scan_window_pri=1280, scan_window_sec=1280, scan_set_2=1)
     
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163766')
 def test_verify_EXT_Scan_Active_C163766(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 
@@ -408,6 +437,7 @@ def test_verify_EXT_Scan_Active_C163766(ble_dut, ble_client, rs_helper_ble):
     #scan phy = 1M phy adv set1 : pri phy = 1M, sec phy = 1M adv type = non con non scan undir , adv data = 200 bytes scan rsp data = 200 bytes adv set2 : pri phy = 1M, sec phy = 1M ad
 
 @pytest.mark.ble_client("bt_wiseconnect")
+@pytest.mark.test_src_map_id('C163771')
 def test_verify_EXT_Passive_Scan_C163771(ble_dut, ble_client, rs_helper_ble):
     """
     Test case category : BLE Extended Scan 

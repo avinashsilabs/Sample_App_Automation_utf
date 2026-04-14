@@ -950,6 +950,7 @@ pytestmark = [
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133428')
 def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(
     wifi_sniffer,
     wifi_access_point,
@@ -1040,6 +1041,7 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_C133428(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133429')
 def test_Coex_sdk_fun_ble_master_wlan_conn_C133429(
     wifi_sniffer,
     wifi_access_point,
@@ -1127,6 +1129,7 @@ def test_Coex_sdk_fun_ble_master_wlan_conn_C133429(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133430')
 def test_Coex_sdk_WLAN_conn_while_BLE_scan_C133430(
     wifi_sniffer,
     wifi_access_point,
@@ -1213,6 +1216,7 @@ def test_Coex_sdk_WLAN_conn_while_BLE_scan_C133430(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133431')
 def test_Coex_sdk_BLE_conn_request_WLAN_conn_C133431(
     wifi_dut,
     wifi_sniffer,
@@ -1328,6 +1332,7 @@ def test_Coex_sdk_BLE_conn_request_WLAN_conn_C133431(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133432')
 def test_Coex_sdk_WLAN_conn_while_BLE_active_scan_C133432(
     wifi_sniffer,
     wifi_access_point,
@@ -1414,6 +1419,7 @@ def test_Coex_sdk_WLAN_conn_while_BLE_active_scan_C133432(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133433')
 def test_Coex_sdk_WLAN_conn_while_BLE_passive_scan_C133433(
     wifi_sniffer,
     wifi_access_point,
@@ -1500,6 +1506,7 @@ def test_Coex_sdk_WLAN_conn_while_BLE_passive_scan_C133433(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133445')
 def test_Coex_sdk_WLAN_scan_BLE_scan_C133445(
     wifi_sniffer,
     wifi_access_point,
@@ -1578,6 +1585,7 @@ def test_Coex_sdk_WLAN_scan_BLE_scan_C133445(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133568')
 def test_Coex_sdk_BLE_scan_while_WLAN_conn_C133568(
     wifi_sniffer,
     wifi_access_point,
@@ -1669,6 +1677,7 @@ def test_Coex_sdk_BLE_scan_while_WLAN_conn_C133568(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133502')
 def test_Coex_sdk_WLAN_disconnect_BLE_slave_C133502(
     wifi_sniffer,
     wifi_access_point,
@@ -1765,6 +1774,7 @@ def test_Coex_sdk_WLAN_disconnect_BLE_slave_C133502(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133466')
 def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(
     wifi_sniffer,
     wifi_access_point,
@@ -1866,6 +1876,7 @@ def test_Coex_sdk_WLAN_disconnect_BLE_peripheral_C133466(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133503')
 def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(
     wifi_sniffer,
     wifi_access_point,
@@ -1974,6 +1985,7 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133503(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133520')
 def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(
     wifi_sniffer,
     wifi_access_point,
@@ -2081,6 +2093,7 @@ def test_Coex_sdk_BLE_conn_disconn_master_WLAN_conn_C133520(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133487')
 def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(
     wifi_sniffer,
     wifi_access_point,
@@ -2187,6 +2200,7 @@ def test_Coex_sdk_BLE_conn_disconn_slave_WLAN_conn_C133487(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133475')
 def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
     wifi_sniffer,
     wifi_access_point,
@@ -2279,6 +2293,7 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133453')
 def test_Coex_sdk_all_channels_scan_time_BLE_adv_C133453(
     wifi_sniffer,
     wifi_access_point,
@@ -2359,6 +2374,7 @@ def test_Coex_sdk_all_channels_scan_time_BLE_adv_C133453(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133454')
 def test_Coex_sdk_selected_channels_scan_time_BLE_slave_C133454(
     wifi_sniffer,
     wifi_access_point,
@@ -2436,6 +2452,7 @@ def test_Coex_sdk_selected_channels_scan_time_BLE_slave_C133454(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133458')
 def test_Coex_sdk_join_time_BLE_slave_C133458(
     wifi_sniffer,
     wifi_access_point,
@@ -2511,6 +2528,7 @@ def test_Coex_sdk_join_time_BLE_slave_C133458(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133551')
 def test_Coex_sdk_ADV_BLE_while_WLAN_SCAN_C133551(
     wifi_sniffer,
     wifi_access_point,
@@ -2598,6 +2616,7 @@ def test_Coex_sdk_ADV_BLE_while_WLAN_SCAN_C133551(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133554')
 def test_Coex_sdk_fun_ble_slave_wlan_conn_disconn_C133554(
     wifi_sniffer,
     wifi_access_point,
@@ -2789,6 +2808,7 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_WPA2_BLE_slave_C133475(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133560')
 def test_Coex_sdk_BLE_active_scan_when_WLAN_conn_C133560(
     wifi_sniffer,
     wifi_access_point,
@@ -2881,6 +2901,7 @@ def test_Coex_sdk_BLE_active_scan_when_WLAN_conn_C133560(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133573')
 def test_Coex_sdk_BLE_scan_while_TCP_TX_C133573(
     wifi_sniffer,
     wifi_access_point,
@@ -2974,6 +2995,7 @@ def test_Coex_sdk_BLE_scan_while_TCP_TX_C133573(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133460')
 def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
     wifi_sniffer,
     wifi_access_point,
@@ -3061,6 +3083,7 @@ def test_Coex_sdk_join_time_WPA2_PMK_BLE_Adv_C133460(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C133556')
 def test_Coex_sdk_BLE_master_WLAN_conn_disconn_C133556(
     wifi_sniffer,
     wifi_access_point,
@@ -3162,6 +3185,7 @@ def test_Coex_sdk_BLE_master_WLAN_conn_disconn_C133556(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780388')
 def test_Coex_sdk_fun_ble_slave_wlan_conn_CI_30ms_C780388(
     wifi_sniffer,
     wifi_access_point,
@@ -3253,6 +3277,7 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_CI_30ms_C780388(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780389')
 def test_Coex_sdk_fun_ble_slave_wlan_conn_CI_80ms_C780389(
     wifi_sniffer,
     wifi_access_point,
@@ -3343,6 +3368,7 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_CI_80ms_C780389(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780390')
 def test_Coex_sdk_fun_ble_slave_wlan_conn_CI_150ms_C780390(
     wifi_sniffer,
     wifi_access_point,
@@ -3434,6 +3460,7 @@ def test_Coex_sdk_fun_ble_slave_wlan_conn_CI_150ms_C780390(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780391')
 def test_Coex_sdk_fun_ble_master_wlan_conn_CI_30ms_C780391(
     wifi_sniffer,
     wifi_access_point,
@@ -3523,6 +3550,7 @@ def test_Coex_sdk_fun_ble_master_wlan_conn_CI_30ms_C780391(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780392')
 def test_Coex_sdk_fun_ble_master_wlan_conn_CI_80ms_C780392(
     wifi_sniffer,
     wifi_access_point,
@@ -3612,6 +3640,7 @@ def test_Coex_sdk_fun_ble_master_wlan_conn_CI_80ms_C780392(
         "disassociated",
     ],
 )
+@pytest.mark.test_src_map_id('C780393')
 def test_Coex_sdk_fun_ble_master_wlan_conn_CI_150ms_C780393(
     wifi_sniffer,
     wifi_access_point,

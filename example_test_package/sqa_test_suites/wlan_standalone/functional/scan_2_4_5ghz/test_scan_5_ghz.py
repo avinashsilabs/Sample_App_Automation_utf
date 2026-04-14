@@ -62,6 +62,7 @@ ping_count = 10
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19400')
 def test_scan_5Ghz_US_NonDFS_C19400(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
@@ -134,6 +135,7 @@ def test_scan_5Ghz_US_NonDFS_C19400(wifi_dut, wifi_access_point,wifi_sniffer):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19401')
 def test_scan_5Ghz_EU_NonDFS_C19401(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
@@ -208,6 +210,7 @@ def test_scan_5Ghz_EU_NonDFS_C19401(wifi_dut, wifi_access_point,wifi_sniffer):
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19402')
 def test_scan_5Ghz_JP_NonDFS_C19402(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
@@ -286,6 +289,7 @@ def test_scan_5Ghz_JP_NonDFS_C19402(wifi_dut, wifi_access_point,wifi_sniffer):
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19406')
 def test_scan_response_in_5Ghz_C19406(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -339,6 +343,7 @@ def test_scan_response_in_5Ghz_C19406(wifi_dut, wifi_access_point,wifi_sniffer):
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19407')
 def test_all_chan_scan_in_5Ghz_by_chan_0_C19407(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
@@ -412,6 +417,7 @@ def test_all_chan_scan_in_5Ghz_by_chan_0_C19407(wifi_dut, wifi_access_point,wifi
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19409')
 def test_scan_all_chan_by_chan_in_bitmap_C19409(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
@@ -501,6 +507,7 @@ def test_scan_all_chan_by_chan_in_bitmap_C19409(wifi_dut, wifi_access_point,wifi
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19408')
 def test_scan_all_channels_in_dual_band_C19408(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         validation = True
@@ -572,6 +579,7 @@ def test_scan_all_channels_in_dual_band_C19408(wifi_dut, wifi_access_point,wifi_
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19410')
 def test_all_chan_scan_by_all_chan_in_bitmap_dual_band_C19410(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         logger().info("Setting DUT in wlan power save...")
@@ -660,6 +668,7 @@ def test_all_chan_scan_by_all_chan_in_bitmap_dual_band_C19410(wifi_dut, wifi_acc
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19411')
 def test_scan_for_channels_36_40_48_149_157_161_165_C19411(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -749,6 +758,7 @@ def test_scan_for_channels_36_40_48_149_157_161_165_C19411(wifi_dut, wifi_access
 @pytest.mark.config('wifi_access_point', wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19412')
 def test_scan_in_dual_band_for_channels_6_and_36_C19412(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -828,6 +838,7 @@ def test_scan_in_dual_band_for_channels_6_and_36_C19412(wifi_dut, wifi_access_po
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19413')
 def test_scan_5ghz_band_for_channels_36_40_149_161_165_C19413(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -915,6 +926,7 @@ def test_scan_5ghz_band_for_channels_36_40_149_161_165_C19413(wifi_dut, wifi_acc
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19414')
 def test_scan_selective_channels_in_dual_bands_C19414(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -1009,6 +1021,7 @@ def test_scan_selective_channels_in_dual_bands_C19414(wifi_dut, wifi_access_poin
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19415')
 def test_scan_in_DFS_from_52_to_68_AND_100_to_140_C19415(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -1116,6 +1129,7 @@ def test_scan_in_DFS_from_52_to_68_AND_100_to_140_C19415(wifi_dut, wifi_access_p
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C19416')
 def test_scan_for_selective_channels_in_5GHZ_C19416(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10
@@ -1201,6 +1215,7 @@ def test_scan_for_selective_channels_in_5GHZ_C19416(wifi_dut, wifi_access_point,
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C61170')
 def test_scan_5Ghz_US_DFS_C61170(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         logger().info("This test case is not supported with 100-140 channels as AP doe's not have support")
@@ -1296,6 +1311,7 @@ def test_scan_5Ghz_US_DFS_C61170(wifi_dut, wifi_access_point,wifi_sniffer):
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C61171')
 def test_scan_5Ghz_EU_DFS_C61171(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         logger().info("This test case is not supported with 100-140 channels as AP doe's not have support")
@@ -1389,6 +1405,7 @@ def test_scan_5Ghz_EU_DFS_C61171(wifi_dut, wifi_access_point,wifi_sniffer):
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C61172')
 def test_scan_5Ghz_JP_DFS_C61172(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         logger().info("This test case is not supported with 100-140 channels as AP doe's not have support")
@@ -1485,6 +1502,7 @@ def test_scan_5Ghz_JP_DFS_C61172(wifi_dut, wifi_access_point,wifi_sniffer):
 @pytest.mark.config('wifi_access_point',wifi ={"channel": 36})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.NCP_9116_DEPLOYED
+@pytest.mark.test_src_map_id('C61173')
 def test_regional_scan_dfs_world_mode_in_5GHZ_C61173(wifi_dut, wifi_access_point,wifi_sniffer):
     with TimeMeasurer() as t:
         rejoin_max = 10

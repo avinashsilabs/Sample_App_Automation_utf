@@ -177,6 +177,7 @@ class power_number_output():
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv","wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C133654')
 def test_wlan_ble_advertise_tx_55sec_data_transfer_C133654(wifi_dut, wifi_access_point, remote_socket, ble_client, power_meter,net_perf_client, protocol, dtim,rs_helper,
                                                   utf_constants):
     with BleLogs(
@@ -245,6 +246,7 @@ def test_wlan_ble_advertise_tx_55sec_data_transfer_C133654(wifi_dut, wifi_access
 @pytest.mark.parametrize("dtim", [10])
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.end_state("wifi_dut", wifi=["ble_stop_adv", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.test_src_map_id('C133655')
 def test_wlan_ble_coex_data_trasfer_DTIM10_BLE_connect_200ms_C133655(wifi_dut, wifi_access_point, ble_client, power_meter, dtim,
                                                        rs_helper, utf_constants,net_perf_client,protocol, remote_socket ):
     with BleLogs(

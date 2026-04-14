@@ -838,6 +838,7 @@ class BleThreadFunctionality(ThreadBase):
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C401825')
 def test_wlan_TCP_Tx_BLE_with_2_adv_sets_C401825(
         wifi_access_point,
         wifi_dut,
@@ -974,6 +975,7 @@ def test_wlan_TCP_Tx_BLE_with_2_adv_sets_C401825(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C401826')
 def test_wlan_TCP_Rx_BLE_with_2_adv_sets_C401826(
         wifi_access_point,
         wifi_dut,
@@ -1111,6 +1113,7 @@ def test_wlan_TCP_Rx_BLE_with_2_adv_sets_C401826(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C401827')
 def test_wlan_UDP_Tx_BLE_with_2_adv_sets_C401827(
         wifi_access_point,
         wifi_dut,
@@ -1259,6 +1262,7 @@ def test_wlan_UDP_Tx_BLE_with_2_adv_sets_C401827(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C401828')
 def test_wlan_UDP_Rx_BLE_with_2_adv_sets_C401828(
         wifi_access_point,
         wifi_dut,
@@ -1393,6 +1397,7 @@ def test_wlan_UDP_Rx_BLE_with_2_adv_sets_C401828(
     },
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C401829')
 def test_wlan_SSL_Tx_BLE_with_2_adv_sets_C401829(
         wifi_access_point,
         wifi_dut,
@@ -1523,6 +1528,7 @@ def test_wlan_SSL_Tx_BLE_with_2_adv_sets_C401829(
     },
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C401830')
 def test_wlan_SSL_Rx_BLE_with_2_adv_sets_C401830(
         wifi_access_point,
         wifi_dut,
@@ -1649,6 +1655,7 @@ def test_wlan_SSL_Rx_BLE_with_2_adv_sets_C401830(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C401831')
 def test_wlan_ble_conn_TCP_Tx_C401831(
         wifi_access_point,
         wifi_dut,
@@ -1779,6 +1786,7 @@ def test_wlan_ble_conn_TCP_Tx_C401831(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C401831')
 def test_wlan_ble_conn_TCP_Rx_C401831(
         wifi_access_point,
         wifi_dut,
@@ -1912,6 +1920,7 @@ def test_wlan_ble_conn_TCP_Rx_C401831(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C401832')
 def test_wlan_ble_conn_UDP_Tx_C401832(
         wifi_access_point,
         wifi_dut,
@@ -2045,6 +2054,7 @@ def test_wlan_ble_conn_UDP_Tx_C401832(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C401833')
 def test_wlan_ble_conn_UDP_Rx_C401833(
         wifi_access_point,
         wifi_dut,
@@ -2173,6 +2183,7 @@ def test_wlan_ble_conn_UDP_Rx_C401833(
     },
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C401834')
 def test_wlan_ble_conn_SSL_Tx_C401834(
         wifi_access_point,
         wifi_dut,
@@ -2297,6 +2308,7 @@ def test_wlan_ble_conn_SSL_Tx_C401834(
     },
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C401835')
 def test_wlan_ble_conn_SSL_Rx_C401835(
         wifi_access_point,
         wifi_dut,
@@ -2428,6 +2440,7 @@ def test_wlan_ble_conn_SSL_Rx_C401835(
     },
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C401836')
 def test_wlan_BLE_ping_dl_ul_with_2_adv_C401836(
         wifi_access_point,
         wifi_dut,
@@ -2548,6 +2561,7 @@ def test_wlan_BLE_ping_dl_ul_with_2_adv_C401836(
     },
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
+@pytest.mark.test_src_map_id('C401837')
 def test_wlan_ble_conn_2adv_ping_ul_dl_C401837(
         wifi_access_point,
         wifi_dut,
@@ -2678,6 +2692,7 @@ def test_wlan_ble_conn_2adv_ping_ul_dl_C401837(
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('C401838')
 def test_wlan_TCP_Tx_Rx_BLE_with_2_adv_sets_C401838(
         wifi_access_point,
         wifi_dut,
@@ -2801,6 +2816,7 @@ def test_wlan_TCP_Tx_Rx_BLE_with_2_adv_sets_C401838(
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('C401839')
 def test_wlan_ble_conn_TCP_Tx_Rx_2adv_sets_C401839(
         wifi_access_point,
         wifi_dut,
@@ -2934,6 +2950,7 @@ def test_wlan_ble_conn_TCP_Tx_Rx_2adv_sets_C401839(
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('C401840')
 def test_wlan_UDP_Tx_Rx_BLE_with_2_adv_sets_C401840(
         wifi_access_point,
         wifi_dut,
@@ -3057,6 +3074,7 @@ def test_wlan_UDP_Tx_Rx_BLE_with_2_adv_sets_C401840(
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
+@pytest.mark.test_src_map_id('C401841')
 def test_wlan_ble_conn_UDP_Tx_Rx_2adv_sets_C401841(
         wifi_access_point,
         wifi_dut,

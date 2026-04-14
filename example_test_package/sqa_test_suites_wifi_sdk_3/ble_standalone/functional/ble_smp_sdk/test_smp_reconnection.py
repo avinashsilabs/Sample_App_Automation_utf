@@ -572,6 +572,7 @@ pytestmark = [
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667600')
 def test_ble_smp_pairing_reconnection_dut_as_master_C667600(wifi_dut, ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
     try:
@@ -617,6 +618,7 @@ def test_ble_smp_pairing_reconnection_dut_as_master_C667600(wifi_dut, ble_sniffe
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667601')
 def test_ble_smp_pairing_reconnection_dut_as_master_C667601(wifi_dut, ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
@@ -661,6 +663,7 @@ def test_ble_smp_pairing_reconnection_dut_as_master_C667601(wifi_dut, ble_sniffe
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667602')
 def test_ble_smp_pairing_reconnection_dut_as_master_C667602(wifi_dut, ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
@@ -705,6 +708,7 @@ def test_ble_smp_pairing_reconnection_dut_as_master_C667602(wifi_dut, ble_sniffe
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667603')
 def test_ble_smp_pairing_reconnection_dut_as_master_C667603(wifi_dut,  ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
@@ -749,6 +753,7 @@ def test_ble_smp_pairing_reconnection_dut_as_master_C667603(wifi_dut,  ble_sniff
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667604')
 def test_ble_smp_pairing_reconnection_dut_as_master_C667604(wifi_dut, ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
@@ -808,6 +813,7 @@ def test_ble_smp_pairing_reconnection_dut_as_master_C667604(wifi_dut, ble_sniffe
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667595')
 def test_ble_smp_pairing_reconnection_dut_as_slave_C667595(wifi_dut,  ble_sniffer, sl_collections, ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
     try:
@@ -853,6 +859,7 @@ def test_ble_smp_pairing_reconnection_dut_as_slave_C667595(wifi_dut,  ble_sniffe
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667596')
 def test_ble_smp_pairing_reconnection_dut_as_slave_C667596(wifi_dut, ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
@@ -897,6 +904,7 @@ def test_ble_smp_pairing_reconnection_dut_as_slave_C667596(wifi_dut, ble_sniffer
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667597')
 def test_ble_smp_pairing_reconnection_dut_as_slave_C667597(wifi_dut, ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
@@ -941,6 +949,7 @@ def test_ble_smp_pairing_reconnection_dut_as_slave_C667597(wifi_dut, ble_sniffer
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667598')
 def test_ble_smp_pairing_reconnection_dut_as_slave_C667598(wifi_dut, ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
@@ -984,6 +993,7 @@ def test_ble_smp_pairing_reconnection_dut_as_slave_C667598(wifi_dut, ble_sniffer
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C667599')
 def test_ble_smp_pairing_reconnection_dut_as_slave_C667599(wifi_dut,  ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
@@ -1052,6 +1062,7 @@ def test_ble_smp_pairing_reconnection_dut_as_slave_C667599(wifi_dut,  ble_sniffe
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557260')
 def test_ble_smp_passkey_entry_pairing_Initiator_display_yes_no_responder_keyboard_only_C557260(wifi_dut,  ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     ble_obj = None
@@ -1081,6 +1092,7 @@ def test_ble_smp_passkey_entry_pairing_Initiator_display_yes_no_responder_keyboa
     ],
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C557252')
 def test_ble_smp_pair_unpair_C557252(wifi_dut,  ble_sniffer, sl_collections,
                                                         ble_client, dut_capability, client_capability, pin_code):
     bt_mon_log_file_name = (f"reports/test_ble_smp_pair_unpair_C557252"

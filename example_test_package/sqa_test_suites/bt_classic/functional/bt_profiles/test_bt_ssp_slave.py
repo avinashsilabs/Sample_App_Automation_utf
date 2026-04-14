@@ -67,6 +67,7 @@ pytestmark = [
 '''=============================== DUT AS SLAVE TEST CASES ================================='''
 
 # This test case verifies the spp connection in slave mode
+@pytest.mark.test_src_map_id('C19958')
 def test_bt_physical_level_conn_slave_c19958(wifi_dut, bt_client):
     with TimeMeasurer() as t:
         bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_bt_slave_spp()
@@ -95,6 +96,7 @@ def test_bt_physical_level_conn_slave_c19958(wifi_dut, bt_client):
 
 
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19959')
 def test_bt_slave_spp_displayonly_data_transfer_c19959(wifi_dut, bt_client):
 
     bt_dut_address, pin_code = wifi_dut.interfaces.wifi.start_slave_ssp_display(pair_mode="1", capability="1")

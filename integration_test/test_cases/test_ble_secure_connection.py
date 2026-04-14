@@ -57,6 +57,7 @@ pytestmark = [
         (0, "KeyboardOnly", "-8"),  # -8 to wait for pass_key
     ],
 )
+@pytest.mark.test_src_map_id('TC9584032523')
 def test_ble_smp_sample(wifi_dut, ble_client, pin_code, client_capability, dut_capability):
     try:
 

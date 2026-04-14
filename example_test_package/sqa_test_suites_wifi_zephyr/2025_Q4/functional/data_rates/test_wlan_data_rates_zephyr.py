@@ -148,6 +148,7 @@ class WLanThread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C19622')
 def test_wifi_zephyr_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                             sniffer_filter, zephyr_wifi_collections):
     ping_count = utf_constants.get("ping_count")
@@ -197,6 +198,7 @@ def test_wifi_zephyr_mgmt_data_rates_c19622(wifi_sniffer, wifi_access_point, wif
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C19623')
 def test_wifi_zephyr_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                     sniffer_filter, zephyr_wifi_collections):
     ping_count = utf_constants.get("ping_count")
@@ -262,6 +264,7 @@ def test_wifi_zephyr_mgmt_data_rates_rts_cts_c19623(wifi_sniffer, wifi_access_po
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C19624')
 def test_wifi_zephyr_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                        request,
                                                        sniffer_filter, zephyr_wifi_collections):
@@ -308,6 +311,7 @@ def test_wifi_zephyr_data_rates_for_data_packet_c19624(wifi_sniffer, wifi_access
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"ssid": 'testing', "security": 'WPA2', "channel": 7})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C19631')
 def test_wifi_zephyr_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                              sniffer_filter, zephyr_wifi_collections):
     ping_count = utf_constants.get("ping_count")
@@ -352,6 +356,7 @@ def test_wifi_zephyr_data_rates_eapol_c19631(wifi_sniffer, wifi_access_point, wi
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C19634')
 def test_wifi_zephyr_basic_data_rates_c19634(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                              sniffer_filter, zephyr_wifi_collections):
     ping_count = utf_constants.get("ping_count")

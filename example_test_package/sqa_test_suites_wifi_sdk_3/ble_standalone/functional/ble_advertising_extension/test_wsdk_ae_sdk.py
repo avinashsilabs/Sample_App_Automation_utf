@@ -139,6 +139,7 @@ def calculate_sync_offset(df):
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528485')
 def test_EXT_ADV_pkt_and_aux_ptr_C528485(ble_dut, sl_collections, ble_sniffer):
     """
     Test case          : This test case will verify Advertising Extention packets for undirected connecable and scannable adv type and aux pointer
@@ -226,6 +227,7 @@ def test_EXT_ADV_pkt_and_aux_ptr_C528485(ble_dut, sl_collections, ble_sniffer):
         },
     },
 )
+@pytest.mark.test_src_map_id('C528486')
 def test_verify_lowest_highest_adv_handle_C528486(ble_dut, sl_collections):
     """
     Test case          : This test case will verify Advertising Extention with lowest and highest adv_handle
@@ -267,6 +269,7 @@ def test_verify_lowest_highest_adv_handle_C528486(ble_dut, sl_collections):
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528487')
 def test_verify_adv_on_channel_37_38_39_C528487(ble_dut, sl_collections, ble_sniffer):
     """
     Test case category : BLE Advertising Extension
@@ -318,6 +321,7 @@ def test_verify_adv_on_channel_37_38_39_C528487(ble_dut, sl_collections, ble_sni
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528488')
 def test_verify_AE_ADV_for_infinite_time_C528488(ble_dut, sl_collections, ble_sniffer):
     """
     Test case category : BLE Advertising Extension
@@ -364,6 +368,7 @@ def test_verify_AE_ADV_for_infinite_time_C528488(ble_dut, sl_collections, ble_sn
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528489')
 def test_verify_AE_ADV_for_2560ms_C528489(ble_dut, sl_collections, ble_sniffer):
     """
     Test case category : BLE Advertising Extension
@@ -457,6 +462,7 @@ def test_verify_AE_ADV_for_2560ms_C528489(ble_dut, sl_collections, ble_sniffer):
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C539202')
 def test_verify_AE_ADV_for_different_interval_min_max_C528491_C528492_C539201_C539202(ble_dut, sl_collections,
                                                                                       ble_sniffer, min_interval,
                                                                                       test_case_id, max_interval, start,
@@ -543,6 +549,7 @@ def test_verify_AE_ADV_for_different_interval_min_max_C528491_C528492_C539201_C5
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528490')
 def test_verify_AE_ADV_for_15_max_event_C528490(ble_dut, sl_collections, ble_sniffer):
     """
     Test case category : BLE Advertising Extension
@@ -593,6 +600,7 @@ def test_verify_AE_ADV_for_15_max_event_C528490(ble_dut, sl_collections, ble_sni
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528493')
 def test_verify_AE_ADV_with_randomm_address_C528493(ble_dut, sl_collections, ble_sniffer):
     """
     Test case category : BLE Advertising Extension
@@ -652,6 +660,7 @@ def test_verify_AE_ADV_with_randomm_address_C528493(ble_dut, sl_collections, ble
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528494')
 def test_verify_AE_non_conn_non_scan_ADV_C528494(ble_dut, sl_collections, ble_sniffer):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -741,6 +750,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528494(ble_dut, sl_collections, ble_sn
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528495')
 def test_verify_AE_non_conn_non_scan_ADV_C528495(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -781,6 +791,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528495(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528496')
 def test_verify_AE_non_conn_non_scan_ADV_C528496(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -871,6 +882,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528496(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528497')
 def test_verify_AE_non_conn_non_scan_ADV_C528497(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -998,6 +1010,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528497(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528498')
 def test_verify_AE_non_conn_non_scan_ADV_C528498(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -1067,6 +1080,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528498(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528499')
 def test_verify_AE_non_conn_non_scan_ADV_C528499(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -1122,6 +1136,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528499(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528500')
 def test_verify_AE_non_conn_non_scan_ADV_C528500(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -1191,6 +1206,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528500(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528501')
 def test_verify_AE_non_conn_non_scan_ADV_C528501(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -1296,6 +1312,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528501(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528502')
 def test_verify_AE_non_conn_non_scan_ADV_C528502(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -1369,6 +1386,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528502(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528503')
 def test_verify_AE_non_conn_non_scan_ADV_C528503(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -1419,6 +1437,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528503(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528504')
 def test_verify_AE_non_conn_non_scan_ADV_C528504(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -1561,6 +1580,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528504(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528505')
 def test_verify_AE_non_conn_non_scan_ADV_C528505(ble_dut, ble_sniffer, sl_collections):
     """
     Test case category : LE Ext Adv - Non connectable Non Scannable undirected adv
@@ -1686,6 +1706,7 @@ def test_verify_AE_non_conn_non_scan_ADV_C528505(ble_dut, ble_sniffer, sl_collec
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528509')
 def test_verify_AE_Scannable_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, sl_collections,
                                                           adv_type, test_case_id, data_len, scan_req_notify_enable):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
@@ -1809,6 +1830,7 @@ def test_verify_AE_Scannable_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, 
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528513')
 def test_verify_AE_Scannable_undirected_ADV_C528510_C528513(ble_dut, remote_wiseconnect3, ble_sniffer, sl_collections,
                                                             adv_type, test_case_id, data_len, scan_req_notify_enable):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
@@ -1922,6 +1944,7 @@ def test_verify_AE_Scannable_undirected_ADV_C528510_C528513(ble_dut, remote_wise
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528516')
 def test_verify_AE_Scannable_undirected_ADV_C528514_C528516(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                             adv_type, test_case_id, data_len):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
@@ -2036,6 +2059,7 @@ def test_verify_AE_Scannable_undirected_ADV_C528514_C528516(ble_dut, ble_sniffer
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528577')
 def test_verify_AE_Scannable_filter_policy_C528575_C528577(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                            adv_type, test_case_id, adv_filter_policy, event_type):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
@@ -2186,6 +2210,7 @@ def test_verify_AE_Scannable_filter_policy_C528575_C528577(ble_dut, ble_sniffer,
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528584')
 def test_verify_2ADV_sets_PHY_1M_2M_C528578_to_C528584(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                        adv_type, adv_type_s2, data_len, data_len_s2, pri_adv_phy,
                                                        sec_adv_phy, test_case_id, adv_handle, adv_handle_s2,
@@ -2326,6 +2351,7 @@ def test_verify_2ADV_sets_PHY_1M_2M_C528578_to_C528584(ble_dut, ble_sniffer, rem
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528591')
 def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                          adv_type, adv_type_s2, data_len, data_len_s2, pri_adv_phy,
                                                          sec_adv_phy, test_case_id, adv_handle, adv_handle_s2):
@@ -2467,6 +2493,7 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528598')
 def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
@@ -2666,6 +2693,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528605')
 def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
@@ -2816,6 +2844,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528612')
 def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
@@ -2976,6 +3005,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528619')
 def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
@@ -3136,6 +3166,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffe
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528626')
 def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
@@ -3307,6 +3338,7 @@ def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffe
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528644')
 def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C528627_C528644(ble_dut, ble_sniffer, remote_wiseconnect3,
                                                                             sl_collections,
                                                                             adv_type, min_interval, max_interval,
@@ -3444,6 +3476,7 @@ def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C528627_C528644(ble_
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528651')
 def test_verify_periodic_Adv_Sync_undreceted_non_conn_non_scan_C528649_C528651(ble_dut, ble_sniffer, sl_collections,
                                                                                adv_type, test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
@@ -3532,6 +3565,7 @@ def test_verify_periodic_Adv_Sync_undreceted_non_conn_non_scan_C528649_C528651(b
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
+@pytest.mark.test_src_map_id('C528519')
 def test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_random_C528517_C528518_C528519(ble_dut, ble_sniffer, sl_collections,
                                                                                adv_type, test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
@@ -3619,6 +3653,7 @@ def test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_random_C528517_C5
     },
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528479')
 def test_legacy_adv_conn_directed_adv_C528479(ble_dut, sl_collections, ble_sniffer):
     """
     Test case          : This test case will verify Advertising Extention packets for undirected connecable and scannable adv type and aux pointer
@@ -3690,6 +3725,7 @@ def test_legacy_adv_conn_directed_adv_C528479(ble_dut, sl_collections, ble_sniff
 )
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('C528484')
 def test_verify_legacy_adv_connactable_Scannable_undirected_C528481_C528484(ble_dut, remote_wiseconnect3, ble_sniffer, sl_collections,
                                                             adv_type, test_case_id, data_len):
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)

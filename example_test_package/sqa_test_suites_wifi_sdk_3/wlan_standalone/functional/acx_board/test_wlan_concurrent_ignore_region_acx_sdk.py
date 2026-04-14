@@ -222,6 +222,7 @@ class WifiThread(ThreadBase):
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 6})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661457')
 def test_wifi_sdk_first_sta_conn_and_apmode_later_c661457(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -294,6 +295,7 @@ def test_wifi_sdk_first_sta_conn_and_apmode_later_c661457(
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 6})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661458')
 def test_wifi_sdk_first_ap_conn_and_stamode_later_c661458(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -367,6 +369,7 @@ def test_wifi_sdk_first_ap_conn_and_stamode_later_c661458(
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234", "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.deployed_25q2
+@pytest.mark.test_src_map_id('C661460')
 def test_wifi_sdk_sta_conn_with_bg_scan_c661460(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):
@@ -454,6 +457,7 @@ def test_wifi_sdk_sta_conn_with_bg_scan_c661460(
 @pytest.mark.config("wifi_access_point",
                     wifi={"security": "WPA3", "passphrase": "thisisatestnetwork", "ssid": "sharma1234",
                           "region": 'China', "channel": 13})
+@pytest.mark.test_src_map_id('C661459')
 def test_wifi_sdk_aput_conn_when_staut_connected_ch13_c661459(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, wifi_client, utf_constants,
         wifi_clients):

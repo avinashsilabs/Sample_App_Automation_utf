@@ -976,6 +976,7 @@ class BLEThread:
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC3505149342')
 def test_tx_notify(
         remote_wiseconnect3, remote_wiseconnect3s, ble_dut,
         ble_sniffer, sl_collections, pri_adv_phy, sec_adv_phy,
@@ -1197,6 +1198,7 @@ def test_tx_notify(
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC6160531361')
 def test_Indications(
         remote_wiseconnect3, remote_wiseconnect3s, ble_dut, ble_sniffer, sl_collections, pri_adv_phy, sec_adv_phy,
         test_case_id, service_uuid, char_uuid, notify_time, data_size, expected_pdu_length):
@@ -1404,6 +1406,7 @@ def test_Indications(
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('TC7062607369')
 def test_bidirectional_tx_rx_notification(
         remote_wiseconnect3, remote_wiseconnect3s, ble_dut,
         ble_sniffer, sl_collections, pri_adv_phy, sec_adv_phy,

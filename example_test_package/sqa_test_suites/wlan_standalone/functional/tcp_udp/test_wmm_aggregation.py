@@ -60,6 +60,7 @@ def logger():
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19031')
 def test_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                remote_socket, wifi_client,
                                                protocol):
@@ -174,6 +175,7 @@ def test_udp_tx_by_enabling_aggregation_c19031(wifi_sniffer, net_perf_client, wi
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19032')
 def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                remote_socket, wifi_client,
                                                protocol):
@@ -285,6 +287,7 @@ def test_udp_rx_by_enabling_aggregation_c19032(wifi_sniffer, net_perf_client, wi
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19033')
 def test_udp_tx_aggregation_open_mode_with_power_save_c19033(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                              remote_socket, wifi_client,
                                                              protocol):
@@ -401,6 +404,7 @@ def test_udp_tx_aggregation_open_mode_with_power_save_c19033(wifi_sniffer, net_p
 )
 @pytest.mark.NCP_9116_DEPLOYED
 @pytest.mark.NCP_9116_DEPLOYED_ACX
+@pytest.mark.test_src_map_id('C19034')
 def test_udp_rx_aggregation_open_mode_with_power_save_c19034(wifi_sniffer, net_perf_client, wifi_access_point, wifi_dut,
                                                              remote_socket, wifi_client,
                                                              protocol):

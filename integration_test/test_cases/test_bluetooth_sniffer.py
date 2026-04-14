@@ -18,6 +18,7 @@ def __print_throughput(throughput: dict):
         print_dict("##     ", throughput)
 
 
+@pytest.mark.test_src_map_id('TC1021117529')
 def test_ble_sniffer_using_nrf(ble_sniffer):
     ble_sniffer.interfaces.sniffer.init_sniffer()
     ble_sniffer.interfaces.sniffer.start_capture()
@@ -28,6 +29,7 @@ def test_ble_sniffer_using_nrf(ble_sniffer):
     file_size = os.path.getsize(ble_sniffer.interfaces.sniffer.capture_file)
     assert file_size > 0
     
+@pytest.mark.test_src_map_id('TC6923505535')
 def test_bt_sniffer_using_ellisys(bt_sniffer):
     bt_sniffer.interfaces.sniffer.init_sniffer()
     bt_sniffer.interfaces.sniffer.start_capture()
@@ -61,6 +63,7 @@ def test_bt_sniffer_using_ellisys(bt_sniffer):
         },
     )
 @pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.test_src_map_id('TC0689451540')
 def test_ble_sniffer_using_frontline(ble_dut, ble_client, ble_sniffer):
     ble_sniffer.interfaces.sniffer.init_sniffer()
     ble_sniffer.interfaces.sniffer.start_capture()
@@ -159,6 +162,7 @@ def test_ble_sniffer_using_frontline(ble_dut, ble_client, ble_sniffer):
         },
     )
 @pytest.mark.ble_sniffer("mock_bluetooth_sniffer")
+@pytest.mark.test_src_map_id('TC7518887545')
 def test_ble_sniffer_using_frontline_with_mock_sniffer(ble_dut, ble_client, ble_sniffer):
     ble_sniffer.interfaces.sniffer.init_sniffer()
     ble_sniffer.interfaces.sniffer.start_capture()

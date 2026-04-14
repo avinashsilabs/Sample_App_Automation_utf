@@ -35,6 +35,7 @@ def logger():
 @pytest.mark.parametrize("channel", [1])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C20790')
 def test_device_as_server_ap_tcp_rx_c20790(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     ping_count = 10
     logger().info(f"********** configuring the sniffer with access point channel **********")
@@ -109,6 +110,7 @@ def test_device_as_server_ap_tcp_rx_c20790(wifi_sniffer, net_perf_client, wifi_d
 @pytest.mark.parametrize("channel", [1])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C20789')
 def test_device_as_client_ap_udp_rx_c20789(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     ping_count = 10
     logger().info(f"********** configuring the sniffer with access point channel **********")
@@ -183,6 +185,7 @@ def test_device_as_client_ap_udp_rx_c20789(wifi_sniffer, net_perf_client, wifi_d
 @pytest.mark.parametrize("channel", [1])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.test_src_map_id('C20788')
 def test_host_as_server_ap_tcp_tx_c20788(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     ping_count = 10
     logger().info(f"********** configuring the sniffer with access point channel **********")
@@ -250,6 +253,7 @@ def test_host_as_server_ap_tcp_tx_c20788(wifi_sniffer, net_perf_client, wifi_dut
 @pytest.mark.parametrize("channel", [1])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.test_src_map_id('C20787')
 def test_host_as_client_ap_udp_tx_c20787(wifi_sniffer, net_perf_client, wifi_dut, wifi_client, protocol, channel):
     ping_count = 10
     logger().info(f"********** configuring the sniffer with access point channel **********")
