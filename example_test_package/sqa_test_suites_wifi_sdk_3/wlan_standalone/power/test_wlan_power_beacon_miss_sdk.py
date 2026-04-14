@@ -68,21 +68,22 @@ class Power_Device:
     def __init__(self) -> None:
         pass
         
-    def power_measurement(power_device=None, power_meter=None, dtim=None, capture_time=60):
+    def power_measurement(power_device=None, power_meter=None, dtim=None, capture_time=60, power_analyzer=None):
         
         if power_device == "keysight_benchvue_power_analyzer_win_wcf":
-            power_obj = power_number_output(power_meter=power_meter, dtim=dtim, capture_time=capture_time)
+            power_obj = power_number_output(power_meter=power_meter, dtim=dtim, capture_time=capture_time, power_analyzer=power_analyzer)
         elif power_device == "nrf_ppk2_device":
             power_obj = ppk_power_number_output(power_meter=power_meter)
         power_obj.get_power_value()
 
 
 class power_number_output():
-    def __init__(self, power_meter=None, dtim=None, capture_time=60):
+    def __init__(self, power_meter=None, dtim=None, capture_time=60, power_analyzer=None):
         super().__init__()
         self.power_meter = power_meter
         self.dtim = dtim
         self.capture_time = capture_time
+        self.power_analyzer = power_analyzer
 
     def __print_throughput(self, throughput: dict):
         if throughput is not None:
@@ -128,6 +129,9 @@ class power_number_output():
             self.power_meter.interfaces.power_meter.results)
         self.__print_throughput(parsed_result)
         assert parsed_result["Output"] is not None
+        if self.power_analyzer is not None:
+            csvfile = str(parsed_result["Dlg File Name"]).replace(".dlg",".csv")
+            self.power_analyzer.interfaces.power_analyzer.generate_report(csvfile)
 
 
 class ppk_power_number_output():
@@ -266,22 +270,23 @@ class M4_Sleep_Thread(ThreadBase):
 class Power_Measurement_Thread(ThreadBase, Power_Device):
 
 
-    def __init__(self, power_meter=None, capture_time=60):
+    def __init__(self, power_meter=None, capture_time=60, power_analyzer=None):
         super().__init__()
         Power_Device().__init__()
         self.power_meter = power_meter
         self.capture_time = capture_time
+        self.power_analyzer = power_analyzer
 	
     def run(self):
         logger().info(f"Starting Power Capture")
         self.power_device = UtfConfig.instance().defaults.get("power_meter", {})
-        Power_Device.power_measurement(power_device=self.power_device, power_meter=self.power_meter, capture_time=self.capture_time)
+        Power_Device.power_measurement(power_device=self.power_device, power_meter=self.power_meter, capture_time=self.capture_time, power_analyzer=self.power_analyzer)
 
 class StandBy_Associated(ThreadBase):
     def __init__(self, dtim=None, wifi_dut=None, wifi_access_point=None, sl_collections=None, power_meter=None,
                  deep_sleep=False, dtim_aligned_type=1, remote_socket=None, send_data=False, capture_time=60,
                  m4_sleep_time=120000, bcast_filter=True, tcp_ka_time=240, send_ka=False, listen_case=False,
-                 beacon_miss=None):
+                 beacon_miss=None, power_analyzer=None):
         self.dtim = dtim
         self.wifi_dut = wifi_dut
         self.sl_collections = sl_collections
@@ -298,6 +303,7 @@ class StandBy_Associated(ThreadBase):
         self.dtim_aligned_type =dtim_aligned_type
         self.listen_case = listen_case
         self.beacon_miss = beacon_miss
+        self.power_analyzer = power_analyzer
 
     def run(self):
         dut = UtfConfig.instance().defaults.get("dut", {})
@@ -320,7 +326,7 @@ class StandBy_Associated(ThreadBase):
                 m4_obj = M4_Sleep_Thread(wifi_dut=self.wifi_dut, m4_sleep_time=self.m4_sleep_time, deep_sleep_without_ret=True)
             else:
                 m4_obj = M4_Sleep_Thread(wifi_dut=self.wifi_dut, m4_sleep_time=self.m4_sleep_time)
-        pm_obj = Power_Measurement_Thread(power_meter=self.power_meter, capture_time=self.capture_time)
+        pm_obj = Power_Measurement_Thread(power_meter=self.power_meter, capture_time=self.capture_time, power_analyzer=self.power_analyzer)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -453,8 +459,9 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.power_analyzer("keysight_analyzer")
 def test_wlan_standby_beacon_miss_1_C402861(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections,
-                                            request, performance_data, custom_performance_fixture):
+                                            request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
@@ -462,7 +469,7 @@ def test_wlan_standby_beacon_miss_1_C402861(firmware_loader, power_meter, wifi_a
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                 sl_collections=sl_collections, power_meter=power_meter, beacon_miss=402861)
+                                 sl_collections=sl_collections, power_meter=power_meter, beacon_miss=402861, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -510,8 +517,9 @@ def test_wlan_standby_beacon_miss_1_C402861(firmware_loader, power_meter, wifi_a
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.power_analyzer("keysight_analyzer")
 def test_wlan_standby_beacon_miss_2_C402862(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections,
-                                            request, performance_data, custom_performance_fixture):
+                                            request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
@@ -519,7 +527,7 @@ def test_wlan_standby_beacon_miss_2_C402862(firmware_loader, power_meter, wifi_a
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                 sl_collections=sl_collections, power_meter=power_meter, beacon_miss=402862)
+                                 sl_collections=sl_collections, power_meter=power_meter, beacon_miss=402862, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -567,8 +575,9 @@ def test_wlan_standby_beacon_miss_2_C402862(firmware_loader, power_meter, wifi_a
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.power_analyzer("keysight_analyzer")
 def test_wlan_standby_beacon_miss_3_C402863(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections,
-                                            request, performance_data, custom_performance_fixture):
+                                            request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
@@ -576,7 +585,7 @@ def test_wlan_standby_beacon_miss_3_C402863(firmware_loader, power_meter, wifi_a
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                 sl_collections=sl_collections, power_meter=power_meter, beacon_miss=402863)
+                                 sl_collections=sl_collections, power_meter=power_meter, beacon_miss=402863, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -624,8 +633,9 @@ def test_wlan_standby_beacon_miss_3_C402863(firmware_loader, power_meter, wifi_a
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.power_analyzer("keysight_analyzer")
 def test_wlan_standby_beacon_miss_4_C402864(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections,
-                                            request, performance_data, custom_performance_fixture):
+                                            request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
@@ -633,7 +643,7 @@ def test_wlan_standby_beacon_miss_4_C402864(firmware_loader, power_meter, wifi_a
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj=StandBy_Associated(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-                                 sl_collections=sl_collections, power_meter=power_meter, beacon_miss=402864)
+                                 sl_collections=sl_collections, power_meter=power_meter, beacon_miss=402864, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     

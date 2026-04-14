@@ -1171,6 +1171,12 @@ devices:
                 type: performance_data.power_performance_data
                 src_dir: 'utf_wiseconnect'
 
+    keysight_analyzer:
+        interfaces:
+            power_analyzer:
+                type: 'power_analyzer.keysight_analyzer'
+                src_dir: 'utf_wiseconnect'
+
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types
 defaults:
@@ -1232,6 +1238,8 @@ defaults:
     logic_analyzer: 'saleae_logic_analyzer'
 
     power_meter: 'keysight_benchvue_power_analyzer_win_wcf'
+
+    power_analyzer: 'keysight_analyzer'
 
     power_meters:
         - 'nrf_ppk2_device'

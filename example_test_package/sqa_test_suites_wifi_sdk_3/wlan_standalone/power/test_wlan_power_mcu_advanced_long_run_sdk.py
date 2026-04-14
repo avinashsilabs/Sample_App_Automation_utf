@@ -69,21 +69,22 @@ class Power_Device:
     def __init__(self) -> None:
         pass
 
-    def power_measurement(power_device=None, power_meter=None, dtim=None, capture_time=60):
+    def power_measurement(power_device=None, power_meter=None, dtim=None, capture_time=60, power_analyzer=None):
 
         if power_device == "keysight_benchvue_power_analyzer_win_wcf":
-            power_obj = power_number_output(power_meter=power_meter, dtim=dtim, capture_time=capture_time)
+            power_obj = power_number_output(power_meter=power_meter, dtim=dtim, capture_time=capture_time, power_analyzer=power_analyzer)
         elif power_device == "nrf_ppk2_device":
             power_obj = ppk_power_number_output(power_meter=power_meter)
         power_obj.get_power_value()
 
 
 class power_number_output():
-    def __init__(self, power_meter=None, dtim=None, capture_time=60):
+    def __init__(self, power_meter=None, dtim=None, capture_time=60, power_analyzer=None):
         super().__init__()
         self.power_meter = power_meter
         self.dtim = dtim
         self.capture_time = capture_time
+        self.power_analyzer = power_analyzer
 
     def __print_throughput(self, throughput: dict):
         if throughput is not None:
@@ -133,6 +134,9 @@ class power_number_output():
             self.power_meter.interfaces.power_meter.results)
         self.__print_throughput(parsed_result)
         assert parsed_result["Output"] is not None
+        if self.power_analyzer is not None:
+            csvfile = str(parsed_result["Dlg File Name"]).replace(".dlg",".csv")
+            self.power_analyzer.interfaces.power_analyzer.generate_report(csvfile)
 
 
 class ppk_power_number_output():
@@ -250,17 +254,18 @@ class M4_Sleep_Thread(ThreadBase):
 
 class Power_Measurement_Thread(ThreadBase, Power_Device):
 
-    def __init__(self, power_meter=None, capture_time=None):
+    def __init__(self, power_meter=None, capture_time=None, power_analyzer=None):
         super().__init__()
         Power_Device().__init__()
         self.power_meter = power_meter
         self.capture_time = capture_time
+        self.power_analyzer = power_analyzer
 
     def run(self):
         logger().info(f"Starting Power Capture")
         self.power_device = UtfConfig.instance().defaults.get("power_meter", {})
         Power_Device.power_measurement(power_device=self.power_device, power_meter=self.power_meter,
-                                       capture_time=self.capture_time)
+                                       capture_time=self.capture_time, power_analyzer=self.power_analyzer)
 
 
 class StandBy_Associated(ThreadBase):
@@ -268,7 +273,7 @@ class StandBy_Associated(ThreadBase):
                  deep_sleep=False, dtim_aligned_type=1, remote_socket=None, send_data=False, capture_time=None,
                  m4_sleep_time=120000, bcast_filter=True, tcp_ka_time=240, send_ka=False, listen_case=False,
                  net_perf_client=None, wifi_client=None, iteration_count=None, ping_count=None, ble_adv_128=None,
-                 bt_dut=None, ble_client=None):
+                 bt_dut=None, ble_client=None, power_analyzer=None):
         self.dtim = dtim
         self.wifi_dut = wifi_dut
         self.sl_collections = sl_collections
@@ -291,6 +296,7 @@ class StandBy_Associated(ThreadBase):
         self.ble_adv_128 = ble_adv_128
         self.bt_dut = bt_dut
         self.ble_client = ble_client
+        self.power_analyzer = power_analyzer
 
     def run(self):
         dut = UtfConfig.instance().defaults.get("dut", {})
@@ -334,7 +340,7 @@ class StandBy_Associated(ThreadBase):
                                          deep_sleep_without_ret=True)
             else:
                 m4_obj = M4_Sleep_Thread(wifi_dut=self.wifi_dut, m4_sleep_time=self.m4_sleep_time)
-        pm_obj = Power_Measurement_Thread(power_meter=self.power_meter, capture_time=self.capture_time)
+        pm_obj = Power_Measurement_Thread(power_meter=self.power_meter, capture_time=self.capture_time, power_analyzer=self.power_analyzer)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -423,9 +429,10 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.power_analyzer("keysight_analyzer")
 def test_wlan_standby_with_udp_tx_DTIM_3_C223500(firmware_loader, power_meter, wifi_access_point, wifi_dut, net_perf_client,
                                                 sl_collections, dtim, request, performance_data, wifi_client,
-                                                custom_performance_fixture, utf_constants, protocol):
+                                                custom_performance_fixture, utf_constants, protocol, power_analyzer):
     iter_count = utf_constants.get("iter_count")
     ping_count = utf_constants.get("ping_count")
     time_duration = utf_constants.get("time_duration")
@@ -439,7 +446,7 @@ def test_wlan_standby_with_udp_tx_DTIM_3_C223500(firmware_loader, power_meter, w
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                    wifi_client=wifi_client, sl_collections=sl_collections, power_meter=power_meter,
                                    iteration_count=iter_count, net_perf_client=net_perf_client,
-                                   ping_count=ping_count, capture_time=time_duration)
+                                   ping_count=ping_count, capture_time=time_duration, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
 
@@ -488,9 +495,10 @@ def test_wlan_standby_with_udp_tx_DTIM_3_C223500(firmware_loader, power_meter, w
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.power_analyzer("keysight_analyzer")
 def test_wlan_standby_with_udp_tx_DTIM_6_C223501(firmware_loader, power_meter, wifi_access_point, wifi_dut, net_perf_client,
                                                 sl_collections, dtim, request, performance_data, wifi_client,
-                                                custom_performance_fixture, utf_constants, protocol):
+                                                custom_performance_fixture, utf_constants, protocol, power_analyzer):
     iter_count = utf_constants.get("iter_count")
     ping_count = utf_constants.get("ping_count")
     time_duration = utf_constants.get("time_duration")
@@ -504,7 +512,7 @@ def test_wlan_standby_with_udp_tx_DTIM_6_C223501(firmware_loader, power_meter, w
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                    wifi_client=wifi_client, sl_collections=sl_collections, power_meter=power_meter,
                                    iteration_count=iter_count, net_perf_client=net_perf_client,
-                                   ping_count=ping_count, capture_time=time_duration)
+                                   ping_count=ping_count, capture_time=time_duration, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
 
@@ -553,9 +561,10 @@ def test_wlan_standby_with_udp_tx_DTIM_6_C223501(firmware_loader, power_meter, w
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.power_analyzer("keysight_analyzer")
 def test_wlan_standby_with_udp_tx_DTIM_10_C223503(firmware_loader, power_meter, wifi_access_point, wifi_dut, net_perf_client,
                                                 sl_collections, dtim, request, performance_data, wifi_client,
-                                                custom_performance_fixture, utf_constants, protocol):
+                                                custom_performance_fixture, utf_constants, protocol, power_analyzer):
     iter_count = utf_constants.get("iter_count")
     ping_count = utf_constants.get("ping_count")
     time_duration = utf_constants.get("time_duration")
@@ -569,7 +578,7 @@ def test_wlan_standby_with_udp_tx_DTIM_10_C223503(firmware_loader, power_meter, 
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                    wifi_client=wifi_client, sl_collections=sl_collections, power_meter=power_meter,
                                    iteration_count=iter_count, net_perf_client=net_perf_client,
-                                   ping_count=ping_count, capture_time=time_duration)
+                                   ping_count=ping_count, capture_time=time_duration, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
 
@@ -623,10 +632,11 @@ def test_wlan_standby_with_udp_tx_DTIM_10_C223503(firmware_loader, power_meter, 
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.power_analyzer("keysight_analyzer")
 def test_wlan_with_ble_adv_udp_tx_DTIM_10_C223503(firmware_loader, power_meter, wifi_access_point, wifi_dut, bt_dut,
                                                   net_perf_client, sl_collections, dtim, request, performance_data,
                                                   wifi_client, custom_performance_fixture, utf_constants, protocol,
-                                                  ble_client):
+                                                  ble_client, power_analyzer):
     iter_count = utf_constants.get("iter_count")
     ping_count = utf_constants.get("ping_count")
     time_duration = utf_constants.get("time_duration")
@@ -640,7 +650,7 @@ def test_wlan_with_ble_adv_udp_tx_DTIM_10_C223503(firmware_loader, power_meter, 
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, ble_adv_128=True,
                                    wifi_client=wifi_client, sl_collections=sl_collections, power_meter=power_meter,
                                    iteration_count=iter_count, net_perf_client=net_perf_client, bt_dut=bt_dut,
-                                   ping_count=ping_count, capture_time=time_duration, ble_client=ble_client)
+                                   ping_count=ping_count, capture_time=time_duration, ble_client=ble_client, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
 

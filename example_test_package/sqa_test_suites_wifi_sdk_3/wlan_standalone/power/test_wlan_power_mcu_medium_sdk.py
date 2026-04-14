@@ -69,21 +69,22 @@ class Power_Device:
     def __init__(self) -> None:
         pass
         
-    def power_measurement(power_device=None, power_meter=None, dtim=None, capture_time=60):
+    def power_measurement(power_device=None, power_meter=None, dtim=None, capture_time=60, power_analyzer=None):
         
         if power_device == "keysight_benchvue_power_analyzer_win_wcf":
-            power_obj = power_number_output(power_meter=power_meter, dtim=dtim, capture_time=capture_time)
+            power_obj = power_number_output(power_meter=power_meter, dtim=dtim, capture_time=capture_time, power_analyzer=power_analyzer)
         elif power_device == "nrf_ppk2_device":
             power_obj = ppk_power_number_output(power_meter=power_meter)
         power_obj.get_power_value()
 
 
 class power_number_output():
-    def __init__(self, power_meter=None, dtim=None, capture_time=60):
+    def __init__(self, power_meter=None, dtim=None, capture_time=60, power_analyzer=None):
         super().__init__()
         self.power_meter = power_meter
         self.dtim = dtim
         self.capture_time = capture_time
+        self.power_analyzer = power_analyzer
 
     def __print_throughput(self, throughput: dict):
         if throughput is not None:
@@ -129,6 +130,9 @@ class power_number_output():
             self.power_meter.interfaces.power_meter.results)
         self.__print_throughput(parsed_result)
         assert parsed_result["Output"] is not None
+        if self.power_analyzer is not None:
+            csvfile = str(parsed_result["Dlg File Name"]).replace(".dlg",".csv")
+            self.power_analyzer.interfaces.power_analyzer.generate_report(csvfile)
 
 
 class ppk_power_number_output():
@@ -267,20 +271,22 @@ class M4_Sleep_Thread(ThreadBase):
 class Power_Measurement_Thread(ThreadBase, Power_Device):
 
 
-    def __init__(self, power_meter=None, capture_time=60):
+    def __init__(self, power_meter=None, capture_time=60, power_analyzer=None):
         super().__init__()
         Power_Device().__init__()
         self.power_meter = power_meter
         self.capture_time = capture_time
+        self.power_analyzer = power_analyzer
 	
     def run(self):
         logger().info(f"Starting Power Capture")
         self.power_device = UtfConfig.instance().defaults.get("power_meter", {})
-        Power_Device.power_measurement(power_device=self.power_device, power_meter=self.power_meter, capture_time=self.capture_time)
+        Power_Device.power_measurement(power_device=self.power_device, power_meter=self.power_meter, capture_time=self.capture_time, power_analyzer=self.power_analyzer)
 
 class StandBy_Associated(ThreadBase):
     def __init__(self, dtim=None, wifi_dut=None, wifi_access_point=None, sl_collections=None, power_meter=None, deep_sleep=False, dtim_aligned_type=1,
-                  remote_socket=None, send_data=False, capture_time=60, m4_sleep_time=120000, bcast_filter=True, tcp_ka_time=240, send_ka=False, listen_case=False):
+                  remote_socket=None, send_data=False, capture_time=60, m4_sleep_time=120000, bcast_filter=True, tcp_ka_time=240, send_ka=False, listen_case=False,
+                  power_analyzer=None):
         self.dtim = dtim
         self.wifi_dut = wifi_dut
         self.sl_collections = sl_collections
@@ -296,6 +302,7 @@ class StandBy_Associated(ThreadBase):
         self.tcp_ka_time = tcp_ka_time
         self.dtim_aligned_type =dtim_aligned_type
         self.listen_case = listen_case
+        self.power_analyzer = power_analyzer
 
     def run(self):
         dut = UtfConfig.instance().defaults.get("dut", {})
@@ -317,7 +324,7 @@ class StandBy_Associated(ThreadBase):
                 m4_obj = M4_Sleep_Thread(wifi_dut=self.wifi_dut, m4_sleep_time=self.m4_sleep_time, deep_sleep_without_ret=True)
             else:
                 m4_obj = M4_Sleep_Thread(wifi_dut=self.wifi_dut, m4_sleep_time=self.m4_sleep_time)
-            pm_obj = Power_Measurement_Thread(power_meter=self.power_meter, capture_time=self.capture_time)
+        pm_obj = Power_Measurement_Thread(power_meter=self.power_meter, capture_time=self.capture_time, power_analyzer=self.power_analyzer)
 
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -438,14 +445,15 @@ pytestmark = [pytest.mark.firmware_app("test_416K_M4SS_256K")]
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_1_C20638(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_1_C20638(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -493,14 +501,15 @@ def test_wlan_standby_associated_DTIM_1_C20638(firmware_loader, power_meter, wif
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_3_C20631(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_3_C20631(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -548,14 +557,15 @@ def test_wlan_standby_associated_DTIM_3_C20631(firmware_loader, power_meter, wif
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_6_C537577(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_6_C537577(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -603,14 +613,15 @@ def test_wlan_standby_associated_DTIM_6_C537577(firmware_loader, power_meter, wi
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_C20632(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_10_C20632(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -717,14 +728,15 @@ def test_wlan_1mbps_listen_rx_C20641_C20642(firmware_loader, power_meter, wifi_a
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_3_RC_CLK_Enabled_C537578(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_3_RC_CLK_Enabled_C537578(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -772,14 +784,15 @@ def test_wlan_standby_associated_DTIM_3_RC_CLK_Enabled_C537578(firmware_loader, 
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_RC_CLK_Enabled_C537579(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_10_RC_CLK_Enabled_C537579(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -934,14 +947,15 @@ def test_wlan_active_tx_20dBm_C20644(firmware_loader, power_meter, wifi_dut, pow
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1, "dtim": 200,
                                                "beacon_interval": 300})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_sleep_C20639(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, sl_collections, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_sleep_C20639(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, sl_collections, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -1062,14 +1076,15 @@ def test_wlan_power_save_without_ram_ret_C20640(firmware_loader, power_meter, wi
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_1_broadcast_filter_disable_C537581(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_1_broadcast_filter_disable_C537581(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -1117,14 +1132,15 @@ def test_wlan_standby_associated_DTIM_1_broadcast_filter_disable_C537581(firmwar
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_3_broadcast_filter_disable_C537580(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_3_broadcast_filter_disable_C537580(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -1172,14 +1188,15 @@ def test_wlan_standby_associated_DTIM_3_broadcast_filter_disable_C537580(firmwar
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_6_broadcast_filter_disable_C537583(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_6_broadcast_filter_disable_C537583(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -1227,14 +1244,15 @@ def test_wlan_standby_associated_DTIM_6_broadcast_filter_disable_C537583(firmwar
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_broadcast_filter_disable_C537582(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_10_broadcast_filter_disable_C537582(firmware_loader, power_meter, wifi_access_point, wifi_dut, sl_collections, dtim, request, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
 
     opn = UtfConfig.instance().defaults.get("opn", {})
     build_number = UtfConfig.instance().defaults.get("build_number", {})
-    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False)
+    stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections, power_meter=power_meter, bcast_filter=False, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -1283,7 +1301,8 @@ def test_wlan_standby_associated_DTIM_10_broadcast_filter_disable_C537582(firmwa
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, wifi_sniffer, sl_collections, request, remote_socket, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, wifi_access_point, wifi_dut, dtim, wifi_sniffer, sl_collections, request, remote_socket, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
@@ -1294,7 +1313,7 @@ def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, w
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name_capture}")
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,power_meter=power_meter, dtim_aligned_type=0, 
-                                 deep_sleep=False, remote_socket=remote_socket, send_ka=True, capture_time=90, m4_sleep_time=120000, tcp_ka_time=55)
+                                 deep_sleep=False, remote_socket=remote_socket, send_ka=True, capture_time=90, m4_sleep_time=120000, tcp_ka_time=55, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
@@ -1343,7 +1362,8 @@ def test_wlan_standby_associated_LI_Novus_C69407(firmware_loader, power_meter, w
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C564139(firmware_loader, power_meter, wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, dtim, request, remote_socket, performance_data, custom_performance_fixture):
+@pytest.mark.power_analyzer("keysight_analyzer")
+def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C564139(firmware_loader, power_meter, wifi_access_point, wifi_dut, wifi_sniffer, sl_collections, dtim, request, remote_socket, performance_data, custom_performance_fixture, power_analyzer):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
     test_name = obtained_test_name.split('[')[0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
@@ -1354,7 +1374,7 @@ def test_wlan_standby_associated_DTIM_10_TCP_KA_240s_C564139(firmware_loader, po
     wifi_sniffer.interfaces.capture.configure_interface(channel=1)
     wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name_capture}")
     stdby_obj=StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, sl_collections=sl_collections,power_meter=power_meter, 
-                                 deep_sleep=False, remote_socket=remote_socket, send_ka=True, capture_time=300, m4_sleep_time=600000, tcp_ka_time=240)
+                                 deep_sleep=False, remote_socket=remote_socket, send_ka=True, capture_time=300, m4_sleep_time=600000, tcp_ka_time=240, power_analyzer=power_analyzer)
     stdby_obj.start()
     stdby_obj.wait_for_exit()
     
