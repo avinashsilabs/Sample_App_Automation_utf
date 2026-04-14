@@ -80,7 +80,8 @@ class BLEFunc(ThreadBase):
             self.ble_sniffer.interfaces.sniffer.init_sniffer()
             logger().info("sniffer capture started")
             self.ble_sniffer.interfaces.sniffer.start_capture(capture_file=self.capture_filename)
-        logger().info("Initiate ble service in DUT")
+            time.sleep(10)
+            logger().info("Sniffer is ready for capture")
         logger().info("Initiate ble service in DUT")
         self.ble_dut_address = self.wifi_dut.interfaces.wifi.ble_start(capability=self.dut_capability,
                                                                        set_smp=0)
@@ -131,27 +132,33 @@ class BLEFunc(ThreadBase):
         self.ble_client.interfaces.bluetooth.get_devices()
         if self.passkey_entry_on_dut_ref:
             self.ble_client.interfaces.bluetooth.connect(dev_addr=self.ble_dut_address)
-            self.ble_client.interfaces.bluetooth.set_pin(pin_code="123456")
-            logger().info("Passkey has set successfully in client")
-            self.wifi_dut.interfaces.wifi.ble_set_smp_passkey(remote_dev_addr=self.ble_client_address,
-                                                              smp_passkey="123456")
-            logger().info("passkey has set successfully in DUT")
+            time.sleep(5)
+            logger().info("BLE connection initiated, starting pairing...")
 
             device_path = mac_address_to_dbus_bt_path(
                 self.ble_client.interfaces.bluetooth.adapter_path, mac_address=self.ble_dut_address
             )
             def pair_reply():
-                pass
+                logger().info("Pairing completed successfully")
             def pair_error(error):
-                pass
-            self.ble_client.interfaces.bluetooth._dev_manager.pair(
-                bus=self.ble_client.interfaces.bluetooth.bus,
-                device_path=device_path,
-                reply_handler=pair_reply,
-                error_handler=pair_error,
-                timeout=60 * 1000,
-            )
+                logger().error(f"Pairing error: {error}")
+            def pair():
+                self.ble_client.interfaces.bluetooth._dev_manager.pair(
+                    bus=self.ble_client.interfaces.bluetooth.bus,
+                    device_path=device_path,
+                    reply_handler=pair_reply,
+                    error_handler=pair_error,
+                    timeout=60 * 1000,
+                )
+            t = threading.Thread(target=pair)
+            t.start()
             time.sleep(10)
+            self.ble_client.interfaces.bluetooth.set_pin(pin_code="123456")
+            logger().info("Passkey has set successfully in client")
+            self.wifi_dut.interfaces.wifi.ble_set_smp_passkey(remote_dev_addr=self.ble_client_address,
+                                                              smp_passkey="123456")
+            logger().info("passkey has set successfully in DUT")
+            time.sleep(30)
             logger().info("checking the connection state...")
             state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
             state_int = int(state) if state.isdigit() else -1
