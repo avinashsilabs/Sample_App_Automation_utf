@@ -1214,9 +1214,10 @@ class WLanThread(ThreadBase):
                         capture_file=f"NT_based_connection_iteration_{i}"
                     )
                     for _ in range(0, 1):
-                        self.scan_list = self.wifi_dut.interfaces.wifi.scan(self.wifi_access_point.interfaces.wifi.guest_networks[
-                                                           0
-                                                       ]["ssid"], retries=3, timeout=25)
+                        self.scan_list = self.wifi_dut.interfaces.wifi.scan(
+                            self.wifi_access_point.interfaces.wifi.guest_networks[
+                                0
+                            ]["ssid"], retries=3, timeout=25)
                     self.wifi_dut.interfaces.wifi.join(
                         ssid=vap_list[0],
                         security=self.wifi_access_point.interfaces.wifi.guest_networks[
