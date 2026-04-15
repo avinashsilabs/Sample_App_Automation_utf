@@ -1713,3 +1713,198 @@ def test_remote_multi_socket_rpc(
         remote_socket_factory.interfaces.socket.close_all()
         remote_socket_factory.interfaces.socket.sockets = []
         wifi_dut.interfaces.wifi.stop_ap()
+
+
+def test_sdk_server(sdk_server, remote_socket):
+    sdk_server.interfaces.server.start_server()
+    time.sleep(5)
+    remote_socket.interfaces.socket.bind_socket(ip=None, port=5002)
+    for _ in range(60):
+        time.sleep(1)
+        logger().info("Do Some Thing")
+    sdk_server.interfaces.server.stop_server()
+
+
+def test_wolfssl_server(wolfssl, logger):
+    # Start the wolfssl server
+    wolfssl.interfaces.server.start()
+    time.sleep(1)
+    assert wolfssl.interfaces.server.is_running() is True
+    messages = wolfssl.interfaces.server.get_messages()
+    assert len(messages) > 1
+    logger.info(messages)
+
+    wolfssl.interfaces.client.start()
+    time.sleep(1)
+    # Client will disconnect automatically after connecting to server and transferring data.This will ensure client is able to connect to server
+    assert wolfssl.interfaces.client.is_running() is False
+    messages = wolfssl.interfaces.client.get_messages()
+    assert len(messages) > 1
+    logger.info(messages)
+
+    assert wolfssl.interfaces.server.is_running() is True
+    messages = wolfssl.interfaces.server.get_messages()
+    assert len(messages) > 1
+    logger.info(messages)
+
+    # Stop the wolfssl server
+    wolfssl.interfaces.server.stop()
+    time.sleep(1)
+    assert wolfssl.interfaces.server.is_running() is False
+
+def test_service_discovery(service_discovery):
+    status = service_discovery.interfaces.sd.get_status()
+    logger().info(f"Status {status}")
+    time.sleep(5)
+    service_discovery.interfaces.sd.start_discovering_services()
+    for _ in range(120):
+        logger().info("Do Some Thing")
+        time.sleep(1)
+    service_discovery.interfaces.sd.stop_discovering_services()
+    time.sleep(10)
+
+def test_service_advertisement(service_advertisement):
+    status = service_advertisement.interfaces.sa.get_status()
+    logger().info(f"Status {status}")
+    time.sleep(5)
+    service_advertisement.interfaces.sa.start_advertising_services()
+    for _ in range(120):
+        logger().info("Do Some Thing")
+        time.sleep(1)
+    service_advertisement.interfaces.sa.stop_advertising_services()
+    time.sleep(10)
+
+
+@pytest.mark.start_state("wifi_dut", device="reset", wifi="init")
+@pytest.mark.config(
+    "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
+)
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation,
+        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz
+        | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID
+        | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
+        "bt_features": 0,
+        "ble_features": 0,
+        "band": 0,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+    },
+)
+# This is to ensure that BLE client is running while executing iperf TCP TX test case and collecting BLE logs simultaneously to find any impact on throughput if any when BLE is active in the background for Co-ex scenario
+def test_simple_iperf_dut_as_client_tcp_tx_with_ble_client(
+    wifi_sniffer,
+    wifi_access_point,
+    wifi_client,
+    wifi_dut,
+    net_perf_client,
+    protocol,
+    utf_constants,
+    request,
+    sl_collections,
+    ble_client,
+):
+    """
+    Simple iperf TCP TX throughput test:
+    - net_perf_client runs as SERVER (listening)
+    - DUT acts as CLIENT and sends data (TX)
+
+    This follows the exact pattern:
+    1. init_server on net_perf_client
+    2. Start the server
+    3. DUT calls iperf to send data
+    4. Process and validate throughput
+    """
+    ping_count = utf_constants.get("ping_count")
+    iter_count = utf_constants.get("iter_count")
+    testcase = request.node.name
+
+    # Start sniffer
+    logger().info("Starting sniffer capture")
+    # wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+    # wifi_sniffer.interfaces.capture.start_capture(capture_file=testcase)
+
+    try:
+        logger().info("Starting BLE client to collect BLE logs...")
+        with BleLogs(
+                start_collecting_logs=True,
+                bt_log_path=f"reports/test_ble_logs_{int(time.time())}.txt"
+        ) as bt_logs:
+            bt_client_address = ble_client.interfaces.bluetooth.start_smp_adv(None)
+            logger().info("BLE Started")
+        time.sleep(30)
+        # Join WiFi network
+        dut_addr = sl_collections.join_to_wifi_network(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            associated=wifi_dut.interfaces.wifi.associated,
+            retry_count=3,
+            ping_after_power_save=False,
+            ping_count=ping_count,
+            power_save=False,
+        )
+
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.switch_host_frequency()
+        time.sleep(2)
+
+        # wifi_client.interfaces.wifi.join_ap(wifi_access_point)
+        host_ip = wifi_client.interfaces.wifi.get_ip_address()
+        #host_ip = "192.168.150.3"
+        logger().info(f"Remote device IP: {host_ip}")
+
+        # TCP TX parameters (matching test_case_no=20740)
+        transfer_type = 1  # TX
+        protocol_num = 6  # TCP
+        throughput_type = 1
+        size = 1460
+        timeout = 40
+
+        # Run test iterations
+        for i in range(iter_count):
+            logger().info(f"Starting iteration {i+1}/{iter_count}")
+
+            # Initialize net_perf_client as SERVER
+            net_perf_client.interfaces.net_perf.init_server(
+                host_ip=host_ip, device_ip=dut_addr["device_ip"], protocol=protocol
+            )
+            net_perf_client.interfaces.net_perf.start()
+
+            # DUT sends data (CLIENT role)
+            logger().info("Sending data from DUT")
+            wifi_dut.interfaces.wifi.iperf(
+                family=2,
+                transfer_type=transfer_type,
+                protocol=protocol_num,
+                local_port=net_perf_client.interfaces.net_perf.get_server_port(),
+                local_ip=dut_addr["device_ip"],
+                remote_ip=host_ip,
+                remote_port=net_perf_client.interfaces.net_perf.get_server_port(),
+                size=size,
+                ttl=30,
+                throughput_type=throughput_type,
+                qos=0,
+                timeout=timeout + 2,
+            )
+
+            # Get and validate throughput
+            tp = net_perf_client.interfaces.net_perf.process_output()
+            assert tp is not None, "Throughput not found"
+            logger().info(f"Data transfer successful - Throughput: {tp}")
+            time.sleep(5)
+
+        # Cleanup
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+
+    finally:
+        # wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(2)
