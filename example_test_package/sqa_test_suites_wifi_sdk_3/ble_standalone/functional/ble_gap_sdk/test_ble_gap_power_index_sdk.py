@@ -101,9 +101,11 @@ class MasterSlaveConnection:
         self.ble_dut.interfaces.bluetooth.ble_stop_scanning()
         time.sleep(2)
         logger().info(f"DUT initiating BLE connection with ble_client device")
-        self.ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=ble_client_address)
+        self.ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=ble_client_address,
+                                                      ble_scan_interval=80, ble_scan_window=80,
+                                                      ble_conn_interval_min=200, ble_conn_interval_max=200,
+                                                      ble_supervision_timeout=3000, timeout=120)
         time.sleep(180)
-
         logger().info("Check connection status of BLE")
         state = self.ble_dut.interfaces.wifi.ble_get_device_state()
         state_int = int(state) if state.isdigit() else -1
