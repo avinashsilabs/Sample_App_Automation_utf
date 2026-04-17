@@ -105,8 +105,11 @@ class WifiJoinThread(ThreadBase):
         time.sleep(2)
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
-        set_att_count = random.randint(10, 70)
-        for set_db_value in range(set_att_count):
+        set_att_min = self.utf_constants.get("set_att_random_min", 5)
+        set_att_max = self.utf_constants.get("set_att_random_max", 70)
+        set_att_count = self.utf_constants.get("set_att_count", 5)
+        random_db_values = random.sample(range(set_att_min, set_att_max + 1), set_att_count)
+        for set_db_value in random_db_values:
             self.wifi_dut.interfaces.wifi.set_attenuator(self.rf_attenuator, att_channel=1, db_value=set_db_value)
             time.sleep(10)
             self.remote_wiseconnect3.interfaces.wifi.poll_signal_strength()

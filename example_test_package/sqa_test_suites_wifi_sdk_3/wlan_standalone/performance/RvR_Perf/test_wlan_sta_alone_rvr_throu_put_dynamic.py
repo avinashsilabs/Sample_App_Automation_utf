@@ -105,8 +105,10 @@ class WifiJoinThread(ThreadBase):
         time.sleep(2)
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
-        set_att_count = self.utf_constants.get("set_att_count")
-        for set_db_value in range(set_att_count):
+        set_att_start = self.utf_constants.get("set_att_start", 0)
+        set_att_end = self.utf_constants.get("set_att_end")
+        logger().info(f"Dynamic values selection")
+        for set_db_value in range(set_att_start, set_att_end):
             self.wifi_dut.interfaces.wifi.set_attenuator(self.rf_attenuator, att_channel=1, db_value=set_db_value)
             time.sleep(10)
             self.remote_wiseconnect3.interfaces.wifi.poll_signal_strength()
