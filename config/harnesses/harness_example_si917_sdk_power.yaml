@@ -1533,6 +1533,14 @@ constants:
         value: 60
     set_att_step:
         value: 1
+    set_att_end:
+        value: 70
+    set_att_min:
+        value: 1
+    set_att_max:
+        value: 65
+    set_att_count:
+        value: 2
     # performance_file_root_dir:
     #     value: 'power_meter'
 
