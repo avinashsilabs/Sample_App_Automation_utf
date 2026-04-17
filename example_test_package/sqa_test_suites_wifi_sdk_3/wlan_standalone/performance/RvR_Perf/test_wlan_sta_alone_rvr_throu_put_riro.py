@@ -105,12 +105,18 @@ class WifiJoinThread(ThreadBase):
         time.sleep(2)
         host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
         logger().info(f"Remote device ip :{host_ip}")
-        set_att_count = self.utf_constants.get("set_att_count")
-        for set_db_value in range(set_att_count):
+        set_att_start = self.utf_constants.get("set_att_riro_start", 0)
+        set_att_peak = self.utf_constants.get("set_att_riro_peak")
+        set_att_step = self.utf_constants.get("set_att_riro_step", 1)
+        # Ramp In: start → peak
+        ramp_in = range(set_att_start, set_att_peak + 1, set_att_step)
+        # Ramp Out: peak → start
+        ramp_out = range(set_att_peak, set_att_start - 1, -set_att_step)
+        for set_db_value in list(ramp_in) + list(ramp_out):
             self.wifi_dut.interfaces.wifi.set_attenuator(self.rf_attenuator, att_channel=1, db_value=set_db_value)
-            time.sleep(10)
-            self.remote_wiseconnect3.interfaces.wifi.poll_signal_strength()
             time.sleep(5)
+            self.remote_wiseconnect3.interfaces.wifi.poll_signal_strength()
+            time.sleep(2)
             if self.data_transfer:
                 if self.traffic_type == "TX":
                         # starting iperf

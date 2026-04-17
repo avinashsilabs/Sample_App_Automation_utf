@@ -1527,6 +1527,12 @@ constants:
         value:  'secured_wifi_station_ping_soc.rps'
     m4_rps_plain:
         value: 'wifi_station_ping_soc.rps'
+    set_att_start:
+        value: 1
+    set_att_peak:
+        value: 60
+    set_att_step:
+        value: 1
     # performance_file_root_dir:
     #     value: 'power_meter'
 
