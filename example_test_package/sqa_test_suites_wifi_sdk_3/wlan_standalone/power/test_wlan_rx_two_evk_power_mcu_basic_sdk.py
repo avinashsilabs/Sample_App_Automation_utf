@@ -233,12 +233,8 @@ class Active_RX_DUT_1(ThreadBase):
         time.sleep(15)
 
 
-# ********************************************************************************************************************
-
-dut = UtfConfig.instance().defaults.get("dut", {})
-logger().info(f"dut: {dut}")
-
-# ********************************************************************************************************************
+# Do not call UtfConfig.instance() at module import time: pytest loads this file
+# before global harness config is applied (UtfConfig.apply_as_global_config).
 
 pytestmark = [pytest.mark.firmware_app("test_480K_M4SS_192K")]
 

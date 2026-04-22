@@ -212,6 +212,7 @@ def test_wifi_sdk_socket_select_tcp_TC19325(wifi_sniffer, wifi_dut, wifi_access_
     """
     Verify Data receive functionality after checking the availability of the data on the socket ID using select function over TCP client
     """
+    sock = None
     try:
         capture_filename = "test_wifi_sdk_socket_select_tcp_TC19325"
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -244,7 +245,8 @@ def test_wifi_sdk_socket_select_tcp_TC19325(wifi_sniffer, wifi_dut, wifi_access_
     finally:
         wifi_sniffer.interfaces.capture.stop_capture()
         remote_socket.interfaces.socket.stop()
-        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+        if sock is not None:
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
         wifi_dut.interfaces.wifi.leave()
 
 
@@ -348,6 +350,7 @@ def test_wifi_sdk_socket_select_dut_tcp_server_TC19326(
     """
     Verify Data receive functionality after checking the availability of the data on the socket ID using select function over TCP server
     """
+    sock = None
     try:
         capture_filename = "test_wifi_sdk_socket_select_dut_tcp_server_TC19326"
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -390,7 +393,8 @@ def test_wifi_sdk_socket_select_dut_tcp_server_TC19326(
     finally:
         wifi_sniffer.interfaces.capture.stop_capture()
         remote_socket_factory.interfaces.socket.close_all()
-        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+        if sock is not None:
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
         wifi_dut.interfaces.wifi.leave()
 
 
@@ -1767,6 +1771,7 @@ def test_wifi_sdk_socket_select_dut_tcp_server_timeout0_TC538014(
     """
     Verify socket select with timeout value 0.
     """
+    sock = None
     try:
         capture_filename = "test_wifi_sdk_socket_select_dut_tcp_server_timeout0_TC538014_1"
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1811,7 +1816,8 @@ def test_wifi_sdk_socket_select_dut_tcp_server_timeout0_TC538014(
     finally:
         wifi_sniffer.interfaces.capture.stop_capture()
         remote_socket_factory.interfaces.socket.close_all()
-        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
+        if sock is not None:
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=sock)
         wifi_dut.interfaces.wifi.leave()
 
 
@@ -2436,6 +2442,7 @@ def test_wifi_sdk_verify_socket_select_functionality_ssl_tx_rx_with_16k_length_c
     ssl_server,
     request,
 ):
+    socket_id = None
     try:
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -2531,4 +2538,5 @@ def test_wifi_sdk_verify_socket_select_functionality_ssl_tx_rx_with_16k_length_c
 
     finally:
         ssl_server.interfaces.ssl.stop_server()
-        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket_id)
+        if socket_id is not None:
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket_id)

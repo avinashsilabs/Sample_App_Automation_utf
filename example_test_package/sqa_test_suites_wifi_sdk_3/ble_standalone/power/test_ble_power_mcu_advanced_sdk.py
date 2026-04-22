@@ -201,12 +201,8 @@ class Power_Measurement_Thread(ThreadBase, Power_Device):
         Power_Device.power_measurement(power_device=self.power_device, power_meter=self.power_meter, capture_time=self.capture_time)
 
 
-# ********************************************************************************************************************
-
-dut = UtfConfig.instance().defaults.get("dut", {})
-logger().info(f"dut: {dut}")
-
-# ********************************************************************************************************************
+# Do not call UtfConfig.instance() at module import time: pytest loads this file
+# before global harness config is applied (UtfConfig.apply_as_global_config).
 
 pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]   
 
