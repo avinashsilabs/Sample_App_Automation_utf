@@ -56,6 +56,32 @@ true);xhr.setRequestHeader('Content-Type', 'application/json');var id = document
 + securityType);var data = {id: id,password: password,securityType: securityType};xhr.send(JSON.stringify(
 data));});</script></body></html>'''
 
+webpage2 = '''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" 
+content="width=device-width, initial-scale=1.0"><title>Login Page</title><style>body {font-family: Arial, 
+sans-serif;margin: 0;padding: 0;display: flex;justify-content: center;align-items: center;height: 
+100vh;background-color: #f0f0f0;}#connect-form {text-align: center;padding: 20px;border: 1px solid 
+#ccc;border-radius: 8px;background-color: #fff;}input[type="text"],input[type="password"] {width: 100%;padding: 
+10px;margin: 10px 0;border-radius: 5px;border: 1px solid #ccc;box-sizing: border-box;}input[type="submit"] {width: 
+100%;padding: 10px;margin: 10px 0;border: none;border-radius: 5px;background-color: #007bff;color: #fff;cursor: 
+pointer;}input[type="submit"]:hover {background-color: #0056b3;}#heading {margin-bottom: 20px;width: 100%;}select[
+name="security-type"] {width: 100%;padding: 10px;margin: 10px 0;border-radius: 5px;border: 1px solid #ccc;box-sizing: 
+border-box;}.form-row {display: flex;justify-content: space-between;align-items: center;margin: 10px 0;}.form-row 
+label {width: 100px;text-align: right;margin-right: 10px;white-space: nowrap;}.form-row input,.form-row select {flex: 
+2;}</style></head><body><div id="connect-form"><h3 id="heading">Silicon Labs</h3><form id="connect-form" 
+action="/connect" method="post"><div class="form-row"><label for="ssid">SSID:</label><input type="text" id="ssid" 
+name="ssid" placeholder="SSID" required></div><div class="form-row"><label for="password">Password:</label><input 
+type="text" id="password" name="password" placeholder="Password" required></div><div class="form-row"><label 
+for="security-type">Security Type:</label><select id="security-type" name="security-type"><option 
+value="Open">Open</option><option value="wpa3_transition">wpa3_transition</option><option value=
+"WPA2">WPA2</option></select></div><input type="submit" 
+value="Connect"></form></div><script>document.getElementById('connect-form').addEventListener('submit', 
+function (event) {event.preventDefault();var xhr = new XMLHttpRequest();xhr.open('POST', '/connect', 
+true);xhr.setRequestHeader('Content-Type', 'application/json');var id = document.getElementsByName('ssid')[
+0].value;var password = document.getElementsByName('password')[0].value;var securityType = document.getElementById(
+'security-type').value;console.log('SSID: ' + id);console.log('Password: ' + password);console.log('Security Type: ' 
++ securityType);var data = {id: id,password: password,securityType: securityType};xhr.send(JSON.stringify(
+data));});</script></body></html>'''
+
 
 def logger():
     return get_logger(__name__)
@@ -71,7 +97,7 @@ class ProvisioningFunctionality(ThreadBase):
                  write_handle=None, wifi_access_points=None, device_ip=None, device_ip_two=None,
                  dut_mac_address_two=None, dut_mac_address=None, set_smp=None, ssid=None, security=None, psk=None,
                  ap_channel=None, wifi_client=None, wiseconnect_web=None, result=None, wifi_clients=None,
-                 net_perf_client=None, protocol=None, traffic=None, qos=None, sniffer_filter=None):
+                 net_perf_client=None, protocol=None, traffic=None, qos=None, sniffer_filter=None, webpage2=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.ble_client = ble_client
@@ -116,6 +142,7 @@ class ProvisioningFunctionality(ThreadBase):
         self.qos = qos
         self.sniffer_filter = sniffer_filter
         self.no_of_clients = 1
+        self.webpage2 = webpage2
 
         logger().info("******************** initializing ble in dut ********************")
         self.bt_dut_address = self.ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=self.set_smp)
@@ -185,7 +212,7 @@ class ProvisioningFunctionality(ThreadBase):
             self.wifi_clients[i].interfaces.wifi.config['interface'] = "wlan0"
             logger().info(f"RASPI-STA{i + 1}:'{self.wifi_clients[i].name}' is joining to DUT-AP")
 
-            if self.test_case == 887643:
+            if self.test_case == 913402:
                 logger().info("******* joining client to DUT-AP in OPEN security ********")
                 self.wifi_clients[i].interfaces.wifi.join(security=SecurityMode.Open, scan_ssid=0)
 
@@ -211,7 +238,8 @@ class ProvisioningFunctionality(ThreadBase):
                     # ProvisioningFunctionality.ip_dict[f'client{i + 1}_ip'] = self.wifi_clients[i].interfaces.wifi.get_ip_address()
                     # logger().info(f"Client{i + 1}_ip: {ProvisioningFunctionality.ip_dict[f'client{i + 1}_ip']}")
                     rc, stdout, stderr = self.wifi_clients[i].interfaces.wifi.shell.execute(
-                        f"sudo ping -c {ping_count} {'192.168.100.77'}")
+                        # f"sudo ping -c {ping_count} {'192.168.100.77'}")
+                        f"sudo ping -c {ping_count} -I wlan0 {'192.168.100.76'}")
                     assert rc == 0, f"RASPI-STA{i + 1} failed to ping DUT"
                     logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
                     connected = True
@@ -223,7 +251,12 @@ class ProvisioningFunctionality(ThreadBase):
         # return ProvisioningFunctionality.ip_dict
 
     def http_server_provisioning(self):
-        self.wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        if self.test_case == 913402:
+            self.wifi_dut.interfaces.wifi.http_server_init(
+                http_port=80, handlers_count=6, send_large_data=1, data=webpage2)
+        else:
+            self.wifi_dut.interfaces.wifi.http_server_init(
+                http_port=80, handlers_count=6, send_large_data=1, data=webpage)
         self.wifi_dut.interfaces.wifi.http_server_start()
         time.sleep(30)
         # ProvisioningFunctionality.ip_dict['dut_ip'] = self.connect_clients_to_dut_as_ap()
@@ -245,8 +278,9 @@ class ProvisioningFunctionality(ThreadBase):
             logger().info(f"received cred on dutap: {self.result}")
         assert self.result, "Unable to fetch 3rd party AP details from DUT"
         time.sleep(5)
-        self.wifi_dut.interfaces.wifi.http_server_stop()
         self.wifi_dut.interfaces.wifi.http_server_deinit()
+        self.wifi_dut.interfaces.wifi.http_server_stop()
+
 
     def ap_mode_start(self):
         """
@@ -325,7 +359,6 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0, HiddenSSID=0):
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-@pytest.mark.test_src_map_id('C913401')
 def test_wifi_sdk_ap_provisioning_wpa2_security_c913401(
         sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter, ap_channel):
@@ -358,9 +391,10 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_c913401(
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
+            coex_mode=Si91xCoexMode.WLANOnly,
             features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
             tcpip_features=Si91xTCPIPFeatureBitMap.Default)
-        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=True)
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect()
 
@@ -371,7 +405,7 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_c913401(
         sl_collections.exception_handling(wifi_dut, error)
 
 
-@pytest.mark.skip("OPEN security issue - 0x10019")
+
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -384,10 +418,9 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_c913401(
 )
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode, OpenMode=Si91xFeatureBitMap.OpenMode)
 @pytest.mark.parametrize("ap_channel", [11])
-@pytest.mark.config('wifi_access_point', wifi={"ssid": 'sharma_test', "security": 'OPEN', "passphrase": '123456789',
+@pytest.mark.config('wifi_access_point', wifi={"ssid": 'sharma_test12', "security": 'OPEN', "passphrase": '123456789',
                                                "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-@pytest.mark.test_src_map_id('C913402')
 def test_wifi_sdk_ap_provisioning_open_security_c913402(
         sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
@@ -408,27 +441,30 @@ def test_wifi_sdk_ap_provisioning_open_security_c913402(
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
             ssid='sharma_test', security='open', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
             wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter, adv_int=480,
-            test_case=887643)
+            test_case=913402, webpage2=webpage2)
 
         ble_obj.ap_mode_start()
         time.sleep(10)
         ble_obj.start()
         ble_obj.wait_for_exit()
         ble_obj.firmware_version()
+        time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
         ble_obj.sl_net_deinit()
-
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient,
+            coex_mode=Si91xCoexMode.WLANOnly,
             features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
             tcpip_features=Si91xTCPIPFeatureBitMap.Default)
-        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.init(config_required=False)
+        time.sleep(10)
         wifi_dut.interfaces.wifi.scan()
         ble_obj.wifi_connect()
-
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
+        wifi_dut.interfaces.wifi.leave()
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
