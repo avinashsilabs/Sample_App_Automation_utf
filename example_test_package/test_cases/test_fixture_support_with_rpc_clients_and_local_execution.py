@@ -1,3 +1,4 @@
+from socket import gethostbyname
 import os
 import string
 import time
@@ -34,6 +35,8 @@ from utf_wiseconnect_3.tests.devices.si91x import (
 from utf.utils import print_dict
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from threading import Thread
+from utf.interfaces.http.server import WebServerInterface
+from utf.utils.iperf.iperf_utils import ping
 
 
 def logger():
@@ -44,6 +47,10 @@ def __print_throughput(throughput: dict):
     if throughput is not None:
         print_dict("##     ", throughput)
 
+def function_check(server: WebServerInterface):
+    port = server.port
+    host_name =  gethostbyname(server.hostname_or_ip_address)
+    logger().info(f"HTTP Server is running on {host_name}:{port}")
 
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.http_client("raspi_http_client")
@@ -55,6 +62,7 @@ def test_http_server_and_linux_client_post(http_server, http_client, logger):
     status, resp_content = http_client.interfaces.http.http_request(
         http_server.interfaces.http.get_server_config(), method, index_path, content
     )
+    function_check(http_server.interfaces.http)
     logger.info(status)
     logger.info(resp_content)
 
@@ -96,12 +104,10 @@ def test_websocket_server_and_linux_client(http_server, http_client, logger):
         http_server.interfaces.http.get_server_config(), "/websocket"
     )
     time.sleep(0.1)
-    is_client_connected = http_server.interfaces.http.get_ws_handler_client_connected
-    assert is_client_connected
+    assert http_server.interfaces.http.get_ws_handler_client_connected
     http_client.interfaces.http.websocket_send("Howdy!")
     time.sleep(0.1)
-    is_message_received = http_server.interfaces.http.get_ws_handler_message_received
-    assert is_message_received == "Howdy!"
+    assert http_server.interfaces.http.get_ws_handler_message_received == "Howdy!"
     http_server.interfaces.http.send_message_to_websocket_clients("Hello!")
     time.sleep(0.1)
     data = http_client.interfaces.http.websocket_receive()
@@ -197,9 +203,8 @@ def test_mqtt_server_and_linux_client(
         if len(msgs) == 1:
             break
     assert len(msgs) == 1
-    msg = ensure_mqtt_message(msgs[0])
-    assert msg.topic == "my test topic"
-    assert msg.payload == b"12345"
+    assert  ensure_mqtt_message(msgs[0]).topic == "my test topic"
+    assert  ensure_mqtt_message(msgs[0]).payload == b"12345"
 
 
 @pytest.mark.mqtt_server("raspi_mosquitto")
@@ -234,9 +239,8 @@ def test_mqtt_server_and_linux_client_with_local_mqtt_client(
         if len(msgs) == 1:
             break
     assert len(msgs) == 1
-    msg = ensure_mqtt_message(msgs[0])
-    assert msg.topic == "my test topic"
-    assert msg.payload == b"12345"
+    assert ensure_mqtt_message(msgs[0]).topic == "my test topic"
+    assert ensure_mqtt_message(msgs[0]).payload == b"12345"
 
 
 @pytest.mark.config(
@@ -1211,6 +1215,13 @@ def test_sniffer_icmp_inspection(
     )
 
 
+def test_ping(wifi_client):
+    host_name =  wifi_client.interfaces.wifi.get_ip_address()
+    logger().info(f"host Ip {host_name}")
+    ping(host_name, count=4, size=None, dns_resolve=False)
+    logger().info("Ping successful")
+
+    
 # NOTE : AZURE AND AWS TESTCASES MIGHT NOT WORK PROPERLY OVER VPN CONNECTIONS
 @pytest.mark.test_src_map_id('TC8001075930')
 def test_azure_c2d_and_d2c(azure_iot_client, logger):
@@ -1908,3 +1919,22 @@ def test_simple_iperf_dut_as_client_tcp_tx_with_ble_client(
     finally:
         # wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
+        
+# Standalone attenuator set and readback test — no wifi_dut required
+@pytest.mark.rf_attenuator('50pa500_attenuator')
+def test_attenuator_set_and_get(rf_attenuator):
+    try:
+        att_channel = 2
+        db_value = 40
+        logger().info(f"Resetting attenuator")
+        rf_attenuator.interfaces.attenuator.reset()
+        logger().info(f"Setting attenuator channel {att_channel} to {db_value}dB")
+        rf_attenuator.interfaces.attenuator.set_attenuator(att_channel, db_value)
+        readback = rf_attenuator.interfaces.attenuator.get_attenuator(att_channel)
+        logger().info(f"Readback of attenuator channel {att_channel}: {readback}dB")
+        assert readback == db_value, f"Attenuator readback mismatch: set {db_value}dB but got {readback}dB"
+        logger().info("Attenuator set and get test passed successfully")
+    except Exception as e:
+        logger().info(f"\n got exception: {e}")
+        assert False, f"Attenuator test failed: {e}"
+ 
