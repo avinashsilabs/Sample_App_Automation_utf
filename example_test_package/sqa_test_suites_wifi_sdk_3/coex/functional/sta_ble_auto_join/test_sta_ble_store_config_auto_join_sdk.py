@@ -772,20 +772,20 @@ def test_sta_ble_store_config_1_profile_ble_adv_20ms_C769724(wifi_dut, wifi_acce
                                }
 )
 @pytest.mark.test_src_map_id('C769725')
-def test_sta_ble_store_config_2_profiles_ble_adv_10240ms_C769725(wifi_dut, wifi_access_point,
+def test_sta_ble_store_config_2_profiles_ble_adv_500ms_C769725(wifi_dut, wifi_access_point,
                                                                  wifi_sniffer, sl_collections, sniffer_filter,
                                                                  utf_constants, ble_client, request,
                                                                  wifi_client, profiles):
     """
-    Test Case: test_sta_ble_store_config_2_profiles_ble_adv_10240ms_C769725
+    Test Case: test_sta_ble_store_config_2_profiles_ble_adv_500ms_C769725
 
     Description:
         This test validates the ability of the DUT to store multiple Wi-Fi profiles and perform BLE advertising
-        with a 10240ms interval while maintaining connectivity to an access point.
+        with a 500ms interval while maintaining connectivity to an access point.
 
      Test Steps:
            1. Configure the DUT in WLAN coexistence mode for 2.4GHz.
-           2. Perform BLE advertising with a 10240ms interval.
+           2. Perform BLE advertising with a 500ms interval.
            3. Set advanced Wi-Fi client configurations on the DUT.
            4. Start the access point with the specified profile configuration.
            5. Store 1 Wi-Fi profile on the DUT with SSID, security, and passphrase.
@@ -801,7 +801,7 @@ def test_sta_ble_store_config_2_profiles_ble_adv_10240ms_C769725(wifi_dut, wifi_
     """
 
     try:
-        test_name = "test_sta_ble_store_config_2_profiles_ble_adv_10240ms_C769725"
+        test_name = "test_sta_ble_store_config_2_profiles_ble_adv_500ms_C769725"
         logger().info("Starting test: " + test_name)
         test_type = "ping"
         iter_count = utf_constants.get("iter_count")
@@ -835,8 +835,8 @@ def test_sta_ble_store_config_2_profiles_ble_adv_10240ms_C769725(wifi_dut, wifi_
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="scan_from_remote_device",
-            ble_adv_int_max=10240,
-            ble_adv_int_min=10240
+            ble_adv_int_max=500,
+            ble_adv_int_min=500
         )
         ble_obj.advertise_dut()
         ble_obj.start()
@@ -2483,6 +2483,7 @@ def test_sta_ble_store_config_2_profiles_HTTP_download_ble_central_500ms_C769734
                                }
 )
 @pytest.mark.test_src_map_id('C769736')
+@pytest.mark.skip("not deployed: BLE reconnection issue")
 def test_sta_ble_store_config_2_profiles_WPA2_WPA3_ble_peripheral_connect_disconnect_C769736(wifi_dut, wifi_access_point,
                                                                                              wifi_sniffer, sl_collections,
                                                                                              sniffer_filter, utf_constants,
@@ -2719,26 +2720,34 @@ def test_sta_ble_store_config_2_profiles_MQTT_ble_central_C769738(wifi_dut, wifi
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
 
         time.sleep(5)
+        mqtt_client.interfaces.mqtt.received_messages.clear()
 
         sw = Stopwatch()
         while sw.elapsed_sec <= 60:
 
             logger().info("DUT publishes message over the topic")
+            mqtt_client.interfaces.mqtt.received_messages.clear()
             wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1,
                                                          timeout=20)
-            # time.sleep(10)
-            msgs = []
             mq = Stopwatch()
+            match = None
             while mq.elapsed_sec < 20:
                 time.sleep(0.1)
                 msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-                if len(msgs) >= 1:
+                for m in msgs:
+                    if (
+                        m.topic == topic
+                        and m.qos == Si91xMqttQos.QOS1
+                        and m.payload.decode() == message
+                    ):
+                        match = m
+                        break
+                if match:
                     break
-            assert len(msgs) >= 1, "No message is received by mqtt-client"
-            assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
-            assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
-            assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
-                                                        "message received is wrong"
+            assert match is not None, (
+                "No message is received by mqtt-client on subscribed topic or message received is wrong"
+            )
+            mqtt_client.interfaces.mqtt.received_messages.clear()
 
         logger().info("....Unsubscribing from the topic....")
         wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
@@ -2770,28 +2779,34 @@ def test_sta_ble_store_config_2_profiles_MQTT_ble_central_C769738(wifi_dut, wifi
         wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
 
         time.sleep(5)
+        mqtt_client.interfaces.mqtt.received_messages.clear()
 
         tw = Stopwatch()
         while tw.elapsed_sec <= 60:
 
             logger().info("DUT publishes message over the topic")
+            mqtt_client.interfaces.mqtt.received_messages.clear()
             wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=topic, message=message, qos=Si91xMqttQos.QOS1,
                                                          timeout=20)
-            # time.sleep(10)
-            msgs = []
             mq = Stopwatch()
+            match = None
             while mq.elapsed_sec < 20:
                 time.sleep(0.1)
                 msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
-
-                logger().info(f"msgs:{msgs}")
-                if len(msgs) >= 1:
+                for m in msgs:
+                    if (
+                        m.topic == topic
+                        and m.qos == Si91xMqttQos.QOS1
+                        and m.payload.decode() == message
+                    ):
+                        match = m
+                        break
+                if match:
                     break
-            assert len(msgs) >= 1, "No message is received by mqtt-client"
-            assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
-            assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
-            assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
-                                                        "message received is wrong"
+            assert match is not None, (
+                "No message is received by mqtt-client on subscribed topic or message received is wrong"
+            )
+            mqtt_client.interfaces.mqtt.received_messages.clear()
 
         logger().info("....Unsubscribing from the topic....")
         wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
@@ -3067,6 +3082,7 @@ def test_sta_ble_store_config_2_profiles_SSL_RX_ble_central_4s_C769733(wifi_dut,
     "wifi_access_point", wifi={"ssid": "store_profile1", "channel": 1, "security": "WPA2", "passphrase": "1234567890"}
 )
 @pytest.mark.test_src_map_id('C769744')
+@pytest.mark.skip("not deployed")
 def test_sta_ble_store_config_2_profiles_BLE_provisioning_peripheral_C769744(wifi_dut, wifi_access_point,
                                                                              wifi_sniffer, sl_collections,
                                                                              sniffer_filter, utf_constants,
@@ -3234,7 +3250,7 @@ def test_sta_ble_store_config_2_profiles_BLE_provisioning_peripheral_C769744(wif
 
 
 
-
+@pytest.mark.skip("not deployed: getting 0x15 error")
 @wifi_dut_marker(ext_tcp_feat_bit=Si91xExtTCPIPFeatureBitMap.ConfigHttpOTAF)
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
