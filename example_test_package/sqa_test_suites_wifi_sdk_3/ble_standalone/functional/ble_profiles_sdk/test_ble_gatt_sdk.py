@@ -3016,21 +3016,27 @@ def service_discovery_on_remote_for_blood_pressure(ble_dut, ble_client_address, 
 @pytest.mark.config(
     "remote_wiseconnect3",
     wifi={
-        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
-        "oper_mode": 0,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 | Si91xFeatureBitMap.WPSSupportDisabled,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
-        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
-                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "bt_features": Si91xBTFeatureBitMap.Default,
-        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-    },
+            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+            "oper_mode": 0,
+            "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            "features": Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                        Si91xFeatureBitMap.WPSSupportDisabled,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                                   Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                                   Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                                   Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                               Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "bt_features": Si91xBTFeatureBitMap.Default,
+            "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                       Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
+        },
 )
 @pytest.mark.end_state("wifi_dut",
                        wifi=["ble_stop_scan", "wifi_powersave_disable", "bt_powersave_disable"])
@@ -3045,11 +3051,21 @@ def test_ble_sdk_enable_blood_pressure_service_in_client_role_C19884(ble_dut, re
         time.sleep(10)
         write_handle_1 = service_discovery_on_remote_for_blood_pressure(
             ble_dut, ble_client_address, "0x1810", "0x2a35", BLEPermissions.DEFAULT)
-        data = "Systolic: 83.0mmHg Diastolic: 50.0mmHg Mean AP:61.0mmHg"
+
+        bp_data = "BP1209"
+
+        ble_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=ble_client_address,
+                                                       start_handle=write_handle_1, end_handle=write_handle_1 + 2)
+
+
+        ble_dut.interfaces.wifi.ble_set_att_value(ble_remote_dev_address=ble_client_address,
+                                                  handle=write_handle_1 + 1,
+                                                  enable_notify=1)
+        time.sleep(2)
         for i in range(10):
-            remote_wiseconnect3.interfaces.wifi.ble_indicate_value(ble_remote_dev_address=ble_dut_address,
-                                                                   handle=write_handle_1, data=data,
-                                                                   data_length=len(data))
+            remote_wiseconnect3.interfaces.wifi.ble_set_local_att_value(notify_data=bp_data,
+                                                                        val_handle=write_handle_1)
+            time.sleep(3)
         logger().info("checking connection stability for 10 mins")
         time.sleep(600)
         state = remote_wiseconnect3.interfaces.wifi.ble_get_device_state()
