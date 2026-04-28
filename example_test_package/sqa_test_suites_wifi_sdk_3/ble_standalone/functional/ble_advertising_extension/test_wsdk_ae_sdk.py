@@ -463,7 +463,7 @@ def test_verify_AE_ADV_for_2560ms_C528489(ble_dut, sl_collections, ble_sniffer):
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C539202')
-def test_verify_AE_ADV_for_different_interval_min_max_C528491_C528492_C539201_C539202(ble_dut, sl_collections,
+def test_ADV_diff_int_min_max_C528491_C528492_C539201_C539202(ble_dut, sl_collections,
                                                                                       ble_sniffer, min_interval,
                                                                                       test_case_id, max_interval, start,
                                                                                       stop):
@@ -472,6 +472,7 @@ def test_verify_AE_ADV_for_different_interval_min_max_C528491_C528492_C539201_C5
     Test case          : This test case will verify Advertising Extention for 2560ms and verify even RSI_APP_EVENT_EXT_ADV_TERMINATED
     Device roles       : DUT is performing Peripheral role where Reference is performing Central
     """
+    logger().info("test_verify_AE_ADV_for_different_interval_min_max_C528491_C528492_C539201_C539202")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=1, ble_dut_address=ble_dut_address,
                                    ble_sniffer=ble_sniffer,
@@ -1707,8 +1708,9 @@ def test_verify_AE_non_conn_non_scan_ADV_C528505(ble_dut, ble_sniffer, sl_collec
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528509')
-def test_verify_AE_Scannable_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, sl_collections,
+def test_AE_Scan_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, sl_collections,
                                                           adv_type, test_case_id, data_len, scan_req_notify_enable):
+    logger().info("test_verify_AE_Scannable_non_conn_ADV_C528506_C528509")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
                                    pri_adv_phy=1, sec_adv_phy=1, data_len=data_len, scan_resp_len=1,
@@ -1831,8 +1833,9 @@ def test_verify_AE_Scannable_non_conn_ADV_C528506_C528509(ble_dut, ble_sniffer, 
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528513')
-def test_verify_AE_Scannable_undirected_ADV_C528510_C528513(ble_dut, remote_wiseconnect3, ble_sniffer, sl_collections,
+def test_AE_Scan_undir_ADV_C528510_C528513(ble_dut, remote_wiseconnect3, ble_sniffer, sl_collections,
                                                             adv_type, test_case_id, data_len, scan_req_notify_enable):
+    logger().info("test_verify_AE_Scannable_undirected_ADV_C528510_C528513")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
@@ -1945,8 +1948,9 @@ def test_verify_AE_Scannable_undirected_ADV_C528510_C528513(ble_dut, remote_wise
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528516')
-def test_verify_AE_Scannable_undirected_ADV_C528514_C528516(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_AE_Scan_undir_ADV_C528514_C528516(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                             adv_type, test_case_id, data_len):
+    logger().info("test_verify_AE_Scannable_undirected_ADV_C528514_C528516")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
@@ -2060,8 +2064,9 @@ def test_verify_AE_Scannable_undirected_ADV_C528514_C528516(ble_dut, ble_sniffer
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528577')
-def test_verify_AE_Scannable_filter_policy_C528575_C528577(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_AE_Scan_filter_policy_C528575_C528577(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                            adv_type, test_case_id, adv_filter_policy, event_type):
+    logger().info("test_verify_AE_Scannable_filter_policy_C528575_C528577")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
@@ -2494,10 +2499,11 @@ def test_verify_2ADV_sets_PHY_LECoded_C528585_to_C528591(ble_dut, ble_sniffer, r
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528598')
-def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_2ADV_sets_Legacy_Ext_C528592_C528598(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
                                                              ):
+    logger().info("test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, adv_type_s2=adv_type_s2,
@@ -2694,10 +2700,11 @@ def test_verify_2ADV_sets_Legacy_Extended_C528592_to_C528598(ble_dut, ble_sniffe
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528605')
-def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_2ADV_sets_Legacy_Ext_C528599_C528605(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
                                                              ):
+    logger().info("test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605")
     random_address = "11:33:33:33:33:11"
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
@@ -2845,10 +2852,11 @@ def test_verify_2ADV_sets_Legacy_Extended_C528599_to_C528605(ble_dut, ble_sniffe
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528612')
-def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_2ADV_sets_Legacy_Ext_C528606_C528612(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
                                                              ):
+    logger().info("test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612")
     random_address = "11:33:33:33:33:11"
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
@@ -3006,10 +3014,11 @@ def test_verify_2ADV_sets_Legacy_Extended_C528606_to_C528612(ble_dut, ble_sniffe
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528619')
-def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_2ADV_sets_Legacy_Ext_C528613_C528619(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
                                                              ):
+    logger().info("test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619")
     random_address = "11:33:33:33:33:11"
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
@@ -3167,10 +3176,11 @@ def test_verify_2ADV_sets_Legacy_Extended_C528613_to_C528619(ble_dut, ble_sniffe
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528626')
-def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_2ADV_sets_Legacy_Ext_C528620_C528626(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                              adv_type, adv_type_s2, data_len, data_len_s2, test_case_id,
                                                              adv_handle, adv_handle_s2,
                                                              ):
+    logger().info("test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626")
     random_address = "11:33:33:33:33:11"
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
@@ -3339,11 +3349,12 @@ def test_verify_2ADV_sets_Legacy_Extended_C528620_to_C528626(ble_dut, ble_sniffe
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528644')
-def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C528627_C528644(ble_dut, ble_sniffer, remote_wiseconnect3,
+def test_Enable_Dis_Ext_Adv_scan_undir_C528627_C528644(ble_dut, ble_sniffer, remote_wiseconnect3,
                                                                             sl_collections,
                                                                             adv_type, min_interval, max_interval,
                                                                             test_case_id, pri_adv_phy, sec_adv_phy,
                                                                             random_address):
+    logger().info("test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C528627_C528644")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
@@ -3477,9 +3488,10 @@ def test_verify_Enable_Disable_Ext_Adv_scannable_undirected_C528627_C528644(ble_
 )
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528651')
-def test_verify_periodic_Adv_Sync_undreceted_non_conn_non_scan_C528649_C528651(ble_dut, ble_sniffer, sl_collections,
+def test_periodic_Adv_undir_non_conn_non_scan_C528649_C528651(ble_dut, ble_sniffer, sl_collections,
                                                                                adv_type, test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
+    logger().info("test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_C528649_C528651")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,
                                    pri_adv_phy=pri_adv_phy, sec_adv_phy=sec_adv_phy, data_len=200, scan_resp_len=1,
@@ -3566,11 +3578,12 @@ def test_verify_periodic_Adv_Sync_undreceted_non_conn_non_scan_C528649_C528651(b
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.check
 @pytest.mark.test_src_map_id('C528519')
-def test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_random_C528517_C528518_C528519(ble_dut, ble_sniffer, sl_collections,
+def test_periodic_Adv_undir_non_conn_non_scan_rand_C528517_C528519(ble_dut, ble_sniffer, sl_collections,
                                                                                adv_type, test_case_id, pri_adv_phy,
                                                                                sec_adv_phy):
     """ Verifying the periodic advertising and on DUT for adv type = non con non scan directed adv type for the below :
      periodic adv data = 200 bytes, adv data = 200 bytes, pri phy = 1M, sec phy=2M phy using random address."""
+    logger().info("test_verify_periodic_Adv_Sync_undirected_non_conn_non_scan_random_C528517_C528518_C528519")
     random_address = "11:22:33:44:55:66"
     adv_data = "".join(random.choices(string.ascii_uppercase + string.digits, k=200))
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=random_address,
@@ -3726,8 +3739,9 @@ def test_legacy_adv_conn_directed_adv_C528479(ble_dut, sl_collections, ble_sniff
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528484')
-def test_verify_legacy_adv_connactable_Scannable_undirected_C528481_C528484(ble_dut, remote_wiseconnect3, ble_sniffer, sl_collections,
+def test_legacy_adv_conn_Scan_undir_C528481_C528484(ble_dut, remote_wiseconnect3, ble_sniffer, sl_collections,
                                                             adv_type, test_case_id, data_len):
+    logger().info("test_verify_legacy_adv_connactable_Scannable_undirected_C528481_C528484")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, ble_dut_address=ble_dut_address,

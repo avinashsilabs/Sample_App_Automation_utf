@@ -128,8 +128,10 @@ def calculate_offset(df):
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528523')
-def test_EXT_Scan_with_Initiating_PHY_1M_and_LE_Coded_C528522_C528523(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_EXT_Scan_PHY_1M_and_LE_Coded_C528522_C528523(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                        test_case_id,scanning_phys, pri_adv_phy, sec_adv_phy):
+
+    logger().info("test_EXT_Scan_with_Initiating_PHY_1M_and_LE_Coded_C528522_C528523")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=2, ble_dut_address=ble_dut_address,
@@ -268,8 +270,9 @@ def test_EXT_Scan_Scan_test_cases_C538066_to_C538069(ble_dut, ble_sniffer, remot
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528536')
-def test_EXT_Passive_Scan_test_for_diff_duty_cycles_with_diff_scan_int_scan_window_C528529_to_C528536(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,scanning_phys,
+def test_EXT_Passive_Scan_duty_cycles_scan_int_win_C528529_C528536(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,scanning_phys,
                                                                                                  pri_adv_phy,sec_adv_phy,scan_interval_pri,scan_window_pri,test_case_id):
+    logger().info("test_EXT_Passive_Scan_test_for_diff_duty_cycles_with_diff_scan_int_scan_window_C528529_to_C528536")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=2, ble_dut_address=ble_dut_address,
@@ -340,8 +343,9 @@ def test_EXT_Passive_Scan_test_for_diff_duty_cycles_with_diff_scan_int_scan_wind
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528544')
-def test_EXT_Active_Scan_test_for_diff_duty_cycles_with_diff_scan_int_scan_window_C528537_to_C528544(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,scanning_phys,
+def test_EXT_Active_Scan_duty_cyc_scan_int_win_C528537_C528544(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,scanning_phys,
                                                                                                  pri_adv_phy,sec_adv_phy,scan_interval_pri,scan_window_pri,test_case_id):
+    logger().info("test_EXT_Active_Scan_test_for_diff_duty_cycles_with_diff_scan_int_scan_window_C528537_to_C528544")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=2, ble_dut_address=ble_dut_address,
@@ -407,8 +411,9 @@ def test_EXT_Active_Scan_test_for_diff_duty_cycles_with_diff_scan_int_scan_windo
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528548')
-def test_EXT_Passive_Scan_test_for_diff_duty_cycles_with_Scan_PHY_as_1M_LE_CODED_C528545_to_C528548(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_EXT_Passive_Scan_duty_cyc_PHY_1M_LE_CODED_C528545_C528548(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                                                                     adv_type_s2,adv_type, pri_adv_phy,sec_adv_phy,test_case_id):
+    logger().info("test_EXT_Passive_Scan_test_for_diff_duty_cycles_with_Scan_PHY_as_1M_LE_CODED_C528545_to_C528548")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, adv_type_s2=adv_type_s2, ble_dut_address=ble_dut_address,scanning_phys=5,
@@ -473,8 +478,9 @@ def test_EXT_Passive_Scan_test_for_diff_duty_cycles_with_Scan_PHY_as_1M_LE_CODED
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528552')
-def test_EXT_Active_Scan_test_for_diff_duty_cycles_with_Scan_PHY_as_1M_LE_CODED_C528549_to_C528552(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
+def test_EXT_Active_Scan_duty_cyc_PHY_1M_LE_CODED_C528549_C528552(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,
                                                                                                     adv_type_s2,adv_type, pri_adv_phy,sec_adv_phy,test_case_id):
+    logger().info("test_EXT_Active_Scan_test_for_diff_duty_cycles_with_Scan_PHY_as_1M_LE_CODED_C528549_to_C528552")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=adv_type, adv_type_s2=adv_type_s2, ble_dut_address=ble_dut_address,scanning_phys=5,
@@ -576,7 +582,8 @@ def test_EXT_Scan_test_for_both_Scan_PHY_1M_LE_CODED_C528520(ble_dut, ble_sniffe
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528521')
-def test_EXT_Scan_test_for_Low_High_scan_int_scan_win_with_Scan_PHY_as_1M_LE_CODED_C528521(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections):
+def test_EXT_Scan_Low_High_scan_int_win_PHY_1M_LE_CODED_C528521(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections):
+    logger().info("test_EXT_Scan_test_for_Low_High_scan_int_scan_win_with_Scan_PHY_as_1M_LE_CODED_C528521")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=1, adv_type_s2=2, ble_dut_address=ble_dut_address,scanning_phys=5,
@@ -635,7 +642,8 @@ def test_EXT_Scan_test_for_Low_High_scan_int_scan_win_with_Scan_PHY_as_1M_LE_COD
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.test_src_map_id('C528525')
-def test_EXT_Scan_test_for_Filter_policy_0x01_and_0x03_C528524_C528525(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,scanning_filter_policy,test_case_id):
+def test_EXT_Scan_Filter_policy_0x01_and_0x03_C528524_C528525(ble_dut, ble_sniffer, remote_wiseconnect3, sl_collections,scanning_filter_policy,test_case_id):
+    logger().info("test_EXT_Scan_test_for_Filter_policy_0x01_and_0x03_C528524_C528525")
     ble_dut_address = ble_dut.interfaces.bluetooth.ble_start(capability=0, set_smp=1)
     ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_start(capability=0, set_smp=1)
     df = sl_collections.verify_adv(peripheral=ble_dut, adv_type=2, adv_type_s2=2, ble_dut_address=ble_dut_address,scanning_phys=5,scanning_whitelist=1,
