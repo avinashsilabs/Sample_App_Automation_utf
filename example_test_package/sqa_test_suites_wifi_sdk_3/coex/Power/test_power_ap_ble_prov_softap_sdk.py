@@ -6,8 +6,7 @@ from utf.utils.thread_base import ThreadBase
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xExtTCPIPFeatureBitMap, Si91xBTFeatureBitMap, \
     Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, \
-    Si91xConfigFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xOperatingMode, \
-    Si91xJoinFeatureBitMap
+    Si91xConfigFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xOperatingMode
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.wifi import SecurityMode
 from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.power.test_wlan_power_mcu_advanced_sdk import Power_Measurement_Thread
@@ -19,7 +18,6 @@ from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.power.test_
         2. Access Point
         3. Raspberry PI4
         4. NUC
-        5. Power Meter
 
     Test Steps:
         1. Configure the DUT in wlan coex mode for 2.4Ghz
@@ -30,7 +28,6 @@ from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.power.test_
         6. DUT will scan list of available networks
         7. DUT will connect to the network with the credentials received from the client
         8. Validate the Acknowledgement from the DUT
-        9. Measure the power number after STA connection
 
     Author: Benazeer K
 """
@@ -134,10 +131,6 @@ class ProvisioningFunctionality(ThreadBase):
         self.wifi_dut.interfaces.wifi.deinit(mode="ap")
 
     def wifi_connect(self):
-        listen_interval = 1000
-        self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
-            join_feature_bitmap=Si91xJoinFeatureBitMap.ListenIntervalFromJoin)
-        self.wifi_dut.interfaces.wifi.set_listen_interval(listen_interval=listen_interval)
         self.wifi_dut.interfaces.wifi.join(
             ssid=self.wifi_access_point.interfaces.wifi.ssid, passphrase=self.result[2], security=self.result[3].lower())
         logger().info("....Successfully connected to the AP....")
@@ -159,6 +152,15 @@ class ProvisioningFunctionality(ThreadBase):
         m4_obj.start()
         pm_obj.wait_for_exit()
         m4_obj.wait_for_exit()
+
+        # dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
+        # logger().info(f'dut_mac_address is {dut_mac_address}')
+        #
+        # logger().info(f"DUT MAC ADDRESS :  {dut_mac_address} DUT IP ADDRESS : {self.device_ip}")
+        #
+        # logger().info(f"....Pinging to DUT before Power Save")
+        # status = self.sl_collections.ping(device_ip=self.device_ip, ping_count=10)
+        # assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
     def firmware_version(self):
         fw_version = self.wifi_dut.interfaces.wifi.get_fw_version()
@@ -276,6 +278,8 @@ class ProvisioningFunctionality(ThreadBase):
             security=self.wifi_access_point.interfaces.wifi.security,
             passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
 
+
+
         data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
         if self.test_case == 887649:
             self.result = re.search(r'ssid:([\w@!]+),password:([\w@#!]+),security:(\w+)', data.decode())
@@ -349,25 +353,25 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0, HiddenSSID=0):
 
 
 @pytest.mark.config(
-    "wifi_clients",
+    "wifi_client",
     wifi={
-        0: {
-            "security": "WPA2",
-            "ssid": "power_test",
-            "passphrase": "123456789",
-            "channel": "11",
-        },
-    }
+        "security": "WPA2",
+        "ssid": "power_test",
+        "passphrase": "123456789",
+        "channel": 11,
+        "interface": "wlan0",
+    },
 )
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.parametrize("ap_channel", [11])
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": 'power@silabs', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+                    wifi={"ssid": 'power123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 # @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-@pytest.mark.test_src_map_id('C887642')
-def test_wifi_softap_ble_with_soft_ap_path_C402909(
-        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
-        wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter, ble_client, ble_dut, power_meter):
+# @pytest.mark.test_src_map_id('C887642')
+def test_wifi_softap_ble_with_soft_ap_path_C402909(sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer,
+                                                        wifi_access_point, power_meter, wiseconnect_web, request,
+                                                        utf_constants, wifi_clients, sniffer_filter, ble_client,
+                                                        ble_dut):
 
     """Verify Soft AP provisioning in WPA2 security and also check WLAN connection to the third party home AP with the
     received credentials on APUT."""
