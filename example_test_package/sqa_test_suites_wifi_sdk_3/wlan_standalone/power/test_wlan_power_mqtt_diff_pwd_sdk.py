@@ -518,7 +518,7 @@ pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_mqtt_pwd_512_bytes_C402871(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+def test_wlan_standby_mqtt_pwd_512_bytes_C402910(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                           sl_collections, request, performance_data, mqtt_server,
                                                           custom_performance_fixture, mqtt_client):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -579,7 +579,7 @@ def test_wlan_standby_mqtt_pwd_512_bytes_C402871(firmware_loader, power_meter, w
 @pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
 @pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-def test_wlan_standby_mqtt_pwd_60_bytes_C402871(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+def test_wlan_standby_mqtt_pwd_60_bytes_C402911(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                           sl_collections, request, performance_data, mqtt_server,
                                                           custom_performance_fixture, mqtt_client):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
