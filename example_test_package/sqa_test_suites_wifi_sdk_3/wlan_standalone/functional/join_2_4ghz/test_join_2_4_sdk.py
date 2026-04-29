@@ -1745,6 +1745,7 @@ def test_wifi_sdk_verify_connectivity_with_correct_psk_after_wrong_psk_c694554(w
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 12})
 @pytest.mark.deployed_25q2
+@pytest.mark.WLAN_Dev_sanity_917
 @pytest.mark.test_src_map_id('C782626')
 def test_wifi_sdk_connection_in_eu_region_C782626(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sl_collections, sniffer_filter):
@@ -1798,6 +1799,7 @@ def test_wifi_sdk_connection_in_eu_region_C782626(wifi_sniffer, wifi_access_poin
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 13})
 @pytest.mark.deployed_25q2
+@pytest.mark.WLAN_Dev_sanity_917
 @pytest.mark.test_src_map_id('C782627')
 def test_wifi_sdk_connection_in_JP_region_C782627(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                   sl_collections, sniffer_filter):
@@ -1851,6 +1853,7 @@ def test_wifi_sdk_connection_in_JP_region_C782627(wifi_sniffer, wifi_access_poin
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Europe", "channel": 11})
 @pytest.mark.deployed_25q2
+@pytest.mark.WLAN_Dev_sanity_917
 @pytest.mark.test_src_map_id('C782628')
 def test_wifi_sdk_connection_in_world_region_C782628(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                                      sl_collections, sniffer_filter):
