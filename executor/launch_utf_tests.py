@@ -9,6 +9,7 @@ from utf.executor.launch_utf_tests import (
     UtfLauncherCmdOption,
     UtfExecutorTypes,
 )
+from utf import get_version
 
 DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
@@ -35,13 +36,14 @@ class AppUtfLauncher(UtfLauncher):
         milestone_branch = os.environ.get("MILESTONE_BRANCH_NAME")
         if not milestone_branch:
             milestone_branch = get_milestone_branch_from_git_branch()
+        framework_version = get_version() or "unknown"
         return {
             UtfLauncherCmdOption.workspace_root: WORKSPACE_ROOT,
             UtfLauncherCmdOption.reports_dir: os.path.join(WORKSPACE_ROOT, "reports"),
             UtfLauncherCmdOption.container_name: "wifitest_1",
             UtfLauncherCmdOption.docker_image_tag: "wifitest:latest",
             UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
-            UtfLauncherCmdOption.docker_flags: f"-e MILESTONE={milestone_branch}",
+            UtfLauncherCmdOption.docker_flags: f"-e MILESTONE={milestone_branch}, -e FRAMEWORK_VERSION={framework_version}",
             UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu_android:2025_10_24",
             UtfLauncherCmdOption.username: "pi",
             UtfLauncherCmdOption.password: "raspberry",

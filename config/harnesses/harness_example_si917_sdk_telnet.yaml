@@ -3,20 +3,6 @@
 # The format of this file is YAML ( https://yaml.org/ ) and the schema
 # is defined in the file schema.json in the same folder as this file
 
-# Common configurations that can be re-used throughout the file
-common_docker_configs:
-    # Standard RPC docker host configuration - can be referenced using *raspi_docker_host
-    raspi_docker_host: &raspi_docker_host
-        type: 'docker'
-        ip_address: '192.168.150.180'
-        image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-        username: pi
-        password: 'raspberry'
-        skip_rabbitmq_check: True
-        volume:
-            - '/tmp/reports:/app/reports'
-        remote_reports_path: '/tmp/reports'
-
 devices:
 
     # Entries in the devices section can have arbitrary names, but they must be unique.
@@ -170,6 +156,20 @@ devices:
                 type: 'cli.telnet_cli_transport_async'
                 remote: '10.207.17.245'
                 port: 4901
+
+    # Common configurations that can be re-used throughout the file
+    common_docker_configs:
+        # Standard RPC docker host configuration - can be referenced using *raspi_docker_host
+        raspi_docker_host: &raspi_docker_host
+            type: 'docker'
+            ip_address: '192.168.150.180'
+            image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+            username: pi
+            password: 'raspberry'
+            skip_rabbitmq_check: True
+            volume:
+                - '/tmp/reports:/app/reports'
+            remote_reports_path: '/tmp/reports'
 
     # This represents an access point configuration.
     static_ap:
