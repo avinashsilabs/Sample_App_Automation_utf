@@ -310,6 +310,9 @@ class StandBy_Associated(ThreadBase):
             logger().info("Set DUT in advertise mode")
             self.bt_dut.interfaces.bluetooth.ble_start_advertising(ble_adv_type=128)
 
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                               psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
+
             logger().info("Start smp scan from the remote device")
             bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(bt_dut_address=bt_dut_address)
             assert bt_client_address is not None
