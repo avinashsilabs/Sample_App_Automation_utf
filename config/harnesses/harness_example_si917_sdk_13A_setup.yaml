@@ -279,7 +279,7 @@ devices:
                 skip_assertion_failure: True
                 dhcp_enable: True
                 # radius server configuration
-                radius_ip: "192.168.50.30"
+                radius_ip: "192.168.50.234"
                 radius_port: "1812"
 #                guest_networks:
 #                    - band: "2g"
@@ -771,7 +771,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'eth2'
+                interface: 'wlan0'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
@@ -1458,8 +1458,7 @@ defaults:
         port: 5001
         host: "localhost"
         tls_version: "-tls1_2"
-        http: false
-
+        http: false5
     bluetooth:
         #ble_address: '03:04:05:06:07:08'
         ble_advertising_data: 'HELLO'
@@ -1467,7 +1466,7 @@ defaults:
         bt_pin_code: "4321"
 
     iop_sockets:
-        server_ip: '192.168.10.212'
+        server_ip: '192.168.50.248'
         server_port: '6001'
         att_channel: 1
         db_value: 2
@@ -1482,7 +1481,7 @@ defaults:
         address_family: 'ipv4'
         port: '6666'
         ip_len: 4
-        server_ip: '192.168.50.117'
+        server_ip: '192.168.50.248'
         stream_type: 'stream'
 
     sntp_server:
