@@ -41,6 +41,7 @@ from utf.utf_session import get_active_session
 from utf.utf_queue_session import UtfQueueSession
 from data_transform.generate_perf_data import generate_perf_data_files
 from data_transform.send_perf_data_to_datalake import send_perf_data
+from xray_integration.xray_mgmt import XrayMgmtSource
 try:
     from executor.launch_utf_tests import get_milestone_branch_from_git_branch
 except ImportError:
@@ -50,11 +51,51 @@ last_loaded_custom_app_name = None
 last_test_mode = None
 default_test_mode = None
 
+# Constants for Vault and Jira/Xray configuration
+VAULT_ADDR_KEY = "VAULT_ADDR"
+VAULT_TOKEN_KEY = "VAULT_TOKEN"
+JIRA_SECRET_PATH = "teams/infra-sw/app/jira_xray"
+JIRA_SERVER_URL_KEY = "JIRA_SERVER_URL"
+JIRA_API_TOKEN_KEY = "JIRA_API_TOKEN"
+XRAY_PROJECT_KEY = "XRAY_TC_TS_PROJECT_KEY"
+
+
+def _setup_jira_xray_credentials_from_vault():
+    """
+    Setup Jira/Xray credentials from Vault for both Docker and local runs.
+    Retrieves credentials from Vault and sets them as environment variables.
+    """
+    try:
+        env_settings = EnvironSettings()
+        if env_settings.VAULT_ADDR and env_settings.VAULT_TOKEN:
+            os.environ[VAULT_ADDR_KEY] = env_settings.VAULT_ADDR
+            os.environ[VAULT_TOKEN_KEY] = env_settings.VAULT_TOKEN
+
+            vault_client = VaultClient()
+            jira_credentials = vault_client.get_secret_values(
+                JIRA_SECRET_PATH,
+                [JIRA_SERVER_URL_KEY, JIRA_API_TOKEN_KEY, XRAY_PROJECT_KEY]
+            )
+
+            # Set as environment variables for XraySettings to read
+            if jira_credentials:
+                os.environ[JIRA_SERVER_URL_KEY] = jira_credentials.get(JIRA_SERVER_URL_KEY, "")
+                os.environ[JIRA_API_TOKEN_KEY] = jira_credentials.get(JIRA_API_TOKEN_KEY, "")
+                os.environ[XRAY_PROJECT_KEY] = jira_credentials.get(XRAY_PROJECT_KEY, "")
+                logger().info("Successfully loaded Jira/Xray credentials from Vault")
+    except Exception as e:
+        logger().warning(f"Unable to load Jira/Xray credentials from Vault: {e}")
+
 
 def pytest_configure(config):
-    """Ensure _metadata attribute is initialized for pytest-metadata plugin."""
+    """
+    Ensure _metadata attribute is initialized for pytest-metadata plugin.
+    Also sets up Jira/Xray credentials from Vault for the test session.
+    """
     if not hasattr(config, "_metadata"):
         config._metadata = {}
+    
+    _setup_jira_xray_credentials_from_vault()
 
 
 def logger():
@@ -259,6 +300,13 @@ def pytest_runtest_protocol(item, nextitem):
         item.user_properties.append(
             (TestUserPropertiesSource.TEST_CUSTOM_INFO, custom_values)
         )
+
+        # Append Jira filters separately (for query filtering, not result properties)
+        product_line = settings.PRODUCT_LINE if settings.PRODUCT_LINE else "917"
+        item.user_properties.append(
+            ("JIRA_FILTERS", {TestResultsModelAttrs.product_line: product_line})
+        )
+
     yield
 
 @pytest.fixture
@@ -320,4 +368,42 @@ def pytest_sessionfinish(session, exitstatus) -> None:
                 logger().info(f"Sent Performace files to datalake files Successfully")
         except Exception as e:
             logger().error(f"Failed to Send Perf Data to Datalake - {e}")
+            
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """
+    This hook implementation is used to update user properties of test item with test management api source data before generating test report for the test item. This is required to make test management source data available in test report which is used by reporters for publishing test results to test management system.
 
+    Args:
+        item: pytest.Item object which represents the collected test case for which test report is being generated
+        call: pytest.CallInfo object which represents the result of setup/call/teardown phase of the test case execution
+
+    Returns:
+        None
+    """
+    outcome = yield
+    rep = outcome.get_result()
+    if rep.when == "setup":
+        # Only call XrayMgmtSource if XRAY is enabled
+        test_results_source = os.environ.get("TEST_RESULTS_SOURCE_API", "").strip().upper()
+        if test_results_source == "XRAY_API":
+            test_case_id = ""
+            custom_props = {}
+            jira_filters = None
+            for p in item.user_properties:
+                if p[0] == TestUserPropertiesSource.TEST_CUSTOM_INFO:
+                    custom_props = p[1]
+                if p[0] == TestUserPropertiesSource.TEST_CASE_ID:
+                    test_case_id = p[1]
+                if p[0] == "JIRA_FILTERS":
+                    jira_filters = p[1]
+
+            _db_properties = XrayMgmtSource().fetch_test_results_properties(
+                field_name="test_src_map_id",
+                field_value=test_case_id,
+                jira_filters=jira_filters,
+                **custom_props
+            )
+            logger().info(
+                f"Fetched test management source data for test case id - {test_case_id} and here it is - {_db_properties}")
+            item.user_properties.append((TestUserPropertiesSource.TEST_CASE, _db_properties))

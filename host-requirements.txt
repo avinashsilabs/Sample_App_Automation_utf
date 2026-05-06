@@ -9,3 +9,5 @@ colored_traceback
 boto3==1.35.60
 openpyxl
 colorcet
+xray_api_client_python @ https://artifactory.silabs.net/artifactory/infrasw-python-local/xray-api-client-python/1.0.3/xray_api_client_python-1.0.3-py3-none-any.whl
+xray_integrator @ https://artifactory.silabs.net/artifactory/infrasw-python-local/xray-integrator/1.0.11b6/xray_integrator-1.0.11b6-py3-none-any.whl

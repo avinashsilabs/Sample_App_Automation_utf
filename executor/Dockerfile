@@ -27,6 +27,7 @@ COPY utf_wiseconnect/ ./utf_wiseconnect/
 RUN ./utf_wiseconnect/target-install.sh
 
 COPY utf_wiseconnect_3/ ./utf_wiseconnect_3/
+COPY xray_integration/ ./xray_integration/
 # RUN ./utf_wiseconnect_3/target-install.sh
 
 # Set UTF_EXTENSIONS_PATH to include all extensions.
