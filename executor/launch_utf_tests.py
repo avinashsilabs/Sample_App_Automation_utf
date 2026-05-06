@@ -9,7 +9,12 @@ from utf.executor.launch_utf_tests import (
     UtfLauncherCmdOption,
     UtfExecutorTypes,
 )
-from utf import get_version
+try:
+    # Attempt to import get_version from utf, if it fails, define a fallback that returns None to support older versions of utf_core
+    from utf import get_version
+except ImportError:
+    def get_version():
+        return None
 
 DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
