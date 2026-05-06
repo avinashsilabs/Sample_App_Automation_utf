@@ -157,6 +157,20 @@ devices:
                 remote: '10.207.17.245'
                 port: 4901
 
+    # Common configurations that can be re-used throughout the file
+    common_docker_configs:
+        # Standard RPC docker host configuration - can be referenced using *raspi_docker_host
+        raspi_docker_host: &raspi_docker_host
+            type: 'docker'
+            ip_address: '192.168.150.180'
+            image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
+            username: pi
+            password: 'raspberry'
+            skip_rabbitmq_check: True
+            volume:
+                - '/tmp/reports:/app/reports'
+            remote_reports_path: '/tmp/reports'
+
     # This represents an access point configuration.
     static_ap:
         interfaces:
@@ -354,12 +368,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
         # this section represents the harness configuration for the server side.
         # the devices and interfaces here will be created on-demand by the server
         # and can be used by the rpc_client-based interfaces above
@@ -414,12 +423,7 @@ devices:
     raspi_multicast:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             multicast:
                 type: 'multicast.rpc_client'
@@ -453,12 +457,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             socket:
                 type: 'socket.rpc_client'
@@ -490,12 +489,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             socket:
                 type: 'socket.rpc_client'
@@ -525,12 +519,7 @@ devices:
     ip_socket_factory:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             socket:
                 type: 'socket.rpc_client'
@@ -580,12 +569,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '10.207.18.146'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             # these are the RPC-enabled interfaces that will forward all method and property access
             # calls over to the respective instance on the server
@@ -641,12 +625,7 @@ devices:
     secondary_raspi_ble_client:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'      #configure secondary Rpi rd_1 IP address
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
             shell:
                 type: 'rpc.rpc_client'
                 # the 'forward_to' property specifies the destination device and interface on the server
@@ -669,74 +648,6 @@ devices:
                             shell: 'linux_shell'
             defaults: { }
 
-    secondary_raspi:
-        interfaces:
-            # the docker_host interface specifies which device to connect to, login credentials, and
-            # the docker image to run
-            docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
-
-            # these are the RPC-enabled interfaces that will forward all method and property access
-            # calls over to the respective instance on the server
-            shell:
-                type: 'rpc.rpc_client'
-                # the 'forward_to' property specifies the destination device and interface on the server
-                # the format is 'device:interface'
-                forward_to: 'raspi_bt_client:linux_shell'
-                host: 'docker_host'
-
-            http:
-                type: 'rpc.rpc_client'
-                forward_to: 'raspi_http_server:http'
-                host: 'docker_host'
-
-            http_client:
-                type: 'rpc.rpc_client'
-                forward_to: 'raspi_http_client:http_client'
-                host: 'docker_host'
-
-            bluetooth:
-                type: 'rpc.rpc_client'
-                forward_to: 'raspi_ble_client:bluetooth'
-                host: 'docker_host'
-
-
-        # this section represents the harness configuration for the server side.
-        # the devices and interfaces here will be created on-demand by the server
-        # and can be used by the rpc_client-based interfaces above
-        harness:
-            devices:
-                raspi_http_server:
-                    interfaces:
-                        linux_shell:
-                            type: 'shell.shell'
-                        http:
-                            type: 'http.server.http_linux'
-                            shell: 'linux_shell'
-                            port: 80
-                            interface: 'eth0'
-
-                raspi_http_client:
-                    interfaces:
-                        linux_shell:
-                            type: 'shell.shell'
-                        http_client:
-                            type: 'http.client.requests_client'
-                            disable_certificate_verification: True
-
-                raspi_ble_client:
-                    interfaces:
-                        linux_shell:
-                            type: 'shell.shell'
-                        bluetooth:
-                            type: 'bluetooth.bluez'
-                            shell: 'linux_shell'
-            defaults: { }
 
     # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled
     raspi_mosquitto:
@@ -744,12 +655,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             mqtt:
                 type: 'mqtt.server.rpc_client'
@@ -782,12 +688,7 @@ devices:
     raspi_mosquitto_ipv6:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             mqtt:
                 type: 'mqtt.server.rpc_client'
@@ -815,12 +716,7 @@ devices:
     raspi_mosquitto_auth:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             mqtt:
                 type: 'mqtt.server.rpc_client'
@@ -862,12 +758,7 @@ devices:
     raspi_mosquitto_tls:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             mqtt:
                 type: 'mqtt.server.rpc_client'
@@ -903,12 +794,7 @@ devices:
     raspi_mosquitto_tls_ipv6:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             mqtt:
                 type: 'mqtt.server.rpc_client'
@@ -944,12 +830,7 @@ devices:
     raspi_mosquitto_tls_ecdsa:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             mqtt:
                 type: 'mqtt.server.rpc_client'
@@ -1003,15 +884,8 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
-                volume:
-                    - '/tmp/reports:/app/reports'
-                remote_reports_path: '/tmp/reports'
+                <<: *raspi_docker_host
+
 
             http:
                 type: 'http.server.rpc_client'
@@ -1038,12 +912,7 @@ devices:
     raspi_lighttpd_tls:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             http:
                 type: 'http.server.rpc_client'
@@ -1071,12 +940,7 @@ devices:
     raspi_lighttpd_tls_dut:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             http:
                 type: 'http.server.rpc_client'
@@ -1106,12 +970,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             http:
                 type: 'http.server.python_http.rpc_client'
@@ -1140,12 +999,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             http:
                 type: 'http.client.rpc_client'
@@ -1180,15 +1034,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
-                volume:
-                    - '/tmp/reports:/app/reports'
-                remote_reports_path: '/tmp/reports'
+                <<: *raspi_docker_host
 
             server:
                 type: 'wifi.sdk_server.rpc_client'
@@ -1387,12 +1233,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             ssl:
                 type: 'ssl.server.rpc_client'
@@ -1442,12 +1283,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             ssl:
                 type: 'ssl.client.rpc_client'
@@ -1526,12 +1362,7 @@ devices:
     raspi_ftp_server_tls:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             ftp_server:
                 type: 'ftp.server.rpc_client'
@@ -1560,12 +1391,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             ftp_client:
                 type: 'ftp.client.rpc_client'
@@ -1592,12 +1418,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             ftp_server:
                 type: 'ftp.server.rpc_client'
@@ -1625,12 +1446,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             ftp_client:
                 type: 'ftp.client.rpc_client'
@@ -1656,12 +1472,7 @@ devices:
     raspi_radius_server:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             radius_server:
                 type: 'radius_server.rpc_client'
@@ -1692,12 +1503,7 @@ devices:
     raspi_radius_server_v2:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             radius_server:
                 type: 'radius_server.rpc_client'
@@ -1767,12 +1573,7 @@ devices:
     openssl_socket:
         interfaces:
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
+                <<: *raspi_docker_host
 
             server:
                 type: 'openssl.rpc_client'
@@ -1890,7 +1691,34 @@ devices:
                 password: 'raspberry'
             linux_shell:
                 type: 'shell.shell'
-
+                
+    ble_sweyntooth_rpc:
+        interfaces:
+            # the docker_host interface specifies which device to connect to, login credentials, and
+            # the docker image to run
+            ble_vul_sniffer:
+                type: 'bluetooth.sniffer.sweyntooth'
+                docker_host: 'sweyntooth_docker'
+                shell: 'linux_shell'
+                port: 'auto'
+                vid: 0x239a
+                pid: 0x8029
+                rpc_docker: True
+            sweyntooth_docker:
+                type: 'docker'
+                ip_address: '192.168.150.180'
+                container_name: "utf_sweyntooth"
+                image: 'utfsilabs/utf_sweyntooth:2026_04_08'
+                is_prune: false
+                is_execute_raspi_manager_scripts: false
+                volume:
+                    - "/dev/bus/usb:/dev/bus/usb"
+                    - "/sys:/sys"
+                username: pi
+                password: 'raspberry'
+            linux_shell:
+                type: 'shell.shell'
+                
     # this represents an brakttoth docker running on the NUC machine using sniffer
     bt_braktooth:
         interfaces:
@@ -2035,15 +1863,7 @@ devices:
             # the docker_host interface specifies which device to connect to, login credentials, and
             # the docker image to run
             docker_host:
-                type: 'docker'
-                ip_address: '192.168.150.180'
-                image: 'utfsilabs/rpi_ubuntu_secondary:2026_02_03'
-                username: pi
-                password: 'raspberry'
-                skip_rabbitmq_check: True
-                volume:
-                    - '/tmp/reports:/app/reports'
-                remote_reports_path: '/tmp/reports'
+                <<: *raspi_docker_host
 
             # RPC interface for iperf/net_perf server
             net_perf_server:
@@ -2268,7 +2088,7 @@ defaults:
         data_chunk_read_elapsed_time: 0.9
         data_chunk_read_dealy: 0.03
 
-    ble_vulnerability_sniffer: 'ble_sweyntooth'
+    ble_vulnerability_sniffer: 'ble_sweyntooth_rpc'
     bt_vulnerability_sniffer: 'bt_braktooth'
 
     wifi:
