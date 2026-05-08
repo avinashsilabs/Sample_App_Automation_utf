@@ -35,6 +35,7 @@ from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.interfaces.power_meter.nrf_ppk2.nrf_power_profiler_mp import NRFPowerProfiler
 from utf import UtfDatabaseProperties, TestUserPropertiesSource, UtfTestReport, TransformFileProperties
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.power.test_wlan_power_mcu_advanced_long_run_sdk import IperfThread
 
 
 def logger():
@@ -308,7 +309,9 @@ class StandBy_Associated(ThreadBase):
     def __init__(self, dtim=None, wifi_dut=None, wifi_access_point=None, sl_collections=None, power_meter=None,
                  deep_sleep=False, dtim_aligned_type=1, remote_socket=None, send_data=False, capture_time=60,
                  m4_sleep_time=120000, bcast_filter=True, tcp_ka_time=240, send_ka=False, listen_case=False,
-                 mqtt_ka_enable=None, mqtt_server=None, bg_scan=None, bg_scan_10=None):
+                 mqtt_ka_enable=None, mqtt_server=None, bg_scan=None, bg_scan_10=None, data_transfer=None,
+                 net_perf_client=None, protocol=None, tcp_tx=None, udp_tx=None, udp_rx=None, ble_client=None,
+                 ble_with_connection=None, wifi_client=None):
 
         self.dtim = dtim
         self.wifi_dut = wifi_dut
@@ -329,6 +332,15 @@ class StandBy_Associated(ThreadBase):
         self.mqtt_server = mqtt_server
         self.bg_scan = bg_scan
         self.bg_scan_10 = bg_scan_10
+        self.data_transfer = data_transfer
+        self.net_perf_client = net_perf_client
+        self.protocol = protocol
+        self.wifi_client = wifi_client
+        self.tcp_tx = tcp_tx
+        self.udp_tx = udp_tx
+        self.udp_rx = udp_rx
+        self.ble_client = ble_client
+        self.ble_with_connection = ble_with_connection
 
     def run(self):
         dut = UtfConfig.instance().defaults.get("dut", {})
@@ -337,8 +349,69 @@ class StandBy_Associated(ThreadBase):
         if dut != "si917_ncp_sl_wifi":
             logger().info(f"M4-TA secure handshake")
             self.wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
-
         time.sleep(2)
+
+        if self.ble_with_connection:
+            with BleLogs(
+                    start_collecting_logs=True,
+                    bt_log_path=f"reports/test_ble_connection_C402919_power{int(time.time())}.log",
+            ) as bt_logs:
+                try:
+                    conn_params = {"min_conn_interval": 0xa0,
+                                   "max_conn_interval": 0xa0,
+                                   "conn_latency": 0,
+                                   "supervision_timeout": 3200}
+                    logger().info("Initializing BLE")
+                    # Set up DUT for BLE advertising
+                    bt_dut_address = self.wifi_dut.interfaces.wifi.ble_start(capability=3, bond_info=0, set_smp=1,
+                                                                             timeout=10)
+                    logger().info("configure bt local name....")
+                    self.wifi_dut.interfaces.wifi.bt_set_local_name(bt_local_name='Silabsautomation')
+                    logger().info(f"fetch the local name")
+                    self.wifi_dut.interfaces.wifi.bt_get_local_name()
+                    logger().info("Advertising DUT ")
+                    self.wifi_dut.interfaces.wifi.ble_start_advertising(ble_adv_type=128, ble_adv_int_min=2048,
+                                                                        ble_adv_int_max=2048,
+                                                                        ble_adv_channel_map=7)
+                    logger().info("Initiating scan from remote device")
+                    # Begin Scanning for BLE devices
+                    bt_client_address = self.ble_client.interfaces.bluetooth.start_smp_scan(
+                        bt_dut_address=bt_dut_address
+                    )
+                    assert bt_client_address is not None, "Unable to fetch BD address from remote BLE device"
+                    scan_result = device_scan_result()
+                    device_found = scan_result.check_for_devices_in_scanned_results(ble_client=self.ble_client,
+                                                                                    bt_dut_address=bt_dut_address,
+                                                                                    adv_data=self.wifi_dut.interfaces.wifi.ble_advertising_data)
+                    assert device_found, "DUT not found in scan results"
+                    logger().info("initiating stop scanning")
+                    self.ble_client.interfaces.bluetooth.stop_scanning()
+                    time.sleep(5)
+                    logger().info("Initiating connection from remote device")
+                    self.ble_client.interfaces.bluetooth.connect(dev_addr=bt_dut_address,
+                                                                 min_conn_interval=conn_params["min_conn_interval"],
+                                                                 max_conn_interval=conn_params["max_conn_interval"],
+                                                                 conn_latency=conn_params["conn_latency"],
+                                                                 supervision_timeout=conn_params["supervision_timeout"])
+                    time.sleep(60)
+                    logger().info("Checking connection status of BLE")
+                    state = self.wifi_dut.interfaces.wifi.ble_get_device_state()
+                    state_int = int(state) if state.isdigit() else -1
+                    assert state_int == BLEDeviceState.Connected, "DUT BLE device is not in connected state"
+                    ble_conn_config = bt_logs.read_ble_connection_params(conn_params)
+                    logger().info(f"**********{ble_conn_config} values in btmon logs")
+                    assert ble_conn_config["Status"] == "Success"
+                    assert (
+                            ble_conn_config["max_conn_interval"]
+                            == conn_params["max_conn_interval"]
+                    )
+                    time.sleep(5)
+                    logger().info(f"found connection intervals of 200ms in btmon logs")
+                    time.sleep(2)
+
+                except Exception as error:
+                    self.sl_collections.exception_handling(wifi_dut=self.wifi_dut, exception=error)
+
         if self.mqtt_ka_enable:
             listen_interval = 1000
             self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
@@ -409,6 +482,32 @@ class StandBy_Associated(ThreadBase):
         self.wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save",
                                                               dtim_aligned_type=self.dtim_aligned_type)
         time.sleep(2)
+        if self.data_transfer:
+            host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+            logger().info(f"Remote device ip :{host_ip}")
+            self.wifi_dut.interfaces.wifi.switch_host_frequency()
+            time.sleep(2)
+            dut_ip = wlan_obj.getter()
+            if self.tcp_tx:
+                ipv4_tx_obj = IperfThread(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point, ip_version=4,
+                                          sl_collections=self.sl_collections, wifi_client=self.wifi_client,
+                                          traffic_type="TX", protocol="TCP", net_perf_client=self.net_perf_client,
+                                          timeout=60, device_ip=dut_ip, remote_ip=host_ip
+                                          )
+            if self.udp_rx:
+                ipv4_tx_obj = IperfThread(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point, ip_version=4,
+                                          sl_collections=self.sl_collections, wifi_client=self.wifi_client,
+                                          traffic_type="RX", protocol="UDP", net_perf_client=self.net_perf_client,
+                                          timeout=60, device_ip=dut_ip, remote_ip=host_ip
+                                          )
+            if self.udp_tx:
+                ipv4_tx_obj = IperfThread(wifi_dut=self.wifi_dut, wifi_access_point=self.wifi_access_point, ip_version=4,
+                                          sl_collections=self.sl_collections, wifi_client=self.wifi_client,
+                                          traffic_type="tX", protocol="UDP", net_perf_client=self.net_perf_client,
+                                          timeout=60, device_ip=dut_ip, remote_ip=host_ip
+                                          )
+            ipv4_tx_obj.start()
+            ipv4_tx_obj.wait_for_exit()
 
         if dut != "si917_ncp_sl_wifi":
             m4_obj.start()
@@ -718,6 +817,271 @@ def test_wlan_standby_associated_bg_Scan_10_DTIM_10_C402916(firmware_loader, pow
     build_number = UtfConfig.instance().defaults.get("build_number", {})
     stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                    sl_collections=sl_collections, power_meter=power_meter, bg_scan_10=True)
+    stdby_obj.start()
+    stdby_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name,
+                                                             opn=opn,
+                                                             build_number=build_number,
+                                                             memory_configuration="test_352K_M4SS_320K",
+                                                             parsed_result=parsed_result["Output"],
+                                                             file_path=performance_file_root_dir,
+                                                             file_name=perf_file_name
+                                                             )
+
+
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
+@pytest.mark.parametrize("dtim", [10])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake
+                    | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+def test_wlan_standby_associated_EXT_Scan_TCP_TX_C402917(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                sl_collections, dtim, request, performance_data, net_perf_client,
+                                                custom_performance_fixture, protocol, wifi_client):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[
+        0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                   sl_collections=sl_collections, power_meter=power_meter, data_transfer=True,
+                                   tcp_tx=True, wifi_client=wifi_client, net_perf_client=net_perf_client,
+                                   protocol=protocol)
+    stdby_obj.start()
+    stdby_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name,
+                                                             opn=opn,
+                                                             build_number=build_number,
+                                                             memory_configuration="test_352K_M4SS_320K",
+                                                             parsed_result=parsed_result["Output"],
+                                                             file_path=performance_file_root_dir,
+                                                             file_name=perf_file_name
+                                                             )
+
+
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
+@pytest.mark.parametrize("dtim", [10])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.Default,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake
+                    | Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+        "bt_features": 0,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+    }
+)
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+def test_wlan_standby_associated_EXT_Scan_UDP_RX_C402918(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                sl_collections, dtim, request, performance_data, net_perf_client,
+                                                custom_performance_fixture, protocol, wifi_client):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[
+        0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                   sl_collections=sl_collections, power_meter=power_meter, data_transfer=True,
+                                   udp_rx=True, wifi_client=wifi_client, protocol=protocol,
+                                   net_perf_client=net_perf_client)
+    stdby_obj.start()
+    stdby_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name,
+                                                             opn=opn,
+                                                             build_number=build_number,
+                                                             memory_configuration="test_352K_M4SS_320K",
+                                                             parsed_result=parsed_result["Output"],
+                                                             file_path=performance_file_root_dir,
+                                                             file_name=perf_file_name
+                                                             )
+
+
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
+@pytest.mark.parametrize("dtim", [10])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "enable_ble_power_index_params": 1,
+        "power_index": 63,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+def test_wlan_co_ex_EXT_Scan_UDP_TX_C402919(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                                sl_collections, dtim, request, performance_data, net_perf_client,
+                                                custom_performance_fixture, protocol, wifi_client, ble_client):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[
+        0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                   sl_collections=sl_collections, power_meter=power_meter, data_transfer=True,
+                                   udp_tx=True, ble_with_connection=True, ble_client=ble_client, protocol=protocol,
+                                   wifi_client=wifi_client, net_perf_client=net_perf_client)
+    stdby_obj.start()
+    stdby_obj.wait_for_exit()
+
+    parsed_result = power_meter.interfaces.power_meter.power_meter_module.process_output(
+        power_meter.interfaces.power_meter.results)
+    __print_throughput(parsed_result)
+    assert parsed_result["Output"] is not None
+    performance_data.interfaces.power_perf_data.generate_csv(test_name=test_name,
+                                                             opn=opn,
+                                                             build_number=build_number,
+                                                             memory_configuration="test_352K_M4SS_320K",
+                                                             parsed_result=parsed_result["Output"],
+                                                             file_path=performance_file_root_dir,
+                                                             file_name=perf_file_name
+                                                             )
+
+
+@pytest.mark.transform_test_results(
+    TransformFileProperties(
+        file_name="perf_power_consumption_medium.csv", data_type="power_performance"
+    )
+)
+@pytest.mark.parametrize("dtim", [10])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DNSClient |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.UartSelForDebugPrints |
+                               Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.FeatureLowPower,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "enable_ble_power_index_params": 1,
+        "power_index": 63,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", device='reset', wifi="init")
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2', "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+def test_wlan_co_ex_dtim_10_EXT_Scan_C402920(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+                                             sl_collections, dtim, request, performance_data,
+                                             custom_performance_fixture, ble_client):
+    performance_file_root_dir, perf_file_name = custom_performance_fixture
+    obtained_test_name = request.node.name
+    test_name = obtained_test_name.split('[')[
+        0] if obtained_test_name and '[' in obtained_test_name else obtained_test_name
+
+    opn = UtfConfig.instance().defaults.get("opn", {})
+    build_number = UtfConfig.instance().defaults.get("build_number", {})
+    stdby_obj = StandBy_Associated(dtim=dtim, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                   sl_collections=sl_collections, power_meter=power_meter,
+                                   ble_with_connection=True, ble_client=ble_client
+                                   )
     stdby_obj.start()
     stdby_obj.wait_for_exit()
 
