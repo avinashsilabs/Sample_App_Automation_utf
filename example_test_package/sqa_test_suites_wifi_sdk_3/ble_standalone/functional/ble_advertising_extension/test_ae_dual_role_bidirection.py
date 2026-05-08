@@ -119,12 +119,10 @@ class BLEThread:
                                 matching_event = event
                                 break
                     if matching_event:
-                        logger().info(f"************** BLE EVENT DATA IS : {matching_event.event_data} **************")
                         received_data = re.findall(r"att_value:\s*([^\s]+)", matching_event.event_data)
                         logger().info(
-                            f"******* Received Data on remote device {self.ble_client_address} : {received_data} ********")
-                        logger().info(
-                            f"******* length of received Data on remote device {self.ble_client_address} : {len(received_data[0])} ********")
+                            f"******* Received Data and length of received data on remote device "
+                            f"{self.ble_client_address} : {received_data} {len(received_data[0])} ********")
                         try:
                             assert received_data[
                                        0] == data, f"data is not matching - Expected: {data}, Received: {received_data[0]}"  # Fixed assertion
@@ -157,9 +155,8 @@ class BLEThread:
                         with lock:
                             write()
                             logger().info(
-                                f"Notification {i + 1}/{self.notification_count} completed successfully from peripheral to central ")
-                            logger().info(
-                                f"Notification {i + 1}/{self.notification_count} completed successfully for {self.ble_client_address}")
+                                f"Notification {i + 1}/{self.notification_count} completed successfully from peripheral "
+                                f"{self.ble_client_address} to central {self.ble_dut_address} ")
                         sent_notifications += 1  # Increment after each notification
                     except Exception as e:
                         logger().error(
@@ -236,12 +233,9 @@ class BLEThread:
                                 matching_event = event
                                 break
                     if matching_event:
-                        logger().info(f"************** BLE EVENT DATA IS : {matching_event.event_data} **************")
                         received_data = re.findall(r"att_value:\s*([^\s]+)", matching_event.event_data)
                         logger().info(
-                            f"******* Received Data on peripheral device {self.ble_dut_address} : {received_data} ********")
-                        logger().info(
-                            f"******* length of received Data on peripheral device {self.ble_dut_address} : {len(received_data[0])} ********")
+                            f"******* Received Data and length of the Data on peripheral device {self.ble_dut_address} : {received_data} {len(received_data[0])}********")
                         try:
                             assert received_data[
                                        0] == data, f"data is not matching - Expected: {data}, Received: {received_data[0]}"  # Fixed assertion
@@ -397,7 +391,6 @@ class BLEThread:
         link_key = ""
         while tw.elapsed_sec < 120:
             events = self.ble_dut.interfaces.wifi.get_async_events()
-            logger().info(f"Link key events: {events}")
             for event in events:
                 if "link_key" in event.event_data:
                     logger().info(f"Link key event data: {event.event_data}")
@@ -556,10 +549,11 @@ class BLEThread:
 @pytest.mark.ble_sniffer("frontline_sniffer")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
 @pytest.mark.test_src_map_id('TC2410629278')
-def test_ble_2_central_connection_20_and_230_bytes_tx_notify_with_1M_2M_LE_Coded_Phy_rates_C768412_to_CC768417(
+def test_ble_2_central_conn_20_and_230_bytes_tx_notify_1M_2M_LE_Coded_C768412_CC768417(
         remote_wiseconnect3, remote_wiseconnect3s, ble_dut, ble_sniffer, sl_collections, pri_adv_phy,
         sec_adv_phy, test_case_id, k, char_uid, service_uid):
     try:
+        logger().info("test_ble_2_central_connection_20_and_230_bytes_tx_notify_with_1M_2M_LE_Coded_Phy_rates_C768412_to_CC768417")
         ble_sniffer.interfaces.sniffer.init_sniffer()
         ble_sniffer.interfaces.sniffer.start_capture(capture_file=f"test_{test_case_id}_sniffer_capture")
         ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)
