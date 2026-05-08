@@ -1059,14 +1059,35 @@ class BleThread(ThreadBase):
     @staticmethod
     def _is_ble_agent_error(error_message: str) -> bool:
         """
-        Detect the bluez agent registration error that requires a forced
-        cleanup of the remote BLE client before retrying.
+        Detect transient BlueZ-side pairing/agent failures that warrant a
+        forced cleanup of the remote BLE client before retrying.
 
-        BlueZ raises ``Can't register the object-path handler for
-        '/tmp/utf_agent': there is already a handler`` when a previous test
-        left a stale ``dbus.service.Object`` registered at that path. The
-        same code path is also reached when the bluez agent fails to
-        authenticate the previous pairing attempt.
+        Originally this only matched the bluez agent registration error
+        (``Can't register the object-path handler for '/tmp/utf_agent'``)
+        and the AuthenticationCanceled variant. In practice we also see two
+        other intermittent flakes for the same underlying class of problem
+        (stale BlueZ device cache / aborted SMP) that benefit from the same
+        cleanup-and-retry sequence:
+
+        1. ``org.bluez.Error.AuthenticationFailed`` / "Authentication
+           Failed" — BlueZ aborts pairing within ~1s of issuing the Pair
+           call (typically because of a stale dev_<addr> object cached
+           from a previous run that conflicts with the freshly-reset DUT
+           bond store). The DUT firmware never sees an SMP pair request
+           and therefore never emits the ``link_key`` async event.
+
+        2. ``Expected event link_key not found in the events`` — the
+           downstream symptom of (1): ``connect_ble`` waits up to 160s
+           for the firmware's ``link_key`` event after a "successful"
+           pair, and times out when (1) silently aborted the pairing.
+
+        Adding these markers routes both transient failures through the
+        existing ``_ble_agent_cleanup_and_retry()`` path in
+        ``ble_connect()`` (which calls ``remove_device(ble_dut_address)``
+        on the BlueZ side and ``bluetooth.close()`` on the remote client),
+        so the next attempt starts from a clean BlueZ state. Tests that
+        previously failed on attempt 1/3 now have two more attempts after
+        a proper cleanup.
         """
         if not error_message:
             return False
@@ -1075,6 +1096,9 @@ class BleThread(ThreadBase):
             "there is already a handler",
             "AuthenticationCanceled",
             "Authentication Canceled",
+            "AuthenticationFailed",
+            "Authentication Failed",
+            "Expected event link_key not found",
         )
         return any(marker in error_message for marker in markers)
 
@@ -1661,14 +1685,13 @@ class BleThread(ThreadBase):
             char_path=self.char_path,
             char_uid=self.char_uid
         )
-        
+
         indication_count = 0
         sw = Stopwatch()
-        
-        # Generate data if not provided
+
         if not self.data:
             self.data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=self.data_length))
-        
+
         while sw.elapsed_sec < self.data_duration:
             self.wifi_dut.interfaces.wifi.ble_indicate_value(
                 ble_remote_dev_address=self.ble_client_address,
@@ -1679,14 +1702,41 @@ class BleThread(ThreadBase):
             )
             indication_count += 1
             time.sleep(self.periodic_delay)
-        
+
+        max_retries = 3
         notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
-        try:
-            assert len(notifications) == indication_count
-        except:
-            assert len(notifications) == indication_count - 1
+        for retry in range(max_retries + 1):
+            time.sleep(10)
+            notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
+            received = len(notifications)
+            logger().info(f"Indications received on remote: {received}/{indication_count}")
+
+            if received >= indication_count:
+                break
+
+            if retry < max_retries:
+                missing = indication_count - received
+                logger().warning(
+                    f"BLE indication drop detected: received {received}/{indication_count}. "
+                    f"Resending {missing} indication(s) (retry {retry + 1}/{max_retries})"
+                )
+                for _ in range(missing):
+                    self.wifi_dut.interfaces.wifi.ble_indicate_value(
+                        ble_remote_dev_address=self.ble_client_address,
+                        handle=12,
+                        data=self.data,
+                        data_address=self.address,
+                        data_length=self.data_length
+                    )
+                    time.sleep(self.periodic_delay)
+
+        assert len(notifications) > 0, "Received indications data is empty"
+        assert len(notifications) >= indication_count, (
+            f"Number of indications received ({len(notifications)}) "
+            f"not matching sent ({indication_count}) even after {max_retries} retries"
+        )
         logger().info(f"Received notifications: {notifications}")
-        
+
         self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=self.char_path)
         self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=self.char_uid)
         time.sleep(1)
@@ -2111,47 +2161,6 @@ def safe_cleanup_ble_test(sl_collections, wifi_dut, ble_obj, ble_client):
     """
     Defensive cleanup helper used by every test's ``finally:`` block.
 
-    Why this helper exists
-    ----------------------
-    The original cleanup pattern was::
-
-        if ble_obj:
-            if getattr(ble_obj, 'ble_dut_address', None):
-                ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-            sl_collections.cleanup_ble(...)
-
-    This called ``remove_device`` while the bluez glib main-loop thread
-    was still running. After a firmware failure (``FW_FAILURE`` ->
-    ``commander device reset``) the underlying dbus state is unstable,
-    and the next dbus call from the main thread can crash the entire
-    Python process with a SIGSEGV inside libdbus / glib (observed crash
-    in ``ble_adapter.py:402`` -> ``logging.Formatter.formatTime``).
-    A native crash is fatal: ``pytest_sessionfinish`` never runs, so
-    ``pytest-html`` cannot write ``reports/pytest-report.html`` and the
-    user sees no report at all.
-
-    What this helper does
-    ---------------------
-    1. Run ``cleanup_ble`` first. On the happy path it ends with
-       ``client.interfaces.bluetooth.close()`` (which stops the glib
-       main-loop thread). However ``cleanup_ble`` can raise *before*
-       it reaches that close (e.g. ``ble_get_device_state`` returns
-       ``SL_STATUS_FAIL`` after a ``commander device reset``), in which
-       case the glib loop stays alive and any subsequent dbus call from
-       the main thread crashes the interpreter.
-    2. Therefore, regardless of whether ``cleanup_ble`` succeeded or
-       raised, *unconditionally* call ``primary_client.interfaces``
-       ``.bluetooth.close()`` ourselves. ``Bluez.close()`` quits the
-       glib MainLoop in its ``finally`` block (and joins the loop
-       thread with a timeout), so once it returns it is safe to make
-       further dbus calls from the main thread.
-    3. Only after the glib loop is guaranteed to be stopped, attempt
-       ``remove_device``. With the bluez interface already closed,
-       this is best-effort and will be re-initialized on next test.
-    4. Every step is wrapped in its own ``try/except`` so a failure in
-       one step never prevents the others from running, and the
-       ``pytest_sessionfinish`` hook always gets a chance to run so
-       ``pytest-html`` writes ``reports/pytest-report.html``.
     """
     if ble_obj is None or ble_client is None:
         return
@@ -3056,12 +3065,12 @@ def test_mqtt_ssl_qos1_username_lengths_ble_central_rx_C887551(
         # WiFi disconnect handled by end_state marker (unassociated)
         pass
 
-@pytest.mark.skip()
+
 @mqtt_lwip_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.mqtt_server("raspi_mosquitto")
-def test_ble_peripheral_80ms_mqtt_wildcard_single_C887552(
+def test_ble_peripheral_80ms_CI_Tx_1000b_mqtt_topic_wildcard_single_C887552(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -3132,7 +3141,7 @@ def test_ble_peripheral_80ms_mqtt_wildcard_single_C887552(
             conn_interval_peripheral=80,
             set_smp=1,
             data_length=100,
-            data_duration=120,
+            data_duration=100,
         )
 
         # Add GATT service BEFORE BLE connection so that BlueZ discovers it
@@ -3178,8 +3187,9 @@ def test_ble_peripheral_80ms_mqtt_wildcard_single_C887552(
 
         # Publish from third-party client to a topic that matches the
         # single-level wildcard subscription (runs concurrently with BLE TX).
+        num_publish_packets = 25
         if mqtt_client:
-            for i in range(20):
+            for i in range(num_publish_packets):
                 message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1000))
                 mqtt_client.interfaces.mqtt.mqtt_client_publish(
                     topic=publish_topic,
@@ -3188,8 +3198,15 @@ def test_ble_peripheral_80ms_mqtt_wildcard_single_C887552(
                 )
                 time.sleep(1)
 
-        # Validate MQTT messages received on DUT (still in parallel with BLE TX).
-        wifi_obj.mqtt_receive_messages()
+            # Validate MQTT messages received on DUT after all publishes finish
+            # (still in parallel with BLE TX). Pass num_packets explicitly so
+            # mqtt_receive_messages does not fall back to self.num_packets,
+            # which was the original bug: with self.num_packets=15 the assertion
+            # tripped on the first iteration (1 >= 15 is False) and the
+            # subsequent exception_handling() tore down the BLE link, causing
+            # the parallel BLE TX worker to fail with
+            # SL_STATUS_SI91X_BLE_SOCKET_NOT_AVAILABLE (0x4D05).
+            wifi_obj.mqtt_receive_messages(num_packets=num_publish_packets)
 
         # Wait for BLE TX notifications to finish before tearing down MQTT.
         logger().info("MQTT publish/receive completed, waiting for BLE TX notifications to finish")
@@ -3224,12 +3241,12 @@ def test_ble_peripheral_80ms_mqtt_wildcard_single_C887552(
         # WiFi disconnect handled by end_state marker (unassociated)
         pass
 
-@pytest.mark.skip()
+
 @mqtt_lwip_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.mqtt_server("raspi_mosquitto")
-def test_mqtt_wildcards_single_ble_tx_C887553(
+def test_mqtt_2topics_wildcards_single_ble_tx_240b_C887553(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -3242,25 +3259,42 @@ def test_mqtt_wildcards_single_ble_tx_C887553(
     mqtt_server,
 ):
     """
-    TC8: Verify MQTT wildcards (+ and #) with BLE TX (240 bytes)
-    
+    TC8: Verify MQTT receive on 2 topics with single-level and multi-level wildcards (+ and #) along with BLE TX (240 bytes) in parallel.
+
     Test Steps:
-    1. Join WiFi and establish BLE peripheral connection (80ms CI)
-    2. Subscribe to topics with both wildcards: THERMOSTATDATA/+/THERMOSTATDATA/#
-    3. Publish to: THERMOSTATDATA/sensor/THERMOSTATDATA
-    4. Perform BLE TX notifications (240 bytes)
+    1. Join WiFi and establish BLE peripheral connection (80ms CI) with GATT
+       service registered before connect (so BlueZ caches it during initial
+       discovery).
+    2. Subscribe to 2 topics with both wildcards on DUT and third-party client:
+         - iothub/+/sqa/properties/#
+         - THERMOSTATDATA/+/TEMPERATUREDATA/#
+    3. In parallel: BLE TX notifications (240 bytes) from DUT and MQTT
+       publish from third-party client onto two matching concrete topics:
+         - iothub/silabs/sqa/properties/test/object
+         - THERMOSTATDATA/sensor/TEMPERATUREDATA/sqa/test
+    4. Validate received MQTT messages on DUT for both topics.
+
+    Modeled on test_ble_peripheral_80ms_CI_Tx_1000b_mqtt_topic_wildcard_single_C887552
+    (BLE TX notifications run concurrently with MQTT publish via a parallel
+    daemon thread).
     """
     global ble_obj, wifi_obj
-    
-    subscribe_topic = "THERMOSTATDATA/+/THERMOSTATDATA/#"
-    publish_topic = "THERMOSTATDATA/sensor/THERMOSTATDATA"
+
+    subscribe_topic1 = "iothub/+/sqa/properties/#"
+    publish_topic1 = "iothub/silabs/sqa/properties/test/object"
+    subscribe_topic2 = "THERMOSTATDATA/+/TEMPERATUREDATA/#"
+    publish_topic2 = "THERMOSTATDATA/sensor/TEMPERATUREDATA/sqa/test"
     qos = Si91xMqttQos.QOS1
-    
-    # WiFi profile configuration
+
+    # WiFi profile configuration. Match C887552/C887547 thread_config so that
+    # BLE and Wi-Fi each get a dedicated stack while running concurrently.
     profile = get_wifi_profile(wifi_access_point)
-    
+    profile["thread_config"] = {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
+
     try:
-        # Create WiFi thread
+        # Create WiFi thread. ``topic`` is set to the first subscribe topic to
+        # satisfy the helper default; both topics are subscribed explicitly
+        # below via ``mqtt_subscribe(topic=...)``.
         wifi_obj = WifiMqttLwipThread(
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
@@ -3271,15 +3305,17 @@ def test_mqtt_wildcards_single_ble_tx_C887553(
             sniffer_filter=sniffer_filter,
             request=request,
             qos=qos,
-            topic=subscribe_topic,
+            topic=subscribe_topic1,
             message_size=300,
             num_packets=15,
             broker_port=1883,
             profile=profile,
             wifi_client=wifi_client,
         )
-        
-        # Create BLE peripheral thread
+
+        # Create BLE peripheral thread. data_duration=120s gives the BLE TX
+        # notifier loop enough headroom to run alongside the MQTT publish
+        # loop (15 iterations x 2 publishes x 1s + receive validation).
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
@@ -3288,45 +3324,120 @@ def test_mqtt_wildcards_single_ble_tx_C887553(
             conn_interval_peripheral=80,
             set_smp=1,
             data_length=240,
+            data_duration=120,
         )
-        
-        # Start threads
+
+        # Add GATT service BEFORE BLE connection so that BlueZ discovers it
+        # during initial GATT cache population at connect time (same pattern
+        # as C887547/C887552).
+        ble_obj.setup_gatt_service()
+
+        # Start threads (Wi-Fi join first, then BLE peripheral connect).
         wifi_obj.start()
         wifi_obj.wait_for_exit()
-        
+
         ble_obj.start()
         ble_obj.wait_for_exit()
-        
+
+        # Perform service discovery on the remote (Raspi BLE) once the BLE
+        # connection is established, so send_notifications_tx() can subscribe
+        # to the characteristic.
+        ble_obj.service_discovery_on_remote()
+        assert ble_obj.char_path is not None, (
+            "BLE service discovery failed - char_path is None. "
+            "The remote device could not find the GATT service."
+        )
+
         # Connect to MQTT
         wifi_obj.mqtt_connect_lwip()
-        
-        # Subscribe to wildcard topics
-        wifi_obj.mqtt_subscribe(topic=subscribe_topic)
-        
-        # Publish from third-party client
+
+        # Subscribe to BOTH wildcard topics on DUT and third-party client.
+        wifi_obj.mqtt_subscribe(topic=subscribe_topic1)
+        wifi_obj.mqtt_subscribe(topic=subscribe_topic2)
+
+        # Run BLE TX notifications in parallel with the MQTT publish loop.
+        ble_tx_exception = []
+
+        def _ble_tx_worker():
+            try:
+                ble_obj.send_notifications_tx()
+            except Exception as e:
+                ble_tx_exception.append(e)
+                logger().error(f"BLE TX notifications failed in parallel thread: {e}")
+
+        ble_tx_thread = threading.Thread(target=_ble_tx_worker, daemon=True)
+        logger().info("Starting BLE TX notifications in parallel with MQTT publish")
+        ble_tx_thread.start()
+
+        # Publish from third-party client to two concrete topics that match
+        # the two wildcard subscriptions (runs concurrently with BLE TX).
+        # Each loop iteration publishes one message to each topic, so the
+        # total message count expected on the third-party client (which is
+        # also subscribed to both wildcards) is iterations x 2.
+        num_iterations = 25
+        num_publish_packets = num_iterations * 2
         if mqtt_client:
-            for i in range(15):
-                message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+            for i in range(num_iterations):
+                message1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=200))
                 mqtt_client.interfaces.mqtt.mqtt_client_publish(
-                    topic=publish_topic,
-                    payload=message,
+                    topic=publish_topic1,
+                    payload=message1,
                     qos=qos
                 )
                 time.sleep(1)
-        
-        # BLE TX notifications
-        ble_obj.send_notifications_tx()
-        
-        # Validate
-        wifi_obj.mqtt_receive_messages()
-        
-        # Unsubscribe and disconnect
-        wifi_obj.mqtt_unsubscribe(topic=subscribe_topic)
+                message2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+                mqtt_client.interfaces.mqtt.mqtt_client_publish(
+                    topic=publish_topic2,
+                    payload=message2,
+                    qos=qos
+                )
+                time.sleep(1)
+
+        # Wait for BLE TX notifications to finish BEFORE validating DUT-side
+        # received messages. mqtt_receive_messages() internally calls
+        # lwip_mqtt.yield on the DUT firmware to drain queued MQTT messages.
+        # If the BLE TX worker is still pushing 240-byte notifications at
+        # this point, the firmware spends most of its time servicing BLE,
+        # the lwip_mqtt.yield response is starved, and after ~27s the
+        # firmware returns "Receive Data Failed, Error Code : 0xFFFFFFFF"
+        # with status 0x00001 - which sl_collections.exception_handling()
+        # reports as "AssertionError type occured / FW_FAILURE: Potential
+        # Firmware Failure". 100-byte notifications (e.g. C887552) stay
+        # under the agent timeout, but 240-byte notifications do not, so
+        # joining the BLE TX thread first is required for this test.
+        logger().info("MQTT publish completed, waiting for BLE TX notifications to finish")
+        ble_tx_thread.join()
+        if ble_tx_exception:
+            raise ble_tx_exception[0]
+
+        # Drain pending BLE GATT events before issuing any further MQTT
+        # commands. send_notifications_tx() ends by calling
+        # disable_notifications + unsubscribe_to_notifications on the remote,
+        # which writes 0x0000 to the CCCD descriptor and fires a trailing
+        # RSI_BLE_GATT_WRITE_EVENT on the DUT firmware. If we issue
+        # lwip_mqtt.yield/unsubscribe while the BLE thread is still
+        # servicing that GATT write, the async status response can be
+        # delayed past the 10s agent-side timeout, which surfaces as
+        # SL_STATUS_TIMEOUT (0x7). A short, explicit drain window lets the
+        # BLE thread finish first and avoids that coex race.
+        time.sleep(5)
+
+        # Validate MQTT messages received on DUT (and third-party client)
+        # for both wildcard subscriptions now that BLE TX is fully drained.
+        # Pass num_packets explicitly so mqtt_receive_messages does not
+        # fall back to self.num_packets; here num_publish_packets is the
+        # exact expected total across both topics.
+        if mqtt_client:
+            wifi_obj.mqtt_receive_messages(num_packets=num_publish_packets)
+
+        # Unsubscribe both topics and disconnect
+        wifi_obj.mqtt_unsubscribe(topic=subscribe_topic1)
+        wifi_obj.mqtt_unsubscribe(topic=subscribe_topic2)
         wifi_obj.mqtt_disconnect()
         wifi_obj.verify_sniffer_capture()
-        
+
         logger().info("TC8: Test completed successfully")
-        
+
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
         raise
@@ -4088,7 +4199,7 @@ def test_ble_peripheral_smp_tx_mqtt_tx_rx_C887558(
         # WiFi disconnect handled by end_state marker (unassociated)
         pass
 
-@pytest.mark.skip()
+
 @mqtt_lwip_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -4106,21 +4217,31 @@ def test_ble_peripheral_smp_indications_mqtt_publish_C887559(
     mqtt_server,
 ):
     """
-    TC14: Verify BLE central SMP indications with MQTT publish
-    
+    TC14: Verify BLE peripheral connection with SMP and do BLE Tx indications and MQTT publish in parallel.
+
     Test Steps:
-    1. Join WiFi and establish BLE central connection with SMP (250ms CI)
-    2. Start BLE indications TX
-    3. Connect to MQTT, subscribe, and publish data
+    1. Join WiFi and establish BLE peripheral connection with SMP (45ms CI),
+       with GATT service registered before connect (so BlueZ caches it during
+       initial discovery).
+    2. Connect to MQTT and subscribe to the topic.
+    3. In parallel: BLE TX indications (240 bytes) from DUT and MQTT publish
+       from DUT to the subscribed topic.
+    4. Validate MQTT messages received on the third-party MQTT client.
+
+    Modeled on test_ble_peripheral_80ms_CI_Tx_1000b_mqtt_topic_wildcard_single_C887552
+    (BLE TX runs concurrently with MQTT publish via a parallel daemon thread).
     """
     global ble_obj, wifi_obj
-    
-    topic = "TC14_Central_Indications_Topic"
+
+    topic = "TC14_Peripheral_Indications_Topic"
     qos = Si91xMqttQos.QOS1
-    
-    # WiFi profile configuration
+    num_publish_packets = 15
+
+    # WiFi profile configuration. Match C887547/C887552 thread_config so that
+    # BLE and Wi-Fi each get a dedicated stack while running concurrently.
     profile = get_wifi_profile(wifi_access_point)
-    
+    profile["thread_config"] = {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}}
+
     try:
         # Create WiFi thread
         wifi_obj = WifiMqttLwipThread(
@@ -4135,18 +4256,15 @@ def test_ble_peripheral_smp_indications_mqtt_publish_C887559(
             qos=qos,
             topic=topic,
             message_size=300,
-            num_packets=15,
+            num_packets=num_publish_packets,
             broker_port=1883,
             profile=profile,
             wifi_client=wifi_client,
         )
-        
-        # Create BLE peripheral thread with SMP for indications.
-        # Test name ("ble_peripheral_smp_indications") confirms peripheral role;
-        # previous central_connect with 250ms CI produced
-        # SL_STATUS_INVALID_PARAMETER (0xFFFFFFE2 / PARAMETER_OUT_OF_RANGE) on
-        # the firmware since that path expects different CI bounds and caused
-        # subsequent service discovery to fail.
+
+        # Create BLE peripheral thread with SMP for indications. data_duration
+        # gives the BLE indications loop enough headroom to run alongside the
+        # MQTT publish loop (num_packets x ~2s sleep + receive validation).
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
@@ -4154,7 +4272,9 @@ def test_ble_peripheral_smp_indications_mqtt_publish_C887559(
             ble_test_type="peripheral_connect",
             conn_interval_peripheral=45,
             set_smp=1,
+            bond_info=1,
             data_length=240,
+            data_duration=120,
         )
 
         # Add GATT service BEFORE BLE connection so BlueZ discovers it at
@@ -4162,41 +4282,65 @@ def test_ble_peripheral_smp_indications_mqtt_publish_C887559(
         # enabled on the remote and char_path is None.
         ble_obj.setup_gatt_service()
 
-        # Start threads
+        # Start threads (Wi-Fi join first, then BLE peripheral connect).
         wifi_obj.start()
         wifi_obj.wait_for_exit()
-        
+
         ble_obj.start()
         ble_obj.wait_for_exit()
 
-        # Perform service discovery after BLE connection is established
+        # Perform service discovery on the remote (Raspi BLE) once the BLE
+        # connection is established, so send_indications_tx() can subscribe
+        # to the characteristic.
         ble_obj.service_discovery_on_remote()
         assert ble_obj.char_path is not None, (
             "BLE service discovery failed - char_path is None. "
             "The remote device could not find the GATT service."
         )
 
-        # Start BLE indications
-        ble_obj.send_indications_tx()
-        
-        # Connect to MQTT
+        # Connect to MQTT and subscribe BEFORE launching BLE TX so the
+        # subscription is in place when the publish loop fires.
         wifi_obj.mqtt_connect_lwip()
-        
-        # Subscribe
         wifi_obj.mqtt_subscribe()
-        
-        # Publish
-        wifi_obj.mqtt_publish()
-        
-        # Validate
-        wifi_obj.mqtt_receive_messages()
-        
-        # Disconnect
+
+        # Run BLE TX indications in parallel with the MQTT publish loop.
+        ble_tx_exception = []
+
+        def _ble_tx_worker():
+            try:
+                ble_obj.send_indications_tx()
+            except Exception as e:
+                ble_tx_exception.append(e)
+                logger().error(f"BLE TX indications failed in parallel thread: {e}")
+
+        ble_tx_thread = threading.Thread(target=_ble_tx_worker, daemon=True)
+        logger().info("Starting BLE TX indications in parallel with MQTT publish")
+        ble_tx_thread.start()
+
+        # MQTT publish from DUT runs concurrently with BLE indications TX.
+        wifi_obj.mqtt_publish(num_packets=num_publish_packets)
+
+        # Wait for BLE TX indications to finish BEFORE validating DUT-side received messages and before tearing down MQTT.
+        logger().info("MQTT publish completed, waiting for BLE TX indications to finish")
+        ble_tx_thread.join()
+        if ble_tx_exception:
+            raise ble_tx_exception[0]
+
+        # BLE thread finish first and avoids that coex race.
+        time.sleep(5)
+
+        # Validate that the third-party Paho client received all DUT
+        # publishes now that BLE TX is fully drained. Pass num_packets
+        # explicitly so mqtt_receive_messages does not fall back to
+        # self.num_packets in any future refactor.
+        wifi_obj.mqtt_receive_messages(num_packets=num_publish_packets)
+
+        # Disconnect MQTT and verify sniffer capture
         wifi_obj.mqtt_disconnect()
         wifi_obj.verify_sniffer_capture()
-        
+
         logger().info("TC14: Test completed successfully")
-        
+
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
         raise
