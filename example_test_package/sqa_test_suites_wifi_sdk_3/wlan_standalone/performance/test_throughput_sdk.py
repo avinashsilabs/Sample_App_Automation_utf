@@ -49,7 +49,7 @@ class WifiJoinThread(ThreadBase):
                  wifi_access_point=None, wifi_client=None, \
                  net_perf_client=None, protocol=None, iteration_count=None, sl_collections=None, ping_count=None,
                  sniffer_filter=None, data_transfer=None, traffic_type=None, testcase=None, bt_dut=None,
-                 test_case_no=None, ble_client=None, ble_conn=None, utf_constants=None, mode=None,
+                 test_case_no=None, ble_client=None, ble_conn=None, utf_constants=None, mode=None, extended_scan=None,
                  ble_data_transfer=None, ssl_server=None, ssl_data_transfer=None, ble_client_address=None):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -79,6 +79,7 @@ class WifiJoinThread(ThreadBase):
         self.ble_client_address = ble_client_address
         self.ble_data_transfer = ble_data_transfer
         self.ssl_server = ssl_server
+        self.extended_scan = extended_scan
 
     def run(self):
         if self.test_case_no == 20740 or self.test_case_no == 20750:
@@ -109,6 +110,9 @@ class WifiJoinThread(ThreadBase):
         self.wifi_sniffer.interfaces.capture.configure_interface(
             channel=self.wifi_access_point.interfaces.wifi.channel)
         self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.testcase)
+
+        fw_version = self.wifi_dut.interfaces.wifi.get_fw_version()
+        logger().info(f"....Firmware version of DUT is {fw_version}....")
 
         if self.ble_conn:
             conn_params = {
@@ -201,11 +205,24 @@ class WifiJoinThread(ThreadBase):
             self.ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=char_path,
                                                                                          char_uid=char_uid)
 
-        self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                 wifi_access_point=self.wifi_access_point,
-                                                                 associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                 retry_count=3, ping_after_power_save=False,
-                                                                 ping_count=self.ping_count, power_save=False)
+        if self.extended_scan:
+            self.wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=15,
+                                                                          adv_passive_channel_time=20)
+            time.sleep(2)
+            self.wifi_dut.interfaces.wifi.scan(scan_type=2)
+            time.sleep(2)
+            self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                     wifi_access_point=self.wifi_access_point,
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                     retry_count=3, ping_after_power_save=False,
+                                                                     ping_count=self.ping_count, power_save=False,
+                                                                     skip_scan=True)
+        else:
+            self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                     wifi_access_point=self.wifi_access_point,
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                     retry_count=3, ping_after_power_save=False,
+                                                                     ping_count=self.ping_count, power_save=False)
         if self.test_case_no == 20750 or self.test_case_no == 20751 or self.test_case_no == 20748 or \
                 self.test_case_no == 20749:
             logger().info(f"BLE Data Transfer is going to start")
