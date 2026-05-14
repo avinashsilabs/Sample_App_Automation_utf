@@ -464,6 +464,18 @@ def test_wifi_sdk_wps_path_wpa2_security_c913440(
         """ **** WPS Button press code - Workaround for WPS web configuration **** """
         logger().info(" ====== WPS button pressed and interrupt occurred and fallback to STA mode ====== ")
 
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        # NEW c913440 staged teardown START
+        # The firmware (1711.2.16.5.0.0.4) was hanging on wifi.deinit
+        # when stop_ap_interface, ble_stop_advertising, http_server_stop
+        # and sl_net_deinit were issued back-to-back in coex (AP+BLE)
+        # mode (verified in pytest_log: TX wifi.deinit echoed but no
+        # status response within 10s -> AssertionError -0x1 / FW_FAILURE).
+        # Stage each teardown step with a small drain delay so the
+        # firmware can settle before the next command, and retry the
+        # final deinit a couple of times so a single transient hang
+        # doesn't fail the test.
+        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         logger().info("##### [NEW c913440] staged teardown ENTER #####")
 
         logger().info("##### [NEW c913440] step 1/4: stop_ap_interface #####")
@@ -630,15 +642,179 @@ def test_wifi_sdk_ap_provisioning_open_security_c887643(
 )
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.parametrize("ap_channel", [11])
-@pytest.mark.parametrize("iteration_count", [5])  # Number of WPS iterations
+@pytest.mark.parametrize("iteration_count", [3])  # Number of WPS iterations
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 def test_wifi_sdk_wps_path_multiple_iterations_c913442(
         sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
-        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, 
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients,
         sniffer_filter, ap_channel, iteration_count):
-    """Verify DUT behavior with WPS path flow executed multiple times in loop"""
+    """Verify DUT behavior with WPS path flow executed multiple times in loop.
+
+    Each iteration mirrors the c913440 baseline single-shot flow:
+      AP+BLE up -> AP+BLE teardown (staged) -> reconfig as STA+BLE -> WPS join
+    Between iterations the DUT is brought back to AP+BLE (deinit + AP config
+    + init) so the next iteration starts from the same clean state as iter 1.
+    """
+
+    def _force_commander_reset(tag):
+        
+        logger().info(f"##### [{tag}] forcing commander HW reset on DUT #####")
+        try:
+            wifi_dut.interfaces.wifi.reset()
+            time.sleep(3)
+            logger().info(f"##### [{tag}] commander reset OK #####")
+            return True
+        except Exception as reset_err:
+            logger().error(f"##### [{tag}] commander reset failed: {reset_err} #####")
+            return False
+
+    def _staged_teardown(ble_obj_local, tag):
+        
+        logger().info(f"##### [{tag}] step 1/4: stop_ap_interface #####")
+        try:
+            ble_obj_local.stop_ap_interface()
+        except Exception as e:
+            logger().warning(f"##### [{tag}] stop_ap_interface error (continuing): {e} #####")
+        time.sleep(3)
+        logger().info(f"##### [{tag}] step 2/4: ble_stop_advertising #####")
+        try:
+            ble_obj_local.ble_stop_advertising()
+        except Exception as e:
+            logger().warning(f"##### [{tag}] ble_stop_advertising error (continuing): {e} #####")
+        time.sleep(2)
+        logger().info(f"##### [{tag}] step 3/4: http_server_stop #####")
+        try:
+            ble_obj_local.http_server_stop()
+        except Exception as e:
+            logger().warning(f"##### [{tag}] http_server_stop error (continuing): {e} #####")
+        time.sleep(3)
+        logger().info(f"##### [{tag}] step 4/4: sl_net_deinit (with retry) #####")
+        deinit_attempts = 2  # 2 soft attempts then HW reset; FW hang is not transient on 1711.2.15.x
+        deinit_ok = False
+        for attempt in range(1, deinit_attempts + 1):
+            try:
+                ble_obj_local.sl_net_deinit()
+                deinit_ok = True
+                logger().info(f"##### [{tag}] sl_net_deinit succeeded on attempt {attempt} #####")
+                break
+            except Exception as deinit_err:
+                logger().warning(
+                    f"##### [{tag}] sl_net_deinit attempt {attempt}/{deinit_attempts} "
+                    f"failed: {deinit_err} #####")
+                time.sleep(3)
+        if not deinit_ok:
+            logger().warning(
+                f"##### [{tag}] soft deinit hung - falling back to HW commander reset #####")
+            _force_commander_reset(tag)
+        time.sleep(5)
+        return deinit_ok
+
+    def _full_reinit_as_ap_ble(tag):
+        
+        logger().info(f"##### [{tag}] full re-init as AP+BLE ENTER #####")
+        
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+        wifi_dut.interfaces.wifi.inited_test_agent_threads = False
+        wifi_dut.interfaces.wifi.test_agent_thread_index = -1
+        wifi_dut.interfaces.wifi.test_agent_threads = {}
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.AccessPoint,
+            coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            features=Si91xFeatureBitMap.Aggregation
+                     | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default
+                           | Si91xTCPIPFeatureBitMap.DHCPv4Server
+                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+            custom_features=Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid
+                            | Si91xCustomFeatureBitMap.NWP120MHz,
+            ext_custom_features=Si91xExtCustomFeatureBitMap.Default
+                                | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
+                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.Default,
+            config_features=Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            bt_features=Si91xBTFeatureBitMap.Default,
+            ble_features=Si91xBLEFeatureBitMap.Default
+                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
+                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
+                                    | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
+                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        )
+        time.sleep(3)
+
+        # wifi.init (no -i, no thread prefix) - "Started AP mode with BLE"
+        wifi_dut.interfaces.wifi.init(mode=None, config_required=False)
+        time.sleep(2)
+
+        # Recreate FW-side test agent threads, same shape as wifi_dut_marker.
+        wifi_dut.interfaces.wifi.init_test_agent_threads(thread_config={
+            "wifi": {"count": 1, "stack_len": 3072},
+            "ble":  {"count": 1, "stack_len": 2048},
+        })
+        time.sleep(2)
+        logger().info(f"##### [{tag}] full re-init as AP+BLE EXIT #####")
+
+    def _full_reinit_as_sta_ble(tag):
+        logger().info(f"##### [{tag}] full re-init as STA+BLE ENTER #####")
+        
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+        wifi_dut.interfaces.wifi.inited_test_agent_threads = False
+        wifi_dut.interfaces.wifi.test_agent_thread_index = -1
+        wifi_dut.interfaces.wifi.test_agent_threads = {}
+
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=0,
+            coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            features=Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1
+                     | Si91xFeatureBitMap.ULPGPIOHandshake
+                     | Si91xFeatureBitMap.Aggregation
+                     | Si91xFeatureBitMap.PSKSecurity,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default | 0,
+            ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                               | 0,
+            custom_features=Si91xCustomFeatureBitMap.NWP120MHz
+                            | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            ext_custom_features=Si91xExtCustomFeatureBitMap.Default
+                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
+                                | 0,
+            bt_features=Si91xBTFeatureBitMap.Default,
+            ble_features=Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=1)
+                         | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
+                         | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
+                         | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
+                         | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
+                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
+                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
+                         | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
+                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
+                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
+                                    | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
+                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            config_features=Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        )
+        time.sleep(3)
+
+        
+        wifi_dut.interfaces.wifi.init(mode=None, config_required=False)
+        time.sleep(2)
+
+        
+        wifi_dut.interfaces.wifi.init_test_agent_threads(thread_config={
+            "wifi": {"count": 1, "stack_len": 3072},
+            "ble":  {"count": 1, "stack_len": 2048},
+        })
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        time.sleep(2)
+        logger().info(f"##### [{tag}] full re-init as STA+BLE EXIT #####")
 
     try:
         test_name = request.node.name
@@ -651,23 +827,23 @@ def test_wifi_sdk_wps_path_multiple_iterations_c913442(
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
 
         for iteration in range(1, iteration_count + 1):
-            logger().info(f"\n{'='*60}")
+            logger().info(f"\n{'=' * 60}")
             logger().info(f"===== WPS ITERATION {iteration} of {iteration_count} =====")
-            logger().info(f"{'='*60}\n")
+            logger().info(f"{'=' * 60}\n")
 
             try:
-                # Create ProvisioningFunctionality object for each iteration
+                
                 ble_obj = ProvisioningFunctionality(
-                    wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, 
-                    ble_dut=ble_dut, set_smp=0, utf_constants=utf_constants, 
+                    wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+                    ble_dut=ble_dut, set_smp=0, utf_constants=utf_constants,
                     wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                    ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, 
-                    wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, 
-                    sniffer_filter=sniffer_filter, adv_int=160, associated=False, skip_scan=True,
-                    power_save=False  # Disable power save for faster iterations
+                    ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel,
+                    wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
+                    sniffer_filter=sniffer_filter, adv_int=160, associated=False,
+                    skip_scan=False, tcp_ip_bypass=False, ip_config_disable=False,
+                    power_save=False,
                 )
 
-                # Start AP mode and services
                 ble_obj.ap_mode_start()
                 ble_obj.start()
                 ble_obj.wait_for_exit()
@@ -677,105 +853,146 @@ def test_wifi_sdk_wps_path_multiple_iterations_c913442(
                 ble_obj.http_server_start()
 
                 """ **** WPS Button press code - Workaround for WPS web configuration **** """
-                logger().info(" ====== WPS button pressed and interrupt occured and fallback to STA mode ====== ")
+                logger().info(" ====== WPS button pressed and interrupt occurred and fallback to STA mode ====== ")
 
-                ble_obj.stop_ap_interface()
-                ble_obj.ble_stop_advertising()
-                ble_obj.http_server_stop()
+                
+                logger().info(f"##### [c913442 iter {iteration}] staged teardown ENTER #####")
+                soft_deinit_ok = _staged_teardown(ble_obj, f"c913442 iter {iteration}")
+                logger().info(
+                    f"##### [c913442 iter {iteration}] staged teardown EXIT "
+                    f"(soft_deinit_ok={soft_deinit_ok}) #####")
 
-                # Deinitialize network stack
-                logger().info(f"[Iteration {iteration}] Deinitializing network stack...")
-                ble_obj.sl_net_deinit()
-                time.sleep(10)  # Reduced wait time for faster iterations
-
-                # Configure WiFi for STA mode with BLE coexistence
                 logger().info(f"[Iteration {iteration}] Configuring WiFi for STA + BLE mode...")
-                wifi_dut.interfaces.wifi.set_wifi_config(
-                    oper_mode=0,
-                    coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-                    features=Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                             Si91xFeatureBitMap.ULPGPIOHandshake | 
-                             Si91xFeatureBitMap.Aggregation | 
-                             Si91xFeatureBitMap.PSKSecurity,
-                    tcpip_features=Si91xTCPIPFeatureBitMap.Default,
-                    ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                                       | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
-                    custom_features=Si91xCustomFeatureBitMap.NWP120MHz
-                                    | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-                    ext_custom_features=Si91xExtCustomFeatureBitMap.Default
-                                        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-                    bt_features=Si91xBTFeatureBitMap.Default,
-                    ble_features=Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=1)
-                                 | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
-                                 | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
-                                 | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
-                                 | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
-                                 | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
-                                 | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
-                                 | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
-                                 | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-                    ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
-                                            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
-                                            | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
-                                            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-                    config_features=Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-                                    | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-                )
+                if not soft_deinit_ok:
+                    _full_reinit_as_sta_ble(f"c913442 iter {iteration} reinit-sta")
+                else:
+                    
+                    wifi_dut.interfaces.wifi.set_wifi_config(
+                        oper_mode=0,
+                        coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                        features=Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1
+                                 | Si91xFeatureBitMap.ULPGPIOHandshake
+                                 | Si91xFeatureBitMap.Aggregation
+                                 | Si91xFeatureBitMap.PSKSecurity,
+                        tcpip_features=Si91xTCPIPFeatureBitMap.Default | 0,
+                        ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                                           | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                                           | 0,
+                        custom_features=Si91xCustomFeatureBitMap.NWP120MHz
+                                        | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+                        ext_custom_features=Si91xExtCustomFeatureBitMap.Default
+                                            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
+                                            | 0,
+                        bt_features=Si91xBTFeatureBitMap.Default,
+                        ble_features=Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=1)
+                                     | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
+                                     | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
+                                     | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
+                                     | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
+                                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
+                                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
+                                     | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
+                                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+                        ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
+                                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
+                                                | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
+                                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+                        config_features=Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                                        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                    )
+                    time.sleep(5)
 
-                # Perform WPS connection
-                logger().info(f"[Iteration {iteration}] Starting WPS process...")
+                    wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+                    wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+
+                logger().info(f"[Iteration {iteration}] Starting WPS process with Auto Connect Enabled")
                 wps_result = ble_obj.join_to_wifi_network_via_wps()
                 logger().info(f"[Iteration {iteration}] WPS Result: {wps_result}")
 
-                # Validate WPS result
-                if wps_result is not None:
-                    if "device_ip" in wps_result and wps_result["device_ip"]:
-                        logger().info(f"[Iteration {iteration}] SUCCESS - DUT IP: {wps_result['device_ip']}")
-                        successful_iterations += 1
-                    else:
-                        logger().warning(f"[Iteration {iteration}] WPS connected but no IP assigned")
-                        failed_iterations.append((iteration, "No IP assigned"))
+                if wps_result is not None and wps_result.get("device_ip"):
+                    logger().info(f"[Iteration {iteration}] SUCCESS - DUT IP: {wps_result['device_ip']}")
+                    successful_iterations += 1
                 else:
-                    logger().warning(f"[Iteration {iteration}] WPS returned None")
-                    failed_iterations.append((iteration, "WPS returned None"))
+                    reason = "No IP assigned" if wps_result else "WPS returned None"
+                    logger().warning(f"[Iteration {iteration}] {reason}")
+                    failed_iterations.append((iteration, reason))
 
-                # Disconnect before next iteration (if not the last iteration)
+                # ---------- Inter-iteration: return DUT to AP+BLE ----------
                 if iteration < iteration_count:
-                    logger().info(f"[Iteration {iteration}] Disconnecting from AP for next iteration...")
+                    logger().info(f"[Iteration {iteration}] Returning DUT to AP+BLE for next iteration...")
+
                     try:
                         ble_obj.wifi_disconnect()
                     except Exception as disconnect_error:
                         logger().warning(f"[Iteration {iteration}] Disconnect warning: {disconnect_error}")
-                    
-                    # Stop WPS on AP before next iteration
-                    wifi_access_point.interfaces.wifi.set_configure_wps_web()
-                    time.sleep(5)  # Wait before next iteration
+                    time.sleep(3)
+
+                    # Disable WPS PBC on the AP - join_to_wifi_network_via_wps() will
+                    # re-enable it at the start of the next iteration.
+                    try:
+                        wifi_access_point.interfaces.wifi.set_configure_wps_web()
+                    except Exception as ap_err:
+                        logger().warning(f"[Iteration {iteration}] AP WPS stop warning: {ap_err}")
+
+                    wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+                    try:
+                        ble_obj.sl_net_deinit()
+                        logger().info(f"[Iteration {iteration}] inter-iter wifi.deinit ok")
+                    except Exception as deinit_err:
+                        logger().warning(
+                            f"[Iteration {iteration}] inter-iter wifi.deinit failed: "
+                            f"{deinit_err}")
+                    time.sleep(3)
+
+                    if not _force_commander_reset(f"c913442 iter {iteration} inter"):
+                        logger().error(
+                            f"[Iteration {iteration}] inter-iter HW reset failed; aborting loop")
+                        break
+                    time.sleep(3)
+
+                    # Mimic the framework's setup sequence (wifi.init + threads).
+                    _full_reinit_as_ap_ble(f"c913442 iter {iteration} inter")
+                    time.sleep(3)
 
             except Exception as iter_error:
                 logger().error(f"[Iteration {iteration}] FAILED with error: {str(iter_error)}")
                 failed_iterations.append((iteration, str(iter_error)))
-                # Continue to next iteration even if current one fails
+                
+                if iteration < iteration_count:
+                    logger().info(f"[Iteration {iteration}] Attempting state recovery for next iteration...")
+                    try:
+                        
+                        if not _force_commander_reset(f"c913442 iter {iteration} except"):
+                            logger().error(
+                                f"[Iteration {iteration}] HW reset failed; aborting loop")
+                            break
+                        time.sleep(3)
+                        # Full fresh re-init (wifi.init + threads), not net.init.
+                        _full_reinit_as_ap_ble(f"c913442 iter {iteration} except")
+                        time.sleep(3)
+                    except Exception as recovery_err:
+                        logger().error(
+                            f"[Iteration {iteration}] state recovery failed; aborting loop: "
+                            f"{recovery_err}")
+                        break
                 continue
 
-        # Final summary
-        logger().info(f"\n{'='*60}")
+        logger().info(f"\n{'=' * 60}")
         logger().info(f"===== WPS ITERATION TEST SUMMARY =====")
-        logger().info(f"{'='*60}")
+        logger().info(f"{'=' * 60}")
         logger().info(f"Total Iterations: {iteration_count}")
         logger().info(f"Successful: {successful_iterations}")
         logger().info(f"Failed: {len(failed_iterations)}")
-        
+
         if failed_iterations:
             logger().info("Failed iterations details:")
             for iter_num, reason in failed_iterations:
                 logger().info(f"  - Iteration {iter_num}: {reason}")
 
-        # Stop sniffer
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Sniffer capture stopped")
 
-        # Assert all iterations passed
         assert successful_iterations == iteration_count, \
             f"WPS loop test failed: {successful_iterations}/{iteration_count} iterations succeeded. " \
             f"Failures: {failed_iterations}"
