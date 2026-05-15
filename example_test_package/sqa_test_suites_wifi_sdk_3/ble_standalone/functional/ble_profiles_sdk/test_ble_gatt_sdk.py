@@ -2276,6 +2276,166 @@ def test_ble_sdk_enable_glucose_service_in_client_role_C19888(wifi_dut, ble_clie
                                        ble_dut_address=bt_dut_address)
 
 
+def add_glucose_service_on_dut(wifi_dut):
+    glucose_measurement_handle = 12
+    glucose_context_handle = 15
+    glucose_feature_handle = 18
+    racp_handle = 20
+
+    logger().info("Adding Glucose service on DUT")
+    wifi_dut.interfaces.wifi.ble_add_service(uid=0x1808)
+
+    logger().info("Adding Glucose Measurement characteristic")
+    wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A18,
+                                                   permissions=0x10,
+                                                   service_handler_num=1,
+                                                   value_handler_num=2)
+    
+    data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+    wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A18,
+                                                  permissions=0x10,
+                                                  value_handler_num=2,
+                                                  data=data)
+
+    logger().info("Adding Glucose Measurement Context characteristic")
+    wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A34,
+                                                   permissions=0x10,
+                                                   service_handler_num=4,
+                                                   value_handler_num=5)
+
+
+    wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A34,
+                                                  permissions=0x10,
+                                                  value_handler_num=5,
+                                                  data=data)
+
+    logger().info("Adding Glucose Feature characteristic")
+    wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A51,
+                                                   permissions=0x02,
+                                                   service_handler_num=7,
+                                                   value_handler_num=8)
+
+
+    wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A51,
+                                                  permissions=0x02,
+                                                  value_handler_num=8,
+                                                  data=data)
+
+    logger().info("Adding Record Access Control Point characteristic")
+    wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x2A52,
+                                                   permissions=0x28,
+                                                   service_handler_num=9,
+                                                   value_handler_num=10)
+    wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x2A52,
+                                                  permissions=0x28,
+                                                  value_handler_num=10,
+                                                  data=data)
+    return glucose_measurement_handle, glucose_context_handle, glucose_feature_handle, racp_handle
+
+
+@wifi_dut_marker()
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.test_src_map_id('C19887')
+def test_ble_sdk_glucose_service_notify_racp_stability_server_role_C19887(wifi_dut, ble_client, sl_collections):
+    """Verify Glucose service notifications, RACP write, and 10 minute stability with  client."""
+    bt_dut_address = None
+    ble_client_address = None
+    ble_obj = None
+    measurement_char_path = None
+    racp_char_path = None
+    glucose_measurement_uuid = "00002a18-0000-1000-8000-00805f9b34fb"
+    racp_uuid = "00002a52-0000-1000-8000-00805f9b34fb"
+    glucose_service_uuid = "00001808-0000-1000-8000-00805f9b34fb"
+
+    try:
+        with BleLogs(start_collecting_logs=True,
+                     bt_log_path=f"reports/test_wifi_sdk_glucose_stability_{int(time.time())}") as bt_logs:
+            bt_dut_address = wifi_dut.interfaces.wifi.ble_start(capability=0)
+            assert bt_dut_address, "Failed to load bt address..."
+            glucose_measurement_handle, _, _, _ = add_glucose_service_on_dut(wifi_dut)
+
+            ble_obj = BleFunctionality(wifi_dut, ble_client, bt_dut_address=bt_dut_address, powersave=True)
+            ble_client_address = ble_obj.ble_adv()
+            time.sleep(60)
+            ble_obj.check_device_state_on_rasp()
+
+            measurement_char_path = ble_obj.resolving_services_on_remote(service_uuid=glucose_service_uuid,
+                                                                         char_uuid=glucose_measurement_uuid)
+            racp_char_path = ble_obj.resolving_services_on_remote(service_uuid=glucose_service_uuid,
+                                                                  char_uuid=racp_uuid)
+
+            logger().info("Enabling notifications for Glucose Measurement on remote device")
+            ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=measurement_char_path)
+            ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(char_path=measurement_char_path,
+                                                                                    char_uid=glucose_measurement_uuid)
+
+            for seq in range(1, 6):
+                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+
+                logger().info(f"Notifying live glucose measurement seq={seq}")
+
+                wifi_dut.interfaces.wifi.ble_set_local_att_value(
+                    val_handle=glucose_measurement_handle,
+                    notify_data=data
+                )
+                time.sleep(2)
+
+            notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[glucose_measurement_uuid]
+            logger().info(f"Glucose Measurement notifications received on Remote Device: {notifications}")
+            assert len(notifications) > 0, "Glucose Measurement notifications are not received on Remote Device"
+            notification_count_before_racp = len(notifications)
+
+            logger().info("Writing Report Stored Records / All Records to RACP")
+            ble_client.interfaces.bluetooth.gatt_adapter.write_charac_value(char_path=racp_char_path, data="\x01\x01")
+            time.sleep(2)
+
+            for index in range(5):
+                record_data = f"REC{index}"
+                logger().info(f"Sending glucose record after RACP write: {data}")
+                wifi_dut.interfaces.wifi.ble_set_local_att_value(notify_data=data,
+                                                                 val_handle=glucose_measurement_handle)
+                time.sleep(3)
+
+            notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[glucose_measurement_uuid]
+            logger().info(f"Glucose records received on Remote Device: {notifications}")
+            assert len(notifications) >= notification_count_before_racp + 5, "Glucose records are not received on Remote Device"
+
+            logger().info("Checking connection stability for 10 mins")
+            time.sleep(600)
+            state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            state_int = int(state) if state.isdigit() else -1
+            logger().info(f"\nDevice state: {state_int}")
+            assert state_int == BLEDeviceState.Connected, "There is no connection stability"
+            ble_obj.check_device_state_on_rasp()
+            logger().info("Connection is stable after 10 mins")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        try:
+            if measurement_char_path is not None:
+                ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=measurement_char_path)
+                ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=glucose_measurement_uuid)
+        except Exception as e:
+            logger().info(f"Failed to disable Glucose Measurement notifications: {e}")
+        try:
+            if bt_dut_address:
+                ble_client.interfaces.bluetooth.disconnect(bt_dut_address)
+                time.sleep(2)
+        except Exception as e:
+            logger().info(f"Disconnect from Remote Device failed: {e}")
+        try:
+            wifi_dut.interfaces.wifi.ble_remove_service()
+        except Exception as e:
+            logger().info(f"Failed to remove service: {e}")
+        ble_client.interfaces.bluetooth.close()
+        if bt_dut_address is not None and ble_client_address is not None:
+            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                       ble_client_address=ble_client_address,
+                                       ble_dut_address=bt_dut_address)
+
+
 @wifi_dut_marker()
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "ble_stop_scan",
                                          "ble_disconnect"])
