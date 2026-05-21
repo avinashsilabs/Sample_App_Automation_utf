@@ -76,6 +76,7 @@ devices:
         type: 'rs911x'
         subtype: 'rs9117'
         src_dir: 'utf_wiseconnect'
+        commander_options: '--serialno 000440354641 --device Si917' #configure primary EVK serial number
 
         # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
         defaults:
@@ -99,6 +100,7 @@ devices:
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
+                serial_number: '000440354641' # configure primary evk serial number
 
             # 'firmware_uart' is a special interface that indicates which UART is used
             # when loading firmware on the device
@@ -118,6 +120,70 @@ devices:
                 # communication interface to the device
                 type: 'sl_wifi_test_agent_cli'
                 src_dir: 'utf_wiseconnect_3.tests'
+                commander_options: '--serialno 000440354641 --device Si917' #configure primary EVK serial number
+                thread_config:
+                    wifi:
+                        count: 2
+                        stack_len: 2048
+                    ble:
+                        count: 0
+                        stack_len: 2048
+
+    encrypted_si917_sl_wifi:
+
+        # The 'type' attribute is optional.  If it is present, the device will be created via a
+        # create_device() function located in the corresponding python module under the 'devices'
+        # folder.
+        # If this attribute is not present, the device will be created as an instance of the Device or CompositeDevice class
+        # In the case of a 9116 device, the type 'rs911x' should be used
+        type: 'rs911x'
+        subtype: 'rs9117'
+        src_dir: 'utf_wiseconnect'
+        commander_options: '--serialno 000440335880 --device Si917' #configure primary EVK serial number
+
+        # The 'defaults' attribute is optional and can be used to specify default attributes for this device instance
+        defaults:
+            cli_transport: 'uart'
+            gpio_transport: 'uart'
+
+        # The 'interfaces' attribute is mandatory to describe the control interfaces/functionality of the device
+        interfaces:
+
+            # Like the top level device names, the interface names are also arbitrary, but must be unique for a
+            # given device
+            uart:
+                # The type attribute is mandatory and specifies the module within the interfaces folder
+                # used to create the interface object
+                type: 'serial'
+
+                # Other attributes are specific to the interface type; some may be optional or mandatory
+                # For a serial uart device connected via USB, you can enable autodetection of the port
+                # by specifying the vid and pid of the device.
+                # In the below example, the vid and pid represent the USB connection to the WSTK
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+                serial_number: '000440335880' # configure primary evk serial number
+
+            # 'firmware_uart' is a special interface that indicates which UART is used
+            # when loading firmware on the device
+            # If this is not present, "uart" will be used as the default.
+            firmware_uart:
+                type: 'serial'
+
+                # See notes above for autodetection rules.  The vid and pid below represent the
+                # 'UART' USB connector on the 9116 board.
+                port: 'auto'
+                vid: 0x1366
+                pid: 0x0105
+
+            wifi:
+                # Both of these (or any interface of type 'cli') require a 'cli_transport' property
+                # to be defined in the defaults section for specifying the
+                # communication interface to the device
+                type: 'sl_wifi_test_agent_cli'
+                src_dir: 'utf_wiseconnect_3.tests'
+                commander_options: '--serialno 000440335880 --device Si917' #configure primary EVK serial number
                 thread_config:
                     wifi:
                         count: 2
@@ -129,13 +195,14 @@ devices:
     efr32_4180b_Si917:
         type: 'efx32'
         subtype: 'efr32'
-        commander_options: "--device Si917"
+        commander_options: "--serialno 000440354641 --device Si917"
         interfaces:
             vcom:
                 type: 'serial'
                 port: 'auto'
                 vid: 0x1366
                 pid: 0x0105
+                serial_number: '000440354641'
 
     #EFR32 configuration
     efr32_4180b:
@@ -239,7 +306,7 @@ devices:
             pdu_switch:
                 # switch type is Digital Logging v222
                 type: 'switch.dli_v222_pdu'
-                hostname: '192.168.1.4'
+                hostname: '10.207.18.22'
                 user: 'admin'
                 password: '1234'
                 # valid outlet numbers are 1-8
@@ -689,7 +756,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 80
-                interface: 'wlan0'
+                interface: 'eth1'
 
     raspi_lighttpd_tls:
         interfaces:
@@ -699,7 +766,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'wlan0'
+                interface: 'eth1'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'
