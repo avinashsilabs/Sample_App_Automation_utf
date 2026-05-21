@@ -1,0 +1,133 @@
+root_path: example_test_package
+test_sequence:
+  - id: c05cb89b55c47bdba73ed8a80e1cf3b55a74b3f9
+    test_case_id: test_wifi_sdk_2_4_tcp_rx_wpa3_C34513
+    test_function: test_wifi_sdk_2_4_tcp_rx_wpa3_C34513
+    test_id: test_wifi_sdk_2_4_tcp_rx_wpa3_C34513::1
+    test_module: sqa_test_suites_wifi_sdk_3/wlan_standalone/performance/test_wpa3_throughtput_sdk.py
+    test_markers:
+      - 'pytest.mark.test_src_map_id('C34513')'
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34513
+      - performance
+      - sqa_test_suites_wifi_sdk_3
+      - tcp
+      - throughput
+      - wlan_standalone
+    test_case_name: test_wifi_sdk_2_4_tcp_rx_wpa3_C34513
+    library_name: ''
+    visible: true
+    iterations: 1
+
+  - id: af2fe61facecd92f00c1458eafa92fbacf0ab9b7
+    test_case_id: test_wifi_sdk_2_4_udp_rx_wpa3_C34515
+    test_function: test_wifi_sdk_2_4_udp_rx_wpa3_C34515
+    test_id: test_wifi_sdk_2_4_udp_rx_wpa3_C34515::1
+    test_module: sqa_test_suites_wifi_sdk_3/wlan_standalone/performance/test_wpa3_throughtput_sdk.py
+    test_markers:
+      - 'pytest.mark.test_src_map_id('C34515')'
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34515
+      - performance
+      - sqa_test_suites_wifi_sdk_3
+      - throughput
+      - udp
+      - wlan_standalone
+    test_case_name: test_wifi_sdk_2_4_udp_rx_wpa3_C34515
+    library_name: ''
+    visible: true
+    iterations: 1
+
+  - id: 9bd6e9d01b82a848076dc5ea2aa3e385a87af483
+    test_case_id: test_wifi_sdk_2_4_tcp_tx_wpa3_C34512
+    test_function: test_wifi_sdk_2_4_tcp_tx_wpa3_C34512
+    test_id: test_wifi_sdk_2_4_tcp_tx_wpa3_C34512::1
+    test_module: sqa_test_suites_wifi_sdk_3/wlan_standalone/performance/test_wpa3_throughtput_sdk.py
+    test_markers:
+      - 'pytest.mark.test_src_map_id('C34512')'
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34512
+      - performance
+      - sqa_test_suites_wifi_sdk_3
+      - tcp
+      - throughput
+      - wlan_standalone
+    test_case_name: test_wifi_sdk_2_4_tcp_tx_wpa3_C34512
+    library_name: ''
+    visible: true
+    iterations: 1
+
+  - id: 037d18502625340a31a4704ff5b71de6e410ecab
+    test_case_id: test_wifi_sdk_2_4_udp_tx_wpa3_C34514
+    test_function: test_wifi_sdk_2_4_udp_tx_wpa3_C34514
+    test_id: test_wifi_sdk_2_4_udp_tx_wpa3_C34514::1
+    test_module: sqa_test_suites_wifi_sdk_3/wlan_standalone/performance/test_wpa3_throughtput_sdk.py
+    test_markers:
+      - 'pytest.mark.test_src_map_id('C34514')'
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C34514
+      - performance
+      - sqa_test_suites_wifi_sdk_3
+      - throughput
+      - udp
+      - wlan_standalone
+    test_case_name: test_wifi_sdk_2_4_udp_tx_wpa3_C34514
+    library_name: ''
+    visible: true
+    iterations: 1
+
+  - id: 951def6e6f6f294ab850a9d4e7e71c25628c2c04
+    test_case_id: test_wifi_sdk_2_4_ssl_tx_wpa3_C354512
+    test_function: test_wifi_sdk_2_4_ssl_tx_wpa3_C354512
+    test_id: test_wifi_sdk_2_4_ssl_tx_wpa3_C354512::1
+    test_module: sqa_test_suites_wifi_sdk_3/wlan_standalone/performance/test_wpa3_throughtput_sdk.py
+    test_markers:
+      - 'pytest.mark.test_src_map_id('C354512')'
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C354512
+      - performance
+      - sqa_test_suites_wifi_sdk_3
+      - ssl
+      - throughput
+      - wlan_standalone
+    test_case_name: test_wifi_sdk_2_4_ssl_tx_wpa3_C354512
+    library_name: ''
+    visible: true
+    iterations: 1
+
+  - id: d62cf80c485855486e4a7f7d8724fa02834434b5
+    test_case_id: test_wifi_sdk_2_4_ssl_rx_wpa3_C354512
+    test_function: test_wifi_sdk_2_4_ssl_rx_wpa3_C354512
+    test_id: test_wifi_sdk_2_4_ssl_rx_wpa3_C354512::1
+    test_module: sqa_test_suites_wifi_sdk_3/wlan_standalone/performance/test_wpa3_throughtput_sdk.py
+    test_markers:
+      - 'pytest.mark.test_src_map_id('C354512')'
+    test_params: []
+    version: 0
+    enabled: true
+    labels:
+      - C354512
+      - performance
+      - sqa_test_suites_wifi_sdk_3
+      - ssl
+      - throughput
+      - wlan_standalone
+    test_case_name: test_wifi_sdk_2_4_ssl_rx_wpa3_C354512
+    library_name: ''
+    visible: true
+    iterations: 1
