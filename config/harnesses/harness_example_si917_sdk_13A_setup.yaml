@@ -255,7 +255,7 @@ devices:
                 type: 'wifi.access_points.asus_rt_ax3000'
                 ip_address: '10.208.70.36'
                 admin_password: 'admin@12345'
-                security: 'open'
+                security: 'WPA2'
                 passphrase: 'thisisatestnetwork'
                 channel: 7
                 ssh_port: 1501
@@ -624,7 +624,7 @@ devices:
                 # (optional) port on which the broker is listening (defaults to 1883)
                 port: 1883
                 # (required) network interface to which the broker is bound
-                interface: 'eth2'
+                interface: 'eth1'
                 # (optional) controls whether tls is enabled. defaults to false
                 tls_enabled: false
 
@@ -771,7 +771,7 @@ devices:
                 type: 'http.server.http_linux'
                 shell: 'linux_shell'
                 port: 443
-                interface: 'wlan0'
+                interface: 'eth1'
                 tls_enabled: true
                 tls_key: 'mosquitto-utf.silabs.com.key.pem'
                 tls_certificate: 'mosquitto-utf.silabs.com.cert.pem'

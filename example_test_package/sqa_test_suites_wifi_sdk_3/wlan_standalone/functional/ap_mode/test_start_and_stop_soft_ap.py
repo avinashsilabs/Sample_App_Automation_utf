@@ -386,7 +386,7 @@ def test_wifi_sdk_dut_soft_stop_ap_functionality_after_enabling_start_ap_C191344
         ap_dut_obj.wait_for_exit()
         logger().info(f"stop the AP")
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
-        time.sleep(5)
+        time.sleep(15)
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info(f"Checking de-authentication in sniffer")

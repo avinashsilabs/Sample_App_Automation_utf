@@ -286,7 +286,7 @@ def test_wifi_sdk_pmf_req_ap_pmf_cap_dut_c19661(wifi_sniffer, wifi_access_point,
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_access_point", wifi={"standard": 'gnbax', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
 @pytest.mark.config(
     "wifi_dut",
