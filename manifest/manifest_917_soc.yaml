@@ -76,7 +76,7 @@ firmware_applications:
     test_twt_sta:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: 'test_agent_soc_rcf2_daf57c7579_twt.rps'
+        filename: 'test_agent_si91x_twt.rps'
 
     test_nvm3:
       - device_type: 'efx32'
@@ -86,7 +86,7 @@ firmware_applications:
     test_ipv6:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: 'test_agent_soc_rcf2_daf57c7579_ipv6.rps'
+        filename: 'test_agent_si91x_ipv6.rps'
 
     test_lwip_stack:
       - device_type: 'efx32'

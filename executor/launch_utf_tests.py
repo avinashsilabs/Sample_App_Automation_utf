@@ -1,14 +1,24 @@
 import subprocess
 import re
+import urllib.parse
+import zipfile
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+
 import click
 import os
-import json
+
+import requests
+from opentelemetry.instrumentation.urllib3 import URLLib3Instrumentor
+from requests.auth import HTTPBasicAuth
+
 from utf.executor.launch_utf_tests import (
     UtfLauncher,
     UtfLaunchCommander,
     UtfLauncherCmdOption,
-    UtfExecutorTypes,
 )
+from utf.utils.artifactory_manager import UNC_PATH_PREPENDED
+
 try:
     # Attempt to import get_version from utf, if it fails, define a fallback that returns None to support older versions of utf_core
     from utf import get_version
@@ -54,6 +64,141 @@ class AppUtfLauncher(UtfLauncher):
             UtfLauncherCmdOption.password: "raspberry",
         }
 
+    def prepare_and_download_binary_rps(self):
+        try:
+            branch_name = os.environ.get("BRANCH_NAME")
+            sdk_build_num = os.environ.get("SDK_BUILD_NUM")
+            artifactory_folder_url = f"https://artifactory.silabs.net/artifactory/gsdk-generic-development/{branch_name}/{sdk_build_num}/extension/wiseconnect.zip"
+            rps_inner_dir = "connectivity_firmware/standard"
+            destination_path = os.path.join(
+                WORKSPACE_ROOT,
+                "manifest",
+            )
+            downloaded_files_list = self.download_and_extract_rps_from_zip(
+                zip_url=artifactory_folder_url,
+                destination_dir=destination_path,
+                inner_folder=rps_inner_dir,
+            )
+            if downloaded_files_list:
+                return downloaded_files_list[0]
+        except Exception as e:
+            print(f"Failed to download the binary rps file due to {e}")
+
+    @staticmethod
+    def download_and_extract_rps_from_zip(zip_url, inner_folder, destination_dir):
+        """Download a .zip file from Artifactory and extract only .rps files from a specific subfolder.
+
+        Args:
+            zip_url: Full URL to the .zip artifact in Artifactory.
+            inner_folder: Subfolder path inside the zip to search for .rps files
+                          (e.g. "connectivity_firmware/standard").
+            destination_dir: Local directory where the .rps files should be saved.
+            auth: Authentication credentials for Artifactory (tuple of username, password).
+
+        :returns: True if at least one .rps file was extracted, False otherwise.
+
+        """
+
+        temp_zip_path = None
+
+        try:
+            print(f"Downloading zip from {zip_url}")
+            # URLLib3Instrumentor().uninstrument()
+            # Download the entire zip to memory first
+            response = requests.get(zip_url, timeout=180)
+            response.raise_for_status()
+            zip_content = response.content
+
+            # Ensure destination directory exists
+            dest_dir_path = Path(UNC_PATH_PREPENDED + destination_dir)
+            dest_dir_path.mkdir(parents=True, exist_ok=True)
+
+            # Write zip content to temporary file
+            with NamedTemporaryFile(delete=False, suffix=".zip") as tmp:
+                temp_zip_path = tmp.name
+                tmp.write(zip_content)
+                print(f"Wrote zip to {temp_zip_path}")
+
+            # Normalize inner_folder path
+            inner_folder_norm = inner_folder.replace("\\", "/").rstrip("/")
+            print(f"Extracting .rps files from subfolder '{inner_folder_norm}'")
+            extracted_count = 0
+            try:
+                with zipfile.ZipFile(temp_zip_path, "r") as zip_ref:
+                    # List all files in the zip for debugging
+                    all_files = zip_ref.namelist()
+                    # Find matching files
+                    matching_files = []
+                    for filename in all_files:
+                        # Normalize path
+                        norm_filename = filename.replace("\\", "/")
+
+                        # Check if in target subfolder and is .rps
+                        if norm_filename.startswith(
+                            inner_folder_norm + "/"
+                        ) and norm_filename.lower().endswith(".rps"):
+                            matching_files.append(filename)
+
+                    print(
+                        f"Found {len(matching_files)} .rps files in '{inner_folder_norm}'"
+                    )
+
+                    if len(matching_files) == 0:
+                        print(
+                            f"Available subfolders: {set([f.split('/')[0] for f in all_files])}"
+                        )
+
+                    # Extract matching files
+                    for filename in matching_files:
+                        rps_filename = Path(filename).name
+                        target_path = dest_dir_path / rps_filename
+
+                        # Read from zip and write to destination
+                        content = zip_ref.read(filename)
+                        with open(target_path, "wb") as f:
+                            f.write(content)
+
+                        print(f"Extracted: {rps_filename}")
+                        extracted_count += 1
+
+            except zipfile.BadZipFile as e:
+                print(f"BadZipFile error: {e}")
+                print(
+                    f"Temp file: {temp_zip_path}, Size: {os.path.getsize(temp_zip_path)} bytes"
+                )
+                return False
+
+            if extracted_count == 0:
+                print(f"No .rps files found in '{inner_folder_norm}' folder")
+                return False
+
+            print(
+                f"Successfully extracted {extracted_count} .rps file(s) to {dest_dir_path}"
+            )
+            return matching_files
+
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP error during download: {e}")
+            print(f"Status code: {e.response.status_code}")
+            print(f"Response: {e.response.text[:500]}")
+            return False
+        except requests.exceptions.RequestException as e:
+            print(f"Request error while downloading zip: {e}")
+            return False
+        except Exception as e:
+            print(f"Error while downloading/extracting zip: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return False
+        finally:
+            # URLLib3Instrumentor().instrument()
+            if temp_zip_path and os.path.exists(temp_zip_path):
+                try:
+                    os.remove(temp_zip_path)
+                except OSError:
+                    pass
+
     def generate_keys_files_from_hwmux(self, hwmux_group_data):
         metadata = hwmux_group_data["metadata"]
         secure_keys = metadata.get("SECURITY_KEYS", None)
@@ -87,12 +232,22 @@ class AppUtfLauncher(UtfLauncher):
             dict containing transformed group data
 
         """
+        binary_file_name_wit_path = self.prepare_and_download_binary_rps()
         self.generate_keys_files_from_hwmux(hwmux_group_data)
+        if binary_file_name_wit_path:
+            binary_file_name = str(os.path.basename(binary_file_name_wit_path))
+            print(f"set efr binary_file_name in manifest as - {binary_file_name}")
+            hwmux_group_data["binary_file_name"] = binary_file_name
         return hwmux_group_data
 
 
 @click.command(cls=UtfLaunchCommander)
 def main(**kwargs):
+    if os.environ.get("UTF_QUEUE_SERVER_URL"):
+        os.environ.pop("UTF_QUEUE_SERVER_URL")
+        print(
+            f"UTF_QUEUE_SERVER_URL is now set to {os.environ.get('UTF_QUEUE_SERVER_URL')}"
+        )
     launcher = AppUtfLauncher(**kwargs)
     launcher.execute()
 

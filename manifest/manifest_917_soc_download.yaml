@@ -1,0 +1,21 @@
+firmware:
+  efx32:
+    load_binary:
+      file_name: &firmware_file_anchor '{{ binary_file_name }}'
+    write_firmware:
+      file_name: test_agent_si91x.rps
+
+firmware_version_file: *firmware_file_anchor
+# List of devices to be reset when needed
+# reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
+reset: [efx32]
+
+artifacts:
+  test_agent_si91x:
+    filename: test_agent_si91x.rps
+    name: test_agent_si91x
+    extension: .rps
+    metadata:
+      app_name: test_agent_si91x
+      branch: ${BRANCH_NAME}
+      build_number: ${SDK_BUILD_NUM}

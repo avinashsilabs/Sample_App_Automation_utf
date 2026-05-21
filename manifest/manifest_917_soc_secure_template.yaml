@@ -1,0 +1,53 @@
+firmware:
+  efx32:
+    load_binary:
+      file_name: &secure_firmware_file_anchor 'encrypted_1_{{ binary_file_name }}'
+    write_firmware:
+      file_name: &secure_test_agent_file_anchor encrypted_1_test_agent_si91x.rps
+
+secure_firmware_config:
+  perform_secure_encrypt: true
+  generate_keys: false
+  base_keys_path: /app/manifest/secure_firmware_keys/
+  
+  conversion:
+    - file_name: &firmware_file_anchor '{{ binary_file_name }}'
+      TA: true
+      config:
+          - prefix: encrypted_1  # the output file will be prefixed with this name
+            key: ota_key_1.txt
+            sign: ta_private_key_1.pem
+
+    - file_name: &test_agent_file_anchor test_agent_si91x.rps
+      TA: false
+      config:
+          - prefix: encrypted_1  # the output file will be prefixed with this name
+            key: m4_ota_key_1.txt
+            sign: m4_private_key_1.pem
+
+firmware_version_file: *firmware_file_anchor
+# List of devices to be reset when needed
+# reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
+reset: [efx32]
+
+firmware_applications:
+  firmware_security_encrypted_1:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename:
+        load_binary:
+          file_name: *secure_firmware_file_anchor
+        write_firmware: 
+          file_name: *secure_test_agent_file_anchor
+      is_secure: true
+
+
+artifacts:
+  test_agent_si91x:
+    filename: test_agent_si91x.rps
+    name: test_agent_si91x
+    extension: .rps
+    metadata:
+      app_name: test_agent_si91x
+      branch: ${BRANCH_NAME}
+      build_number: ${SDK_BUILD_NUM}

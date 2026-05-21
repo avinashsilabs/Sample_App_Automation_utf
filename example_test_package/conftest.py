@@ -284,7 +284,7 @@ def reset_on_test_mode_change(request, wiseconnect_duts, harness):
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_protocol(item, nextitem):
     if is_publish_test_results_enabled() and is_test_results_source_api_enabled():
-        module_name = UtfConfig.instance().defaults.get("dut")
+        module_name = "917"
         settings = EnvironSettings()
         case_id = extract_test_case_id(item.originalname)
         tool_chain = "GCC 10.3.1"

@@ -30,6 +30,7 @@ from utf.interfaces.wifi import (
     CountryCode,
 )
 from utf.utils.logger import get_logger
+from utf import UtfDatabaseProperties
 from utf_wiseconnect_3.tests.sl_status import SLStatus
 from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.security_enhancements.test_wlan_sta_enterprise_sdk import (
     SnifferValidationProcess,
@@ -38,6 +39,23 @@ from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.
 
 def logger():
     return get_logger(__name__)
+
+
+pytestmark = [
+    pytest.mark.database_properties(
+        UtfDatabaseProperties(
+            test_result_type="FUNCTIONAL",
+            feature_name="autojoin",
+            module_name="wlan_storeconfig_autojoin",
+            tool_chain="gcc",
+            test_creation_date="2024-01-01",
+            test_description="Wi-Fi store-config and auto-join (RAM/NVM) functional tests",
+            iot_req_id="na",
+            req_id="na",
+        )
+    ),
+]
+
 
 
 """
