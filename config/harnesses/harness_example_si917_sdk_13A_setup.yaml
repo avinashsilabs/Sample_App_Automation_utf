@@ -1411,7 +1411,7 @@ defaults:
         disable_sniffer_validation: false
 
         # firmware path for http/https otaf
-        http_url: '/secure_SiWG917-B.2.15.5.1.0.2_671.rps'
+        http_url: 'SiWG917-B.2.16.5.0.0.12.rps'
 
         pll_mode: 0
         rf_type: 1
