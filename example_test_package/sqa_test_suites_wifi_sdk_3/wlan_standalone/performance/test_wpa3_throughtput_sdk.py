@@ -560,7 +560,7 @@ def test_wifi_sdk_2_4_ssl_tx_wpa3_C354512(wifi_sniffer, wifi_access_point, wifi_
     }
 )
 @pytest.mark.test_src_map_id('C354512')
-def test_wifi_sdk_2_4_ssl_rx_wpa3_C354512(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
+def test_wifi_sdk_2_4_ssl_rx_wpa3_C354513(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants, request,
                                               wifi_client, sniffer_filter, sl_collections, radius_server, ssl_server):
     ping_count = utf_constants.get("ping_count")
     iter_count = utf_constants.get("iter_count")
