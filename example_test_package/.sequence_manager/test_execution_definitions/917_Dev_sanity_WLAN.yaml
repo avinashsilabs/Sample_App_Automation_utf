@@ -685,7 +685,6 @@ test_sequence:
       - wlan_mbssid_sdk
       - wlan_standalone
     test_case_name: test_wifi_sdk_mbssid_T_open_sec_c219286[TCP]
-
   - id: >-
       2374a189ee45815b7c28fd84b48a08b0f9a8c3c5d63432894bf167296c69c1fd4f0110e67b3f64386a4bee049ae130e32b01b1a51a2666dfc80adb9533d58106
     test_src_map_id: C537928::1
@@ -1014,51 +1013,6 @@ test_sequence:
       - wlan_standalone
     test_case_name: >-
       test_wifi_sdk_verify_dut_behaviour_twt_enable_traffic_enable_ps_enable_twt_disable_traffic_disable_ps_disable_c538046
-  - id: >-
-      8b7de872b0b7d2526f3ca2285d2589f72e12189755d133f72809cd3e94106b52c309308ce6892ae842455161e03871276fa2709e807cb46639d0841451952db6
-    test_src_map_id: C219286::1
-    test_case_id: test_wifi_sdk_mbssid_T_open_sec_c219286[TCP]
-    test_function: test_wifi_sdk_mbssid_T_open_sec_c219286
-    test_id: test_wifi_sdk_mbssid_T_open_sec_c219286[TCP]::1
-    test_module: >-
-      sqa_test_suites_wifi_sdk_3/wlan_standalone/functional/mbssid/test_wlan_mbssid_sdk.py
-    test_markers:
-      - pytest.mark.start_state('wifi_dut',wifi='init')
-      - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
-      - 'pytest.mark.config(''net_perf_client'',net_perf={''host_role'': ''S''})'
-      - >-
-        pytest.mark.config('wifi_access_point',wifi={'standard':
-        'gnbax','security': 'Open'})
-      - >-
-        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable','unassociated'])
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
-        1,'stack_len': 2048}},'oper_mode':
-        Si91xOperatingMode.WiFiClient,'coex_mode':
-        Si91xCoexMode.WLANBLE,'features':
-        Si91xFeatureBitMap.Default,'custom_features':
-        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_tcpip_features':
-        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid|Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,'config_features':
-        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'bt_features':
-        0,'ble_features': 0,'ble_custom_ext_features': 0})
-    test_params:
-      - name: protocol
-        value: TCP
-    version: 0
-    enabled: true
-    labels:
-      - T
-      - c219286
-      - functional
-      - mbssid
-      - open
-      - sdk
-      - sec
-      - sqa_test_suites_wifi_sdk_3
-      - wifi
-      - wlan_mbssid_sdk
-      - wlan_standalone
-    test_case_name: test_wifi_sdk_mbssid_T_open_sec_c219286[TCP]
   - id: >-
       b47db9a0ab254687807bd7c6a8b5504e367573482b01efd6ec3f63a0524e8720a612aeb708ef33456a023127faad9b9c32a9120264c7bd6cddacb5f6709de365
     test_src_map_id: C19780::2
