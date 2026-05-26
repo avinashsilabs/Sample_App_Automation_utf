@@ -364,7 +364,7 @@ class BLEFunc(ThreadBase):
             self.nrf_ble_client.interfaces.bluetooth.pair(self.ble_dut_address)
             security_level = self.nrf_ble_client.interfaces.bluetooth.get_peer_connection_security_status(
                 self.ble_dut_address)
-            assert security_level.value == 2
+            assert security_level == 2, f"Unexpected security level: {security_level} (expected 2 = JUST_WORKS)"
             if self.testcase_no == 557257:
                 pass
             else:
@@ -768,14 +768,14 @@ class BLEFunc(ThreadBase):
         error_code_received = ""
         if self.check_error:
             while tw.elapsed_sec < 120:
-                events = self.wifi_dut.interfaces.wifi.get_async_events()
+                events = self.wifi_dut.interfaces.wifi.get_async_events(since_time=0)
                 for event in events:
                     if "resp_status:" in event.event_data:
                         error_code_str = re.findall(r"resp_status: (\w.*)", event.event_data)
                         if error_code_str:
                             error_code_received = re.split(",", error_code_str[0])
                             logger().info(f"********{error_code_received}*********")
-                if self.error_code_expected:
+                if error_code_received:
                     break
                 time.sleep(1.2)
             if error_code_received and len(error_code_received) > 0:
