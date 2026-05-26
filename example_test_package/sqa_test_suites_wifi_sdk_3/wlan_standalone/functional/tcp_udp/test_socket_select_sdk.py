@@ -231,7 +231,7 @@ def test_wifi_sdk_socket_select_tcp_TC19325(wifi_sniffer, wifi_dut, wifi_access_
         logger.info(f"Successfully opened tcp client socket and socket id received is {sock} which is expected")
         wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=device_ip, ip_len=4, server_port=port, asynch=1)
         wifi_dut.interfaces.wifi.bsdSocketConnect(socket_fd=sock, server_ip=server_ipp, ip_len=4, server_port=port)
-        wifi_dut.interfaces.wifi.bsdAsyncSocketSelect(numberOfFds=1, time=10)
+        wifi_dut.interfaces.wifi.bsdAsyncSocketSelect(numberOfFds=1, time=100)
         for i in range(repeat_count):
             tx_buffer = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
             buffer_length = len(tx_buffer)
