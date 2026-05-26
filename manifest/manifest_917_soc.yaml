@@ -1,9 +1,9 @@
 firmware:
   efx32:
     load_binary:
-      file_name: &firmware_file_anchor 'SiWG917-B.2.16.5.0.0.11.rps'
+      file_name: &firmware_file_anchor 'SiWG917-B.2.12.2.1.0.9.rps'
     write_firmware:
-      file_name: 'test_agent_si91x_aws_410_fc2_monozip_590_def_mem.rps'
+      file_name: 'test_agent_soc_rcf2_daf57c7579_generic192k.rps.rps'
 
 firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed
@@ -101,7 +101,7 @@ firmware_applications:
     test_480K_M4SS_192K:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: 'test_agent_si91x_aws_410_fc2_monozip_590_def_mem.rps'
+        filename: 'test_agent_soc_cf_480K.rps'
 
     test_416K_M4SS_256K:
       - device_type: 'efx32'
