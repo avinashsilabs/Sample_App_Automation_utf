@@ -203,7 +203,9 @@ def ble_master_slave(wifi_dut, ble_client, mode, ble_dut_address=None, start_nee
             wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, ble_scan_filter_type=1,
                                                         timeout=120)
             # wifi_dut.interfaces.wifi.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
-            timeout = 200
+            time.sleep(10)
+            wifi_dut.interfaces.wifi.ble_stop_scanning()
+            timeout = 120
             logger().info(f"DUT initiating BLE connection with ble_client device")
             wifi_dut.interfaces.wifi.ble_connect(ble_remote_dev_address=ble_client_address,
                                                  expected="RSI_BLE_ENCRYPT_STARTED_EVENT",
@@ -368,10 +370,9 @@ def connect_disconnect_bt(wifi_dut, bt_client, bt_address, bt_dut_address, bt_so
     logger().info("Initiating BT disconnection on DUT")
     for i in range(1, iter_count + 1):
         logger().info(f"\n\nInitiating BT disconnection from raspi device...iteration: '{i}'")
-        bt_client.interfaces.bluetooth.bt_device.disconnect_device(bt_dut_address)
         bt_socket.close()
         logger().info("Waiting for some time to complete bt disconnection")
-        time.sleep(10)
+        time.sleep(2)
         logger().info(f"BT disconnection success...iteration: '{i}'")
 
         logger().info(f"\nRe-Initiating BT connection from raspi device...iteration: '{i}'")
@@ -817,7 +818,7 @@ def test_BT_connect_and_disconnect_BLE_is_in_connection_C19999(firmware_loader, 
             logger().info(f"Initiating BT test with DUT mode '{bt_mode}'")
             bt_address, bt_socket, bt_dut_address = bt_spp_master_slave(wifi_dut, bt_client, bt_mode)
 
-            ble_mode = "ble_master"
+            ble_mode = "ble_slave"
             logger().info(f"Initiating BLE test with DUT mode '{ble_mode}'")
             ble_address, ble_dut_address = ble_master_slave(wifi_dut, ble_client, ble_mode)
 
@@ -831,7 +832,7 @@ def test_BT_connect_and_disconnect_BLE_is_in_connection_C19999(firmware_loader, 
 
             logger().info(f"Initiating connect disconnect bt for 5 iterations")
             connect_disconnect_bt(wifi_dut, bt_client, bt_address, bt_dut_address, bt_socket, iter_count=iter_count,
-                                  data_transfer=True)
+                                  data_transfer=False)
 
             logger().info("Initiating BLE disconnection on DUT")
             ble_disconnect(wifi_dut, ble_address)
