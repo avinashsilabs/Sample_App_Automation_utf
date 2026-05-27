@@ -7,7 +7,7 @@ test_sequence:
     test_function: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876
     test_id: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876::1
     test_module: >-
-      sqa_test_suites_wifi_sdk_3/ble_standalone/functional/ble_profiles_sdk/test_ble_gatt_sdk.py
+      sqa_test_suites_wifi_sdk_3/ble_standalone/functional/ble_profiles_sdk/test_ble_gatt_dual_role.py
     test_markers:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
@@ -315,7 +315,7 @@ test_sequence:
     test_function: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876
     test_id: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876::1
     test_module: >-
-      sqa_test_suites_wifi_sdk_3/ble_standalone/functional/ble_profiles_sdk/test_ble_gatt_sdk.py
+      sqa_test_suites_wifi_sdk_3/ble_standalone/functional/ble_profiles_sdk/test_ble_gatt_dual_role.py
     test_markers:
       - >-
         pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
