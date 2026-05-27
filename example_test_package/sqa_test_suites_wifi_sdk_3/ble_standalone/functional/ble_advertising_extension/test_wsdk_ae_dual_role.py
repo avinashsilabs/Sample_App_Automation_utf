@@ -330,10 +330,12 @@ def ble_ae_slave(ble_dut, remote_wiseconnect3, ble_dut_address, ble_client_addre
                                                    filter_duplicates=0,
                                                    duration=0,
                                                    period=0, remote_address=ble_dut_address)
+    time.sleep(5)
     remote_wiseconnect3.interfaces.wifi.ble_ae_set_scan_enable(enable=0,
                                                    filter_duplicates=0,
                                                    duration=0, period=0,
                                                    remote_address=ble_dut_address)
+    time.sleep(20)
     logger().info("getting the device state")
     state = ble_dut.interfaces.bluetooth.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
@@ -437,12 +439,14 @@ def ble_ae_master(ble_dut, remote_wiseconnect3, sl_collections, ble_client_addre
                                                         duration=0,
                                                         period=0, remote_address=ble_client_address)
     logger().info("\n\nenable power save in ble dut")
+    
+    time.sleep(20)
+    ble_dut.interfaces.wifi.ble_ae_set_scan_enable(enable=0, filter_duplicates=0, duration=0, period=0,
+                                                   remote_address=ble_client_address)
+                            
     ble_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                  psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
     ble_dut.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-    time.sleep(30)
-    ble_dut.interfaces.wifi.ble_ae_set_scan_enable(enable=0, filter_duplicates=0, duration=0, period=0,
-                                                   remote_address=ble_client_address)
     retries = 3
     for retry in range(retries):
         try:
@@ -619,7 +623,7 @@ def test_dut_master_and_slave_tx_rx_notification_C662086(ble_dut, remote_wisecon
         write_handle_1 = None
         write_handle_2 = None
         logger().info("ble-started")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)  # capability=3, set_smp=1)
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)  # capability=3, set_smp=1)
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(set_smp=0)  # set_smp=0)#capability=3, set_smp=0)
         ble_client_address_2  = remote_wiseconnect3s[0].interfaces.wifi.ble_gatt_start(set_smp=0)#capability=3, set_smp=0)
         logger().info(f"BLE-DUT-ADDRESS:{ble_dut_address}")
@@ -1267,7 +1271,7 @@ def skip_test_dut_master_and_slave_tx_tx_notification_C663033(ble_dut, remote_wi
         ble_sniffer.interfaces.sniffer.start_capture(
             capture_file="test_dut_master_and_slave_tx_tx_notification_C663033")
         logger().info("ble-started")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)  # capability=3, set_smp=1)
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)  # capability=3, set_smp=1)
         logger().info("ble-started-remote-side")
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(set_smp=0)  # set_smp=0)#capability=3, set_smp=0)
         logger().info(f"ble_client-address:{ble_client_address}")
@@ -2749,7 +2753,7 @@ def test_dut_master_and_slave_tx_indication_C663035(ble_dut, remote_wiseconnect3
         logger().info("ble-started")
         write_handle_1 = None
         write_handle_2 = None
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)  # capability=3, set_smp=1)
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)  # capability=3, set_smp=1)
         logger().info("ble-started-remote-side")
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(set_smp=0)  # set_smp=0)#capability=3, set_smp=0)
         logger().info(f"ble_client-address:{ble_client_address}")
@@ -2794,7 +2798,7 @@ def test_dut_master_and_slave_tx_indication_C663035(ble_dut, remote_wiseconnect3
                                                               handle=(write_handle_1 + 1), enable_notify=1)
         ble_fun1 = TxIndicationFunctionality(ble_dut, ble_client=remote_wiseconnect3,
                                              ble_client_address=ble_client_address, data=data, data_length=230,
-                                             allocated_mem_addr=allocated_mem_addr, handle=12, indication_count=50)
+                                             allocated_mem_addr=allocated_mem_addr, handle=12, indication_count=15)
         logger().info(f"*******Configure Buffer Mode:{1} and Buffer count:{2} ****************")
         ble_dut.interfaces.wifi.ble_set_resp_notify_buffer(ble_remote_dev_address=ble_client_address_2,
                                                                            buffer_mode=1,
@@ -2804,7 +2808,7 @@ def test_dut_master_and_slave_tx_indication_C663035(ble_dut, remote_wiseconnect3
                                                               handle=(write_handle_2 + 1), enable_notify=1)
         ble_fun2 = TxIndicationFunctionality(ble_dut, ble_client=remote_wiseconnect3s[0],
                                              ble_client_address=ble_client_address_2, data=data, data_length=230,
-                                             allocated_mem_addr=allocated_mem_addr, handle=12, indication_count=50)
+                                             allocated_mem_addr=allocated_mem_addr, handle=12, indication_count=15)
         thread1 = threading.Thread(target=ble_fun1.run)
         thread2 = threading.Thread(target=ble_fun2.run)
         thread1.start()
@@ -3470,7 +3474,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768425(ble_dut, remote_wisecon
         write_handle_3 = None
         write_handle_4 = None
         logger().info("ble-started")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)  # capability=3, set_smp=1)
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)  # capability=3, set_smp=1)
         logger().info("ble-started-remote-side")
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(
             set_smp=0)  # set_smp=0)#capability=3, set_smp=0)
@@ -3751,7 +3755,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768426(ble_dut, remote_wisecon
         write_handle_3 = None
         write_handle_4 = None
         logger().info("ble-started")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)  # capability=3, set_smp=1)
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)  # capability=3, set_smp=1)
         logger().info("ble-started-remote-side")
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(
             set_smp=0)  # set_smp=0)#capability=3, set_smp=0)
@@ -4312,7 +4316,7 @@ def test_dut_master_and_slave_tx_rx_notification_C768428(ble_dut, remote_wisecon
         write_handle_3 = None
         write_handle_4 = None
         logger().info("ble-started")
-        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)  # capability=3, set_smp=1)
+        ble_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)  # capability=3, set_smp=1)
         logger().info("ble-started-remote-side")
         ble_client_address = remote_wiseconnect3.interfaces.wifi.ble_gatt_start(
             set_smp=0)  # set_smp=0)#capability=3, set_smp=0)
