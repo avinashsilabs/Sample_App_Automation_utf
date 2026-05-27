@@ -2012,23 +2012,14 @@ def test_verify_ble_ae_dual_role_adv_and_scan_interval_C538063(ble_dut, ble_snif
                 file_size = os.path.getsize(exported_csv_file)
                 assert file_size > 0, f"CSV file {exported_csv_file} is empty"
 
-        df = pd.read_csv(exported_csv_file)
-        df = _normalize_sniffer_df(df)
+        sniffer_data_df = ble_sniffer.interfaces.sniffer.import_data_from_csv_to_df_obj(exported_csv_file)
+        logger().info(sniffer_data_df.head())
+        assert sniffer_data_df is not None
+        assert len(sniffer_data_df[
+                       'Type'] == 'ADV_EXT_IND') >= 1, "\n\n **** Test case Failed with no ADV_EXT_IND packets found..! ****\n\n"
+        assert len(sniffer_data_df[
+                       'Type'] == 'AUX_ADV_IND') >= 1, "\n\n **** Test case Failed with no AUX_ADV_IND packets found..! ****\n\n"
 
-        adv_ext = df[df["Type_norm"] == "ADV_EXT_IND"]
-        aux_adv = df[df["Type_norm"] == "AUX_ADV_IND"]
-
-        assert len(adv_ext) >= 1, (
-            f"[{test_case_id}] No/insufficient ADV_EXT_IND packets found "
-
-        )
-
-        assert len(aux_adv) >= 1, (
-            f"[{test_case_id}] No/insufficient AUX_ADV_IND packets found "
-
-        )
-        logger().info(f'\n\naux_adv_in packets found:{len(aux_adv)}')
-        logger().info(f'\n\nadv_ext_ind packets found:{len(adv_ext)}')
     except Exception as e:
         logger().error(f"Test failed: {e}")
         # Set advertising data on remote device (complete data)
