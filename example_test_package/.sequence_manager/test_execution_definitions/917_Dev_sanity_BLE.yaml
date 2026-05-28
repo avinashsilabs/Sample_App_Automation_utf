@@ -1,59 +1,12 @@
 root_path: example_test_package
 test_sequence:
   - id: >-
-      d2012eeb7c7b40e70293a855e941f122faf7f7d9d6fffad5a8d6ba9a590788a08e4c91c2d5214f1dd68c1aa5dadf8f9c0d2010135dc79f7259371e2a2d12ff95
-    test_src_map_id: C19876::1
+      4300dd1fda6de11b682b6d9d9b882e7efa34e106c3734e9f90700b4e2b58f8316d012f24f40119d94abd1a13018fb60817485fb556e87a4b50220f9fdac0c298
     test_case_id: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876
     test_function: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876
     test_id: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876::1
     test_module: >-
       sqa_test_suites_wifi_sdk_3/ble_standalone/functional/ble_profiles_sdk/test_ble_gatt_dual_role.py
-    test_markers:
-      - >-
-        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        Si91xCoexMode.WLANBLE,'features':
-        Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1|Si91xFeatureBitMap.ULPGPIOHandshake,'tcpip_features':
-        Si91xTCPIPFeatureBitMap.Default,'custom_features':
-        Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_tcpip_features':
-        Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,'ext_custom_features':
-        Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid|Si91xExtCustomFeatureBitMap.Default|Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0|Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE|Si91xExtCustomFeatureBitMap.FeatureLowPower,'config_features':
-        Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'bt_features':
-        Si91xBTFeatureBitMap.Default,'ble_features':
-        Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
-        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE,'thread_config':
-        {'wifi': {'count': 1,'stack_len': 2048},'ble': {'count': 1,'stack_len':
-        4096}}})
-      - >-
-        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable',['ble_stop_adv']])
-    test_params: [ ]
-    version: 0
-    enabled: true
-    labels:
-      - C19876
-      - RD1
-      - ble
-      - ble_gatt_sdk
-      - ble_profiles_sdk
-      - ble_standalone
-      - dual
-      - fetch
-      - functional
-      - profiles
-      - role
-      - sdk
-      - sqa_test_suites_wifi_sdk_3
-    test_case_name: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876
-  - id: >-
-      95fb131234cde232ee8fab6fb72f0d82b3f6aa4c7beeb7f315c20cd2d3cea400279f549430d6dc19e0aaf330662393149c4d0c5ebf60a2f4429812d0a831b3c0
-    test_src_map_id: C193309::1
-    test_case_id: >-
-      test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_c193309
-    test_function: >-
-      test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_c193309
-    test_id: >-
-      test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_c193309::1
-    test_module: >-
-      sqa_test_suites_wifi_sdk_3/ble_standalone/functional/ble_data_transfer_sdk/test_ble_data_transfer_sdk.py
     test_markers:
       - >-
         pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
@@ -68,29 +21,29 @@ test_sequence:
         Si91xBTFeatureBitMap.Default,'ble_features':
         Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
         Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE})
-    test_params: [ ]
+      - >-
+        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable',['ble_stop_adv']])
+      - pytest.mark.test_src_map_id('C19876',)
+    test_params: []
     version: 0
     enabled: true
     labels:
+      - C19876
+      - RD1
       - ble
-      - ble_data_transfer_sdk
+      - ble_gatt_dual_role
+      - ble_profiles_sdk
       - ble_standalone
-      - buffer
-      - bytes
-      - c193309
-      - dut
+      - dual
+      - fetch
       - functional
-      - respons
+      - profiles
+      - role
       - sdk
-      - slave
       - sqa_test_suites_wifi_sdk_3
-      - wifi
-      - write
-    test_case_name: >-
-      test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_c193309
+    test_case_name: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876
   - id: >-
       e038795868f9a9c78d3169edf3407c86e3f353cb1c6e96d247b917af662291cbbe7177d5f1a59fe836332230868809bd16f56aa17371a4dd663b0f481a36f80b
-    test_src_map_id: C193311::1
     test_case_id: >-
       test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_without_respons_buffer_0_c193311
     test_function: >-
@@ -113,7 +66,8 @@ test_sequence:
         Si91xBTFeatureBitMap.Default,'ble_features':
         Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
         Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE})
-    test_params: [ ]
+      - pytest.mark.test_src_map_id('C193311',)
+    test_params: []
     version: 0
     enabled: true
     labels:
@@ -135,7 +89,6 @@ test_sequence:
       test_wifi_sdk_ble_dut_as_master_with_20_bytes_write_without_respons_buffer_0_c193311
   - id: >-
       8780aa8997d0342a200e181111e72f706b2b5006164cea01fbf11467b53f52cb3b731ce55123506f827229daf40bef950ccfed60a0187c5fe0df49ea30b55465
-    test_src_map_id: C193315::1
     test_case_id: >-
       test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_with_respons_buffer_0_c193315
     test_function: >-
@@ -158,7 +111,8 @@ test_sequence:
         Si91xBTFeatureBitMap.Default,'ble_features':
         Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
         Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE})
-    test_params: [ ]
+      - pytest.mark.test_src_map_id('C193315',)
+    test_params: []
     version: 0
     enabled: true
     labels:
@@ -180,7 +134,6 @@ test_sequence:
       test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_with_respons_buffer_0_c193315
   - id: >-
       183201e65aba639c1ea141f70041773e2e32c949bd455aa0ac475912429f90e6901349664c53b8526cff2b9dbbea26388cca596fa8f004d3f5ccfaa81d37bd57
-    test_src_map_id: C193317::1
     test_case_id: >-
       test_wifi_sdk_ble_dut_as_slave_with_20_bytes_tx_indication_buffer_0_c193317
     test_function: >-
@@ -203,7 +156,8 @@ test_sequence:
         Si91xBTFeatureBitMap.Default,'ble_features':
         Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
         Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE})
-    test_params: [ ]
+      - pytest.mark.test_src_map_id('C193317',)
+    test_params: []
     version: 0
     enabled: true
     labels:
@@ -225,7 +179,6 @@ test_sequence:
       test_wifi_sdk_ble_dut_as_slave_with_20_bytes_tx_indication_buffer_0_c193317
   - id: >-
       db3b37d0aab0754aca5af026d07c5e4e5f56e08e49607825927e1a39bc8f34ae68dd93501671c79c56e664afe5e0361a865b774fb01d22039cae4a6e6c2b2678
-    test_src_map_id: C193319::1
     test_case_id: >-
       test_wifi_sdk_ble_dut_as_master_with_20_bytes_rx_notifications_buffer_0_c193319
     test_function: >-
@@ -248,7 +201,8 @@ test_sequence:
         Si91xBTFeatureBitMap.Default,'ble_features':
         Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
         Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE})
-    test_params: [ ]
+      - pytest.mark.test_src_map_id('C193319',)
+    test_params: []
     version: 0
     enabled: true
     labels:
@@ -270,7 +224,6 @@ test_sequence:
       test_wifi_sdk_ble_dut_as_master_with_20_bytes_rx_notifications_buffer_0_c193319
   - id: >-
       4c919413c7e47c2be889bbc6ddebfcea3bd0d52da87b0e5985efc5a9d3277dd0bf12463fd6565730db6fff29a2448c0c143ed7918920ae1f669abc5d6cc1321d
-    test_src_map_id: C19851::2
     test_case_id: test_ble_sdk_io_cap_displayonly_C19851
     test_function: test_ble_sdk_io_cap_displayonly_C19851
     test_id: test_ble_sdk_io_cap_displayonly_C19851::1
@@ -293,7 +246,8 @@ test_sequence:
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
       - >-
         pytest.mark.end_state('wifi_dut',wifi=['ble_stop_adv','wifi_powersave_disable','bt_powersave_disable'])
-    test_params: [ ]
+      - pytest.mark.test_src_map_id('C19851',)
+    test_params: []
     version: 0
     enabled: true
     labels:
@@ -309,17 +263,20 @@ test_sequence:
       - sqa_test_suites_wifi_sdk_3
     test_case_name: test_ble_sdk_io_cap_displayonly_C19851
   - id: >-
-      d2012eeb7c7b40e70293a855e941f122faf7f7d9d6fffad5a8d6ba9a590788a08e4c91c2d5214f1dd68c1aa5dadf8f9c0d2010135dc79f7259371e2a2d12ff95
-    test_src_map_id: C19876::1
-    test_case_id: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876
-    test_function: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876
-    test_id: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876::1
+      95fb131234cde232ee8fab6fb72f0d82b3f6aa4c7beeb7f315c20cd2d3cea400279f549430d6dc19e0aaf330662393149c4d0c5ebf60a2f4429812d0a831b3c0
+    test_case_id: >-
+      test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_c193309
+    test_function: >-
+      test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_c193309
+    test_id: >-
+      test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_c193309::1
     test_module: >-
-      sqa_test_suites_wifi_sdk_3/ble_standalone/functional/ble_profiles_sdk/test_ble_gatt_dual_role.py
+      sqa_test_suites_wifi_sdk_3/ble_standalone/functional/ble_data_transfer_sdk/test_ble_data_transfer_sdk.py
     test_markers:
       - >-
-        pytest.mark.config('wifi_dut',wifi={'oper_mode': 0,'coex_mode':
-        Si91xCoexMode.WLANBLE,'features':
+        pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
+        1,'stack_len': 2048},'ble': {'count': 1,'stack_len': 2048}},'oper_mode':
+        0,'coex_mode': Si91xCoexMode.WLANBLE,'features':
         Si91xFeatureBitMap.WPSSupportDisabled|Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1|Si91xFeatureBitMap.ULPGPIOHandshake,'tcpip_features':
         Si91xTCPIPFeatureBitMap.Default,'custom_features':
         Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,'ext_tcpip_features':
@@ -328,26 +285,25 @@ test_sequence:
         Si91xConfigFeatureBitMap.EnahanceMaxPsp|Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0,'bt_features':
         Si91xBTFeatureBitMap.Default,'ble_features':
         Si91xBLEFeatureBitMap.Default|Si91xBLEFeatureBitMap.BLECustomFeatureBitmapValid|Si91xBLEFeatureBitMap.RS9113_Si91x_Compatible_Feature|Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE|Si91xBLEFeatureBitMap.BLE_MAX_NBR_CENTRALS|Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX|Si91xBLEFeatureBitMap.BLE_MAX_NUM_OF_PHERIPHERALS|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV|Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC,'ble_custom_ext_features':
-        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE,'thread_config':
-        {'wifi': {'count': 1,'stack_len': 2048},'ble': {'count': 1,'stack_len':
-        4096}}})
-      - >-
-        pytest.mark.end_state('wifi_dut',wifi=['wifi_powersave_disable','bt_powersave_disable',['ble_stop_adv']])
-    test_params: [ ]
+        Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST|Si91xBLECustomFeatureBitMap.Default|Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS|Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS_AE})
+      - pytest.mark.test_src_map_id('C193309',)
+    test_params: []
     version: 0
     enabled: true
     labels:
-      - C19876
-      - RD1
       - ble
-      - ble_gatt_sdk
-      - ble_profiles_sdk
+      - ble_data_transfer_sdk
       - ble_standalone
-      - dual
-      - fetch
+      - buffer
+      - bytes
+      - c193309
+      - dut
       - functional
-      - profiles
-      - role
+      - respons
       - sdk
+      - slave
       - sqa_test_suites_wifi_sdk_3
-    test_case_name: test_ble_sdk_fetch_profiles_in_dual_role_from_RD1_C19876
+      - wifi
+      - write
+    test_case_name: >-
+      test_wifi_sdk_ble_dut_as_slave_with_20_bytes_write_without_respons_buffer_0_c193309
