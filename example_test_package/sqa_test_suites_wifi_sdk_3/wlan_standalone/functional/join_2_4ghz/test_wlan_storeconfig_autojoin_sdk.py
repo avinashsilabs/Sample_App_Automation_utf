@@ -848,7 +848,7 @@ Map_security = {
 @pytest.mark.deployed_25q4
 @pytest.mark.WLAN_Dev_sanity_917
 @pytest.mark.test_src_map_id('C769960')
-def test_RAM_autojoin_with_one_profile_and_one_credential_C769960(
+def test_RAM_autojoin_with_one_profile_and_one_credential_c769960(
     wifi_dut,
     wifi_access_point,
     wifi_sniffer,
@@ -865,7 +865,7 @@ def test_RAM_autojoin_with_one_profile_and_one_credential_C769960(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769960")
 
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -887,7 +887,7 @@ def test_RAM_autojoin_with_one_profile_and_one_credential_C769960(
             channel=wifi_access_point.interfaces.wifi.channel
         )
         wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=request.node.name + f"capture_on_channel_{profiles[0]}"
+            capture_file="c769960" + f"capture_on_channel_{profiles[0]}"
         )
         since_time = time.perf_counter_ns()
         logger().info(f"PROFILE : {0} ")
@@ -999,7 +999,7 @@ def test_RAM_autojoin_with_wpa2_wpa_two_profiles_c769961(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769961")
         wifi_client.interfaces.wifi.start_ap(
             ssid=profiles[1]["ssid"],
             security=SecurityMode.WPA,
@@ -1061,7 +1061,7 @@ def test_RAM_autojoin_with_wpa2_wpa_two_profiles_c769961(
             channel=profiles[1]["channel"]
         )
         wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=request.node.name + f"channel_{profiles[1]['channel']}"
+            capture_file="c769961" + f"channel_{profiles[1]['channel']}"
         )
         wifi_access_point.interfaces.wifi.disconnect_devices(
             mac_address=wifi_obj.dut_mac_address
@@ -1169,7 +1169,7 @@ def test_RAM_autojoin_auto_join_with_wpa2_open_two_profiles_c769962(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769962")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1279,7 +1279,7 @@ def test_RAM_autojoin_with_wpa3_enterprise_tls_peap_security_c769967(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769967")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1353,7 +1353,7 @@ def test_RAM_autojoin_with_wpa3_enterprise_tls_peap_security_c769967(
             channel=profiles[1]["channel"]
         )
         wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=request.node.name + f"channel_{profiles[1]['channel']}"
+            capture_file="c769967" + f"channel_{profiles[1]['channel']}"
         )
         logger().info(f"SSID : {profiles[1]['ssid']}")
         logger().info(f"Security : {profiles[1]['security']}")
@@ -1478,7 +1478,7 @@ def test_RAM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769968(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769968")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1605,7 +1605,7 @@ def test_RAM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769968(
 )
 @pytest.mark.deployed_25q4
 @pytest.mark.test_src_map_id('C769963')
-def test_RAM_autojoin_after_sl_net_deinit_with_wpa3_C769963(
+def test_RAM_autojoin_after_sl_net_deinit_with_wpa3_c769963(
     wifi_dut,
     wifi_access_point,
     wifi_sniffer,
@@ -1622,7 +1622,7 @@ def test_RAM_autojoin_after_sl_net_deinit_with_wpa3_C769963(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769963")
 
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -1651,7 +1651,7 @@ def test_RAM_autojoin_after_sl_net_deinit_with_wpa3_C769963(
             channel=wifi_access_point.interfaces.wifi.channel
         )
         wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=request.node.name + f"capture_on_channel_{profiles[0]}"
+            capture_file="c769963" + f"capture_on_channel_{profiles[0]}"
         )
         logger().info(f"\n ---- INITIALIZING DEVICE AGAIN ---- \n")
         since_time = time.perf_counter_ns()
@@ -1746,7 +1746,7 @@ def test_RAM_autojoin_while_doing_SNTP_data_transfer_c769974(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769974")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1869,7 +1869,7 @@ def test_RAM_autojoin_while_doing_MQTTS_data_transfer_c769975(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769975")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -1970,7 +1970,7 @@ def test_RAM_autojoin_while_doing_MQTTS_data_transfer_c769975(
 )
 @pytest.mark.deployed_25q4
 @pytest.mark.test_src_map_id('C769980')
-def test_RAM_autojoin_with_incorrect_psk_first_try_C769980(
+def test_RAM_autojoin_with_incorrect_psk_first_try_c769980(
     wifi_dut,
     wifi_access_point,
     wifi_sniffer,
@@ -1987,7 +1987,7 @@ def test_RAM_autojoin_with_incorrect_psk_first_try_C769980(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=profiles[1]["channel"]
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769980")
 
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -2116,7 +2116,7 @@ def test_RAM_autojoin_with_two_profiles_mbssid_c769982(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=profiles[1]["channel"]
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769982")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -2222,7 +2222,7 @@ def test_RAM_autojoin_with_two_profiles_mbssid_c769982(
 )
 @pytest.mark.deployed_25q4
 @pytest.mark.test_src_map_id('C769984')
-def test_RAM_autojoin_error_with_invalid_credential_C769984(
+def test_RAM_autojoin_error_with_invalid_credential_c769984(
     wifi_dut, profiles, sl_collections
 ):
 
@@ -2288,7 +2288,7 @@ def test_RAM_autojoin_error_with_invalid_credential_C769984(
 )
 @pytest.mark.deployed_25q4
 @pytest.mark.test_src_map_id('C769985')
-def test_RAM_autojoin_error_with_three_profiles_and_credentials_C769985(
+def test_RAM_autojoin_error_with_three_profiles_and_credentials_c769985(
     wifi_dut, profiles, sl_collections
 ):
 
@@ -2359,7 +2359,7 @@ def test_RAM_autojoin_error_with_three_profiles_and_credentials_C769985(
     },
 )
 @pytest.mark.test_src_map_id('C769987')
-def test_NVM_autojoin_with_one_profile_and_one_credential_C769987(
+def test_NVM_autojoin_with_one_profile_and_one_credential_c769987(
     firmware_loader,
     wifi_dut,
     wifi_access_point,
@@ -2377,7 +2377,7 @@ def test_NVM_autojoin_with_one_profile_and_one_credential_C769987(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769987")
 
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -2399,7 +2399,7 @@ def test_NVM_autojoin_with_one_profile_and_one_credential_C769987(
             channel=wifi_access_point.interfaces.wifi.channel
         )
         wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=request.node.name + f"capture_on_channel_{profiles[0]}"
+            capture_file="c769987" + f"capture_on_channel_{profiles[0]}"
         )
         since_time = time.perf_counter_ns()
         logger().info(f"PROFILE : {0} ")
@@ -2512,7 +2512,7 @@ def test_NVM_autojoin_with_wpa2_wpa_two_profiles_c769988(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769988")
         wifi_client.interfaces.wifi.start_ap(
             ssid=profiles[1]["ssid"],
             security=SecurityMode.WPA,
@@ -2574,7 +2574,7 @@ def test_NVM_autojoin_with_wpa2_wpa_two_profiles_c769988(
             channel=profiles[1]["channel"]
         )
         wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=request.node.name + f"channel_{profiles[1]['channel']}"
+            capture_file="c769988" + f"channel_{profiles[1]['channel']}"
         )
         wifi_access_point.interfaces.wifi.disconnect_devices(
             mac_address=wifi_obj.dut_mac_address
@@ -2685,7 +2685,7 @@ def test_NVM_autojoin_auto_join_with_wpa2_open_two_profiles_c769989(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769989")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -2767,7 +2767,7 @@ def test_NVM_autojoin_auto_join_with_wpa2_open_two_profiles_c769989(
     ],
 )
 @pytest.mark.test_src_map_id('C769990')
-def test_NVM_autojoin_after_sl_net_deinit_with_wpa3_C769990(
+def test_NVM_autojoin_after_sl_net_deinit_with_wpa3_c769990(
     firmware_loader,
     wifi_dut,
     wifi_access_point,
@@ -2785,7 +2785,7 @@ def test_NVM_autojoin_after_sl_net_deinit_with_wpa3_C769990(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769990")
 
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -2814,7 +2814,7 @@ def test_NVM_autojoin_after_sl_net_deinit_with_wpa3_C769990(
             channel=wifi_access_point.interfaces.wifi.channel
         )
         wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=request.node.name + f"capture_on_channel_{profiles[0]}"
+            capture_file="c769990" + f"capture_on_channel_{profiles[0]}"
         )
         logger().info(f"\n ---- INITIALIZING DEVICE AGAIN ---- \n")
         since_time = time.perf_counter_ns()
@@ -2914,7 +2914,7 @@ def test_NVM_autojoin_with_wpa3_enterprise_tls_peap_security_c769994(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769994")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -2988,7 +2988,7 @@ def test_NVM_autojoin_with_wpa3_enterprise_tls_peap_security_c769994(
             channel=profiles[1]["channel"]
         )
         wifi_sniffer.interfaces.capture.start_capture(
-            capture_file=request.node.name + f"channel_{profiles[1]['channel']}"
+            capture_file="c769994" + f"channel_{profiles[1]['channel']}"
         )
         logger().info(f"SSID : {profiles[1]['ssid']}")
         logger().info(f"Security : {profiles[1]['security']}")
@@ -3114,7 +3114,7 @@ def test_NVM_autojoin_with_wpa2_enterprise_tls_ttls_security_c769995(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c769995")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -3266,7 +3266,7 @@ def test_NVM_autojoin_while_doing_SNTP_data_transfer_c770001(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c770001")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -3390,7 +3390,7 @@ def test_NVM_autojoin_while_doing_MQTTS_data_transfer_c770002(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c770002")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -3491,7 +3491,7 @@ def test_NVM_autojoin_while_doing_MQTTS_data_transfer_c770002(
     },
 )
 @pytest.mark.test_src_map_id('C770007')
-def test_NVM_autojoin_with_incorrect_psk_first_try_C770007(
+def test_NVM_autojoin_with_incorrect_psk_first_try_c770007(
     firmware_loader,
     wifi_dut,
     wifi_access_point,
@@ -3509,7 +3509,7 @@ def test_NVM_autojoin_with_incorrect_psk_first_try_C770007(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=profiles[1]["channel"]
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c770007")
 
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -3639,7 +3639,7 @@ def test_NVM_autojoin_with_two_profiles_mbssid_c770009(
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=profiles[1]["channel"]
         )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file="c770009")
         wifi_obj = WLANAutoJoinThread(
             wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut,
@@ -3745,7 +3745,7 @@ def test_NVM_autojoin_with_two_profiles_mbssid_c770009(
     ],
 )
 @pytest.mark.test_src_map_id('C770011')
-def test_NVM_autojoin_error_with_invalid_credential_C770011(
+def test_NVM_autojoin_error_with_invalid_credential_c770011(
     firmware_loader, wifi_dut, profiles, sl_collections
 ):
 
@@ -3811,7 +3811,7 @@ def test_NVM_autojoin_error_with_invalid_credential_C770011(
     ],
 )
 @pytest.mark.test_src_map_id('C770012')
-def test_NVM_autojoin_error_with_three_profiles_and_credentials_C770012(
+def test_NVM_autojoin_error_with_three_profiles_and_credentials_c770012(
     wifi_dut, profiles, sl_collections
 ):
 
