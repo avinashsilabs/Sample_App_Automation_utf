@@ -480,23 +480,20 @@ def test_wlan_ap_active_sta_tcp_tx_c402929(firmware_loader, wifi_sniffer, wifi_a
     "wifi_dut",
     wifi=
     {
-        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
-        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |
-                          Si91xTCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV |
-                              Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
-                              Si91xExtTCPIPFeatureBitMap.THREE_SSL_SOCKET_SELECT,
-        "config_features": 0,
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.test_src_map_id('C402930')
@@ -538,23 +535,20 @@ def test_wlan_ap_active_sta_tcp_rx_c402930(firmware_loader, wifi_sniffer, wifi_a
     "wifi_dut",
     wifi=
     {
-        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
-        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |
-                          Si91xTCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
-                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
-                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "config_features": 0,
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.test_src_map_id('C402931')
@@ -596,23 +590,20 @@ def test_wlan_ap_active_sta_udp_tx_c402931(firmware_loader, wifi_sniffer, wifi_a
     "wifi_dut",
     wifi=
     {
-        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
-        "features": Si91xFeatureBitMap.OpenMode | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.WPSSupportDisabled,
-        "custom_features": Si91xCustomFeatureBitMap.NWP160MHz | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Si91xCustomFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.DHCPv4Server |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
-                               Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid |
-                          Si91xTCPIPFeatureBitMap.SSL,
-        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose |
-                              Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID |
-                              Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_DIV,
-        "config_features": 0,
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
         "band": 0,
-        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}}
     }
 )
 @pytest.mark.test_src_map_id('C402932')
