@@ -870,10 +870,10 @@ test_sequence:
   - id: >-
       e532b05fb43d57df9ea410697b5918400adea174d67af9092fd566f0c51e5505f5deaaa9aebf860e63b4ffc2dc1e0cd49c984c97e42b75848f0e9d048c21cf1e
     test_src_map_id: C769960::1
-    test_case_id: test_RAM_autojoin_with_one_profile_and_one_credential_C769960[profiles0]
-    test_function: test_RAM_autojoin_with_one_profile_and_one_credential_C769960
+    test_case_id: test_RAM_autojoin_with_one_profile_and_one_credential_c769960[profiles0]
+    test_function: test_RAM_autojoin_with_one_profile_and_one_credential_c769960
     test_id: >-
-      test_RAM_autojoin_with_one_profile_and_one_credential_C769960[profiles0]::1
+      test_RAM_autojoin_with_one_profile_and_one_credential_c769960[profiles0]::1
     test_module: >-
       sqa_test_suites_wifi_sdk_3/wlan_standalone/functional/join_2_4ghz/test_wlan_storeconfig_autojoin_sdk.py
     test_markers:
@@ -914,7 +914,7 @@ test_sequence:
       - sqa_test_suites_wifi_sdk_3
       - wlan_standalone
       - wlan_storeconfig_autojoin_sdk
-    test_case_name: test_RAM_autojoin_with_one_profile_and_one_credential_C769960[profiles0]
+    test_case_name: test_RAM_autojoin_with_one_profile_and_one_credential_c769960[profiles0]
   - id: >-
       f1f0264d3077b5aaca24c660131758f6c2ece47234eedc517012f58a3fceb027e2e01440a18c25d525b85ff438a7e286dc8b61869bfb3b0cbfb1dd20e6d713ae
     test_src_map_id: C767020::1
