@@ -299,6 +299,8 @@ pipeline {
                                                 --test_results_source_api TEST_RAIL_API \
                                                 --docker_flags "-e JENKINS_SERVER_NAME=${BUILD_URL}, \
                                                     -e JENKIN_RUN_NUM=${BUILD_NUMBER}, \
+                                                    -e BRANCH_NAME=${BRANCH_NAME}, \
+                                                    -e SDK_BUILD_NUM=${SDK_BUILD_NUM}, \
                                                     -e JENKINS_TEST_RESULTS_URL=${JOB_URL}${BUILD_NUMBER}/testReport, \
                                                     -e JENKINS_JOB_NAME=${JOB_NAME}, \
                                                     -e SDK_URL=https://stash.silabs.com/projects/REDPINE/repos/release_packages/browse?at=refs%2Fheads%2F${RS9116_FIRMWARE}, \
