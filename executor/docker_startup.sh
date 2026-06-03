@@ -3,7 +3,7 @@
 #################################################
 # Application level scripts comes here
 echo "Running app level startup script"
-dhcpcd
+#dhcpcd
 dnsmasq
 /etc/init.d/dbus start
 bluetoothd &
