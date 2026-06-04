@@ -936,10 +936,10 @@ test_sequence:
         '2401:2334:1234:1356::2000'})
       - >-
         pytest.mark.config('wifi_dut',wifi={'thread_config': {'wifi': {'count':
-        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': '13','features':
-        '21','tcpip_features': '2148141068','config_features':
-        '67108865','ext_custom_features': '542638080','ext_tcpip_features':
-        '2147483648'})
+        1,'stack_len': 2048}},'oper_mode': 0,'coex_mode': 13,'features':
+        21,'tcpip_features': 2148141068,'config_features':
+        67108865,'ext_custom_features': 542638080,'ext_tcpip_features':
+        2147483648})
       - pytest.mark.firmware_app('test_ipv6',)
       - pytest.mark.start_state('wifi_access_point',wifi='ap_enabled')
       - pytest.mark.start_state('wifi_dut',wifi=['init'])
