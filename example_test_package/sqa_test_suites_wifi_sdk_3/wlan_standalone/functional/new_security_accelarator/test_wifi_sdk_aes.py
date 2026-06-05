@@ -211,7 +211,7 @@ pytestmark = [
     pytest.mark.config(
         "wifi_dut",
         wifi={
-            "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+            "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
             "oper_mode": Si91xOperatingMode.WiFiClient,
             "coex_mode": Si91xCoexMode.WLANOnly,
             "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client,
