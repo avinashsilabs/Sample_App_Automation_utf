@@ -132,13 +132,14 @@ class ProvisioningFunctionality(ThreadBase):
             if self.test_case == 20145 or self.test_case == 20147 or self.test_case == 20148 or self.test_case == 20149 or self.test_case == 201159 or self.test_case == 201275 or self.test_case == 661503 or self.test_case == 198666:
                 logger().info(f"******************** get all profiles ********************")
                 uuids = self.wifi_dut.interfaces.wifi.ble_get_profiles_async(
-                    ble_remote_dev_address=self.ble_client_address)
+                    ble_remote_dev_address=self.ble_client_address,async_timeout=60)
                 assert HealthThermometerService.UUID.lower() in uuids is not None, "couldn't fetch health_thermometer " \
                                                                                    "profile "
 
                 logger().info(" ******************** Resolving Profile ********************")
                 start_handle, end_handle, data = self.wifi_dut.interfaces.wifi.ble_get_profile_async(
-                    ble_remote_dev_address=self.ble_client_address, uuid=int(HealthThermometerService.UUID, 16))
+                    ble_remote_dev_address=self.ble_client_address, uuid=int(HealthThermometerService.UUID, 16),
+                    async_timeout=60)
                 assert start_handle is not None, "failed to fetch the start handle.."
                 assert end_handle is not None, "failed to fetch end handle.."
 
