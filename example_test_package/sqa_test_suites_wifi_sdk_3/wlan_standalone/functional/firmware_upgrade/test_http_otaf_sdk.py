@@ -66,7 +66,7 @@ class WifiJoin(ThreadBase):
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
         self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
         self.wifi_dut.interfaces.wifi.initialize_thread()
-        wifi_dut.interfaces.wifi.is_external_stack_enabled = False
+        self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
         fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
         self.wifi_dut.interfaces.wifi.inited = False
