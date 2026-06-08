@@ -4565,6 +4565,9 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_server_intermediate_root_ca_cert_C11389
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa2_enterprise", uid="user1", enc="tls",
                                           expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+            logger().info(
+                f"Note: As per SI91X-14038, according to latest changes async error codes are not sent to host so normal eap failure would be enough "
+                f"so commented the async error code part in the test case ")
 
             wifi_dut.interfaces.wifi.start_ip(
                 expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
@@ -4573,21 +4576,21 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_server_intermediate_root_ca_cert_C11389
                 f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
                 f" is expected")
 
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            rejoin_error_events = [
-                event
-                for event in events
-                if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
-            ]
-            for event in rejoin_error_events:
-                logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
-                output = event.event_data
-            logger().info(f"\n\n Event data is: {output} \n\n")
-            result = output.strip().split(':')[1].lstrip()
-            logger().info(f"\n\n Reason code:{result} \n\n")
-
-            assert result == '3D', "Unable to get expected reason code hence test is failed"
-            logger().info(f"Observed Expected Error Code {result}, which means SERVER_INT_ROOT_CA_INVALID_SIGN_ALG error and hence test cases is passed")
+            # events = wifi_dut.interfaces.wifi.get_async_events()
+            # rejoin_error_events = [
+            #     event
+            #     for event in events
+            #     if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
+            # ]
+            # for event in rejoin_error_events:
+            #     logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
+            #     output = event.event_data
+            # logger().info(f"\n\n Event data is: {output} \n\n")
+            # result = output.strip().split(':')[1].lstrip()
+            # logger().info(f"\n\n Reason code:{result} \n\n")
+            #
+            # assert result == '3D', "Unable to get expected reason code hence test is failed"
+            # logger().info(f"Observed Expected Error Code {result}, which means SERVER_INT_ROOT_CA_INVALID_SIGN_ALG error and hence test cases is passed")
 
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
@@ -4667,6 +4670,9 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_server_root_ca_cert_C113897(wifi_dut, w
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa2_enterprise", uid="user1", enc="tls",
                                           expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+            logger().info(
+                f"Note: As per SI91X-14038, according to latest changes async error codes are not sent to host so normal eap failure would be enough "
+                f"so commented the async error code part in the test case ")
 
             wifi_dut.interfaces.wifi.start_ip(
                 expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
@@ -4675,21 +4681,21 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_server_root_ca_cert_C113897(wifi_dut, w
                 f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
                 f" is expected")
 
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            rejoin_error_events = [
-                event
-                for event in events
-                if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
-            ]
-            for event in rejoin_error_events:
-                logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
-                output = event.event_data
-            logger().info(f"\n\n Event data is: {output} \n\n")
-            result = output.strip().split(':')[1].lstrip()
-            logger().info(f"\n\n Reason code:{result} \n\n")
-
-            assert result == '3E', "Unable to get expected reason code hence test is failed"
-            logger().info(f"Observed Expected Error Code {result}, which means SERVER_ROOT_CA_INVALID_SIGN_ALG error and hence test cases is passed")
+            # events = wifi_dut.interfaces.wifi.get_async_events()
+            # rejoin_error_events = [
+            #     event
+            #     for event in events
+            #     if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
+            # ]
+            # for event in rejoin_error_events:
+            #     logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
+            #     output = event.event_data
+            # logger().info(f"\n\n Event data is: {output} \n\n")
+            # result = output.strip().split(':')[1].lstrip()
+            # logger().info(f"\n\n Reason code:{result} \n\n")
+            #
+            # assert result == '3E', "Unable to get expected reason code hence test is failed"
+            # logger().info(f"Observed Expected Error Code {result}, which means SERVER_ROOT_CA_INVALID_SIGN_ALG error and hence test cases is passed")
 
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
@@ -4768,6 +4774,9 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_server_cert_C113898(wifi_dut, wifi_acce
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa2_enterprise", uid="user1", enc="tls",
                                           expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+            logger().info(
+                f"Note: As per SI91X-14038, according to latest changes async error codes are not sent to host so normal eap failure would be enough "
+                f"so commented the async error code part in the test case ")
 
             wifi_dut.interfaces.wifi.start_ip(
                 expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
@@ -4776,21 +4785,21 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_server_cert_C113898(wifi_dut, wifi_acce
                 f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
                 f" is expected")
 
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            rejoin_error_events = [
-                event
-                for event in events
-                if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
-            ]
-            for event in rejoin_error_events:
-                logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
-                output = event.event_data
-            logger().info(f"\n\n Event data is: {output} \n\n")
-            result = output.strip().split(':')[1].lstrip()
-            logger().info(f"\n\n Reason code:{result} \n\n")
-
-            assert result == '3C', "Unable to get expected reason code hence test is failed"
-            logger().info(f"Observed Expected Error Code {result}, which means SERVER_CERT_INVALID_SIGN_ALG error and hence test cases is passed")
+            # events = wifi_dut.interfaces.wifi.get_async_events()
+            # rejoin_error_events = [
+            #     event
+            #     for event in events
+            #     if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
+            # ]
+            # for event in rejoin_error_events:
+            #     logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
+            #     output = event.event_data
+            # logger().info(f"\n\n Event data is: {output} \n\n")
+            # result = output.strip().split(':')[1].lstrip()
+            # logger().info(f"\n\n Reason code:{result} \n\n")
+            #
+            # assert result == '3C', "Unable to get expected reason code hence test is failed"
+            # logger().info(f"Observed Expected Error Code {result}, which means SERVER_CERT_INVALID_SIGN_ALG error and hence test cases is passed")
 
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
@@ -4870,6 +4879,9 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_client_cert_c113899(wifi_dut, wifi_acce
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa2_enterprise", uid="user1", enc="tls",
                                           expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+            logger().info(
+                f"Note: As per SI91X-14038, according to latest changes async error codes are not sent to host so normal eap failure would be enough "
+                f"so commented the async error code part in the test case ")
 
             wifi_dut.interfaces.wifi.start_ip(
                 expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
@@ -4878,21 +4890,21 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_client_cert_c113899(wifi_dut, wifi_acce
                 f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
                 f" is expected")
 
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            rejoin_error_events = [
-                event
-                for event in events
-                if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
-            ]
-            for event in rejoin_error_events:
-                logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
-                output = event.event_data
-            logger().info(f"\n\n Event data is: {output} \n\n")
-            result = output.strip().split(':')[1].lstrip()
-            logger().info(f"\n\n Reason code:{result} \n\n")
-
-            assert result == '3F', "Unable to get expected reason code hence test is failed"
-            logger().info(f"Observed Expected Error Code {result}, which means SERVER_ROOT_CA_INVALID_SIGN_ALG error and hence test cases is passed")
+            # events = wifi_dut.interfaces.wifi.get_async_events()
+            # rejoin_error_events = [
+            #     event
+            #     for event in events
+            #     if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
+            # ]
+            # for event in rejoin_error_events:
+            #     logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
+            #     output = event.event_data
+            # logger().info(f"\n\n Event data is: {output} \n\n")
+            # result = output.strip().split(':')[1].lstrip()
+            # logger().info(f"\n\n Reason code:{result} \n\n")
+            #
+            # assert result == '3F', "Unable to get expected reason code hence test is failed"
+            # logger().info(f"Observed Expected Error Code {result}, which means SERVER_ROOT_CA_INVALID_SIGN_ALG error and hence test cases is passed")
 
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
@@ -4980,6 +4992,9 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_client_root_ca_cert_c113895(wifi_dut, w
                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                           security="wpa2_enterprise", uid="user1", enc="tls",
                                           expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION)
+            logger().info(
+                f"Note: As per SI91X-14038, according to latest changes async error codes are not sent to host so normal eap failure would be enough "
+                f"so commented the async error code part in the test case ")
 
             wifi_dut.interfaces.wifi.start_ip(
                 expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
@@ -4988,21 +5003,21 @@ def test_wsdk_WPA2_EAP_invalid_algorithm_client_root_ca_cert_c113895(wifi_dut, w
                 f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
                 f" is expected")
 
-            events = wifi_dut.interfaces.wifi.get_async_events()
-            rejoin_error_events = [
-                event
-                for event in events
-                if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
-            ]
-            for event in rejoin_error_events:
-                logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
-                output = event.event_data
-            logger().info(f"\n\n Event data is: {output} \n\n")
-            result = output.strip().split(':')[1].lstrip()
-            logger().info(f"\n\n Reason code:{result} \n\n")
-
-            assert result == '40', "Unable to get expected reason code hence test is failed"
-            logger().info(f"Observed Expected Error Code {result}, which means SERVER_ROOT_CA_INVALID_SIGN_ALG error and hence test cases is passed")
+            # events = wifi_dut.interfaces.wifi.get_async_events()
+            # rejoin_error_events = [
+            #     event
+            #     for event in events
+            #     if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
+            # ]
+            # for event in rejoin_error_events:
+            #     logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
+            #     output = event.event_data
+            # logger().info(f"\n\n Event data is: {output} \n\n")
+            # result = output.strip().split(':')[1].lstrip()
+            # logger().info(f"\n\n Reason code:{result} \n\n")
+            #
+            # assert result == '40', "Unable to get expected reason code hence test is failed"
+            # logger().info(f"Observed Expected Error Code {result}, which means SERVER_ROOT_CA_INVALID_SIGN_ALG error and hence test cases is passed")
 
             dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
             logger().info(f"Mac Address of DUT: {dut_mac_address}")
@@ -5166,25 +5181,29 @@ def test_wsdk_WPA2_EAP_Conn_TLS_when_client_inter_root_ca_with_invalid_algorithm
         logger().info(
             f" Connection failed when invalid algorithm of ca_sha384 is loaded into the device,observed error code "
             f" 0x10008 which is expected")
+        logger().info(
+            f"Note: As per SI91X-14038, according to latest changes async error codes are not sent to host so normal eap failure would be enough "
+            f"so commented the async error code part in the test case ")
+
         wifi_dut.interfaces.wifi.start_ip(
             expected_status=SLStatus.SL_STATUS_SI91X_COMMAND_GIVEN_IN_INVALID_STATE)
         logger().info(
             f"IP configuration failed when command given in incorrect state,observed error code 0x10021 which "
             f" is expected")
-        events = wifi_dut.interfaces.wifi.get_async_events()
-        error_events = [
-            event
-            for event in events
-            if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
-        ]
-        for event in error_events:
-            logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
-            output = event.event_data
-        logger().info(f"\n\n Event data is: {output} \n\n")
-        result = output.strip().split(':')[1].lstrip()
-        logger().info(f"\n\n Reason code:{result} \n\n")
-        assert result == '4f', "Unable to get expected reason code hence test is failed"
-        logger().info(f"Observed Expected Error Code, Hence test cases is passed")
+        # events = wifi_dut.interfaces.wifi.get_async_events()
+        # error_events = [
+        #     event
+        #     for event in events
+        #     if event.event_type == AsyncEventIdentifiers.WIFICONNECTIONLOGEVENTASYNC
+        # ]
+        # for event in error_events:
+        #     logger().info(f"event type is {event.event_type} and event data is: {event.event_data}")
+        #     output = event.event_data
+        # logger().info(f"\n\n Event data is: {output} \n\n")
+        # result = output.strip().split(':')[1].lstrip()
+        # logger().info(f"\n\n Reason code:{result} \n\n")
+        # assert result == '4f', "Unable to get expected reason code hence test is failed"
+        # logger().info(f"Observed Expected Error Code, Hence test cases is passed")
         dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
