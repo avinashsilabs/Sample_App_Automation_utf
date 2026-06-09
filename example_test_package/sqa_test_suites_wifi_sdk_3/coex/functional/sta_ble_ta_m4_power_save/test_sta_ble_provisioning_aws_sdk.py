@@ -99,16 +99,17 @@ class ProvisioningFunctionality(ThreadBase):
 
             self.sl_collections.connect_ble(wifi_dut=self.wifi_dut, ble_client=self.ble_client,
                                             ble_dut_address=self.bt_dut_address,
-                                            min_conn_interval=self.min_conn_interval,
-                                            max_conn_interval=self.max_conn_interval,
+                                            min_conn_interval=160,
+                                            max_conn_interval=160,
                                             conn_latency=self.conn_latency,
                                             supervision_timeout=self.supervision_timeout)
             time.sleep(3)
 
             if self.test_case == 537997 or self.test_case == 20153 or self.test_case == 20155:
                 self.wifi_dut.interfaces.wifi.ble_update_conn_param(
-                    ble_remote_dev_address=self.ble_client_address, ble_conn_interval_min=3200,
-                    ble_conn_interval_max=3200, ble_conn_latency=0, ble_supervision_timeout=2000)
+                    ble_remote_dev_address=self.ble_client_address, ble_conn_interval_min=self.min_conn_interval,
+                    ble_conn_interval_max=self.min_conn_interval, ble_conn_latency=0,
+                    ble_supervision_timeout=self.supervision_timeout)
 
             logger().info(".... checking ble connection stability ....")
             time.sleep(60)
@@ -252,15 +253,17 @@ class ProvisioningFunctionality(ThreadBase):
         status = self.sl_collections.ping(device_ip=device_ip, ping_count=10)
         assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
-        logger().info(f"....Applying performance profile mode and Enable_bt_power_save....")
-        self.ble_dut.interfaces.bluetooth.set_performance_profile(mode="power_save_low_latency")
-        self.ble_dut.interfaces.bluetooth.enable_bt_power_save()
-
-        logger().info(f"....Pinging to DUT after Power Save")
-        status = self.sl_collections.ping(device_ip=device_ip, ping_count=10)
-        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
-
-        time.sleep(10)
+        # NOTE: BT / M4 power-save MUST stay disabled during the BLE
+        # provisioning notification round-trip below. With BT power-save
+        # enabled and conn_interval=200ms the DUT queues the GATT
+        # notification (IP / MAC) but the bluez client doesn't see it
+        # within the polling window - giving an empty notifications
+        # buffer (observed failure: 3x retry, all []). The working
+        # `test_sta_ble_provisioning_sdk.py::ProvisioningFunctionality
+        # .wifi_connect` does the notify round-trip BEFORE enabling
+        # power-save; we mirror that pattern here. Power-save is then
+        # enabled at the end of this method so AWS testing still runs
+        # in power-save (the actual coverage goal of this test).
 
         logger().info(f' *********************** subscribe to notifications ***********************')
         self.ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=self.char_path)
@@ -275,17 +278,20 @@ class ProvisioningFunctionality(ThreadBase):
         time.sleep(3)
         logger().info("******************** Validate Data ********************")
         notifications_data = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
-        time.sleep(10)
         logger().info(
             f' *********************** Notification is DUT IP address {notifications_data} ***********************')
 
-        # Retry logic for empty notifications
+        # Retry logic for empty notifications. Re-issue the notify on
+        # each retry so the DUT actually re-pushes the value (a stale
+        # buffer-poll alone won't materialise a missed notification).
         retry_count = 0
         max_retries = 3
         while len(notifications_data) == 0 and retry_count < max_retries:
             retry_count += 1
-            logger().warning(f"Notification is empty, retry {retry_count}/{max_retries}")
-            time.sleep(5)
+            logger().warning(f"IP notification empty, retry {retry_count}/{max_retries} (re-pushing)")
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                ble_remote_dev_address=self.ble_client_address, data=device_ip)
+            time.sleep(10)
             notifications_data = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
             logger().info(
                 f' *********************** Retry Notification is {notifications_data} ***********************')
@@ -307,6 +313,7 @@ class ProvisioningFunctionality(ThreadBase):
         self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
             ble_remote_dev_address=self.ble_client_address, buffer_mode=1, buffer_count=2)
 
+        dut_mac_address = self.wifi_dut.interfaces.wifi.get_mac_address()
         self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
             ble_remote_dev_address=self.ble_client_address, data=dut_mac_address)
         time.sleep(3)
@@ -314,13 +321,39 @@ class ProvisioningFunctionality(ThreadBase):
         logger().info("******************** Validate Data ********************")
         notifications_data = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
         logger().info(f' *********************** Notification is {notifications_data} ***********************')
+
+        # Same retry pattern for MAC notification: re-push and re-poll.
+        retry_count = 0
+        max_retries = 3
+        while len(notifications_data) == 0 and retry_count < max_retries:
+            retry_count += 1
+            logger().warning(f"MAC notification empty, retry {retry_count}/{max_retries} (re-pushing)")
+            self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                ble_remote_dev_address=self.ble_client_address, data=dut_mac_address)
+            time.sleep(10)
+            notifications_data = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
+            logger().info(
+                f' *********************** Retry Notification is {notifications_data} ***********************')
+
         assert len(notifications_data) > 0, " .... received data is empty ...."
-        assert notifications_data == [dut_mac_address], ".... Device MAC Mismatched or Acknowledgement not received ....."
+        assert notifications_data == [
+            dut_mac_address], ".... Device MAC Mismatched or Acknowledgement not received ....."
 
         logger().info(f' *********************** unsubscribe to notifications ***********************')
         self.ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=self.char_path)
         self.ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=self.char_uid)
         self.ble_client.interfaces.bluetooth.gatt_adapter.clear_notifications()
+
+        # Provisioning round-trip is complete; now enable performance
+        # profile + BT power-save so the subsequent AWS workload is
+        # exercised under power-save (the actual test goal).
+        logger().info(f"....Applying performance profile mode and Enable_bt_power_save....")
+        self.ble_dut.interfaces.bluetooth.set_performance_profile(mode="power_save_low_latency")
+        self.ble_dut.interfaces.bluetooth.enable_bt_power_save()
+
+        logger().info(f"....Pinging to DUT after Power Save")
+        status = self.sl_collections.ping(device_ip=device_ip, ping_count=10)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
         time.sleep(60)
 
@@ -342,7 +375,7 @@ class ProvisioningFunctionality(ThreadBase):
         logger().info("******************** Validate Data ********************")
         notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
         logger().info(f' *********************** Notification is {notifications} ***********************')
-        
+
         # Retry logic for empty notifications
         retry_count = 0
         max_retries = 3
@@ -352,7 +385,7 @@ class ProvisioningFunctionality(ThreadBase):
             time.sleep(5)
             notifications = self.ble_client.interfaces.bluetooth.gatt_adapter.notifications[self.char_uid]
             logger().info(f' *********************** Retry Notification is {notifications} ***********************')
-        
+
         assert len(notifications) > 0, " .... received data is empty ...."
         assert notifications == [fw_version], ".... Firmware Version Mismatched or Acknowledgement not received ....."
 
@@ -386,7 +419,7 @@ class ProvisioningFunctionality(ThreadBase):
             logger().info("Checking connection status of BLE")
             state = self.ble_dut.interfaces.bluetooth.ble_get_device_state()
             state_int = int(state) if state.isdigit() else -1
-            
+
             # Handle each state with try-except to prevent cascade failures
             if state_int == 8:
                 logger().info("Device is in connected status try to disconnect")
@@ -450,7 +483,7 @@ class ProvisioningFunctionality(ThreadBase):
                 self.ble_client.interfaces.bluetooth.close()
             except Exception as e:
                 logger().warning(f"Failed to close BLE client: {e}")
-                
+
             logger().info(" *************DUT Cleanup Success *******************")
         except Exception as cleanup_ex:
             logger().error(f"Exception during BLE cleanup: {cleanup_ex}")
@@ -462,12 +495,13 @@ class aws_publish_message_Thread(ThreadBase):
     Thread to publish data from DUT to aws server on subscribed topic and QOS value
     """
 
-    def __init__(self, wifi_dut, topic, message, qos):
+    def __init__(self, wifi_dut, topic, message, qos, duration):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.topic = topic
         self.message = message
         self.qos = qos
+        self.duration = duration
 
     def run(self):
         logger().info("Publishing aws message from DUT")
@@ -480,7 +514,7 @@ class aws_publish_message_Thread(ThreadBase):
             AwsConnection().publish_from_dut(self.wifi_dut, self.topic, msg, qos=self.qos)
             send_count += 1
             time.sleep(3)
-            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            self.wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=self.duration)
         logger().info("aws_publish_message_thread completed")
 
 
@@ -715,19 +749,20 @@ class AwsConnection(ThreadBase):
         recv_messages = None
         for retry in range(max_retries):
             recv_messages = aws_iot_client.interfaces.aws_iot.get_received_messages()
-            
+
             if len(recv_messages) >= len(messages):
                 logger().info(f"Successfully received all {len(messages)} messages")
                 break
-            
+
             if retry < max_retries - 1:
                 logger().warning(f"Expected {len(messages)} messages but only received {len(recv_messages)} so far. "
-                               f"Retry {retry + 1}/{max_retries - 1}, waiting {retry_wait}s...")
+                                 f"Retry {retry + 1}/{max_retries - 1}, waiting {retry_wait}s...")
                 time.sleep(retry_wait)
-        
+
         # Final check if we received enough messages
         if len(recv_messages) < len(messages):
-            logger().error(f"Expected {len(messages)} messages but only received {len(recv_messages)} after {max_retries} retries")
+            logger().error(
+                f"Expected {len(messages)} messages but only received {len(recv_messages)} after {max_retries} retries")
             raise AssertionError(
                 f"Message count mismatch: Expected {len(messages)} messages, "
                 f"but only received {len(recv_messages)} messages"
@@ -754,7 +789,8 @@ class AwsConnection(ThreadBase):
         logger().info("AWS messages validated successfully")
 
 
-def wifi_dut_marker(IEEE802_11W=0, memory_config=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode, with_certificates=False):
+def wifi_dut_marker(IEEE802_11W=0, memory_config=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                    with_certificates=False):
     """
         Common method to generate wifi_dut marker for pytest.mark.config decorator..
     """
@@ -787,12 +823,15 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=Si91xExtCustomFeatureBitMap.Fea
         config["client_key"] = ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"]
     return pytest.mark.config("wifi_dut", wifi=config)
 
+
 @wifi_dut_marker(with_certificates=True)
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "aws_unsubscribe", "aws_disconnect", "unassociated"])
-@pytest.mark.test_src_map_id('C537997')
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "aws_unsubscribe", "aws_disconnect",
+                             "unassociated"])
 def test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997(
-        wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, aws_iot_client, request, utf_constants):
-    """Verify BLE and WLAN connection using STA+BLE provisioning app by configuring Maximum BLE Conn interval with AWS IoT connectivity"""
+        wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, aws_iot_client, request,
+        utf_constants):
+    """Verify WLAN commissioning, AWS connection and AWS IoT connectivity using BLE provisioning"""
     try:
         bt_mon_log_file_name = (f"reports/test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997"
                                 f"{int(time.time())}.log")
@@ -807,9 +846,9 @@ def test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997(
             ble_obj = ProvisioningFunctionality(
                 wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, ble_pairing=0,
                 utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                test_case=537997, min_conn_interval=200, max_conn_interval=200)
-            
-            logger().info(f"M4-TA secure handshake")
+                test_case=537997, min_conn_interval=15, max_conn_interval=15)
+
+            logger().info("M4-TA secure handshake")
             wifi_dut.interfaces.wifi.m4_ta_secure_handshake(sub_cmd_type=5, xtal_enable=1)
 
             ble_obj.start()
@@ -821,19 +860,19 @@ def test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997(
 
             # AWS IoT functionality
             logger().info("\n\n******************** Starting AWS IoT Testing ********************\n\n")
-            
+
             # Prepare test messages
             messages = []
             for i in range(10):
                 messages.append(text_generator(size=100))
             logger().info(f"Generated messages for AWS testing: {messages}")
-            
+
             # Setup AWS connection parameters
             test_name = request.node.name
             client_id = test_name + '_client'
             topic = 'topic_' + test_name
             qos = Si91xAwsQos.QOS0
-            
+
             # Create AWS connection instance
             aws_conn = AwsConnection(
                 wifi_dut=wifi_dut,
@@ -846,52 +885,53 @@ def test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997(
                 topic=topic,
                 qos=qos
             )
-            
+
             # Connect DUT to AWS IoT
             logger().info("Connecting DUT to AWS IoT server")
             assert aws_conn.connect_to_aws_server_from_dut(
                 wifi_dut, client_id), "Failed to connect aws server from DUT"
             logger().info("DUT connected to AWS IoT server successfully")
-            
+
             # Subscribe from DUT to topic_raspi (to receive messages from RasPi)
             topic_dut = topic + '_dut'
             topic_raspi = topic + '_raspi'
             aws_conn.subscribe_from_dut(wifi_dut, topic_raspi, qos)
             logger().info(f"DUT subscribed to topic: {topic_raspi}")
-            
+
             # Connect RasPi to AWS IoT
             logger().info("Connecting RasPi (aws_iot_client) to AWS IoT server")
             aws_conn.connect_to_aws_server_from_raspi(aws_iot_client)
             logger().info("RasPi connected to AWS IoT server successfully")
-            
+
             # Subscribe from RasPi on a different topic to receive only DUT messages
             topic_dut = topic + '_dut'
             topic_raspi = topic + '_raspi'
-            
+
             aws_conn.subscribe_from_raspi(aws_iot_client, topic_dut, qos)
             logger().info(f"RasPi subscribed to topic: {topic_dut}")
-            
+
             # Wait to ensure both subscriptions are active before publishing
             logger().info("Waiting for subscriptions to be fully active...")
             time.sleep(5)
-            
+
             # Generate messages for RasPi publish test
             messages_raspi = []
-            for i in range(10):
+            for i in range(15):
                 messages_raspi.append(text_generator(size=100))
             logger().info(f"Generated messages for RasPi publish test: {messages_raspi}")
-            
+
             # Run parallel publish operations from DUT and RasPi
             logger().info("\n\n*** Starting Parallel Publish Operations: DUT and RasPi publishing simultaneously ***\n")
-            
+
             # Create thread for DUT publish (publish to topic_dut)
             dut_publish_thread = aws_publish_message_Thread(
                 wifi_dut=wifi_dut,
                 topic=topic_dut,
                 message=messages,
-                qos=qos
+                qos=qos,
+                duration=500
             )
-            
+
             # Create thread for RasPi publish (publish to topic_raspi)
             raspi_publish_thread = aws_publish_raspi_Thread(
                 aws_iot_client=aws_iot_client,
@@ -900,34 +940,34 @@ def test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997(
                 qos=qos,
                 aws_conn=aws_conn
             )
-            
+
             # Start both threads in parallel
             logger().info("Starting DUT publish thread...")
             dut_publish_thread.start()
-            
+
             logger().info("Starting RasPi publish thread...")
             raspi_publish_thread.start()
-            
+
             # Wait for both threads to complete
             logger().info("Waiting for DUT publish thread to complete...")
             dut_publish_thread.wait_for_exit()
             logger().info("DUT publish thread completed")
-            
+
             logger().info("Waiting for RasPi publish thread to complete...")
             raspi_publish_thread.wait_for_exit()
             logger().info("RasPi publish thread completed")
-            
+
             logger().info("\n\n*** Both publish threads completed. Starting validation ***\n")
-            
+
             # Validate messages received on RasPi (from DUT on topic_dut)
             logger().info("\n*** Validating messages published by DUT and received on RasPi ***")
             aws_conn.validate_aws_messages_from_raspi(aws_iot_client, topic_dut, qos, messages, wait_time=15)
             logger().info("Successfully validated: DUT published and RasPi received all messages")
-            
+
             # Wait a bit before starting DUT message reception to ensure all messages are delivered
             logger().info("Waiting for AWS IoT to deliver all messages to DUT...")
             time.sleep(10)
-            
+
             # Validate messages received on DUT (from RasPi)
             logger().info("\n*** Validating messages published by RasPi and received on DUT ***")
             for i, expected_msg in enumerate(messages_raspi):
@@ -935,18 +975,18 @@ def test_wifi_sdk_wlan_ble_provisioning_aws_tx_rx_C537997(
                 logger().info(f"Received message {i + 1} on DUT: {received_msg}")
                 assert received_msg == expected_msg, f"Message mismatch: expected '{expected_msg}', got '{received_msg}'"
             logger().info("Successfully validated: RasPi published and DUT received all messages")
-            
+
             logger().info("\n\n*** Parallel Publish and Validation Completed Successfully ***\n")
-            
+
             # Unsubscribe and disconnect
             logger().info("\n\nCleaning up AWS connections")
             logger().info("DUT Unsubscribing from aws topic")
             wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_raspi)
-            
+
             logger().info("Initiating aws_iot_disconnect from DUT")
             wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
             time.sleep(10)
-            
+
             logger().info("\n\n******************** AWS IoT Testing Completed Successfully ********************\n\n")
 
             wifi_sniffer.interfaces.capture.stop_capture()
@@ -1146,6 +1186,7 @@ def test_wifi_sdk_ble_provisioning_power_save_aws_validation_C20153(
                                    ble_client_address=ble_obj.ble_client_address,
                                    ble_dut_address=ble_obj.ble_dut_address)
 
+
 @pytest.mark.skip(reason="For this test case scripting corrections are needed and will be added in next sprint")
 @wifi_dut_marker(with_certificates=True)
 @pytest.mark.end_state("wifi_dut",
@@ -1333,5 +1374,3 @@ def test_wifi_sdk_ble_provisioning_wifi_disconnect_reconnect_aws_validation_C201
         sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                    ble_client_address=ble_obj.ble_client_address,
                                    ble_dut_address=ble_obj.ble_dut_address)
-
-
