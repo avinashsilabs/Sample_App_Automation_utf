@@ -3285,7 +3285,7 @@ def test_sta_ble_store_config_otaf_2_profiles_ble_slave_45ms_C769735(wifi_dut, w
 
 
 
-@wifi_dut_marker(wifi_stack_len=2048, ble_stack_len=2048)
+@wifi_dut_marker(wifi_stack_len=2041, ble_stack_len=3584)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
@@ -3361,7 +3361,7 @@ def test_sta_ble_store_config_2_profiles_BLE_provisioning_peripheral_C769744(wif
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
-            test_case=20145,
+            test_case=661503,
             ble_dut=wifi_dut,
             ble_pairing=0,
             utf_constants=utf_constants,
