@@ -34,3 +34,18 @@ firmware_applications:
             file_name: 'SiWG917-B.2.14.4.0.0.1.rps'
           write_firmware:
             file_name: 'test_agent_soc_tp_342_cf2_480.rps'
+
+    test_480K_M4SS_192K:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_twt_410rc3_110L_480.rps'
+
+    test_416K_M4SS_256K:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_twt_410rc3_110L_416.rps'
+
+    test_352K_M4SS_320K:
+      - device_type: 'efx32'
+        device_subtype: 'efr32_4180b_Si917'
+        filename: 'test_agent_410FC_pw_352.rps'
