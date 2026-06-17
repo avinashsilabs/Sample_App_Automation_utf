@@ -1047,7 +1047,7 @@ def test_ble_sdk_fetch_desc_that_are_not_supported_C19865(ble_dut, ble_client, u
         logger().info(f"********fetching descriptor with unsupported handles*************")
         try:
             # Try to fetch descriptors with handles outside valid range (unsupported)
-            ble_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=bt_client_address,
+            ble_dut.interfaces.wifi.ble_get_att_descriptors_async(ble_devices_address=bt_client_address,
                                                            start_handle=0x20,
                                                            end_handle=0x21)
         except Exception as Err:
@@ -1100,7 +1100,7 @@ def test_ble_sdk_read_value_of_descriptor_from_RD1_C19867(ble_dut, ble_client, s
         assert end_handle_1 , "failed to fetch the end handle.."
 
         logger().info(f"To fetch value of descriptor using multiple att read")
-        att_values = ble_dut.interfaces.wifi.ble_get_multiple_att(
+        att_values = ble_dut.interfaces.wifi.ble_get_multiple_att_values_async(
             ble_remote_dev_address=bt_client_address,
             no_of_handles=2,
             handle_1=start_handle,
@@ -1929,7 +1929,7 @@ def test_ble_sdk_fetch_desc_from_RD1_C19864(wifi_dut, ble_client, sl_collections
         assert start_handle is not None, "failed to fetch the start handle.."
         assert end_handle is not None, "failed to fetch end handle.."
         logger().info(f"********fetching descriptor*************")
-        wifi_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=bt_client_address, start_handle=start_handle,
+        wifi_dut.interfaces.wifi.ble_get_att_descriptors_async(ble_devices_address=bt_client_address, start_handle=start_handle,
                                                        end_handle=end_handle)
         wifi_dut.interfaces.wifi.ble_disconnect(ble_remote_dev_address=bt_client_address)
         logger().info(" Issued BLE disconnect ")
@@ -3213,7 +3213,7 @@ def test_ble_sdk_enable_blood_pressure_service_in_client_role_C19884(ble_dut, re
 
         bp_data = "BP1209"
 
-        ble_dut.interfaces.wifi.ble_get_att_descriptor(ble_devices_address=ble_client_address,
+        ble_dut.interfaces.wifi.ble_get_att_descriptors_async(ble_devices_address=ble_client_address,
                                                        start_handle=write_handle_1, end_handle=write_handle_1 + 2)
 
 
