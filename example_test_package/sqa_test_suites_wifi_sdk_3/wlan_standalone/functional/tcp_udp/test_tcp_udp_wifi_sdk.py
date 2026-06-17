@@ -619,6 +619,909 @@ class WifiJoinThread(ThreadBase):
         assert "Remote Terminate" in event_data_output, "expected error code not found. Expected is Remote Terminate"
         logger().info("*********** Remote Termination is Successful *************")
 
+def per_socket_close_dut_marker(*, tls=False, ap=False, ap_ssid="WLAN_BLE_AP_C1726587", ap_passphrase="12345678", ap_channel=11, ap_security="Open"):
+    """Build pytest.mark.config for C172657x WLAN+BLE per-socket-close tests (websocket wifi_dut_marker pattern)."""
+    tcpip_features = (
+        Si91xTCPIPFeatureBitMap.DHCPv4Client
+        | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
+    )
+    config = {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity
+                    | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": tcpip_features,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
+                           | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+    if tls:
+        config["tcpip_features"] = tcpip_features | Si91xTCPIPFeatureBitMap.SSL
+        config["ca_cert"] = [
+            (
+                "ca-chain.cert.pem",
+                "SL_NET_SIGNING_CERTIFICATE",
+                "SL_NET_TLS_SERVER_CREDENTIAL_START",
+            )
+        ]
+    if ap:
+        config["oper_mode"] = Si91xOperatingMode.AccessPoint
+        config["tcpip_features"] = (
+            Si91xTCPIPFeatureBitMap.DHCPv4Server
+            | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+            | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
+        )
+        config["security"] = ap_security
+        config["ssid"] = ap_ssid
+        config["passphrase"] = ap_passphrase
+        config["channel"] = ap_channel
+    return pytest.mark.config("wifi_dut", wifi=config)
+
+
+class PerSocketCloseRemoteTerminateFlow:
+    """Reusable WLAN+BLE per-socket-close test flow (C172657x series).
+
+    Automates DUT socket setup, data transfer, remote termination handling, and host
+    close for WiseConnect per-socket-close (WaitForSocketClose) validation. Pair with
+    ``per_socket_close_dut_marker()`` for DUT pytest config (WLAN+BLE coex, global
+    WaitForSocketClose ext_tcpip feature).
+
+    **Full flow (typical pytest usage)**::
+
+        @per_socket_close_dut_marker()
+        def test_my_case(..., remote_socket, wifi_client):
+            PerSocketCloseRemoteTerminateFlow(
+                test_map_id="C1726572", dut_role="client",
+            ).run(
+                sniffer_filter, wifi_access_point, wifi_dut, sl_collections,
+                wifi_sniffer, request, remote_socket, wifi_client,
+            )
+
+    **Partial reuse** — call public phase methods directly after constructing the flow
+    (same pattern as ``WifiJoinThread`` scenario methods)::
+
+        flow = PerSocketCloseRemoteTerminateFlow(test_map_id="C1726574", dut_role="multi_server")
+        dut_addr = flow.join_dut_to_ap(wifi_dut, wifi_access_point, sl_collections)
+        flow.device_ip = dut_addr["device_ip"]
+        flow.setup_dut_multi_server_path(wifi_dut, remote_socket_factory, flow.device_ip)
+        flow.verify_remote_terminate(wifi_dut)
+        flow.close_dut_sockets(wifi_dut)
+        flow.cleanup(wifi_dut, None, remote_socket_factory=remote_socket_factory)
+
+    **Import from another test file**::
+
+        from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.tcp_udp.test_tcp_udp_wifi_sdk import (
+            per_socket_close_dut_marker,
+            PerSocketCloseRemoteTerminateFlow,
+        )
+
+    ``dut_role`` selects the end-to-end scenario executed by ``run()``:
+
+    ==============================  ==========  =======================================
+    dut_role                        Test ID     Summary
+    ==============================  ==========  =======================================
+    ``client``                      C1726572    DUT TCP client TX; remote server stop → 0x62 → 0x43
+    ``multi_server``                C1726574    10 DUT TCP servers; remote close during RX → 0x62 → 0x43
+    ``tls_client``                  C1726576    DUT TLS client TX; remote SSL stop → 0x62 → 0x43
+    ``client_graceful``             C1726579    DUT host graceful close (FIN, no 0x62)
+    ``tls_client_tx``               C1726581    DUT TLS client send only (no close verify)
+    ``client_graceful_loop``        C1726584    Repeat graceful connect/send/close for 24 h
+    ``client_lan_unplug``           C1726585    Remote LAN down during TX → 0x62 → 0x43
+    ``ap_client_remote_terminate``  C1726587    DUT AP + STA; TCP client remote close → 0x62 → 0x43
+    ==============================  ==========  =======================================
+
+    **Fixtures required by ``run()``** (depends on ``dut_role``):
+
+    - All roles: ``sniffer_filter``, ``wifi_access_point``, ``wifi_dut``, ``sl_collections``,
+      ``wifi_sniffer``, ``request``, ``wifi_client``
+    - ``remote_socket``: client / graceful / LAN-unplug / AP-client roles
+    - ``remote_socket_factory``: ``multi_server`` (pass ``remote_socket=None``)
+    - ``ssl_server``: ``tls_client``, ``tls_client_tx`` (pass ``remote_socket=None``)
+
+    **TA async events:** remote terminate = cmd **0x62**; host socket close =
+    ``bsdAsyncSockClose`` cmd **0x43**.
+
+    Per-socket ``bsdSetPerSocketWaitForSocketClose`` setsockopt (spec step 5) is deferred
+    until firmware support; global WaitForSocketClose from the marker is still applied.
+
+    All methods on this class are public for reuse. Key phases: ``join_dut_to_ap``,
+    ``enable_power_save``, ``setup_dut_client_path``, ``setup_dut_multi_server_path``,
+    ``setup_dut_tls_client_path``, ``receive_data_on_all_server_sockets``,
+    ``trigger_remote_terminate_during_server_receive``, ``verify_remote_terminate``,
+    ``close_dut_sockets``, ``client_graceful_flow``, ``client_graceful_loop_flow``,
+    ``client_lan_unplug_flow``, ``tls_client_tx_flow``, ``ap_client_remote_terminate_flow``,
+    ``cleanup``.
+    """
+
+    DEFAULT_LOOP_DURATION_SEC = 24 * 3600
+
+    def __init__(
+            self,
+            test_map_id,
+            dut_role="client",
+            no_of_pkts=100,
+            pkt_length=1460,
+            local_port=5001,
+            connect_retries=3,
+            connect_retry_delay=10,
+            num_client_sockets=10,
+            num_server_sockets=10,
+            loop_duration_sec=None,
+    ):
+        """Configure a per-socket-close flow instance.
+
+        Args:
+            test_map_id: TestRail / source map ID (e.g. ``'C1726572'``) used in log prefixes.
+            dut_role: Scenario selector for ``run()`` — see class docstring for values.
+            no_of_pkts: Number of TX/RX packet iterations per socket path.
+            pkt_length: TCP/TLS payload size in bytes.
+            local_port: Base DUT bind port; multi-server uses ``local_port + socket_index``.
+            connect_retries: DUT connect attempts before assert failure.
+            connect_retry_delay: Seconds between connect retries.
+            num_client_sockets: Reserved for multi-client scenarios (default 10).
+            num_server_sockets: DUT TCP server count for ``multi_server`` role (default 10).
+            loop_duration_sec: Duration in seconds for ``client_graceful_loop`` (default 24 h).
+        """
+        self.test_map_id = test_map_id
+        self.dut_role = dut_role
+        self.no_of_pkts = no_of_pkts
+        self.pkt_length = pkt_length
+        self.local_port = local_port
+        self.connect_retries = connect_retries
+        self.connect_retry_delay = connect_retry_delay
+        self.num_client_sockets = num_client_sockets
+        self.num_server_sockets = num_server_sockets
+        self.loop_duration_sec = loop_duration_sec or self.DEFAULT_LOOP_DURATION_SEC
+        self.server_socket_id = None
+        self.client_socket_id = None
+        self.dut_socket_ids = []
+        self.server_socket_ids = []
+        self.client_socket_ids = []
+        self.remote_servers = []
+        self.remote_clients = []
+        self.socket_ids_to_close = []
+        self.device_ip = None
+        self.ssl_server = None
+        self.ssl_server_port = None
+        self._remote_lan_iface = None
+        self._remote_lan_unplugged = False
+
+    def ensure_multi_socket_state(self):
+        """Back-fill multi-socket fields when an older class body is partially deployed."""
+        if not hasattr(self, 'num_client_sockets'):
+            self.num_client_sockets = 10
+        if not hasattr(self, 'num_server_sockets'):
+            self.num_server_sockets = 10
+        if not hasattr(self, 'loop_duration_sec'):
+            self.loop_duration_sec = self.DEFAULT_LOOP_DURATION_SEC
+        if not hasattr(self, 'dut_socket_ids'):
+            self.dut_socket_ids = []
+        if not hasattr(self, 'server_socket_ids'):
+            self.server_socket_ids = []
+        if not hasattr(self, 'client_socket_ids'):
+            self.client_socket_ids = []
+        if not hasattr(self, 'remote_servers'):
+            self.remote_servers = []
+        if not hasattr(self, 'remote_clients'):
+            self.remote_clients = []
+        if not hasattr(self, 'socket_ids_to_close'):
+            self.socket_ids_to_close = []
+
+    def log_phase(self, phase, message):
+        logger().info(f"[{self.test_map_id} {phase}] {message}")
+
+    def enable_power_save(self, wifi_dut, power_save):
+        self.log_phase(
+            "power_save",
+            "Enable Wi-Fi and BT power save on DUT "
+            "(set_performance_profile + rsi_bt_power_save_profile mode=2, type=0)",
+        )
+        if power_save:
+            wifi_dut.interfaces.wifi.set_performance_profile(mode="power_save_low_latency")
+            wifi_dut.interfaces.wifi.enable_bt_power_save(
+                psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave,
+            )
+            self.log_phase("power_save", "Wi-Fi and BT power save enabled successfully")
+        else:
+            self.log_phase("power_save", "Skipped — harness power_save flag is not set")
+
+    @staticmethod
+    def parse_accepted_client_socket_id(accept_data):
+        """Parse accepted client socket fd from bsdSocketAccept TA output ('Socket ID: N')."""
+        if accept_data is None:
+            raise ValueError("bsdSocketAccept returned no data")
+        text = accept_data.decode('utf-8', errors='ignore') if isinstance(accept_data, bytes) else str(accept_data)
+        match = re.search(r'Socket ID:\s*(\d+)', text)
+        if match:
+            return int(match.group(1))
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped.isdigit():
+                return int(stripped)
+        raise ValueError(f"Could not parse accepted client socket ID from accept response: {text!r}")
+
+    def connect_remote_tcp_client(self, remote_client, device_ip, dut_port):
+        if remote_client.sock is not None:
+            try:
+                remote_client.sock.close()
+            except Exception:
+                pass
+            remote_client.sock = None
+        remote_client.connect_client_tcp(device_ip, dut_port, client_port=0)
+
+    def close_remote_tcp_peer(self, remote_client):
+        """Close remote TCP peer — prefer stop() (C1726572 / socket-select pattern)."""
+        if hasattr(remote_client, 'stop'):
+            try:
+                remote_client.stop()
+                return
+            except Exception:
+                pass
+        if remote_client.sock is not None:
+            try:
+                remote_client.sock.close()
+            except Exception:
+                pass
+            remote_client.sock = None
+
+    def setup_dut_multi_server_path(self, wifi_dut, remote_socket_factory, device_ip):
+        """Multi DUT TCP server sockets — create, setsockopt, bind, listen, accept."""
+        num = self.num_server_sockets
+        self.log_phase("socket_create", f"Create {num} TCP server sockets (sl_si91x_config_socket + Asyncsocket)")
+        wifi_dut.interfaces.wifi.set_socket_config(
+            total_sockets=num,
+            total_tcp_sockets=num,
+            tcp_rx_only_sockets=num,
+            tcp_rx_high_performance_sockets=0,
+        )
+        self.server_socket_ids = []
+        self.client_socket_ids = []
+        self.remote_clients = []
+        self.socket_ids_to_close = []
+
+        for socket_index in range(num):
+            server_socket_id = wifi_dut.interfaces.wifi.Asyncsocket(
+                domain="AF_INET", stream_type="SOCK_STREAM", protocol="IPPROTO_TCP")
+            self.server_socket_ids.append(server_socket_id)
+            self.log_phase(
+                "socket_create", f"Created server socket index {socket_index}: socket_id={server_socket_id}")
+
+        # Step 5 (per-socket close setsockopt) deferred — see comment above per_socket_close_dut_marker.
+
+        self.log_phase("connect", f"Bind all {num} DUT TCP server sockets")
+        for socket_index, server_socket_id in enumerate(self.server_socket_ids):
+            dut_port = self.local_port + socket_index
+            wifi_dut.interfaces.wifi.bind(
+                socket_fd=server_socket_id, device_ip=device_ip,
+                server_port=dut_port, timeout=5, asynch=1)
+            self.log_phase("connect", f"Bound socket index {socket_index} on port {dut_port}")
+
+        self.log_phase("connect", f"Listen on all {num} DUT TCP server sockets")
+        for socket_index, server_socket_id in enumerate(self.server_socket_ids):
+            wifi_dut.interfaces.wifi.listen(socket_fd=server_socket_id, backlog=1, asynch=1)
+            self.log_phase("connect", f"Listening socket index {socket_index}: socket_id={server_socket_id}")
+
+        self.log_phase("connect", f"Accept remote TCP clients on all {num} DUT server sockets")
+        for socket_index, server_socket_id in enumerate(self.server_socket_ids):
+            dut_port = self.local_port + socket_index
+            remote_client = remote_socket_factory.interfaces.socket.create_socket()
+            accept_results = ThreadBase.call_functions_simultaneously(
+                [
+                    (wifi_dut.interfaces.wifi.bsdSocketAccept, server_socket_id, 1),
+                    (self.connect_remote_tcp_client, remote_client, device_ip, dut_port),
+                ],
+                timeout=40,
+            )
+            client_socket_id = self.parse_accepted_client_socket_id(accept_results[0])
+            self.client_socket_ids.append(client_socket_id)
+            self.remote_clients.append(remote_client)
+            self.socket_ids_to_close.insert(0, client_socket_id)
+            self.socket_ids_to_close.append(server_socket_id)
+            self.log_phase(
+                "connect", f"Accepted socket index {socket_index}: client_socket_id={client_socket_id}")
+            time.sleep(1)
+
+        self.server_socket_id = self.server_socket_ids[0]
+        self.client_socket_id = self.client_socket_ids[0]
+
+    def receive_data_on_all_server_sockets(self, wifi_dut):
+        """Round-robin RX on all accepted client sockets (C19351/C780281 async pattern)."""
+        self.log_phase("send", f"Receive TCP data on all {self.num_server_sockets} accepted sockets")
+        tx_buffer = "X" * self.pkt_length
+        for _ in range(self.no_of_pkts):
+            for socket_index, client_socket_id in enumerate(self.client_socket_ids):
+                dut_port = self.local_port + socket_index
+                remote_client = self.remote_clients[socket_index]
+                assert remote_client.sock is not None, (
+                    f"Remote client index {socket_index} (port={dut_port}) not connected")
+                remote_client.send_data_tcp(tx_buffer, use_server_socket=False)
+                time.sleep(1)
+                wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
+                wifi_dut.interfaces.wifi.bsdSocketReceiveFrom(
+                    socket_fd=client_socket_id, async_timeout=60)
+
+    def trigger_remote_terminate_during_server_receive(self, wifi_dut, socket_index=0):
+        """Close remote client while DUT is blocked in RX (TA cmd 0x62)."""
+        remote_client = self.remote_clients[socket_index]
+        client_socket_id = self.client_socket_ids[socket_index]
+        recv_expected = [
+            SLStatus.SL_STATUS_OK,
+            SLStatus.SL_STATUS_SI91X_SOCKET_TX_OR_RX_FAIL,
+            SLStatus.SL_STATUS_SI91X_TCP_SERVER_SOCKET_CLOSE_FAIL,
+            SLStatus.SL_STATUS_SI91X_SOCKET_NOT_CONNECTED,
+        ]
+        self.log_phase(
+            "remote_terminate",
+            f"Block DUT recv on socket index {socket_index} while closing remote client",
+        )
+        try:
+            ThreadBase.call_functions_simultaneously(
+                [
+                    (
+                        wifi_dut.interfaces.wifi.bsdSocketReceiveFrom,
+                        client_socket_id,
+                        recv_expected,
+                        10,
+                        120,
+                    ),
+                    (self.close_remote_tcp_peer, remote_client),
+                ],
+                timeout=150,
+            )
+        except Exception as exc:
+            self.log_phase(
+                "remote_terminate",
+                f"Simultaneous recv/remote-close finished: {exc}",
+            )
+        time.sleep(3)
+        for _ in range(3):
+            wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
+            time.sleep(1)
+
+    def setup_dut_client_path(self, wifi_dut, remote_socket, wifi_client):
+        self.log_phase("socket_create", "Create DUT TCP client socket")
+        server_ip = wifi_client.interfaces.wifi.get_ip_address()
+        remote_socket.interfaces.socket.start_server(port=self.local_port)
+        self.server_socket_id = wifi_dut.interfaces.wifi.Asyncsocket(
+            domain="AF_INET", stream_type="SOCK_STREAM", protocol="IPPROTO_TCP")
+        self.log_phase("socket_create", f"DUT TCP client socket created, socket_id={self.server_socket_id}")
+        # Step 5 (per-socket close setsockopt) deferred — see comment above per_socket_close_dut_marker.
+        self.log_phase("connect", "DUT TCP client bind and connect to remote server")
+        wifi_dut.interfaces.wifi.bind(
+            socket_fd=self.server_socket_id, device_ip=self.device_ip,
+            server_port=self.local_port, timeout=5, asynch=1)
+        connect_status = False
+        for count in range(self.connect_retries):
+            try:
+                wifi_dut.interfaces.wifi.bsdSocketConnect(
+                    socket_fd=self.server_socket_id, server_ip=server_ip, server_port=self.local_port)
+                connect_status = True
+                break
+            except Exception:
+                logger().info(f"Socket connect retry {count + 1}/{self.connect_retries}")
+                time.sleep(self.connect_retry_delay)
+        assert connect_status, "Socket connection failed in DUT"
+        self.log_phase("connect", f"DUT connected to remote server {server_ip}:{self.local_port}")
+        time.sleep(2)
+        self.socket_ids_to_close = [self.server_socket_id]
+        return server_ip
+
+    def prepare_tcp_client(
+            self, wifi_dut, remote_socket, wifi_client, power_save, *, remote_terminate_callback=False):
+        self.enable_power_save(wifi_dut, power_save)
+        if remote_terminate_callback:
+            wifi_dut.interfaces.wifi.set_remote_terminate_callback()
+        return self.setup_dut_client_path(wifi_dut, remote_socket, wifi_client)
+
+    def client_send_during(self, wifi_dut, server_ip, action, *, action_phase="trigger"):
+        self.log_phase("send", "Start DUT TCP client TX (send_data_pkts in background)")
+        tx_thread = Thread(
+            target=wifi_dut.interfaces.wifi.send_data_pkts,
+            args=(self.server_socket_id, self.pkt_length, self.no_of_pkts, 1, server_ip, self.local_port),
+            daemon=True,
+        )
+        tx_thread.start()
+        time.sleep(2)
+        self.log_phase(action_phase, f"Executing {action_phase} while DUT is sending")
+        action()
+        tx_thread.join(timeout=120)
+        time.sleep(2)
+
+    def client_graceful_send_and_host_close(self, wifi_dut, server_ip, remote_socket):
+        """DUT TCP TX then graceful host close via bsdAsyncSockClose (FIN, not RST)."""
+        self.log_phase("send", "Send TCP data from DUT client (send_data_pkts)")
+        bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(
+            socket_id=self.server_socket_id, pkt_length=self.pkt_length, no_of_pkts=self.no_of_pkts,
+            time_interval=1, server_ip=server_ip, server_port=self.local_port)
+        self.log_phase("send", f"DUT sent {bytes_sent} bytes")
+        assert bytes_sent, "DUT failed to send TCP data in step 7"
+        self.log_phase(
+            "host_close",
+            "Host close DUT socket via bsdAsyncSockClose — expect graceful FIN shutdown (not RST)",
+        )
+        wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=self.server_socket_id)
+        remote_socket.interfaces.socket.socket_close_indication(1)
+        time.sleep(2)
+        wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
+        self.log_phase("host_close", "Host close completed — DUT should have sent FIN for graceful shutdown")
+        self.socket_ids_to_close = []
+
+    def client_graceful_flow(self, wifi_dut, remote_socket, wifi_client, power_save):
+        """C1726579: power save, socket, setsockopt, connect, send, host close."""
+        server_ip = self.prepare_tcp_client(wifi_dut, remote_socket, wifi_client, power_save)
+        self.client_graceful_send_and_host_close(wifi_dut, server_ip, remote_socket)
+        remote_socket.interfaces.socket.stop()
+
+    def client_graceful_loop_flow(self, wifi_dut, remote_socket, wifi_client, power_save):
+        """C1726584: power save once, then repeat socket/connect/send/host-close for 24 hours."""
+        self.enable_power_save(wifi_dut, power_save)
+        loop_hours = self.loop_duration_sec // 3600
+        self.log_phase(
+            "loop",
+            f"Repeat socket setup and graceful close in loop for {loop_hours} hours "
+            f"({self.loop_duration_sec} seconds)",
+        )
+        loop_sw = Stopwatch()
+        iteration = 0
+        while loop_sw.elapsed_sec < self.loop_duration_sec:
+            iteration += 1
+            logger().info(
+                f"[{self.test_map_id} loop] iteration {iteration}: "
+                f"elapsed {loop_sw.elapsed_sec:.0f}s / {self.loop_duration_sec}s")
+            try:
+                remote_socket.interfaces.socket.stop()
+            except Exception:
+                pass
+            server_ip = self.setup_dut_client_path(wifi_dut, remote_socket, wifi_client)
+            self.client_graceful_send_and_host_close(wifi_dut, server_ip, remote_socket)
+            try:
+                remote_socket.interfaces.socket.stop()
+            except Exception:
+                pass
+            time.sleep(1)
+        self.log_phase(
+            "loop",
+            f"Loop completed: {iteration} iterations over {loop_sw.elapsed_sec:.0f}s "
+            f"without failure",
+        )
+
+    def unplug_remote_lan_cable(self, wifi_client):
+        """Simulate unplugging remote LAN cable by bringing its interface down."""
+        iface = wifi_client.interfaces.wifi.config.get("interface", "eth0")
+        self.log_phase(
+            "lan_unplug",
+            f"Plug out LAN cable on remote TCP server machine — "
+            f"sudo ifconfig {iface} down",
+        )
+        wifi_client.interfaces.wifi.shell(f"sudo ifconfig {iface} down")
+        self._remote_lan_iface = iface
+        self._remote_lan_unplugged = True
+        time.sleep(2)
+
+    def restore_remote_lan_cable(self, wifi_client):
+        """Restore remote interface after simulated LAN cable unplug."""
+        if not self._remote_lan_unplugged or not self._remote_lan_iface:
+            return
+        try:
+            logger().info(
+                f"[{self.test_map_id}] Restoring remote interface "
+                f"{self._remote_lan_iface} — sudo ifconfig up")
+            wifi_client.interfaces.wifi.shell(f"sudo ifconfig {self._remote_lan_iface} up")
+            time.sleep(5)
+        except Exception as exc:
+            logger().warning(f"Failed to restore remote LAN interface: {exc}")
+        finally:
+            self._remote_lan_unplugged = False
+
+    def trigger_lan_unplug_during_client_send(self, wifi_dut, server_ip, wifi_client):
+        """Unplug remote LAN while DUT is actively sending TCP data."""
+        self.client_send_during(
+            wifi_dut, server_ip,
+            lambda: self.unplug_remote_lan_cable(wifi_client),
+            action_phase="lan_unplug",
+        )
+
+    def client_lan_unplug_flow(self, wifi_dut, remote_socket, wifi_client, power_save):
+        """C1726585: TCP client TX, remote LAN unplug during send, retries, socket close."""
+        server_ip = self.prepare_tcp_client(
+            wifi_dut, remote_socket, wifi_client, power_save, remote_terminate_callback=True)
+        self.trigger_lan_unplug_during_client_send(wifi_dut, server_ip, wifi_client)
+        self.verify_remote_terminate(wifi_dut)
+        self.close_dut_sockets(wifi_dut)
+        self.log_phase(
+            "lan_unplug", "DUT completed TCP retries and proper socket closing after remote LAN unplug")
+        try:
+            remote_socket.interfaces.socket.stop()
+        except Exception:
+            pass
+        self.restore_remote_lan_cable(wifi_client)
+
+    def setup_dut_ap_and_sta_join(self, wifi_dut, wifi_client, sl_collections, power_save):
+        """C1726587: WLAN+BLE AP mode, power save, 3rd party STA join + DHCP IP."""
+        channel = wifi_client.interfaces.wifi.config.get("channel", 11)
+        ssid = wifi_client.interfaces.wifi.config.get("ssid", "WLAN_BLE_AP_C1726587")
+        passphrase = wifi_client.interfaces.wifi.config.get("passphrase", "12345678")
+        security = wifi_client.interfaces.wifi.config.get("security", "Open")
+        self.log_phase("connect", "Bring up DUT in AP mode (start_ap)")
+        sl_collections.configure_dut_in_static_ip(
+            wifi_dut, static_ip="192.168.100.76", static_subnet="255.255.255.0",
+            static_gateway="192.168.100.76")
+        wifi_dut.interfaces.wifi.start_ap(
+            ssid=ssid, security=security, psk=passphrase, channel=channel,
+            dtim_beacon_count=1, beacon_interval=100)
+        self.device_ip = "192.168.100.76"
+        self.log_phase("connect", f"DUT AP started — SSID {ssid}, channel {channel}")
+        self.enable_power_save(wifi_dut, power_save)
+        self.log_phase("connect", "3rd party STA joins DUT AP and obtains IP via DHCP")
+        wifi_client.interfaces.wifi.join()
+        time.sleep(10)
+        client_ip = wifi_client.interfaces.wifi.get_ip_address()
+        assert client_ip, "3rd party STA failed to get IP from DUT AP"
+        self.log_phase("connect", f"3rd party STA connected with IP {client_ip}")
+
+    def trigger_remote_server_close_during_client_send(self, wifi_dut, server_ip, remote_socket):
+        """DUT TX while remote TCP server socket is closed."""
+        def close_remote_server():
+            self.log_phase("remote_close", "Close remote TCP server socket while DUT is sending")
+            remote_socket.interfaces.socket.stop()
+
+        self.client_send_during(
+            wifi_dut, server_ip, close_remote_server, action_phase="remote_close")
+
+    def ap_client_remote_terminate_flow(
+            self, wifi_dut, remote_socket, wifi_client, sl_collections, power_save):
+        """C1726587: DUT AP + STA, TCP client remote terminate (0x62) + host close (0x43)."""
+        self.setup_dut_ap_and_sta_join(wifi_dut, wifi_client, sl_collections, power_save)
+        server_ip = self.prepare_tcp_client(
+            wifi_dut, remote_socket, wifi_client, power_save, remote_terminate_callback=True)
+        self.trigger_remote_server_close_during_client_send(wifi_dut, server_ip, remote_socket)
+        self.verify_remote_terminate(wifi_dut)
+        self.close_dut_sockets(wifi_dut)
+        self.log_phase(
+            "host_close", "Host close completed — Cmd 0x43 after remote terminate event (0x62)")
+
+    def tls_client_send_data_only(self, wifi_dut):
+        """DUT TLS client TX (send_data_pkts)."""
+        self.log_phase("send", "Send TLS data from DUT client (send_data_pkts)")
+        bytes_sent = wifi_dut.interfaces.wifi.send_data_pkts(
+            socket_id=self.server_socket_id, pkt_length=self.pkt_length,
+            no_of_pkts=self.no_of_pkts, time_interval=1)
+        self.log_phase("send", f"DUT sent {bytes_sent} bytes over TLS socket")
+        assert bytes_sent, "DUT failed to send TLS data in step 7"
+
+    def tls_client_tx_flow(self, wifi_dut, ssl_server, power_save):
+        """C1726581: power save, socket, TLS setsockopt, connect, send."""
+        self.enable_power_save(wifi_dut, power_save)
+        self.setup_dut_tls_client_path(wifi_dut, ssl_server)
+        self.tls_client_send_data_only(wifi_dut)
+
+    def setup_dut_tls_client_path(self, wifi_dut, ssl_server):
+        """Create TLS client socket, TCP_ULP setsockopt, TLS connect."""
+        self.ssl_server = ssl_server
+        self.ssl_server_port = ssl_server.interfaces.ssl.config["device_port1"]
+        ssl_server.interfaces.ssl.start_server(port=self.ssl_server_port)
+        server_ip = ssl_server.interfaces.ssl.server_ip
+
+        self.log_phase("socket_create", "Create DUT TCP/TLS client socket (Asyncsocket SOCK_STREAM)")
+        self.server_socket_id = wifi_dut.interfaces.wifi.Asyncsocket(
+            domain="AF_INET", stream_type="SOCK_STREAM", protocol="IPPROTO_TCP")
+
+        self.log_phase("connect", "Setsockopt: TCP_ULP TLS (sl_si91x_setsockopt)")
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+            socket_fd=self.server_socket_id, option_name="TCP_ULP", option_val="tls_1_2")
+        # Step 5 (per-socket close setsockopt) deferred — see comment above per_socket_close_dut_marker.
+
+        self.log_phase("connect", f"Bind and TLS connect to remote server {server_ip}:{self.ssl_server_port}")
+        wifi_dut.interfaces.wifi.bind(
+            socket_fd=self.server_socket_id, device_ip=self.device_ip,
+            server_port=self.local_port, timeout=5, asynch=1, ip_len=4)
+        wifi_dut.interfaces.wifi.bsdSsetCustomSyncSockopt(
+            socket_fd=self.server_socket_id, cert_index=0)
+        connect_status = False
+        for count in range(self.connect_retries):
+            try:
+                wifi_dut.interfaces.wifi.bsdSocketConnect(
+                    socket_fd=self.server_socket_id, server_ip=server_ip,
+                    server_port=self.ssl_server_port)
+                connect_status = True
+                break
+            except Exception:
+                logger().info(f"TLS socket connect retry {count + 1}/{self.connect_retries}")
+                time.sleep(self.connect_retry_delay)
+        assert connect_status, "TLS socket connection failed in DUT"
+        time.sleep(2)
+        self.socket_ids_to_close = [self.server_socket_id]
+        return server_ip
+
+    def tls_client_send_and_remote_terminate(self, wifi_dut):
+        """DUT TLS TX while remote SSL server is closed (TA cmd 0x62)."""
+        self.log_phase("send", "DUT TLS client TX (send_data_pkts)")
+        tx_thread = Thread(
+            target=wifi_dut.interfaces.wifi.send_data_pkts,
+            args=(self.server_socket_id, self.pkt_length, self.no_of_pkts, 1),
+            daemon=True,
+        )
+        tx_thread.start()
+        time.sleep(2)
+        self.log_phase("remote_close", "Close remote SSL server during DUT TLS TX")
+        self.ssl_server.interfaces.ssl.stop_server()
+        tx_thread.join(timeout=120)
+        time.sleep(2)
+
+    def start_client_data_transfer(self, wifi_dut, server_ip):
+        self.log_phase("send", "DUT TCP client TX")
+        tx_thread = Thread(
+            target=wifi_dut.interfaces.wifi.send_data_pkts,
+            args=(self.server_socket_id, self.pkt_length, self.no_of_pkts, 1, server_ip, self.local_port),
+            daemon=True,
+        )
+        tx_thread.start()
+        time.sleep(2)
+        return tx_thread
+
+    def verify_remote_terminate(self, wifi_dut, since_time=None):
+        event_data_output = ""
+        sw = Stopwatch()
+        while sw.elapsed_sec < 60 and not event_data_output:
+            time.sleep(2)
+            wifi_dut.interfaces.wifi.bsdAsyncEvent(time=10)
+            if since_time is not None:
+                events = wifi_dut.interfaces.wifi.get_async_events(
+                    since_time=since_time, update_last_retrieved_timestamp=False)
+            else:
+                events = wifi_dut.interfaces.wifi.get_async_events()
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.REMOTE_TERMINATE:
+                    event_data_output = event.event_data
+                    break
+                if "Remote Terminate" in event.event_data:
+                    event_data_output = event.event_data
+                    break
+        self.log_phase("remote_terminate", f"Async event data: {event_data_output}")
+        assert event_data_output, "Remote terminate event (0x62) not received from TA"
+        assert "Remote Terminate" in event_data_output, "Expected Remote Terminate in event data"
+        self.log_phase("remote_terminate", "Remote terminate (0x62) received from TA successfully")
+
+    def close_dut_sockets(self, wifi_dut):
+        self.log_phase("host_close", "Host close DUT sockets (bsdAsyncSockClose / cmd 0x43)")
+        for socket_id in self.socket_ids_to_close:
+            wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket_id)
+            self.log_phase("host_close", f"DUT socket close completed for socket_id={socket_id}")
+
+    def cleanup(self, wifi_dut, remote_socket, remote_socket_factory=None, ssl_server=None):
+        if ssl_server is not None:
+            try:
+                ssl_server.interfaces.ssl.stop_server()
+            except Exception:
+                pass
+        elif remote_socket_factory is not None:
+            try:
+                remote_socket_factory.interfaces.socket.close_all()
+            except Exception:
+                pass
+        elif remote_socket is not None:
+            try:
+                remote_socket.interfaces.socket.stop()
+            except Exception:
+                pass
+        for socket_id in self.socket_ids_to_close:
+            try:
+                wifi_dut.interfaces.wifi.bsdAsyncSockClose(socket_fd=socket_id)
+            except Exception:
+                pass
+
+    def join_dut_to_ap(self, wifi_dut, wifi_access_point, sl_collections):
+        """Join DUT to external AP (standalone — no dependency on WifiJoinThread)."""
+        dut_addr = sl_collections.join_to_wifi_network(
+            wifi_dut=wifi_dut,
+            retry_count=3,
+            wifi_access_point=wifi_access_point,
+            associated=wifi_dut.interfaces.wifi.associated,
+            ping_after_power_save=True,
+            enc="ccmp",
+        )
+        logger().info(
+            f"device_ip, device_mac : {dut_addr['device_ip']}, {dut_addr['dut_mac_address']}")
+        return dut_addr
+
+    def run(
+            self,
+            sniffer_filter,
+            wifi_access_point,
+            wifi_dut,
+            sl_collections,
+            wifi_sniffer,
+            request,
+            remote_socket,
+            wifi_client,
+            remote_socket_factory=None,
+            ssl_server=None,
+    ):
+        """Execute the full per-socket-close flow for ``self.dut_role``.
+
+        Orchestrates sniffer capture, Wi-Fi join (or AP+STA for AP role), power save,
+        socket setup, data transfer, remote terminate / graceful close as applicable,
+        0x62 verification, 0x43 host close, and cleanup. Exceptions are routed through
+        ``sl_collections.exception_handling``; LAN-unplug role restores remote interface
+        in ``finally``.
+
+        Args:
+            sniffer_filter: Sniffer filter fixture.
+            wifi_access_point: External AP fixture (join path) or channel reference.
+            wifi_dut: DUT Wi-Fi fixture.
+            sl_collections: UTF sl_collections helper fixture.
+            wifi_sniffer: Sniffer capture fixture.
+            request: Pytest ``request`` fixture (test name for capture file).
+            remote_socket: Remote TCP server/client fixture; ``None`` for multi-server/TLS.
+            wifi_client: Remote STA / server IP fixture.
+            remote_socket_factory: Required when ``dut_role`` is ``multi_server``.
+            ssl_server: Required when ``dut_role`` is ``tls_client`` or ``tls_client_tx``.
+        """
+        self.ensure_multi_socket_state()
+        try:
+            test_name = request.node.name
+            power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+
+            sniffer_channel = wifi_access_point.interfaces.wifi.channel
+            if self.dut_role == "ap_client_remote_terminate":
+                sniffer_channel = wifi_client.interfaces.wifi.config.get("channel", sniffer_channel)
+            wifi_sniffer.interfaces.capture.configure_interface(channel=sniffer_channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+            if self.dut_role == "ap_client_remote_terminate":
+                self.ap_client_remote_terminate_flow(
+                    wifi_dut, remote_socket, wifi_client, sl_collections, power_save)
+            else:
+                dut_addr = self.join_dut_to_ap(wifi_dut, wifi_access_point, sl_collections)
+                self.device_ip = dut_addr['device_ip']
+
+                if self.dut_role == "client_graceful":
+                    self.client_graceful_flow(
+                        wifi_dut, remote_socket, wifi_client, power_save)
+                elif self.dut_role == "client_graceful_loop":
+                    self.client_graceful_loop_flow(
+                        wifi_dut, remote_socket, wifi_client, power_save)
+                elif self.dut_role == "client_lan_unplug":
+                    self.client_lan_unplug_flow(
+                        wifi_dut, remote_socket, wifi_client, power_save)
+                elif self.dut_role == "tls_client_tx":
+                    if ssl_server is None:
+                        raise ValueError("ssl_server fixture is required for tls_client_tx role")
+                    self.tls_client_tx_flow(wifi_dut, ssl_server, power_save)
+                else:
+                    self.enable_power_save(wifi_dut, power_save)
+                    remote_terminate_since_time = None
+                    if self.dut_role != "multi_server":
+                        wifi_dut.interfaces.wifi.set_remote_terminate_callback()
+
+                    logger().info(
+                        f"[{self.test_map_id}] Running per-socket close flow with "
+                        f"dut_role={self.dut_role}, num_client_sockets={self.num_client_sockets}, "
+                        f"num_server_sockets={self.num_server_sockets}")
+
+                    if self.dut_role == "client":
+                        server_ip = self.setup_dut_client_path(wifi_dut, remote_socket, wifi_client)
+                        data_thread = self.start_client_data_transfer(wifi_dut, server_ip)
+                        remote_socket.interfaces.socket.stop()
+                        data_thread.join(timeout=120)
+                    elif self.dut_role == "multi_server":
+                        if remote_socket_factory is None:
+                            raise ValueError(
+                                "remote_socket_factory is required for multi_server role")
+                        self.setup_dut_multi_server_path(wifi_dut, remote_socket_factory, self.device_ip)
+                        self.receive_data_on_all_server_sockets(wifi_dut)
+                        assert self.remote_clients, "No remote TCP clients available for step 10"
+                        remote_terminate_since_time = time.perf_counter_ns()
+                        wifi_dut.interfaces.wifi.set_remote_terminate_callback()
+                        self.trigger_remote_terminate_during_server_receive(wifi_dut, socket_index=0)
+                    elif self.dut_role == "tls_client":
+                        if ssl_server is None:
+                            raise ValueError("ssl_server fixture is required for tls_client role")
+                        self.setup_dut_tls_client_path(wifi_dut, ssl_server)
+                        self.tls_client_send_and_remote_terminate(wifi_dut)
+                    else:
+                        raise ValueError(f"Unsupported dut_role={self.dut_role!r}")
+
+                    self.verify_remote_terminate(
+                        wifi_dut, since_time=remote_terminate_since_time)
+                    self.close_dut_sockets(wifi_dut)
+
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+        except Exception as e:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+        finally:
+            if self.dut_role == "client_lan_unplug":
+                self.restore_remote_lan_cable(wifi_client)
+            self.cleanup(
+                wifi_dut, remote_socket, remote_socket_factory=remote_socket_factory,
+                ssl_server=ssl_server)
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.PSKSecurity
+                    | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.ULPGPIOHandshake,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "band": 0,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19347')
+def test_wifi_sdk_tcp_open_send_close_socket_c19347(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket_factory, wifi_client):
+    """This test case Verifies the tcp client socket is open, send data,close functionality"""
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
+            max_retry_attempts=0, scan_interval=4, beacon_missed_count=40, first_time_retry_enable=0)
+
+        wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                                     sl_collections=sl_collections, test_name=test_name, sniffer_filter=sniffer_filter,
+                                     remote_socket_factory=remote_socket_factory, wifi_client=wifi_client)
+
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+
+        wifi_thread.tcp_single_socket_dut_client()
+
+        dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+
+        sniffer_verification = SnifferValidationProcess(wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter,
+                                                        wifi_access_point=wifi_access_point, test_case=19347,
+                                                        dut_mac_address=dut_mac_address, ap_mac_address=ap_mac_address,
+                                                        sl_collections=sl_collections)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        sniffer_verification.verify_sniffer_validation()
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        remote_socket_factory.interfaces.socket.close_all()
+        remote_socket_factory.interfaces.socket.sockets = []
 
 @pytest.mark.config(
     "wifi_dut",
@@ -2990,4 +3893,187 @@ def test_wifi_sdk_raspi_ap_and_dut_tcp_data_receive_check_c780281(wifi_sniffer, 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+@per_socket_close_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C1726572')
+def test_wifi_sdk_tcp_client_tx_per_socket_close_remote_terminate_c1726572(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client):
+    """C1726572: WLAN+BLE TCP client TX, per-socket close setsockopt, remote terminate (0x62), host close (0x43)."""
+    PerSocketCloseRemoteTerminateFlow(
+        test_map_id='C1726572',
+        dut_role="client",
+    ).run(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client)
+
+
+# C1726579 — WLAN+BLE TCP client graceful host close (FIN not RST):
+# 1 WLAN+BLE init | 2 Wi-Fi join | 3 power save | 4 socket create |
+# 5 per-socket close setsockopt (deferred) | 6 connect | 7 send | 8 host close
+@per_socket_close_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C1726579')
+def test_wifi_sdk_tcp_client_per_socket_close_graceful_host_close_c1726579(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client):
+    """C1726579: WLAN+BLE TCP client — per-socket close setsockopt, TX, graceful host close (FIN not RST)."""
+    PerSocketCloseRemoteTerminateFlow(
+        test_map_id='C1726579',
+        dut_role="client_graceful",
+    ).run(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client)
+
+
+# C1726584 — WLAN+BLE TCP client graceful close loop for 24 hours:
+# 1 WLAN+BLE init | 2 Wi-Fi join | 3 power save |
+# 4-8 socket/connect/send/graceful host close (FIN not RST) | 9 repeat 4-8 for 24h
+# (step 5 per-socket close setsockopt deferred)
+@per_socket_close_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C1726584')
+def test_wifi_sdk_tcp_client_per_socket_close_graceful_host_close_24h_loop_c1726584(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client):
+    """C1726584: WLAN+BLE TCP client — repeat steps 4-8 (graceful FIN close) in loop for 24 hours."""
+    PerSocketCloseRemoteTerminateFlow(
+        test_map_id='C1726584',
+        dut_role="client_graceful_loop",
+        no_of_pkts=20,
+        pkt_length=50,
+        loop_duration_sec=24 * 3600,
+    ).run(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client)
+
+
+@per_socket_close_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C1726574')
+def test_wifi_sdk_multi_tcp_server_per_socket_close_remote_terminate_c1726574(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket_factory, wifi_client):
+    """C1726574: WLAN+BLE 10 DUT TCP server sockets, bind/listen/accept/RX, remote terminate (0x62), host close (0x43)."""
+    PerSocketCloseRemoteTerminateFlow(
+        test_map_id='C1726574',
+        dut_role="multi_server",
+        num_server_sockets=10,
+        no_of_pkts=20,
+        pkt_length=50,
+    ).run(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket=None, wifi_client=wifi_client, remote_socket_factory=remote_socket_factory)
+
+
+@per_socket_close_dut_marker(tls=True)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C1726576')
+def test_wifi_sdk_tls_client_per_socket_close_remote_terminate_c1726576(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        ssl_server, wifi_client):
+    """C1726576: WLAN+BLE TLS client TX, TCP_ULP + per-socket close setsockopt, remote terminate (0x62), host close (0x43)."""
+    PerSocketCloseRemoteTerminateFlow(
+        test_map_id='C1726576',
+        dut_role="tls_client",
+        no_of_pkts=100,
+        pkt_length=1460,
+    ).run(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket=None, wifi_client=wifi_client, ssl_server=ssl_server)
+
+
+# C1726581 — 7-step WLAN+BLE TLS client TX with TCP_ULP + per-socket close setsockopt:
+# 1 WLAN+BLE init | 2 Wi-Fi join | 3 power save | 4 socket create |
+# 5 TCP_ULP TLS + per-socket close setsockopt | 6 TLS connect | 7 send TLS data
+@per_socket_close_dut_marker(tls=True)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated", "close_sockets"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C1726581')
+def test_wifi_sdk_tls_client_per_socket_close_send_data_c1726581(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        ssl_server, wifi_client):
+    """C1726581: WLAN+BLE TLS client — TCP_ULP setsockopt, per-socket close, TLS connect, send data."""
+    PerSocketCloseRemoteTerminateFlow(
+        test_map_id='C1726581',
+        dut_role="tls_client_tx",
+        no_of_pkts=100,
+        pkt_length=1460,
+    ).run(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket=None, wifi_client=wifi_client, ssl_server=ssl_server)
+
+
+# C1726585 — WLAN+BLE TCP client remote LAN unplug during TX:
+# 1 WLAN+BLE init | 2 Wi-Fi join | 3 power save | 4 socket create |
+# 5 per-socket close setsockopt (deferred) | 6 connect | 7 send | 8 unplug remote LAN
+@per_socket_close_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C1726585')
+def test_wifi_sdk_tcp_client_per_socket_close_remote_lan_unplug_c1726585(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client):
+    """C1726585: WLAN+BLE TCP client — per-socket close, TX, remote LAN unplug, TCP retries, socket close."""
+    PerSocketCloseRemoteTerminateFlow(
+        test_map_id='C1726585',
+        dut_role="client_lan_unplug",
+        no_of_pkts=100,
+        pkt_length=1460,
+    ).run(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client)
+
+
+# C1726587 — 9-step WLAN+BLE DUT AP + STA remote terminate flow:
+# 1 WLAN+BLE init | 2 DUT AP | 3 power save + STA join | 4-6 socket/setsockopt/connect |
+# 7 send | 8 close remote server (0x62) | 9 host close (0x43)
+@pytest.mark.wifi_client("raspi_wifi")
+@per_socket_close_dut_marker(ap=True)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_client",
+    wifi={
+        "ssid": "WLAN_BLE_AP_C1726587",
+        "passphrase": "12345678",
+        "security": "Open",
+        "channel": 11,
+        "interface": "wlan0",
+    },
+)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C1726587')
+def test_wifi_sdk_ap_tcp_client_per_socket_close_remote_terminate_c1726587(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client):
+    """C1726587: WLAN+BLE DUT AP — STA join, TCP client TX, remote server close (0x62), host close (0x43)."""
+    PerSocketCloseRemoteTerminateFlow(
+        test_map_id='C1726587',
+        dut_role="ap_client_remote_terminate",
+        no_of_pkts=100,
+        pkt_length=1460,
+    ).run(
+        sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
+        remote_socket, wifi_client)
 
