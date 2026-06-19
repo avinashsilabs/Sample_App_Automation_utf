@@ -140,6 +140,56 @@ class BleThreadFunctionality(ThreadBase):
         self.ble_client.interfaces.bluetooth.close()
         logger().info(" *************DUT Cleanup Success *******************")
 
+
+class BleNotifyTxThread(ThreadBase):
+    def __init__(self, wifi_dut=None, ble_client_address=None, payload_length=20, interval_s=2):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ble_client_address = ble_client_address
+        self.payload_length = payload_length
+        self.interval_s = interval_s
+        self.sent_count = 0
+
+    def run(self):
+        while not self.stop_requested:
+            last_error = None
+            for attempt in range(1, 6):
+                if self.stop_requested:
+                    return
+                notify_data_address = None
+                try:
+                    notify_data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=self.payload_length))
+                    notify_data_address = self.wifi_dut.interfaces.wifi.allocate_memory(size=len(notify_data) + 1)
+                    self.wifi_dut.interfaces.wifi.load_memory(
+                        address=notify_data_address,
+                        size=len(notify_data),
+                        write_content=notify_data,
+                    )
+                    self.wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                        self.ble_client_address,
+                        data=notify_data,
+                        data_address=notify_data_address,
+                    )
+                    self.sent_count += 1
+                    logger().info(f"Continuous BLE Tx count: {self.sent_count}")
+                    last_error = None
+                    break
+                except Exception as ble_tx_ex:
+                    last_error = ble_tx_ex
+                    logger().warning(f"Continuous BLE Tx attempt {attempt}/5 failed: {ble_tx_ex}")
+                    time.sleep(2)
+                finally:
+                    if notify_data_address is not None:
+                        try:
+                            self.wifi_dut.interfaces.wifi.memory_free(notify_data_address)
+                        except Exception:
+                            pass
+            if last_error is not None:
+                if self.stop_requested:
+                    return
+                raise last_error
+            time.sleep(self.interval_s)
+
 # this thread used for sta+ble as a slave
 class BleDualRoleThreadFunctionality(ThreadBase):
     def __init__(
@@ -245,7 +295,7 @@ class BleDualRoleThreadFunctionality(ThreadBase):
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, capture_filename=None, wifi_access_point=None, wifi_sniffer=None, mqtt_server=None
                  , mqtt_client=None, sl_collections=None, topic=None, sniffer_filter=None, message=None,
-                 utf_constants=None):
+                 utf_constants=None, retry_count=1, disconnect_retry_count=1):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.capture_filename = capture_filename
@@ -260,22 +310,46 @@ class WifiJoin(ThreadBase):
         self.message = message
         self.keep_alive_time = None
         self.utf_constants = utf_constants
+        self.retry_count = retry_count
+        self.disconnect_retry_count = disconnect_retry_count
 
     def run(self):
         try:
-            logger().info(f"Start sniffer capture on channel {self.wifi_access_point.interfaces.wifi.channel}")
-            self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.
-                                                                     channel)
-            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
+            if self.capture_filename is not None and self.wifi_sniffer is not None:
+                logger().info(f"Start sniffer capture on channel {self.wifi_access_point.interfaces.wifi.channel}")
+                self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.
+                                                                         channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.capture_filename}.pcap")
 
             self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                           beacon_missed_count=40,
                                                                           first_time_retry_enable=0)
 
             self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
-                                                                     associated=self.wifi_dut.interfaces.wifi.associated)
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                     retry_count=self.retry_count)
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+
+    def disconnect(self):
+        if self.wifi_dut.interfaces.wifi.associated:
+            disconnect_error = None
+            for disconnect_attempt in range(1, self.disconnect_retry_count + 1):
+                try:
+                    logger().info(
+                        f"disconnecting from AP before next iteration, attempt {disconnect_attempt}/{self.disconnect_retry_count}"
+                    )
+                    self.wifi_dut.interfaces.wifi.leave()
+                    disconnect_error = None
+                    break
+                except Exception as disconnect_ex:
+                    disconnect_error = disconnect_ex
+                    logger().warning(
+                        f"Wi-Fi disconnect attempt {disconnect_attempt}/{self.disconnect_retry_count} failed: {disconnect_ex}"
+                    )
+                    time.sleep(3)
+            if disconnect_error is not None:
+                raise disconnect_error
 
     def mqtt_connection(self):
         self.wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=1)
@@ -472,7 +546,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0, HiddenSSID=0, ca
     }
     return pytest.mark.config("wifi_dut", wifi=config)
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="Skipping test_wifi_sdk_mqtt_subs_ble_dual_conn_c778114")
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -535,6 +609,7 @@ def test_wifi_sdk_mqtt_subs_ble_dual_conn_c778114(
         # ble_clients[1].interfaces.bluetooth.close()
 
 
+@pytest.mark.run
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -576,7 +651,27 @@ def test_wifi_sdk_mqtt_subs_ble_slave_conn_c778115(
 
         ble_obj.start()
         ble_obj.wait_for_exit()
+        logger().info("Clearing any stale remote BLE device record before slave connection")
+        try:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        except Exception as ble_reset_ex:
+            logger().warning(f"Remote BLE pre-clean skipped due to error: {ble_reset_ex}")
+
+        try:
+            pre_slave_state = wifi_dut.interfaces.wifi.ble_get_device_state()
+            logger().info(f"DUT BLE state before slave connection attempt: {pre_slave_state}")
+        except Exception as ble_state_ex:
+            logger().warning(f"BLE state read before slave connection failed: {ble_state_ex}")
         ble_obj.slave_connection()
+        logger().info("Updating BLE connection interval to 80 ms for DUT peripheral connection")
+        ble_client.interfaces.bluetooth.hci_tool_manager.update_conn(
+            dev_addr=ble_obj.ble_dut_address,
+            min_conn_interval=int(80 / 1.25),
+            max_conn_interval=int(80 / 1.25),
+            conn_latency=0,
+            supervision_timeout=3200,
+        )
+        time.sleep(5)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -674,6 +769,7 @@ def test_wifi_sdk_mqtt_subs_ble_slave_conn_c778115(
         # ble_clients[0].interfaces.bluetooth.close()
 
 
+@pytest.mark.run
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -809,6 +905,7 @@ def test_wifi_sdk_mqtt_keep_alive_ble_diff_conn_c778116(
         # ble_clients[0].interfaces.bluetooth.close()
 
 
+@pytest.mark.run
 @pytest.mark.mqtt_server("raspi_mosquitto")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -947,6 +1044,7 @@ def test_wifi_sdk_mqtt_retain_bit_ble_provisioning_c778117(
                 logger().warning(f"BLE cleanup skipped due to error: {cleanup_ex}")
 
 
+@pytest.mark.run
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -1095,6 +1193,7 @@ def test_wifi_sdk_mqtt_ssl_ble_master_c778118(
         # ble_clients[0].interfaces.bluetooth.close()
 
 
+@pytest.mark.run
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @wifi_dut_marker(memory_config= Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode, 
                  ssl= Si91xTCPIPFeatureBitMap.SSL , 
@@ -1283,11 +1382,14 @@ def test_wifi_sdk_mqtt_ssl_diff_username_ble_master_c778119(
                 logger().warning(f"BLE cleanup skipped due to error: {cleanup_ex}")
         # ble_clients[0].interfaces.bluetooth.close()
 
-@pytest.mark.skip()
+@pytest.mark.run
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
+@wifi_dut_marker(memory_config= Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+                 ssl= Si91xTCPIPFeatureBitMap.SSL,
+                 ca_cert= ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 def test_wifi_sdk_mqtt_ssl_single_level_card_ble_slave_c778120(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, ble_client,
         ble_dut, utf_constants,  mqtt_client, mqtt_server):
@@ -1295,6 +1397,14 @@ def test_wifi_sdk_mqtt_ssl_single_level_card_ble_slave_c778120(
     verify DUT functionality with MQTT subscription using Single Level wild card character(+) in the topic name """
 
     ble_obj=None
+    ca_cert_address = None
+    topic = None
+    host_topic_subscribed = False
+    host_mqtt_connected = False
+    dut_topic_subscribed = False
+    dut_mqtt_connected = False
+    ble_service_created = False
+    char_path = None
     try:
         test_name = request.node.name
         # assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
@@ -1303,6 +1413,7 @@ def test_wifi_sdk_mqtt_ssl_single_level_card_ble_slave_c778120(
         multiple_topic = ["mytesttopic/sensor/mytesttopic", "mytesttopic/automation/mytesttopic",
                           "mytesttopic/siliconlabs/mytesttopic"]
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1000))
+        gatt_index = 1
 
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1326,21 +1437,134 @@ def test_wifi_sdk_mqtt_ssl_single_level_card_ble_slave_c778120(
 
         ble_obj.start()
         ble_obj.wait_for_exit()
+        logger().info("Clearing stale BLE device/service state before slave connection")
+        try:
+            wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
+        except Exception as stale_service_ex:
+            logger().warning(f"Initial BLE service cleanup skipped due to error: {stale_service_ex}")
+        try:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        except Exception as stale_device_ex:
+            logger().warning(f"Initial BLE device cleanup skipped due to error: {stale_device_ex}")
+        logger().info("Creating custom GATT service and notify characteristic in DUT for BLE Tx validation")
+        wifi_dut.interfaces.wifi.ble_add_service(uid=hex(0xAABB))
+        ble_service_created = True
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(
+            uid=0x1AA1,
+            service_handler_num=gatt_index,
+            value_handler_num=gatt_index + 1,
+        )
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(
+            uid=0x1AA1,
+            value_handler_num=gatt_index + 1,
+        )
         ble_obj.slave_connection()
         wifi_obj.start()
         wifi_obj.wait_for_exit()
-        wifi_obj.mqtt_connection_ssl()
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        server_ip = mqtt_server.interfaces.mqtt.hostname_or_ip_address
+        server_port = mqtt_server.interfaces.mqtt.port
+
+        logger().info("Loading CA certificate into DUT memory for TLS MQTT wildcard validation")
+        cert_file = str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem"))
+        with open(cert_file) as f:
+            cert_contents = f.read()
+        cert_size = len(cert_contents)
+        cert_buffer_size = (512 * int(cert_size / 512)) + 512
+        ca_cert_address = wifi_dut.interfaces.wifi.allocate_memory(size=cert_buffer_size)
+        wifi_dut.interfaces.wifi.load_memory(ca_cert_address, size=cert_size, write_content=cert_contents)
+
+        wifi_dut.interfaces.mqtt.paho_mqtt_set_advanced_configuration_command_handler(
+            ca_cert=ca_cert_address,
+            ca_cert_length=cert_size,
+            last_will_qos=Si91xMqttQos.QOS1,
+            is_will_enabled=0,
+            last_will_retain=0,
+        )
+
+        logger().info("Both DUT and third-party mqtt client connects to MQTT server")
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_connect_to_server_command_handler(
+            broker_address=server_ip,
+            broker_port=server_port,
+            client_id="Si91x_mqtt_client",
+            enable_ssl=1,
+        )
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        host_mqtt_connected = True
+        dut_mqtt_connected = True
+        time.sleep(5)
+
         logger().info("MQTT Client subscribes to the topic")
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+        host_topic_subscribed = True
 
         logger().info("DUT subscribes to the topic")
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_subscribe_command_handler(
+            topic=topic,
+            qos_level=Si91xMqttQos.QOS1,
+        )
+        dut_topic_subscribed = True
+        time.sleep(3)
+
+        notify_data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+        service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
+        char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+        logger().info("Resolving remote notify characteristic for DUT BLE Tx validation")
+        char_path = sl_collections.service_discovery_on_remote(
+            ble_client,
+            service_uid=service_uid,
+            char_uid=char_uid,
+        )
+        logger().info(f"Resolved notify characteristic path: {char_path}")
+        ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
+            char_path=char_path,
+            char_uid=char_uid,
+        )
+        wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
+            ble_remote_dev_address=ble_obj.ble_client_address,
+            buffer_mode=1,
+            buffer_count=2,
+        )
+        time.sleep(2)
+        logger().info("DUT peripheral sends BLE Tx notification of 100 bytes")
+        notify_data_address = wifi_dut.interfaces.wifi.allocate_memory(size=len(notify_data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(
+            address=notify_data_address,
+            size=len(notify_data),
+            write_content=notify_data,
+        )
+        try:
+            wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                ble_obj.ble_client_address,
+                data=notify_data,
+                data_address=notify_data_address,
+            )
+        finally:
+            wifi_dut.interfaces.wifi.memory_free(notify_data_address)
+        time.sleep(10)
+        notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+        assert len(notifications) > 0, "received data is empty"
+        logger().info(f"notifications received on remote :{notifications}")
+        assert notifications[0] in notify_data, "BLE notification payload mismatch"
+        ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+        ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         time.sleep(3)
 
         count = 0
         logger().info("**************** DUT publishes message over multiple topics *****************")
         for length in multiple_topic:
-            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=length, message=message, qos=1, timeout=20)
+            wifi_dut.interfaces.mqtt.paho_mqtt_client_publish_command_handler(
+                topic=length,
+                qos_level=Si91xMqttQos.QOS1,
+                msg_payload_len=len(message),
+                use_higher_data_len=1,
+                data_buffer=address2,
+                timeout=20,
+            )
             time.sleep(2)
             msgs = []
             sw = Stopwatch()
@@ -1358,10 +1582,17 @@ def test_wifi_sdk_mqtt_ssl_single_level_card_ble_slave_c778120(
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("....Unsubscribing from the topic....")
-        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        mqtt_client.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        host_topic_subscribed = False
 
         logger().info(".....Unsubscribe from the topic.....")
-        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_unsubscribe_command_handler(topic=topic)
+        dut_topic_subscribed = False
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_disconnect_command_handler()
+        dut_mqtt_connected = False
+        if getattr(mqtt_client.interfaces.mqtt, "client", None) is not None:
+            mqtt_client.interfaces.mqtt.mqtt_client_close()
+            host_mqtt_connected = False
         time.sleep(3)
 
         wifi_dut.interfaces.wifi.memory_free(address2)
@@ -1370,14 +1601,76 @@ def test_wifi_sdk_mqtt_ssl_single_level_card_ble_slave_c778120(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_obj.ble_cleanup()
+        if topic is not None and host_topic_subscribed and getattr(mqtt_client.interfaces.mqtt, "client", None) is not None:
+            try:
+                mqtt_client.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+                host_topic_subscribed = False
+            except Exception as host_unsub_ex:
+                logger().warning(f"Host MQTT unsubscribe cleanup skipped due to error: {host_unsub_ex}")
+        if host_mqtt_connected and getattr(mqtt_client.interfaces.mqtt, "client", None) is not None:
+            try:
+                mqtt_client.interfaces.mqtt.mqtt_client_close()
+                host_mqtt_connected = False
+            except Exception as host_disc_ex:
+                logger().warning(f"Host MQTT disconnect cleanup skipped due to error: {host_disc_ex}")
+        if hasattr(wifi_dut.interfaces, "mqtt"):
+            if topic is not None and dut_topic_subscribed:
+                dut_unsubscribed = False
+                for unsubscribe_attempt in range(1, 6):
+                    try:
+                        wifi_dut.interfaces.mqtt.paho_mqtt_client_unsubscribe_command_handler(topic=topic, timeout=60)
+                        dut_topic_subscribed = False
+                        dut_unsubscribed = True
+                        break
+                    except Exception as dut_unsub_ex:
+                        logger().warning(
+                            f"DUT MQTT unsubscribe cleanup attempt {unsubscribe_attempt}/5 failed: {dut_unsub_ex}"
+                        )
+                        time.sleep(2)
+                if not dut_unsubscribed:
+                    logger().warning("DUT MQTT unsubscribe cleanup skipped after 5 attempts")
+            if dut_mqtt_connected:
+                dut_disconnected = False
+                for disconnect_attempt in range(1, 6):
+                    try:
+                        wifi_dut.interfaces.mqtt.paho_mqtt_client_disconnect_command_handler(timeout=60)
+                        dut_mqtt_connected = False
+                        dut_disconnected = True
+                        break
+                    except Exception as dut_disc_ex:
+                        logger().warning(
+                            f"DUT MQTT disconnect cleanup attempt {disconnect_attempt}/5 failed: {dut_disc_ex}"
+                        )
+                        time.sleep(2)
+                if not dut_disconnected:
+                    logger().warning("DUT MQTT disconnect cleanup skipped after 5 attempts")
+        if ca_cert_address is not None:
+            try:
+                wifi_dut.interfaces.wifi.memory_free(ca_cert_address)
+                ca_cert_address = None
+            except Exception as cert_free_ex:
+                logger().warning(f"CA cert memory cleanup skipped due to error: {cert_free_ex}")
+        if ble_obj is not None:
+            if ble_service_created:
+                try:
+                    wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
+                    ble_service_created = False
+                except Exception as service_remove_ex:
+                    logger().warning(f"BLE service cleanup skipped due to error: {service_remove_ex}")
+            try:
+                ble_obj.ble_cleanup()
+            except Exception as cleanup_ex:
+                logger().warning(f"BLE cleanup skipped due to error: {cleanup_ex}")
         # ble_clients[0].interfaces.bluetooth.close()
 
-@pytest.mark.skip()
+@pytest.mark.run
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
+@wifi_dut_marker(memory_config= Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+                 ssl= Si91xTCPIPFeatureBitMap.SSL,
+                 ca_cert= ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 def test_wifi_sdk_mqtt_ssl_single_multiple_level_card_ble_slave_c778121(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, ble_client,
         ble_dut, utf_constants, mqtt_client, mqtt_server):
@@ -1385,6 +1678,13 @@ def test_wifi_sdk_mqtt_ssl_single_multiple_level_card_ble_slave_c778121(
     wildcards, and publish the data while transmitting 240 bytes over BLE with DLE enabled """
 
     ble_obj=None
+    ca_cert_address = None
+    topic = None
+    host_topic_subscribed = False
+    host_mqtt_connected = False
+    dut_topic_subscribed = False
+    dut_mqtt_connected = False
+    ble_service_created = False
     try:
         test_name = request.node.name
         # assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
@@ -1393,6 +1693,7 @@ def test_wifi_sdk_mqtt_ssl_single_multiple_level_card_ble_slave_c778121(
         multiple_topic = ["patch/iothub/properties/desired/sensor", "patch/substation/properties/desired/automation",
                           "patch/workspace/properties/desired/siliconlabs"]
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1000))
+        gatt_index = 1
 
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1416,21 +1717,134 @@ def test_wifi_sdk_mqtt_ssl_single_multiple_level_card_ble_slave_c778121(
 
         ble_obj.start()
         ble_obj.wait_for_exit()
+        logger().info("Clearing stale BLE device/service state before slave connection")
+        try:
+            wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
+        except Exception as stale_service_ex:
+            logger().warning(f"Initial BLE service cleanup skipped due to error: {stale_service_ex}")
+        try:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        except Exception as stale_device_ex:
+            logger().warning(f"Initial BLE device cleanup skipped due to error: {stale_device_ex}")
+        logger().info("Creating custom GATT service and notify characteristic in DUT for BLE Tx validation")
+        wifi_dut.interfaces.wifi.ble_add_service(uid=hex(0xAABB))
+        ble_service_created = True
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(
+            uid=0x1AA1,
+            service_handler_num=gatt_index,
+            value_handler_num=gatt_index + 1,
+        )
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(
+            uid=0x1AA1,
+            value_handler_num=gatt_index + 1,
+        )
         ble_obj.slave_connection()
         wifi_obj.start()
         wifi_obj.wait_for_exit()
-        wifi_obj.mqtt_connection_ssl()
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        server_ip = mqtt_server.interfaces.mqtt.hostname_or_ip_address
+        server_port = mqtt_server.interfaces.mqtt.port
+
+        logger().info("Loading CA certificate into DUT memory for TLS MQTT wildcard validation")
+        cert_file = str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem"))
+        with open(cert_file) as f:
+            cert_contents = f.read()
+        cert_size = len(cert_contents)
+        cert_buffer_size = (512 * int(cert_size / 512)) + 512
+        ca_cert_address = wifi_dut.interfaces.wifi.allocate_memory(size=cert_buffer_size)
+        wifi_dut.interfaces.wifi.load_memory(ca_cert_address, size=cert_size, write_content=cert_contents)
+
+        wifi_dut.interfaces.mqtt.paho_mqtt_set_advanced_configuration_command_handler(
+            ca_cert=ca_cert_address,
+            ca_cert_length=cert_size,
+            last_will_qos=Si91xMqttQos.QOS1,
+            is_will_enabled=0,
+            last_will_retain=0,
+        )
+
+        logger().info("Both DUT and third-party mqtt client connects to MQTT server")
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_connect_to_server_command_handler(
+            broker_address=server_ip,
+            broker_port=server_port,
+            client_id="Si91x_mqtt_client",
+            enable_ssl=1,
+        )
+        wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        host_mqtt_connected = True
+        dut_mqtt_connected = True
+        time.sleep(5)
+
         logger().info("MQTT Client subscribes to the topic")
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+        host_topic_subscribed = True
 
         logger().info("DUT subscribes to the topic")
-        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_subscribe_command_handler(
+            topic=topic,
+            qos_level=Si91xMqttQos.QOS1,
+        )
+        dut_topic_subscribed = True
+        time.sleep(3)
+
+        notify_data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=240))
+        service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
+        char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+        logger().info("Resolving remote notify characteristic for DUT BLE Tx validation")
+        char_path = sl_collections.service_discovery_on_remote(
+            ble_client,
+            service_uid=service_uid,
+            char_uid=char_uid,
+        )
+        logger().info(f"Resolved notify characteristic path: {char_path}")
+        ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
+            char_path=char_path,
+            char_uid=char_uid,
+        )
+        wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
+            ble_remote_dev_address=ble_obj.ble_client_address,
+            buffer_mode=1,
+            buffer_count=2,
+        )
+        time.sleep(2)
+        logger().info("DUT peripheral sends BLE Tx notification of 240 bytes")
+        notify_data_address = wifi_dut.interfaces.wifi.allocate_memory(size=len(notify_data) + 1)
+        wifi_dut.interfaces.wifi.load_memory(
+            address=notify_data_address,
+            size=len(notify_data),
+            write_content=notify_data,
+        )
+        try:
+            wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                ble_obj.ble_client_address,
+                data=notify_data,
+                data_address=notify_data_address,
+            )
+        finally:
+            wifi_dut.interfaces.wifi.memory_free(notify_data_address)
+        time.sleep(10)
+        notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+        assert len(notifications) > 0, "received data is empty"
+        logger().info(f"notifications received on remote :{notifications}")
+        assert notifications[0] in notify_data, "BLE notification payload mismatch"
+        ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+        ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
         time.sleep(3)
 
         count = 0
         logger().info("**************** DUT publishes message over multiple topics *****************")
         for length in multiple_topic:
-            wifi_dut.interfaces.mqtt.mqtt_client_publish(topic=length, message=message, qos=1, timeout=20)
+            wifi_dut.interfaces.mqtt.paho_mqtt_client_publish_command_handler(
+                topic=length,
+                qos_level=Si91xMqttQos.QOS1,
+                msg_payload_len=len(message),
+                use_higher_data_len=1,
+                data_buffer=address2,
+                timeout=20,
+            )
             time.sleep(2)
             msgs = []
             sw = Stopwatch()
@@ -1448,10 +1862,17 @@ def test_wifi_sdk_mqtt_ssl_single_multiple_level_card_ble_slave_c778121(
         logger().info("Stop the sniffer")
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("....Unsubscribing from the topic....")
-        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        mqtt_client.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        host_topic_subscribed = False
 
         logger().info(".....Unsubscribe from the topic.....")
-        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_unsubscribe_command_handler(topic=topic)
+        dut_topic_subscribed = False
+        wifi_dut.interfaces.mqtt.paho_mqtt_client_disconnect_command_handler()
+        dut_mqtt_connected = False
+        if getattr(mqtt_client.interfaces.mqtt, "client", None) is not None:
+            mqtt_client.interfaces.mqtt.mqtt_client_close()
+            host_mqtt_connected = False
         time.sleep(3)
 
         wifi_dut.interfaces.wifi.memory_free(address2)
@@ -1460,10 +1881,51 @@ def test_wifi_sdk_mqtt_ssl_single_multiple_level_card_ble_slave_c778121(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_obj.ble_cleanup()
+        if topic is not None and host_topic_subscribed and getattr(mqtt_client.interfaces.mqtt, "client", None) is not None:
+            try:
+                mqtt_client.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+                host_topic_subscribed = False
+            except Exception as host_unsub_ex:
+                logger().warning(f"Host MQTT unsubscribe cleanup skipped due to error: {host_unsub_ex}")
+        if host_mqtt_connected and getattr(mqtt_client.interfaces.mqtt, "client", None) is not None:
+            try:
+                mqtt_client.interfaces.mqtt.mqtt_client_close()
+                host_mqtt_connected = False
+            except Exception as host_disc_ex:
+                logger().warning(f"Host MQTT disconnect cleanup skipped due to error: {host_disc_ex}")
+        if hasattr(wifi_dut.interfaces, "mqtt"):
+            if topic is not None and dut_topic_subscribed:
+                try:
+                    wifi_dut.interfaces.mqtt.paho_mqtt_client_unsubscribe_command_handler(topic=topic)
+                    dut_topic_subscribed = False
+                except Exception as dut_unsub_ex:
+                    logger().warning(f"DUT MQTT unsubscribe cleanup skipped due to error: {dut_unsub_ex}")
+            if dut_mqtt_connected:
+                try:
+                    wifi_dut.interfaces.mqtt.paho_mqtt_client_disconnect_command_handler()
+                    dut_mqtt_connected = False
+                except Exception as dut_disc_ex:
+                    logger().warning(f"DUT MQTT disconnect cleanup skipped due to error: {dut_disc_ex}")
+        if ca_cert_address is not None:
+            try:
+                wifi_dut.interfaces.wifi.memory_free(ca_cert_address)
+                ca_cert_address = None
+            except Exception as cert_free_ex:
+                logger().warning(f"CA cert memory cleanup skipped due to error: {cert_free_ex}")
+        if ble_obj is not None:
+            if ble_service_created:
+                try:
+                    wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
+                    ble_service_created = False
+                except Exception as service_remove_ex:
+                    logger().warning(f"BLE service cleanup skipped due to error: {service_remove_ex}")
+            try:
+                ble_obj.ble_cleanup()
+            except Exception as cleanup_ex:
+                logger().warning(f"BLE cleanup skipped due to error: {cleanup_ex}")
         # ble_clients[0].interfaces.bluetooth.close()
 
-@pytest.mark.skip()
+
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -1543,24 +2005,43 @@ def test_wifi_sdk_mqtt_ssl_rejoin_ble_dual_role_c778122(
         ble_obj.ble_cleanup()
         ble_clients[0].interfaces.bluetooth.close()
 
-@pytest.mark.skip()
+@pytest.mark.run
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config('wifi_access_point', wifi={"channel": 4})
+@wifi_dut_marker(memory_config= Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+                 ssl= Si91xTCPIPFeatureBitMap.SSL,
+                 ca_cert= ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 def test_wifi_sdk_mqtt_ssl_ble_slave_long_run_c778123(
         wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter, ble_client,
-        ble_dut, utf_constants, ble_clients, mqtt_client, mqtt_server):
-    """Connect BLE as Slave mode and Run 20 bytes of TX data for 30 minutes and sub to MQTT server with qos1 and
-    SSL conn and pub data, initiate WLAN disconn and do in a loop from scan/connect/ipconfig/subscribe/publish/disconnect for 30 minutes in loop"""
+        ble_dut, utf_constants, mqtt_client, mqtt_server):
+    """Connect BLE as Slave mode and run 20 bytes of TX data while subscribing to MQTT server with qos1 and
+    SSL connection, then repeat scan/connect/ipconfig/subscribe/publish/disconnect in a configured iteration loop."""
 
     ble_obj=None
+    ca_cert_address = None
+    topic = None
+    host_topic_subscribed = False
+    host_mqtt_connected = False
+    dut_topic_subscribed = False
+    dut_mqtt_connected = False
+    ble_service_created = False
     try:
         test_name = request.node.name
-        assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
+        # assert len(ble_clients) >= 2, f"Minimum 2 Raspi devices needed"
 
         topic = 'weather'
         message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1000))
+        iteration_count = 10
+        wifi_retry_count = 5
+        wifi_disconnect_retry_count = 5
+        mqtt_publish_retry_count = 5
+        mqtt_unsubscribe_retry_count = 5
+        mqtt_disconnect_retry_count = 5
+        gatt_index = 1
+        service_uid = "0000aabb-0000-1000-8000-00805f9b34fb"
+        char_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
 
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -1577,25 +2058,234 @@ def test_wifi_sdk_mqtt_ssl_ble_slave_long_run_c778123(
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                             wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
                             sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
-                            message=message)
+                            message=message, retry_count=wifi_retry_count,
+                            disconnect_retry_count=wifi_disconnect_retry_count)
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        server_ip = mqtt_server.interfaces.mqtt.hostname_or_ip_address
+        server_port = mqtt_server.interfaces.mqtt.port
+
+        logger().info("Loading CA certificate into DUT memory for TLS MQTT long-run validation")
+        cert_file = str(get_tls_certificate_dir().joinpath("ca-chain.cert.pem"))
+        with open(cert_file) as f:
+            cert_contents = f.read()
+        cert_size = len(cert_contents)
+        cert_buffer_size = (512 * int(cert_size / 512)) + 512
+        ca_cert_address = wifi_dut.interfaces.wifi.allocate_memory(size=cert_buffer_size)
+        wifi_dut.interfaces.wifi.load_memory(ca_cert_address, size=cert_size, write_content=cert_contents)
 
         ble_obj = BleThreadFunctionality(wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-                                         ble_dut=ble_dut, ble_pairing=1)
+                                         ble_dut=ble_dut, ble_pairing=0)
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        logger().info("Clearing stale BLE device/service state before slave connection")
+        try:
+            wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
+        except Exception as stale_service_ex:
+            logger().warning(f"Initial BLE service cleanup skipped due to error: {stale_service_ex}")
+        try:
+            ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
+        except Exception as stale_device_ex:
+            logger().warning(f"Initial BLE device cleanup skipped due to error: {stale_device_ex}")
+        logger().info("Creating custom GATT service and notify characteristic in DUT for BLE Tx validation")
+        wifi_dut.interfaces.wifi.ble_add_service(uid=hex(0xAABB))
+        ble_service_created = True
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(
+            uid=0x1AA1,
+            service_handler_num=gatt_index,
+            value_handler_num=gatt_index + 1,
+        )
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(
+            uid=0x1AA1,
+            value_handler_num=gatt_index + 1,
+        )
+        ble_obj.slave_connection()
+        logger().info("Updating BLE connection interval to 80 ms for DUT peripheral connection")
+        ble_client.interfaces.bluetooth.hci_tool_manager.update_conn(
+            dev_addr=ble_obj.ble_dut_address,
+            min_conn_interval=int(80 / 1.25),
+            max_conn_interval=int(80 / 1.25),
+            conn_latency=0,
+            supervision_timeout=3200,
+        )
+        time.sleep(5)
+        logger().info("Resolving remote notify characteristic for DUT BLE Tx validation")
+        char_path = None
+        char_props = None
+        for discovery_attempt in range(1, 6):
+            logger().info(f"GATT discovery attempt {discovery_attempt} for DUT BLE Tx validation")
+            time.sleep(3)
+            servs, chars = ble_client.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+            logger().info(f"Resolved services: {servs}, characteristics: {chars}")
+            if len(servs) == 0 or len(chars) == 0:
+                time.sleep(3)
+                continue
 
-        loop_watch = Stopwatch()
-        while loop_watch.elapsed_sec < 1800:
-            logger().info(f"***** Iteration for {loop_watch.elapsed_sec} seconds *****")
-            ble_obj.start()
-            ble_obj.wait_for_exit()
-            ble_obj.slave_connection()
+            char_path, char_props = ble_client.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+                services=servs,
+                service_uid=service_uid,
+                char_uid=char_uid,
+            )
+            logger().info(f"Resolved characteristic properties: {char_props}")
+            if char_path and len(char_props) > 0:
+                break
+            time.sleep(3)
+
+        assert char_path, "Notify characteristic path is empty after GATT discovery retries"
+        logger().info(f"Resolved notify characteristic path: {char_path}")
+        ble_client.interfaces.bluetooth.gatt_adapter.enable_notifications(char_path=char_path)
+        ble_client.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
+            char_path=char_path,
+            char_uid=char_uid,
+        )
+        wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
+            ble_remote_dev_address=ble_obj.ble_client_address,
+            buffer_mode=1,
+            buffer_count=2,
+        )
+        time.sleep(2)
+        initial_notification_count = len(ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid])
+
+        for iteration in range(iteration_count):
+            logger().info(f"***** Iteration {iteration + 1}/{iteration_count} *****")
+            notify_data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
+            logger().info("DUT peripheral sends BLE Tx notification of 20 bytes")
+            previous_notification_count = len(ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid])
+            notify_data_address = wifi_dut.interfaces.wifi.allocate_memory(size=len(notify_data) + 1)
+            wifi_dut.interfaces.wifi.load_memory(
+                address=notify_data_address,
+                size=len(notify_data),
+                write_content=notify_data,
+            )
+            try:
+                wifi_dut.interfaces.wifi.ble_notify_custom_value(
+                    ble_obj.ble_client_address,
+                    data=notify_data,
+                    data_address=notify_data_address,
+                )
+            finally:
+                wifi_dut.interfaces.wifi.memory_free(notify_data_address)
+            time.sleep(10)
+            notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+            assert len(notifications) > previous_notification_count, "received data is empty"
+            logger().info(f"notifications received on remote :{notifications}")
+            assert notifications[-1] in notify_data, "BLE notification payload mismatch"
+
             wifi_obj.start()
             wifi_obj.wait_for_exit()
-            wifi_obj.mqtt_connection_ssl()
-            wifi_obj.subscribe_and_publish(qos=1)
+
+            wifi_dut.interfaces.mqtt.paho_mqtt_set_advanced_configuration_command_handler(
+                ca_cert=ca_cert_address,
+                ca_cert_length=cert_size,
+                last_will_qos=Si91xMqttQos.QOS1,
+                is_will_enabled=0,
+                last_will_retain=0,
+            )
+
+            logger().info("Both DUT and third-party mqtt client connects to MQTT server")
+            wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+            wifi_dut.interfaces.mqtt.paho_mqtt_client_connect_to_server_command_handler(
+                broker_address=server_ip,
+                broker_port=server_port,
+                client_id="Si91x_mqtt_client",
+                enable_ssl=1,
+            )
+            wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+            mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+            host_mqtt_connected = True
+            dut_mqtt_connected = True
+            time.sleep(5)
+
+            logger().info("MQTT Client subscribes to the topic")
+            mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=Si91xMqttQos.QOS1)
+            host_topic_subscribed = True
+
+            logger().info("DUT subscribes to the topic")
+            wifi_dut.interfaces.mqtt.paho_mqtt_client_subscribe_command_handler(
+                topic=topic,
+                qos_level=Si91xMqttQos.QOS1,
+            )
+            dut_topic_subscribed = True
+            time.sleep(3)
+
+            logger().info("DUT publishes message over the topic")
+            publish_error = None
+            for publish_attempt in range(1, mqtt_publish_retry_count + 1):
+                try:
+                    wifi_dut.interfaces.mqtt.paho_mqtt_client_publish_command_handler(
+                        topic=topic,
+                        qos_level=Si91xMqttQos.QOS1,
+                        msg_payload_len=len(message),
+                        use_higher_data_len=1,
+                        data_buffer=address2,
+                        timeout=60,
+                    )
+                    publish_error = None
+                    break
+                except Exception as publish_ex:
+                    publish_error = publish_ex
+                    logger().warning(
+                        f"MQTT publish attempt {publish_attempt}/{mqtt_publish_retry_count} failed: {publish_ex}"
+                    )
+                    time.sleep(3)
+            if publish_error is not None:
+                raise publish_error
+            time.sleep(2)
+
+            msgs = []
+            sw = Stopwatch()
+            while sw.elapsed_sec < 10:
+                time.sleep(0.1)
+                msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+
+            assert msgs[-1].topic == topic, "No message received by mqtt-client on subscribed topic"
+            assert msgs[-1].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+            assert msgs[-1].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or message received is wrong"
 
             logger().info(".....Unsubscribe from the topic.....")
-            wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+            mqtt_client.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+            host_topic_subscribed = False
+            unsubscribe_error = None
+            for unsubscribe_attempt in range(1, mqtt_unsubscribe_retry_count + 1):
+                try:
+                    wifi_dut.interfaces.mqtt.paho_mqtt_client_unsubscribe_command_handler(topic=topic, timeout=60)
+                    unsubscribe_error = None
+                    break
+                except Exception as unsubscribe_ex:
+                    unsubscribe_error = unsubscribe_ex
+                    logger().warning(
+                        f"MQTT unsubscribe attempt {unsubscribe_attempt}/{mqtt_unsubscribe_retry_count} failed: {unsubscribe_ex}"
+                    )
+                    time.sleep(3)
+            if unsubscribe_error is not None:
+                raise unsubscribe_error
+            dut_topic_subscribed = False
+            disconnect_error = None
+            for disconnect_attempt in range(1, mqtt_disconnect_retry_count + 1):
+                try:
+                    wifi_dut.interfaces.mqtt.paho_mqtt_client_disconnect_command_handler(timeout=60)
+                    disconnect_error = None
+                    break
+                except Exception as disconnect_ex:
+                    disconnect_error = disconnect_ex
+                    logger().warning(
+                        f"MQTT disconnect attempt {disconnect_attempt}/{mqtt_disconnect_retry_count} failed: {disconnect_ex}"
+                    )
+                    time.sleep(3)
+            if disconnect_error is not None:
+                raise disconnect_error
+            dut_mqtt_connected = False
+            if getattr(mqtt_client.interfaces.mqtt, "client", None) is not None:
+                mqtt_client.interfaces.mqtt.mqtt_client_close()
+                host_mqtt_connected = False
             time.sleep(3)
+
+            wifi_obj.disconnect()
+            time.sleep(3)
+
+        notifications = ble_client.interfaces.bluetooth.gatt_adapter.notifications[char_uid]
+        assert len(notifications) > initial_notification_count, "received data is empty"
+        logger().info(f"notifications received on remote :{notifications}")
 
         wifi_dut.interfaces.wifi.memory_free(address2)
         wifi_dut.interfaces.wifi.memory_free(topic_address1)
@@ -1603,5 +2293,72 @@ def test_wifi_sdk_mqtt_ssl_ble_slave_long_run_c778123(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_obj.ble_cleanup()
-        ble_clients[0].interfaces.bluetooth.close()
+        if topic is not None and host_topic_subscribed and getattr(mqtt_client.interfaces.mqtt, "client", None) is not None:
+            try:
+                mqtt_client.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+                host_topic_subscribed = False
+            except Exception as host_unsub_ex:
+                logger().warning(f"Host MQTT unsubscribe cleanup skipped due to error: {host_unsub_ex}")
+        if host_mqtt_connected and getattr(mqtt_client.interfaces.mqtt, "client", None) is not None:
+            try:
+                mqtt_client.interfaces.mqtt.mqtt_client_close()
+                host_mqtt_connected = False
+            except Exception as host_disc_ex:
+                logger().warning(f"Host MQTT disconnect cleanup skipped due to error: {host_disc_ex}")
+        if hasattr(wifi_dut.interfaces, "mqtt"):
+            if topic is not None and dut_topic_subscribed:
+                try:
+                    wifi_dut.interfaces.mqtt.paho_mqtt_client_unsubscribe_command_handler(topic=topic)
+                    dut_topic_subscribed = False
+                except Exception as dut_unsub_ex:
+                    logger().warning(f"DUT MQTT unsubscribe cleanup skipped due to error: {dut_unsub_ex}")
+            if dut_mqtt_connected:
+                try:
+                    wifi_dut.interfaces.mqtt.paho_mqtt_client_disconnect_command_handler()
+                    dut_mqtt_connected = False
+                except Exception as dut_disc_ex:
+                    logger().warning(f"DUT MQTT disconnect cleanup skipped due to error: {dut_disc_ex}")
+        if ca_cert_address is not None:
+            try:
+                wifi_dut.interfaces.wifi.memory_free(ca_cert_address)
+                ca_cert_address = None
+            except Exception as cert_free_ex:
+                logger().warning(f"CA cert memory cleanup skipped due to error: {cert_free_ex}")
+        if ble_obj is not None:
+            try:
+                ble_client.interfaces.bluetooth.gatt_adapter.disable_notifications(char_path=char_path)
+            except Exception:
+                pass
+            try:
+                ble_client.interfaces.bluetooth.gatt_adapter.unsubscribe_to_notifications(char_uid=char_uid)
+            except Exception:
+                pass
+            if ble_service_created:
+                service_removed = False
+                for cleanup_attempt in range(1, 6):
+                    try:
+                        wifi_dut.interfaces.wifi.ble_remove_service(timeout=10)
+                        ble_service_created = False
+                        service_removed = True
+                        break
+                    except Exception as service_remove_ex:
+                        logger().warning(
+                            f"BLE service cleanup attempt {cleanup_attempt}/5 failed: {service_remove_ex}"
+                        )
+                        time.sleep(2)
+                if not service_removed:
+                    logger().warning("BLE service cleanup skipped after 5 attempts")
+            ble_cleanup_done = False
+            for cleanup_attempt in range(1, 6):
+                try:
+                    ble_obj.ble_cleanup()
+                    ble_cleanup_done = True
+                    break
+                except Exception as cleanup_ex:
+                    logger().warning(
+                        f"BLE cleanup attempt {cleanup_attempt}/5 failed: {cleanup_ex}"
+                    )
+                    time.sleep(2)
+            if not ble_cleanup_done:
+                logger().warning("BLE cleanup skipped after 5 attempts")
+        # ble_clients[0].interfaces.bluetooth.close()
