@@ -1087,8 +1087,10 @@ def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
 
         wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                               test_name=test_name, sl_collections=sl_collections, test_type="ping",
-                              ping_count=ping_count, wifi_client=wifi_client,
-                              addr_type="link")
+                              ping_count=ping_count, wifi_client=wifi_client, addr_type="link",
+                              ping_after_power_save=False,
+                              ping_before_power_save=False)
+
         ble_obj = BleThreadFunctionality(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
@@ -1098,13 +1100,21 @@ def test_Coex_sdk_WLAN_ipv6_BLE_master_C156991(
             gatt=True,
             service_class=["HeartRateService"],
         )
+
         ble_obj.advertise_dut()
         ble_obj.ble_connect(role="master")
+
+        logger().info("Waiting for BLE connection and pending GATT procedure to settle before fetching profiles")
+        time.sleep(12)
+
         ble_obj.fetch_profiles()
+
         ble_obj.start()
         wlan_obj.start()
-        wlan_obj.wait_for_exit()
+
         ble_obj.wait_for_exit()
+        wlan_obj.wait_for_exit()
+
         wifi_sniffer.interfaces.capture.stop_capture()
         ble_obj.ble_disconnect()
         wifi_dut.interfaces.wifi.leave()
