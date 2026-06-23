@@ -550,10 +550,6 @@ class WLanThread(ThreadBase):
             self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(
                 socket_fd=sock, option_level="SOL_TCP", option_name="TCP_ULP", option_val="tls_1_2")
 
-            self.wifi_dut.interfaces.wifi.bind(socket_fd=sock, device_ip=self.dut_add_dict['device_ip'],
-                                               server_port=server_port, timeout=15,
-                                               ip_len=6, ip_version=6)
-
             logger().info(" ***** DUT is connecting to server socket ***** ")
             connect_status = False
             for count in range(3):
@@ -3334,18 +3330,21 @@ def test_Coex_sdk_WLAN_ipv6_ssl_rx_ble_rx_C538026(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="notifications",
-            dev_state=8,
+            dev_state=9,
             gatt=True,
             service_class=["HeartRateService"],
-            ble_pairing=1,
-            remote_adv_int_min="0xA0 0x00",
-            remote_adv_int_max="0xA0 0x00"
         )
 
-        ble_obj.check_scan_functionality()
         wifi_obj.join_to_ap()
-        ble_obj.connect_from_dut()
+
+        ble_obj.advertise_dut()
+        ble_obj.ble_connect(role="master")
+
+        logger().info("Waiting for BLE connection and pending GATT procedure to settle before fetching profiles")
+        time.sleep(12)
+
         ble_obj.fetch_profiles()
+
         ble_obj.start()
         wifi_obj.start()
         wifi_obj.wait_for_exit()
@@ -3533,16 +3532,21 @@ def test_Coex_WLAN_ipv6_ssl_rx_LL_ble_rx_C538033(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="notifications",
-            dev_state=8,
+            dev_state=9,
             gatt=True,
             service_class=["HeartRateService"],
-            ble_pairing=1,
-            remote_adv_int_min="0xA0 0x00",
-            remote_adv_int_max="0xA0 0x00"
         )
+
         wifi_obj.join_to_ap()
+
+        ble_obj.advertise_dut()
         ble_obj.ble_connect(role="master")
+
+        logger().info("Waiting for BLE connection and pending GATT procedure to settle before fetching profiles")
+        time.sleep(12)
+
         ble_obj.fetch_profiles()
+
         ble_obj.start()
         wifi_obj.start()
         wifi_obj.wait_for_exit()
