@@ -34,6 +34,20 @@ def test_nrf5340(ble_client):
     ble_client.interfaces.wifi.register_callbacks()
     time.sleep(6)
     ble_client.interfaces.wifi.start_adv()
+
+@pytest.mark.ble_client("nrf_53840_cli")
+def test_nrf5340_le_audio(ble_client):
+    time.sleep(6)
+    ble_client.interfaces.wifi.ble_init()
+    time.sleep(6)
+    ble_client.interfaces.wifi.register_callbacks()
+    time.sleep(6)
+    ble_client.interfaces.wifi.set_local_name("nRF_BAP")
+    time.sleep(6)
+    ble_client.interfaces.wifi.set_adv_params()
+    time.sleep(6)
+    ble_client.interfaces.wifi.start_adv()
+    time.sleep(180)
    
 
 

@@ -209,8 +209,8 @@ devices:
                 # In the below example, the vid and pid represent the USB connection to the WSTK
                 port: 'auto'
                 vid: 0x1366
-                pid: 0x1051
-                serial_number: 001050165832     # prefix zeros if digits are less than 12
+                pid: 0x1061
+                serial_number: 001050170845     # prefix zeros if digits are less than 12
                 b_interface_number : '00'       # this is the interface number of the device use to identify serial port, As multiple serial ports are available in the device
             vcom:
                 type: 'serial'
@@ -260,7 +260,7 @@ devices:
                 port: 'auto'
                 vid: 0x0403
                 pid: 0x6001
-                options: "--chiperase --reset -s 1050165832"    # this is the serial number of the device with -s as argument
+                options: "--chiperase --verify --reset -s 1050170845"    # this is the serial number of the device with -s as argument 1050137348 1050157850 1050170845
 
     dlink810_ap:
         interfaces:

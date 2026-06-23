@@ -1,7 +1,7 @@
 firmware:
   rs911x: &firmware_file_anchor RS9116W_rt595.rps
   rt595: sqa_test_agent-rt595-gcc_arm3.elf
-  nrf53840: zephyr.hex
+  nrf53840: zephyr_1.hex
 
 #firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed
