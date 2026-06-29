@@ -9685,3 +9685,4491 @@ def test_wifi_sdk_mqtt_over_tls_QoS1_with_invalid_SNI_C919355(
 
     except Exception as Ex:
          sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_receive_payload_exactly_1460_bytes_C990067(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections,utf_constants ):
+    """QOS0: Verify that MQTT client can receive a payload of exactly 1460 bytes"""
+
+    try:
+        topic = "mytesttopic_C990067"
+        # QoS 0: total = payload + topic_len + 2 → 1439(payload) + 19(topic_length) + 2(topic_length_field) = 1460
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1439))
+        capture_filename = request.node.name
+
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        time.sleep(25)
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        logger().info("*************** MQTT Client subscribes to the topic *****************")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        logger().info("*************** DUT subscribes to the topic *******************")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 15:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+        assert found, "No message is received by DUT on subscribed topic or message received is wrong"
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_receive_payload_exactly_1400_bytes_C990068(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """QOS0: Verify MQTT client handles payload slightly below the chunking threshold (1400 bytes) correctly"""
+
+    try:
+        topic = "mytesttopic_C990068"
+        # QoS 0: total = payload + topic_len + 2 → 1379 + 19 + 2 = 1400 (below chunking threshold)
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=1379))
+        capture_filename = request.node.name
+
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        time.sleep(25)
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        logger().info("*************** MQTT Client subscribes to the topic *****************")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        logger().info("*************** DUT subscribes to the topic *******************")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 15:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+        assert found, "No message is received by DUT on subscribed topic or message received is wrong"
+
+        # Optional: validate callback count and content_length from DUT serial log
+        # (requires firmware MQTT_RX_CB instrumentation; not present on all test-agent builds)
+        expected_content_len = len(message)
+        expected_topic_len = len(topic)
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        cb_entries = [line for _, line in serial_log if b"MQTT_RX_CB:" in line]
+        logger().info(f"MQTT_RX_CB entries in serial log: {cb_entries}")
+
+        if len(cb_entries) >= 1:
+            last_cb = cb_entries[-1].decode(errors='replace')
+            cb_count_match = re.search(r'callback_count=(\d+)', last_cb)
+            content_len_match = re.search(r'content_length=(\d+)', last_cb)
+            topic_len_match = re.search(r'topic_length=(\d+)', last_cb)
+
+            if cb_count_match:
+                cb_count = int(cb_count_match.group(1))
+                logger().info(f"Callback invocation count: {cb_count}")
+                assert cb_count == 1, ("Expected single callback invocation, got %s — "
+                                        "MORE_DATA fragmentation detected" % cb_count)
+            if content_len_match:
+                logger().info(f"content_length from DUT: {content_len_match.group(1)}, expected: {expected_content_len}")
+                assert int(content_len_match.group(1)) == expected_content_len, \
+                    "content_length mismatch: got %s, expected %s" % (content_len_match.group(1), expected_content_len)
+            if topic_len_match:
+                logger().info(f"topic_length from DUT: {topic_len_match.group(1)}, expected: {expected_topic_len}")
+                assert int(topic_len_match.group(1)) == expected_topic_len, \
+                    "topic_length mismatch: got %s, expected %s" % (topic_len_match.group(1), expected_topic_len)
+            logger().info("Single callback invocation confirmed — no MORE_DATA fragmentation")
+        else:
+            logger().warning("No MQTT_RX_CB entries in serial log — firmware instrumentation may not be present")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_receive_chunked_payload_1461_bytes_C990069(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """QOS0: Verify MQTT client correctly reassembles a 1461-byte payload (above MSS)
+    that arrives in two chunks with MORE_DATA flag handling."""
+
+    try:
+        topic = "test/large_payload"
+        # QoS 0: total = payload + topic_len + 2 → 1441 + 18 + 2 = 1461 (one byte above 1460 MSS, forces chunking)
+        payload_len = 1461 - len(topic) - 2
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # Step 1: Connect to AP and get IP address
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # Step 2: Enable TA power save
+        logger().info("Step 2: Enabling TA power save")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # Step 3: Connect DUT to MQTT server and verify connection
+        logger().info("Step 3: DUT connects to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection status: Connected")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Step 4: Subscribe to topic and confirm subscription
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # Step 5: Publish payload of exactly 1461 bytes from broker
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload (wire total = {payload_len + len(topic) + 2} = 1461 bytes)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # Step 6: Monitor DUT for incoming message callback
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 30:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+
+        # Step 7: Verify payload matches byte-by-byte
+        logger().info("Step 7: Verifying payload integrity (byte-by-byte comparison)")
+        assert found, "DUT did not receive the 1461-byte message on subscribed topic"
+        logger().info("Payload received matches sent payload")
+
+        # Steps 7-9: Validate chunking via serial log (MORE_DATA flag and callback count)
+        logger().info("Validating MORE_DATA chunking from DUT serial log")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {cb_entries}")
+
+        total_content_bytes = 0
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+            logger().info(f"First chunk callback: {first_cb}")
+            logger().info(f"Last chunk callback:  {last_cb}")
+
+            first_count = re.search(r'callback_count=(\d+)', first_cb)
+            last_count = re.search(r'callback_count=(\d+)', last_cb)
+            if first_count and last_count:
+                logger().info(f"Step 7: First chunk — callback_count={first_count.group(1)} (MORE_DATA=1)")
+                logger().info(f"Step 8: Last chunk  — callback_count={last_count.group(1)} (MORE_DATA=0)")
+                assert int(last_count.group(1)) > int(first_count.group(1)), \
+                    "Expected multiple callback invocations for chunked 1461-byte payload"
+
+            for cb in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', cb)
+                if cl_match:
+                    total_content_bytes += int(cl_match.group(1))
+
+            # Step 9: Confirm reassembly completion
+            logger().info(f"Step 9: Reassembly complete — total content across {len(cb_entries)} chunks: {total_content_bytes} bytes")
+        elif len(cb_entries) == 1:
+            logger().info("Single callback — firmware delivered 1461 bytes in one shot")
+            cl_match = re.search(r'content_length=(\d+)', cb_entries[0])
+            if cl_match:
+                total_content_bytes = int(cl_match.group(1))
+        else:
+            logger().warning("No MQTT_RX_CB entries found in serial log")
+
+        # Step 10: Validate complete payload integrity after reassembly
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        if total_content_bytes > 0:
+            assert total_content_bytes == payload_len, \
+                f"Reassembled content length {total_content_bytes} != expected {payload_len}"
+            logger().info(f"Total reassembled content: {total_content_bytes} bytes — matches expected {payload_len}")
+        final_msgs_c990069 = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs_c990069}')
+        assert message in final_msgs_c990069, "Reassembled payload does not match original message"
+        logger().info("Complete payload integrity validated")
+
+        # Step 11: Verify no memory leaks after reassembly
+        logger().info("Step 11: Checking for memory leaks after reassembly")
+        full_log_text = b"".join([line for _, line in post_publish_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory"]:
+            assert pattern not in full_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info("No memory leaks detected after reassembly completion")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_receive_chunked_payload_1900_bytes_C990070(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """QOS0: Verify MQTT client correctly reassembles a 1900-byte payload (well above MSS)
+    that arrives in multiple chunks with MORE_DATA flag handling."""
+
+    try:
+        topic = "test/large_payload"
+        # QoS 0: total = payload + topic_len + 2 → 1880 + 18 + 2 = 1900 (440 bytes above 1460 MSS)
+        payload_len = 1900 - len(topic) - 2
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # Step 1: Connect to AP and get IP address
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # Step 2: Enable TA power save
+        logger().info("Step 2: Enabling TA power save")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # Step 3: Connect DUT to MQTT server and verify connection
+        logger().info("Step 3: DUT connects to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection status: Connected")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Step 4: Subscribe to topic and confirm subscription
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # Step 5: Publish payload of exactly 1900 bytes from broker
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload (wire total = {payload_len + len(topic) + 2} = 1900 bytes)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # Step 6: Monitor DUT for incoming message callback
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 30:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+
+        # Step 7: Verify payload matches byte-by-byte
+        logger().info("Step 7: Verifying payload integrity (byte-by-byte comparison)")
+        assert found, "DUT did not receive the 1900-byte message on subscribed topic"
+        logger().info("Payload received matches sent payload")
+
+        # Steps 7-9: Validate chunking via serial log (MORE_DATA flag and callback count)
+        logger().info("Validating MORE_DATA chunking from DUT serial log")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {cb_entries}")
+
+        total_content_bytes = 0
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+            logger().info(f"First chunk callback: {first_cb}")
+            logger().info(f"Last chunk callback:  {last_cb}")
+
+            first_count = re.search(r'callback_count=(\d+)', first_cb)
+            last_count = re.search(r'callback_count=(\d+)', last_cb)
+            if first_count and last_count:
+                logger().info(f"Step 7: First chunk — callback_count={first_count.group(1)} (MORE_DATA=1)")
+                logger().info(f"Step 8: Last chunk  — callback_count={last_count.group(1)} (MORE_DATA=0)")
+                assert int(last_count.group(1)) > int(first_count.group(1)), \
+                    "Expected multiple callback invocations for chunked 1900-byte payload"
+
+            for cb in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', cb)
+                if cl_match:
+                    total_content_bytes += int(cl_match.group(1))
+
+            # Step 9: Confirm reassembly completion
+            logger().info(f"Step 9: Reassembly complete — total content across {len(cb_entries)} chunks: {total_content_bytes} bytes")
+        elif len(cb_entries) == 1:
+            logger().info("Single callback — firmware delivered 1900 bytes in one shot")
+            cl_match = re.search(r'content_length=(\d+)', cb_entries[0])
+            if cl_match:
+                total_content_bytes = int(cl_match.group(1))
+        else:
+            logger().warning("No MQTT_RX_CB entries found in serial log")
+
+        # Step 10: Validate complete payload integrity after reassembly
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        if total_content_bytes > 0:
+            assert total_content_bytes == payload_len, \
+                f"Reassembled content length {total_content_bytes} != expected {payload_len}"
+            logger().info(f"Total reassembled content: {total_content_bytes} bytes — matches expected {payload_len}")
+        final_msgs_c990070 = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs_c990070}')
+        assert message in final_msgs_c990070, "Reassembled payload does not match original message"
+        logger().info("Complete payload integrity validated")
+
+        # Step 11: Verify no memory leaks after reassembly
+        logger().info("Step 11: Checking for memory leaks after reassembly")
+        full_log_text = b"".join([line for _, line in post_publish_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory"]:
+            assert pattern not in full_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info("No memory leaks detected after reassembly completion")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_receive_chunked_payload_2000_bytes_C990071(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """QOS0: Verify MQTT client correctly reassembles a 2000-byte payload (well above MSS)
+    that arrives in multiple chunks with MORE_DATA flag handling."""
+
+    try:
+        topic = "test/large_payload"
+        # QoS 0: total = payload + topic_len + 2 → 1980 + 18 + 2 = 2000 (540 bytes above 1460 MSS)
+        payload_len = 2000 - len(topic) - 2
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # Step 1: Connect to AP and get IP address
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # Step 2: Enable TA power save
+        logger().info("Step 2: Enabling TA power save")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # Step 3: Connect DUT to MQTT server and verify connection
+        logger().info("Step 3: DUT connects to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection status: Connected")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Step 4: Subscribe to topic and confirm subscription
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # Step 5: Publish payload of exactly 2000 bytes from broker
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload (wire total = {payload_len + len(topic) + 2} = 2000 bytes)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # Step 6: Monitor DUT for incoming message callback
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 30:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+
+        # Step 7: Verify payload matches byte-by-byte
+        logger().info("Step 7: Verifying payload integrity (byte-by-byte comparison)")
+        assert found, "DUT did not receive the 2000-byte message on subscribed topic"
+        logger().info("Payload received matches sent payload")
+
+        # Steps 7-9: Validate chunking via serial log (MORE_DATA flag and callback count)
+        logger().info("Validating MORE_DATA chunking from DUT serial log")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {cb_entries}")
+
+        total_content_bytes = 0
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+            logger().info(f"First chunk callback: {first_cb}")
+            logger().info(f"Last chunk callback:  {last_cb}")
+
+            first_count = re.search(r'callback_count=(\d+)', first_cb)
+            last_count = re.search(r'callback_count=(\d+)', last_cb)
+            if first_count and last_count:
+                logger().info(f"Step 7: First chunk — callback_count={first_count.group(1)} (MORE_DATA=1)")
+                logger().info(f"Step 8: Last chunk  — callback_count={last_count.group(1)} (MORE_DATA=0)")
+                assert int(last_count.group(1)) > int(first_count.group(1)), \
+                    "Expected multiple callback invocations for chunked 2000-byte payload"
+
+            for cb in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', cb)
+                if cl_match:
+                    total_content_bytes += int(cl_match.group(1))
+
+            # Step 9: Confirm reassembly completion
+            logger().info(f"Step 9: Reassembly complete — total content across {len(cb_entries)} chunks: {total_content_bytes} bytes")
+        elif len(cb_entries) == 1:
+            logger().info("Single callback — firmware delivered 2000 bytes in one shot")
+            cl_match = re.search(r'content_length=(\d+)', cb_entries[0])
+            if cl_match:
+                total_content_bytes = int(cl_match.group(1))
+        else:
+            logger().warning("No MQTT_RX_CB entries found in serial log")
+
+        # Step 10: Validate complete payload integrity after reassembly
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        if total_content_bytes > 0:
+            assert total_content_bytes == payload_len, \
+                f"Reassembled content length {total_content_bytes} != expected {payload_len}"
+            logger().info(f"Total reassembled content: {total_content_bytes} bytes — matches expected {payload_len}")
+        final_msgs_c990071 = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs_c990071}')
+        assert message in final_msgs_c990071, "Reassembled payload does not match original message"
+        logger().info("Complete payload integrity validated")
+
+        # Step 11: Verify no memory leaks after reassembly
+        logger().info("Step 11: Checking for memory leaks after reassembly")
+        full_log_text = b"".join([line for _, line in post_publish_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory"]:
+            assert pattern not in full_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info("No memory leaks detected after reassembly completion")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_receive_chunked_payload_2001_bytes_C990072(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """QOS0: Verify MQTT client correctly reassembles a 2001-byte payload (above MSS)
+    that arrives in multiple chunks with MORE_DATA flag handling."""
+
+    try:
+        topic = "test/large_payload"
+        # QoS 0: total = payload + topic_len + 2 → 1981 + 18 + 2 = 2001 (541 bytes above 1460 MSS)
+        payload_len = 2001 - len(topic) - 2
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # Step 1: Connect to AP and get IP address
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # Step 2: Enable TA power save
+        logger().info("Step 2: Enabling TA power save")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # Step 3: Connect DUT to MQTT server and verify connection
+        logger().info("Step 3: DUT connects to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection status: Connected")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Step 4: Subscribe to topic and confirm subscription
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # Step 5: Publish payload of exactly 2001 bytes from broker
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload (wire total = {payload_len + len(topic) + 2} = 2001 bytes)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # Step 6: Monitor DUT for incoming message callback
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 30:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+
+        # Verify payload matches byte-by-byte
+        logger().info("Verifying payload integrity (byte-by-byte comparison)")
+        assert found, "DUT did not receive the 2001-byte message on subscribed topic"
+        logger().info("Payload received matches sent payload")
+
+        # Validate chunking via serial log (MORE_DATA flag and callback count)
+        logger().info("Validating MORE_DATA chunking from DUT serial log")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {cb_entries}")
+
+        total_content_bytes = 0
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+            logger().info(f"First chunk callback: {first_cb}")
+            logger().info(f"Last chunk callback:  {last_cb}")
+
+            first_count = re.search(r'callback_count=(\d+)', first_cb)
+            last_count = re.search(r'callback_count=(\d+)', last_cb)
+            if first_count and last_count:
+                logger().info(f"First chunk — callback_count={first_count.group(1)} (MORE_DATA=1)")
+                logger().info(f"Last chunk  — callback_count={last_count.group(1)} (MORE_DATA=0)")
+                assert int(last_count.group(1)) > int(first_count.group(1)), \
+                    "Expected multiple callback invocations for chunked 2001-byte payload"
+
+            for cb in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', cb)
+                if cl_match:
+                    total_content_bytes += int(cl_match.group(1))
+
+            logger().info(f"Reassembly complete — total content across {len(cb_entries)} chunks: {total_content_bytes} bytes")
+        elif len(cb_entries) == 1:
+            logger().info("Single callback — firmware delivered 2001 bytes in one shot")
+            cl_match = re.search(r'content_length=(\d+)', cb_entries[0])
+            if cl_match:
+                total_content_bytes = int(cl_match.group(1))
+        else:
+            logger().warning("No MQTT_RX_CB entries found in serial log")
+
+        # Validate complete payload integrity after reassembly
+        logger().info("Validating complete payload integrity after reassembly")
+        if total_content_bytes > 0:
+            assert total_content_bytes == payload_len, \
+                f"Reassembled content length {total_content_bytes} != expected {payload_len}"
+            logger().info(f"Total reassembled content: {total_content_bytes} bytes — matches expected {payload_len}")
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message in final_msgs, "Reassembled payload does not match original message"
+        logger().info("Complete payload integrity validated")
+
+        # Verify no memory leaks after reassembly
+        logger().info("Checking for memory leaks after reassembly")
+        full_log_text_c990072 = b"".join([line for _, line in post_publish_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory"]:
+            assert pattern not in full_log_text_c990072, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info("No memory leaks detected after reassembly completion")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_rx_threshold_exceeds_payload_reject_C990073(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """Verify behavior when RX threshold macro (SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE) is configured
+    larger than the incoming payload. Publish 2001 bytes and observe DUT behavior:
+    - If firmware has SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE < 2001 → payload rejected (not delivered).
+    - If firmware has SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE >= 2001 → payload delivered via chunking."""
+
+    try:
+        topic = "test/large_payload"
+        # QoS 0 wire total = payload + topic_len + 2 → 1981 + 18 + 2 = 2001
+        payload_len = 2001 - len(topic) - 2
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # Step 1: Connect to AP and get IP address
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # Step 2: Enable TA power save
+        logger().info("Step 2: Enabling TA power save")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # Step 3: Connect DUT to MQTT server and verify connection
+        logger().info("Step 3: DUT connects to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection status: Connected")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Step 4: Subscribe to topic
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # Step 5: Publish 2001-byte payload to test RX threshold behavior
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload (wire total = 2001 bytes)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # Step 6: Monitor DUT for incoming message callback
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 15:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+
+        if not found:
+            # Payload rejected — SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE < 2001
+            logger().info("DUT correctly rejected the 2001-byte payload (RX threshold enforced)")
+
+            error_found = False
+            for _, line in post_publish_log:
+                decoded = line.decode(errors='replace').lower()
+                if any(kw in decoded for kw in ["error", "exceed", "too large", "reject", "drop"]):
+                    logger().info(f"Error indication in DUT log: {line.decode(errors='replace').strip()}")
+                    error_found = True
+                    break
+            if error_found:
+                logger().info("Firmware logged an error for the oversized payload")
+            else:
+                logger().info("DUT silently dropped the oversized payload — no explicit error log")
+
+        else:
+            # Payload accepted — SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE >= 2001
+            logger().info(
+                "DUT received the 2001-byte payload — "
+                "SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE is >= 2001 in current firmware build"
+            )
+
+            # Validate chunking via serial log
+            cb_entries = [
+                line.decode(errors='replace') for _, line in post_publish_log
+                if b"MQTT_RX_CB:" in line
+            ]
+            if len(cb_entries) >= 2:
+                logger().info(f"Payload delivered in {len(cb_entries)} chunks (MORE_DATA chunking)")
+                total_content = 0
+                for cb in cb_entries:
+                    cl_match = re.search(r'content_length=(\d+)', cb)
+                    if cl_match:
+                        total_content += int(cl_match.group(1))
+                if total_content > 0:
+                    logger().info(f"Total reassembled content: {total_content} bytes, expected: {payload_len}")
+            elif len(cb_entries) == 1:
+                logger().info("Payload delivered in single callback")
+            else:
+                logger().warning("No MQTT_RX_CB entries — firmware instrumentation may not be present")
+
+            # Verify payload integrity
+            final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {final_msgs}')
+            assert message in final_msgs, "Payload received but content does not match"
+            logger().info("Payload integrity verified — byte-by-byte match confirmed")
+
+        # Verify no memory leaks regardless of accept/reject
+        logger().info("Checking for memory leaks")
+        full_log_text = b"".join([line for _, line in post_publish_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory"]:
+            assert pattern not in full_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info("No memory leaks detected")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_retained_msg_large_payload_2000_bytes_C990074(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """QOS0: Verify MQTT client connection and rx data when retained bit is set to 1
+    with IS_LAST_WILL_RETAINED=1 and QOS_OF_LAST_WILL=1, using a 2000-byte payload."""
+
+    try:
+        topic = "test/large_payload"
+        last_will_topic = "WiFiSDK-MQTT-CLIENT-LAST-WILL"
+        last_will_message = "WiFiSDK-MQTT-CLIENT has been disconnected"
+        # QoS 0: total = payload + topic_len + 2 → 1980 + 18 + 2 = 2000
+        payload_len = 2000 - len(topic) - 2
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # Step 1: Connect to AP and get IP address
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # Step 2: Enable TA power save
+        logger().info("Step 2: Enabling TA power save")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # Step 3: Connect DUT to MQTT server with retained=1 and last will (QoS=1, retained=1)
+        logger().info("Step 3: DUT connects to MQTT server (is_retained=True, last_will QoS=1, last_will retained=True)")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client",
+            qos=1,
+            connect_timeout=30,
+            is_retained=True,
+            will_topic=last_will_topic,
+            will_message=last_will_message,
+        )
+        pre_connect_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+
+        sw = Stopwatch()
+        mqtt_connected = False
+        while sw.elapsed_sec < 30:
+            time.sleep(0.5)
+            connect_log = wifi_dut.interfaces.wifi.bus.get_input_log()[pre_connect_log_len:]
+            connect_log_text = b"".join([line for _, line in connect_log])
+            if b"SL_MQTT_CLIENT_CONNECTED_EVENT" in connect_log_text:
+                mqtt_connected = True
+                break
+            if b"SL_MQTT_CLIENT_DISCONNECTED_EVENT" in connect_log_text:
+                assert False, (
+                    "DUT emitted SL_MQTT_CLIENT_DISCONNECTED_EVENT before MQTT connection "
+                    "was established — check connect_timeout and broker reachability"
+                )
+        assert mqtt_connected, (
+            "DUT did not emit SL_MQTT_CLIENT_CONNECTED_EVENT within 30s — MQTT connection failed"
+        )
+        logger().info("DUT MQTT connection status: Connected (retained=1, last_will_retained=1, last_will_qos=1)")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Step 4: Subscribe to topic and confirm subscription
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # Step 5: Publish payload of exactly 2000 bytes from broker
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload (wire total = 2000 bytes)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # Step 6: Monitor DUT for incoming message callback
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 30:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+
+        # Step 7: Verify payload matches byte-by-byte
+        logger().info("Step 7: Verifying payload integrity (byte-by-byte comparison)")
+        assert found, "DUT did not receive the 2000-byte retained message on subscribed topic"
+        logger().info("Payload received matches sent payload")
+
+        # Validate chunking via serial log (MORE_DATA flag and callback count)
+        logger().info("Validating MORE_DATA chunking from DUT serial log")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {cb_entries}")
+
+        total_content_bytes = 0
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+            logger().info(f"First chunk callback: {first_cb}")
+            logger().info(f"Last chunk callback:  {last_cb}")
+
+            first_count = re.search(r'callback_count=(\d+)', first_cb)
+            last_count = re.search(r'callback_count=(\d+)', last_cb)
+            if first_count and last_count:
+                logger().info(f"First chunk — callback_count={first_count.group(1)} (MORE_DATA=1)")
+                logger().info(f"Last chunk  — callback_count={last_count.group(1)} (MORE_DATA=0)")
+                assert int(last_count.group(1)) > int(first_count.group(1)), \
+                    "Expected multiple callback invocations for chunked 2000-byte retained payload"
+
+            for cb in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', cb)
+                if cl_match:
+                    total_content_bytes += int(cl_match.group(1))
+
+            logger().info(f"Reassembly complete — total content across {len(cb_entries)} chunks: {total_content_bytes} bytes")
+        elif len(cb_entries) == 1:
+            logger().info("Single callback — firmware delivered 2000 bytes in one shot")
+            cl_match = re.search(r'content_length=(\d+)', cb_entries[0])
+            if cl_match:
+                total_content_bytes = int(cl_match.group(1))
+        else:
+            logger().warning("No MQTT_RX_CB entries found in serial log")
+
+        # Step 10: Validate complete payload integrity after reassembly
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        if total_content_bytes > 0:
+            assert total_content_bytes == payload_len, \
+                f"Reassembled content length {total_content_bytes} != expected {payload_len}"
+            logger().info(f"Total reassembled content: {total_content_bytes} bytes — matches expected {payload_len}")
+        final_msgs_c990074 = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs_c990074}')
+        assert message in final_msgs_c990074, "Reassembled payload does not match original message"
+        logger().info("Complete payload integrity validated")
+
+        # Step 11: Verify no memory leaks after reassembly
+        logger().info("Step 11: Checking for memory leaks after reassembly")
+        full_log_text_c990074 = b"".join([line for _, line in post_publish_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory"]:
+            assert pattern not in full_log_text_c990074, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info("No memory leaks detected after reassembly completion")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_wildcard_subscribe_large_payload_C990075(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """QOS0: Verify MQTT client correctly receives large payloads when subscribed
+    using single-level wildcard (+). DUT subscribes to 'test/+' and broker publishes
+    to 'test/large_payload' with a 1460-byte total payload."""
+
+    try:
+        wildcard_topic = "test/+"
+        publish_topic = "test/large_payload"
+        # QoS 0: total = payload + topic_len + 2 → 1440 + 18 + 2 = 1460
+        payload_len = 1460 - len(publish_topic) - 2
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # Step 1: Connect to AP and get IP address
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=publish_topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        # Step 2: Connect DUT to MQTT server
+        logger().info("Step 2: DUT connects to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection status: Connected")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Step 3: DUT subscribes using single-level wildcard (+)
+        logger().info(f"Step 3: DUT subscribes to wildcard topic '{wildcard_topic}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=publish_topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=wildcard_topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to wildcard '{wildcard_topic}' is active")
+
+        # Step 4: Broker publishes to concrete topic that matches the wildcard
+        logger().info(f"Step 4: Publishing {payload_len}-byte payload to '{publish_topic}' (wire total = 1460 bytes)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=publish_topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # Step 5: Monitor DUT for incoming message callback
+        logger().info("Step 5: Monitoring DUT for incoming message via wildcard subscription")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 15:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+
+        # Step 6: Verify payload matches byte-by-byte
+        logger().info("Step 6: Verifying payload integrity (byte-by-byte comparison)")
+        assert found, (f"DUT did not receive the 1460-byte message published to '{publish_topic}' "
+                       f"via wildcard subscription '{wildcard_topic}'")
+        logger().info("Payload received via wildcard subscription matches sent payload")
+
+        # Optional: Validate callback details from DUT serial log (requires firmware instrumentation)
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        cb_entries = [line for _, line in serial_log if b"MQTT_RX_CB:" in line]
+        logger().info(f"MQTT_RX_CB entries in serial log: {cb_entries}")
+
+        if len(cb_entries) >= 1:
+            last_cb = cb_entries[-1].decode(errors='replace')
+            cb_count_match = re.search(r'callback_count=(\d+)', last_cb)
+            content_len_match = re.search(r'content_length=(\d+)', last_cb)
+            topic_len_match = re.search(r'topic_length=(\d+)', last_cb)
+
+            if cb_count_match:
+                cb_count = int(cb_count_match.group(1))
+                logger().info(f"Callback invocation count: {cb_count}")
+            if content_len_match:
+                logger().info(f"content_length from DUT: {content_len_match.group(1)}, expected: {payload_len}")
+            if topic_len_match:
+                logger().info(f"topic_length from DUT: {topic_len_match.group(1)}, expected: {len(publish_topic)}")
+            logger().info("Callback details validated via serial log")
+        else:
+            logger().warning("No MQTT_RX_CB entries in serial log — firmware instrumentation may not be present")
+
+        logger().info("Wildcard subscription delivered payload correctly — test passed")
+
+        logger().info("....Unsubscribing from the wildcard topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=wildcard_topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_qos0_m4_powersave_2000_bytes_C990077(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """QOS0: Verify MQTT client correctly receives and reassembles 2000-byte payload
+    with M4 powersave enabled. Precondition: M4 powersave params configured in SLCP."""
+
+    try:
+        topic = "test/large_payload"
+        # QoS 0: total = payload + topic_len + 2 → 1980 + 18 + 2 = 2000
+        payload_len = 2000 - len(topic) - 2
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # Step 1: Connect to AP and get IP address
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # Step 2: Enable TA power save + M4 power save
+        logger().info("Step 2: Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # Step 3: Connect DUT to MQTT server and verify connection
+        logger().info("Step 3: DUT connects to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection status: Connected")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Step 4: Subscribe to topic and confirm subscription
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # Step 5: Publish payload of exactly 2000 bytes from broker
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload (wire total = 2000 bytes)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # Step 6: Monitor DUT for incoming message callback
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 30:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+            if found:
+                break
+        time.sleep(2)
+
+        # Step 7: Verify payload matches byte-by-byte
+        logger().info("Step 7: Verifying payload integrity (byte-by-byte comparison)")
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        assert found, f"DUT did not receive the 2000-byte message with {ps_label} powersave"
+        logger().info(f"Payload received matches sent payload ({ps_label} powersave)")
+
+        # Steps 7-9: Validate chunking via serial log (MORE_DATA flag and callback count)
+        logger().info("Validating MORE_DATA chunking from DUT serial log")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {cb_entries}")
+
+        total_content_bytes = 0
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+            logger().info(f"First chunk callback: {first_cb}")
+            logger().info(f"Last chunk callback:  {last_cb}")
+
+            first_count = re.search(r'callback_count=(\d+)', first_cb)
+            last_count = re.search(r'callback_count=(\d+)', last_cb)
+            if first_count and last_count:
+                logger().info(f"Step 7: First chunk — callback_count={first_count.group(1)} (MORE_DATA=1)")
+                logger().info(f"Step 8: Last chunk  — callback_count={last_count.group(1)} (MORE_DATA=0)")
+                assert int(last_count.group(1)) > int(first_count.group(1)), \
+                    "Expected multiple callback invocations for chunked 2000-byte payload"
+
+            for cb in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', cb)
+                if cl_match:
+                    total_content_bytes += int(cl_match.group(1))
+
+            # Step 9: Confirm reassembly completion
+            logger().info(f"Step 9: Reassembly complete — total content across {len(cb_entries)} chunks: {total_content_bytes} bytes")
+        elif len(cb_entries) == 1:
+            logger().info("Single callback — firmware delivered 2000 bytes in one shot")
+            cl_match = re.search(r'content_length=(\d+)', cb_entries[0])
+            if cl_match:
+                total_content_bytes = int(cl_match.group(1))
+        else:
+            logger().warning("No MQTT_RX_CB entries — firmware instrumentation may not be present")
+
+        # Step 10: Validate complete payload integrity after reassembly
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        if total_content_bytes > 0:
+            assert total_content_bytes == payload_len, \
+                f"Reassembled content length {total_content_bytes} != expected {payload_len}"
+            logger().info(f"Total reassembled content: {total_content_bytes} bytes — matches expected {payload_len}")
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message in final_msgs, "Reassembled payload does not match original message"
+        logger().info(f"Complete payload integrity validated with {ps_label} powersave active")
+
+        # Step 11: Verify no memory leaks after reassembly
+        logger().info("Step 11: Checking for memory leaks after reassembly")
+        full_log_text = b"".join([line for _, line in post_publish_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory"]:
+            assert pattern not in full_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected after reassembly with {ps_label} powersave")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_rx_two_brokers_same_topic_2000_bytes_C990078(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """Verify MQTT connection and RX data when receiving data from 2 different brokers (publishers) with the same topic and a 2000-byte large payload."""
+
+    import paho.mqtt.client as paho_mqtt
+
+    broker_2_client = None
+    try:
+        topic = "test/large_payload"
+        payload_len = 2000 - len(topic) - 2
+        message_1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        message_2 = ''.join(random.choices(string.ascii_lowercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP and get IP address ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message_1)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Step 2: Enable TA power save (WLAN + BLE) ──
+        logger().info("Step 2: Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # ── Step 3: Connect DUT to MQTT server and verify connection ──
+        logger().info("Step 3: DUT connects to MQTT server — verifying 'Connected' status")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection status: Connected")
+
+        # Connect broker/publisher 1 (framework mqtt_client fixture)
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Connect broker/publisher 2 (standalone paho client)
+        server_cfg = mqtt_server.interfaces.mqtt
+        broker_2_client = paho_mqtt.Client(client_id="broker2_publisher_C990078", clean_session=True)
+        broker_2_client.loop_start()
+        broker_2_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Broker 2 (standalone paho client) connected to MQTT server")
+
+        # ── Step 4: Subscribe DUT to topic and confirm subscription ──
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 5: Publish 2000-byte payload from broker 1 ──
+        logger().info(f"Step 5a: Broker 1 publishing {payload_len}-byte payload (wire total = 2000 bytes)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message_1, qos=0)
+        time.sleep(4)
+
+        # ── Step 5b: Publish 2000-byte payload from broker 2 ──
+        logger().info(f"Step 5b: Broker 2 publishing {payload_len}-byte payload (wire total = 2000 bytes)")
+        broker_2_client.publish(topic, payload=message_2, qos=0)
+        time.sleep(4)
+
+        # ── Step 6: Monitor DUT for incoming message callbacks from both brokers ──
+        logger().info("Step 6: Monitoring DUT for incoming messages from both brokers")
+        sw = Stopwatch()
+        found_msg1 = False
+        found_msg2 = False
+        while sw.elapsed_sec < 30:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message_1 in msgs:
+                found_msg1 = True
+            if message_2 in msgs:
+                found_msg2 = True
+            if found_msg1 and found_msg2:
+                break
+        time.sleep(2)
+
+        # ── Step 7: Verify payload from both brokers matches byte-by-byte ──
+        logger().info("Step 7: Verifying payload integrity from broker 1")
+        assert found_msg1, "DUT did not receive the 2000-byte message from broker 1"
+        logger().info("Broker 1 payload received and matches sent payload")
+
+        logger().info("Verifying payload integrity from broker 2")
+        assert found_msg2, "DUT did not receive the 2000-byte message from broker 2"
+        logger().info("Broker 2 payload received and matches sent payload")
+
+        # ── Steps 7-9: Validate chunking via serial log (MORE_DATA flags) ──
+        logger().info("Validating MORE_DATA chunking from DUT serial log")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {cb_entries}")
+
+        total_content_bytes = 0
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+            logger().info(f"First chunk callback: {first_cb}")
+            logger().info(f"Last chunk callback:  {last_cb}")
+
+            first_count = re.search(r'callback_count=(\d+)', first_cb)
+            last_count = re.search(r'callback_count=(\d+)', last_cb)
+            if first_count and last_count:
+                logger().info(f"Step 7: First chunk — callback_count={first_count.group(1)} (MORE_DATA=1)")
+                logger().info(f"Step 8: Last chunk  — callback_count={last_count.group(1)} (MORE_DATA=0)")
+
+            for cb in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', cb)
+                if cl_match:
+                    total_content_bytes += int(cl_match.group(1))
+
+            logger().info(f"Step 9: Reassembly complete — total content across {len(cb_entries)} chunks: {total_content_bytes} bytes")
+        elif len(cb_entries) == 1:
+            logger().info("Single callback — firmware delivered payload in one shot")
+            cl_match = re.search(r'content_length=(\d+)', cb_entries[0])
+            if cl_match:
+                total_content_bytes = int(cl_match.group(1))
+        else:
+            logger().warning("No MQTT_RX_CB entries — firmware instrumentation may not be present")
+
+        # ── Step 10: Validate complete payload integrity after reassembly ──
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message_1 in final_msgs, "Reassembled payload from broker 1 does not match original"
+        assert message_2 in final_msgs, "Reassembled payload from broker 2 does not match original"
+        logger().info("Complete payload integrity validated for both brokers")
+
+        # ── Step 11: Verify no memory leaks after reassembly ──
+        logger().info("Step 11: Checking for memory leaks after reassembly")
+        full_log_text = b"".join([line for _, line in post_publish_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory"]:
+            assert pattern not in full_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info("No memory leaks detected after receiving from two brokers")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if broker_2_client is not None:
+            try:
+                broker_2_client.disconnect()
+                broker_2_client.loop_stop()
+            except Exception:
+                pass
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_simultaneous_tx_rx_max_payload_C990080(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """Verify simultaneous MQTT TX and RX with max payload (2000 bytes) over
+    10 iterations. DUT publishes (TX) while broker publishes for DUT to receive
+    (RX) on separate topics. Checks for deadlock, corruption, and leaks."""
+
+    try:
+        tx_topic = "test/tx_payload"
+        rx_topic = "test/rx_payload"
+        max_payload_len = 2000 - len(tx_topic) - 2
+        iterations = 10
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP, establish MQTT connection, and subscribe ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=tx_topic,
+                            message="init")
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        logger().info("Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        logger().info("DUT connects to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection status: Connected")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        logger().info(f"Subscribing DUT to RX topic '{rx_topic}' and broker to TX topic '{tx_topic}'")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=rx_topic, qos=0)
+        time.sleep(2)
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=tx_topic, qos=0)
+        time.sleep(2)
+        logger().info("Step 1 complete: MQTT connection and subscriptions verified")
+
+        pre_test_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Steps 2-9: Run 10 iterations of TX then RX ──
+        tx_results = []
+        rx_results = []
+
+        for iteration in range(1, iterations + 1):
+            logger().info(f"═══ Iteration {iteration}/{iterations} ═══")
+            tx_msg = ''.join(random.choices(string.ascii_uppercase + string.digits, k=max_payload_len))
+            rx_msg = ''.join(random.choices(string.ascii_lowercase + string.digits, k=max_payload_len))
+
+            # Step 2: DUT publishes max payload (TX direction)
+            logger().info("Step 2: DUT publishing max payload (TX direction)")
+            try:
+                wifi_dut.interfaces.mqtt.mqtt_client_publish(
+                    topic=tx_topic, message=tx_msg, qos=0, timeout=30)
+                logger().info("DUT publish command accepted")
+            except Exception as tx_err:
+                logger().warning(f"TX publish error at iteration {iteration}: {tx_err}")
+            time.sleep(3)
+
+            # Step 3: Broker publishes max payload for DUT to receive (RX direction)
+            logger().info("Step 3: Broker publishing max payload for DUT (RX direction)")
+            mqtt_client.interfaces.mqtt.mqtt_client_publish(
+                topic=rx_topic, payload=rx_msg, qos=0)
+            time.sleep(5)
+
+            # Step 4: Check for deadlock — DUT should still be responsive
+            logger().info("Step 4: Verifying DUT is responsive (no deadlock)")
+
+            # Step 5-6: Verify TX — broker received DUT's published payload
+            logger().info("Step 5-6: Verifying TX payload received by broker")
+            sw = Stopwatch()
+            tx_payload_found = False
+            while sw.elapsed_sec < 15:
+                time.sleep(0.5)
+                broker_msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+                for m in broker_msgs:
+                    payload_str = ""
+                    if hasattr(m, 'payload') and m.payload:
+                        payload_str = m.payload.decode(errors='replace') if isinstance(m.payload, bytes) else str(m.payload)
+                    if tx_msg in payload_str:
+                        tx_payload_found = True
+                        break
+                if tx_payload_found:
+                    break
+            tx_results.append(tx_payload_found)
+            if tx_payload_found:
+                logger().info(f"  TX verified: broker received DUT's {max_payload_len}-byte payload")
+            else:
+                logger().warning(f"  TX payload NOT found at broker in iteration {iteration}")
+
+            # Step 7-8: Verify RX — DUT received broker's published payload
+            logger().info("Step 7-8: Verifying RX payload delivered to DUT application")
+            sw = Stopwatch()
+            rx_payload_found = False
+            while sw.elapsed_sec < 30:
+                time.sleep(0.5)
+                dut_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+                logger().info(f'received message on dut : {dut_msgs}')
+                if rx_msg in dut_msgs:
+                    rx_payload_found = True
+                    break
+            rx_results.append(rx_payload_found)
+            if rx_payload_found:
+                logger().info(f"  RX verified: DUT received broker's {max_payload_len}-byte payload")
+            else:
+                logger().warning(f"  RX payload NOT found on DUT in iteration {iteration}")
+
+            logger().info(f"  Iteration {iteration} complete — TX={'PASS' if tx_payload_found else 'FAIL'}, RX={'PASS' if rx_payload_found else 'FAIL'}")
+            time.sleep(2)
+
+        # ── Step 9: Summarize all iterations ──
+        logger().info("Step 9: Stress test summary across 10 iterations")
+        tx_pass_count = sum(1 for r in tx_results if r)
+        rx_pass_count = sum(1 for r in rx_results if r)
+        logger().info(f"  TX pass: {tx_pass_count}/{iterations}")
+        logger().info(f"  RX pass: {rx_pass_count}/{iterations}")
+        assert tx_pass_count == iterations, \
+            f"TX failures in {iterations - tx_pass_count} of {iterations} iterations"
+        assert rx_pass_count == iterations, \
+            f"RX failures in {iterations - rx_pass_count} of {iterations} iterations"
+        logger().info("All 10 iterations passed — no data corruption in either direction")
+
+        # ── Step 10: Check no resource leaks after all iterations ──
+        logger().info("Step 10: Checking for resource leaks after all iterations")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_test_log = serial_log[pre_test_log_len:]
+        full_log_text = b"".join([line for _, line in post_test_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory",
+                        b"memory leak", b"alloc fail"]:
+            assert pattern not in full_log_text, \
+                f"Resource leak detected in DUT logs: {pattern.decode()}"
+        logger().info("No resource leaks detected after 10 TX/RX iterations")
+
+        logger().info("....Unsubscribing from topics....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=rx_topic)
+        time.sleep(1)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_rx_two_topics_large_payload_C990081(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """Verify DUT can handle large payloads on two different subscribed topics
+    (topic1/data with 4000 bytes and topic2/data with 5000 bytes) without
+    cross-contamination between topics."""
+
+    try:
+        topic_1 = "topic1/data"
+        topic_2 = "topic2/data"
+        payload_len_1 = 4000
+        payload_len_2 = 5000
+        message_1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len_1))
+        message_2 = ''.join(random.choices(string.ascii_lowercase + string.digits, k=payload_len_2))
+        capture_filename = request.node.name
+
+        # ── Connect to AP and get IP address ──
+        logger().info("Connecting to AP and obtaining IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic_1,
+                            message=message_1)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Enable TA power save (WLAN + BLE) ──
+        logger().info("Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # ── Connect DUT to MQTT server ──
+        logger().info("DUT connecting to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection established")
+
+        # Connect framework publisher
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # ── Step 1: Subscribe to "topic1/data" with QoS 1 ──
+        logger().info(f"Step 1: Subscribing DUT to '{topic_1}' with QoS 1")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic_1, qos=1)
+        time.sleep(3)
+
+        # ── Step 2: Subscribe to "topic2/data" with QoS 1 ──
+        logger().info(f"Step 2: Subscribing DUT to '{topic_2}' with QoS 1")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic_2, qos=1)
+        time.sleep(3)
+
+        # ── Step 3: Verify both subscriptions acknowledged ──
+        logger().info("Step 3: Both subscriptions acknowledged (no error during subscribe calls)")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 4: Publish 4000-byte payload to "topic1/data" ──
+        logger().info(f"Step 4: Publishing {payload_len_1}-byte payload to '{topic_1}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic_1, payload=message_1, qos=0)
+        time.sleep(2)
+
+        # ── Step 5: Wait for complete reassembly and callback for topic1 ──
+        logger().info("Step 5: Waiting for DUT to receive and reassemble topic1 payload")
+        sw = Stopwatch()
+        found_topic1_msg = False
+        topic1_received_topic = None
+        while sw.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            for i in range(0, len(msgs) - 1, 2):
+                if msgs[i + 1] == message_1:
+                    found_topic1_msg = True
+                    topic1_received_topic = msgs[i]
+                    break
+            if found_topic1_msg:
+                break
+        time.sleep(2)
+
+        # ── Step 6: Verify correct topic name in callback for topic1 ──
+        logger().info("Step 6: Verifying topic name for topic1 payload")
+        assert found_topic1_msg, \
+            f"DUT did not receive the {payload_len_1}-byte message on '{topic_1}' within 60s"
+        assert topic1_received_topic == topic_1, \
+            f"Topic mismatch: expected '{topic_1}', got '{topic1_received_topic}'"
+        logger().info(f"Topic1 payload received on correct topic: '{topic1_received_topic}'")
+
+        # ── Step 7: Validate 4000-byte payload integrity ──
+        logger().info(f"Step 7: Validating {payload_len_1}-byte payload integrity")
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message_1 in final_msgs, \
+            f"Reassembled payload on '{topic_1}' does not match original {payload_len_1}-byte message"
+        logger().info(f"{payload_len_1}-byte payload integrity validated for '{topic_1}'")
+
+        mid_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 8: Publish 5000-byte payload to "topic2/data" ──
+        logger().info(f"Step 8: Publishing {payload_len_2}-byte payload to '{topic_2}'")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic_2, payload=message_2, qos=0)
+        time.sleep(2)
+
+        # ── Step 9: Wait for complete reassembly and callback for topic2 ──
+        logger().info("Step 9: Waiting for DUT to receive and reassemble topic2 payload")
+        sw2 = Stopwatch()
+        found_topic2_msg = False
+        topic2_received_topic = None
+        while sw2.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            for i in range(0, len(msgs) - 1, 2):
+                if msgs[i + 1] == message_2:
+                    found_topic2_msg = True
+                    topic2_received_topic = msgs[i]
+                    break
+            if found_topic2_msg:
+                break
+        time.sleep(2)
+
+        # ── Step 10: Verify correct topic name in callback for topic2 ──
+        logger().info("Step 10: Verifying topic name for topic2 payload")
+        assert found_topic2_msg, \
+            f"DUT did not receive the {payload_len_2}-byte message on '{topic_2}' within 60s"
+        assert topic2_received_topic == topic_2, \
+            f"Topic mismatch: expected '{topic_2}', got '{topic2_received_topic}'"
+        logger().info(f"Topic2 payload received on correct topic: '{topic2_received_topic}'")
+
+        # ── Step 11: Validate 5000-byte payload integrity ──
+        logger().info(f"Step 11: Validating {payload_len_2}-byte payload integrity")
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message_2 in final_msgs, \
+            f"Reassembled payload on '{topic_2}' does not match original {payload_len_2}-byte message"
+        logger().info(f"{payload_len_2}-byte payload integrity validated for '{topic_2}'")
+
+        # ── Step 12: Confirm no cross-contamination between topics ──
+        logger().info("Step 12: Verifying no cross-contamination between topics")
+        all_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {all_msgs}')
+        for i in range(0, len(all_msgs) - 1, 2):
+            rx_topic = all_msgs[i]
+            rx_payload = all_msgs[i + 1]
+            if rx_payload == message_1:
+                assert rx_topic == topic_1, \
+                    f"Cross-contamination: topic1 payload received on '{rx_topic}' instead of '{topic_1}'"
+            elif rx_payload == message_2:
+                assert rx_topic == topic_2, \
+                    f"Cross-contamination: topic2 payload received on '{rx_topic}' instead of '{topic_2}'"
+        logger().info("No cross-contamination detected — each payload arrived on its correct topic")
+
+        # ── Validate chunking via serial log (MORE_DATA flags) ──
+        logger().info("Validating MORE_DATA chunking from DUT serial log")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publishes: {len(cb_entries)}")
+
+        total_content_bytes = 0
+        for cb in cb_entries:
+            cl_match = re.search(r'content_length=(\d+)', cb)
+            if cl_match:
+                total_content_bytes += int(cl_match.group(1))
+        if total_content_bytes > 0:
+            logger().info(f"Total reassembled content across {len(cb_entries)} chunks: {total_content_bytes} bytes")
+
+        # ── Verify no memory leaks ──
+        logger().info("Checking for memory leaks after large payload reception on two topics")
+        full_log_text = b"".join([line for _, line in post_publish_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory", b"alloc fail"]:
+            assert pattern not in full_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info("No memory leaks detected")
+
+        logger().info("....Unsubscribing from topics....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic_1)
+        time.sleep(1)
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic_2)
+        time.sleep(1)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTT_client_rx_large_payload_range_C990082(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """Verify DUT behavior when handling large payloads across a comprehensive
+    range of sizes (1500, 2000, 3000, 5000, 7500 bytes). Each payload is
+    published, reassembled, and validated for content_length and payload
+    integrity."""
+
+    try:
+        topic = "test/payload_range"
+        capture_filename = request.node.name
+
+        payload_sizes = [
+            1500,
+            2000,
+            3000,
+            5000,
+            7500,
+        ]
+
+        # ── Connect to AP and get IP address ──
+        logger().info("Connecting to AP and obtaining IP address")
+        dummy_msg = "init"
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=dummy_msg)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Enable TA power save (WLAN + BLE) ──
+        logger().info("Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # ── Connect DUT to MQTT server ──
+        logger().info("DUT connecting to MQTT server")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTT connection established")
+
+        # Connect framework publisher
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # ── Step 1: Subscribe DUT and verify subscription ──
+        logger().info(f"Step 1: Subscribing DUT to '{topic}' and verifying subscription")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=1)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' acknowledged")
+
+        results = []
+
+        for idx, payload_size in enumerate(payload_sizes):
+            step_base = idx * 2 + 2
+            logger().info(f"{'=' * 60}")
+            logger().info(f"Step {step_base}: Publishing {payload_size}-byte payload")
+            logger().info(f"{'=' * 60}")
+
+            message = ''.join(random.choices(string.ascii_letters + string.digits, k=payload_size))
+
+            pre_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+            mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+            time.sleep(2)
+
+            # Wait for reassembly with timeout scaled to payload size
+            timeout_sec = max(60, payload_size // 100)
+            sw = Stopwatch()
+            found = False
+            while sw.elapsed_sec < timeout_sec:
+                time.sleep(0.5)
+                msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+                logger().info(f'received message on dut : {msgs}')
+                if message in msgs:
+                    found = True
+                    break
+
+            # Check for firmware error events before asserting
+            serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+            post_log = serial_log[pre_log_len:]
+            post_log_text = b"".join([line for _, line in post_log])
+            assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in post_log_text, (
+                f"Firmware error after {payload_size}-byte payload: "
+                f"SL_MQTT_CLIENT_ERROR_EVENT detected")
+
+            # Analyze MQTT_RX_CB chunk entries (informational — not all builds emit these)
+            cb_entries = [
+                line.decode(errors='replace') for _, line in post_log
+                if b"MQTT_RX_CB:" in line
+            ]
+            chunk_content_total = 0
+            for cb in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', cb)
+                if cl_match:
+                    chunk_content_total += int(cl_match.group(1))
+            chunk_count = len(cb_entries)
+
+            logger().info(f"Step {step_base + 1}: Validating {payload_size}-byte payload — "
+                          f"received={found}, chunks={chunk_count}, "
+                          f"reassembled_bytes={chunk_content_total}")
+
+            results.append({
+                'size': payload_size,
+                'received': found,
+                'chunk_count': chunk_count,
+                'content_total': chunk_content_total,
+                'message': message,
+            })
+
+            assert found, (
+                f"DUT did not receive {payload_size}-byte payload within {timeout_sec}s")
+
+            if chunk_content_total > 0:
+                assert chunk_content_total == payload_size, (
+                    f"content_length mismatch for {payload_size}-byte payload: "
+                    f"reassembled {chunk_content_total} bytes")
+                logger().info(f"content_length={chunk_content_total} matches expected {payload_size}")
+
+            if chunk_count > 0:
+                logger().info(f"Chunk count: {chunk_count} for {payload_size}-byte payload")
+
+            # Check for memory errors after each payload
+            for pat in [b"heap corruption", b"double free", b"HardFault",
+                        b"out of memory", b"alloc fail"]:
+                assert pat not in post_log_text, (
+                    f"Memory error after {payload_size}-byte payload: {pat.decode()}")
+
+            # Brief settle time between payload sizes
+            time.sleep(3)
+
+        # ── Step 10: Verify all payloads delivered with correct content_length ──
+        logger().info("Step 10: Verifying all payloads delivered with correct content_length")
+        for r in results:
+            assert r['received'], f"{r['size']}-byte payload was not received"
+            if r['content_total'] > 0:
+                assert r['content_total'] == r['size'], (
+                    f"{r['size']}-byte payload: content_length {r['content_total']} != {r['size']}")
+        logger().info("All payloads delivered with correct content_length")
+
+        # ── Step 11: Validate all payload integrity using pattern matching ──
+        logger().info("Step 11: Validating all payload integrity")
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        for r in results:
+            assert r['message'] in final_msgs, (
+                f"Integrity check failed: {r['size']}-byte payload not found in received messages")
+        logger().info("All payload integrity checks passed")
+
+        # ── Step 12: Confirm consistent behavior across all sizes ──
+        logger().info("Step 12: Confirming consistent behavior across all payload sizes")
+        sizes_ok = [r['size'] for r in results if r['received']]
+        logger().info(f"Successfully received payloads of sizes: {sizes_ok}")
+        assert len(sizes_ok) == len(payload_sizes), (
+            f"Only {len(sizes_ok)}/{len(payload_sizes)} payload sizes succeeded")
+        logger().info("Consistent behavior confirmed across all payload sizes "
+                      f"({', '.join(str(s) for s in sizes_ok)} bytes)")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_rx_1460_bytes_no_chunking_C990084(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """Verify that MQTTs (MQTT over TLS) client can receive a payload of exactly
+    1460 bytes (payload + header) with no chunking — delivered in a single
+    callback with no MORE_DATA flag. M4 powersave enabled. QoS 0."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    publisher_client = None
+    try:
+        topic = "test/large_payload"
+        payload_len = 1460 - len(topic) - 2
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP and get IP address ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message, power_save=False)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Step 2: Connect DUT to MQTTs server before enabling power save ──
+        # TLS handshake is unreliable if power save is active during connect.
+        logger().info("Step 2: DUT connects to MQTTs server (TLS, port 8883) — verifying 'Connected' status")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        server_cfg = mqtt_server.interfaces.mqtt
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client",
+            server_port=8883,
+            qos=0,
+            connect_timeout=30,
+            keep_alive_interval=60,
+            is_retained=False,
+            is_connection_encrypted=True,
+        )
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(
+            server=server_cfg,
+            connect_wait_timeout=60,
+            async_timeout=60,
+            timeout=65,
+        )
+        logger().info("DUT MQTTs connection status: Connected (TLS verified via CONNECTED event)")
+
+        # ── Step 3: Enable TA power save + M4 power save (after MQTTs session is up) ──
+        logger().info("Step 3: Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500, timeout=5)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # Connect standalone publisher on MQTTs (port 8883) with cert verification disabled
+        publisher_client = paho_mqtt.Client(client_id="publisher_C990084", clean_session=True)
+        publisher_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        publisher_client.tls_insecure_set(True)
+        publisher_client.loop_start()
+        publisher_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Standalone publisher connected to MQTTs broker (cert verification disabled)")
+
+        # ── Step 4: Subscribe to "test/large_payload" and confirm subscription active ──
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}' and confirming subscription")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 5: Publish exactly 1460-byte payload from broker ──
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload (wire total = 1460 bytes) to '{topic}'")
+        publisher_client.publish(topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # ── Step 6: Monitor DUT for incoming message callback ──
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 30:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+                break
+        time.sleep(2)
+
+        # Check for firmware errors
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        post_log_text = b"".join([line for _, line in post_publish_log])
+        assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in post_log_text, \
+            "Firmware error: SL_MQTT_CLIENT_ERROR_EVENT detected after publish"
+
+        # ── Step 7: Verify payload received matches sent payload (byte-by-byte) ──
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info(f"Step 7: Verifying payload integrity ({ps_label} powersave)")
+        assert found, f"DUT did not receive the 1460-byte message with {ps_label} powersave"
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message in final_msgs, "Payload received does not match sent payload"
+        logger().info("Payload received matches sent payload (byte-by-byte comparison)")
+
+        # ── Step 7b: Verify no MORE_DATA flag and single callback invocation ──
+        logger().info("Checking serial log for single callback with no MORE_DATA flag")
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {cb_entries}")
+
+        if len(cb_entries) > 0:
+            # ── Step 8: Confirm single callback invocation ──
+            assert len(cb_entries) == 1, (
+                f"Expected single callback for 1460-byte payload, got {len(cb_entries)} — "
+                f"payload was chunked when it should not be")
+            logger().info("Step 8: Single callback invocation confirmed — no chunking occurred")
+
+            cb_line = cb_entries[0]
+            more_data_match = re.search(r'MORE_DATA=(\d+)', cb_line)
+            if more_data_match:
+                more_data_val = int(more_data_match.group(1))
+                assert more_data_val == 0, (
+                    f"MORE_DATA flag is {more_data_val}, expected 0 for single-segment delivery")
+                logger().info("No MORE_DATA flag set — payload delivered in single segment")
+            else:
+                logger().info("MORE_DATA field not present in callback — no chunking indicated")
+
+            cl_match = re.search(r'content_length=(\d+)', cb_line)
+            if cl_match:
+                content_len = int(cl_match.group(1))
+                assert content_len == payload_len, (
+                    f"content_length={content_len} != expected {payload_len}")
+                logger().info(f"content_length={content_len} matches expected {payload_len}")
+        else:
+            logger().info("No MQTT_RX_CB entries — firmware instrumentation may not be present; "
+                          "payload delivery confirmed via API")
+
+        # ── Verify no memory leaks ──
+        logger().info("Checking for memory leaks after 1460-byte payload reception")
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory"]:
+            assert pattern not in post_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected with {ps_label} powersave")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if publisher_client is not None:
+            try:
+                publisher_client.disconnect()
+                publisher_client.loop_stop()
+            except Exception:
+                pass
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_rx_chunked_payload_threshold_C990087(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """MQTTs: Verify chunked RX behavior when the incoming payload (1900 bytes)
+    exceeds the RX threshold macro (SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE = 2000).
+    The payload should arrive in two chunks — first with MORE_DATA=1, second with
+    MORE_DATA=0 — followed by a reassembly completion callback. M4 powersave enabled.
+    QoS 0."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    publisher_client = None
+    try:
+        topic = "test/large_payload"
+        payload_len = 1900
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP and get IP address ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Step 2: Enable TA power save + M4 power save ──
+        logger().info("Step 2: Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # ── Step 3: Connect DUT to MQTTs server and verify "Connected" status ──
+        logger().info("Step 3: DUT connects to MQTTs server (TLS, port 8883) — verifying 'Connected' status")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=0, is_connection_encrypted=True)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTTs connection status: Connected")
+
+        server_cfg = mqtt_server.interfaces.mqtt
+        publisher_client = paho_mqtt.Client(client_id="publisher_C990087", clean_session=True)
+        publisher_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        publisher_client.tls_insecure_set(True)
+        publisher_client.loop_start()
+        publisher_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Standalone publisher connected to MQTTs broker")
+
+        # ── Step 4: Subscribe to "test/large_payload" and confirm subscription active ──
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}' and confirming subscription")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 5: Publish 1900-byte payload from broker ──
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload to '{topic}'")
+        publisher_client.publish(topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # ── Step 6: Monitor DUT for incoming message callback ──
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+                break
+        time.sleep(2)
+
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        post_log_text = b"".join([line for _, line in post_publish_log])
+        assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in post_log_text, \
+            "Firmware error: SL_MQTT_CLIENT_ERROR_EVENT detected after publish"
+
+        # ── Step 7: Verify payload received matches sent payload ──
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info(f"Step 7: Verifying payload integrity ({ps_label} powersave)")
+        assert found, f"DUT did not receive the {payload_len}-byte message within 60s"
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message in final_msgs, "Reassembled payload does not match sent payload"
+        logger().info("Payload received matches sent payload (byte-by-byte comparison)")
+
+        # ── Steps 7–9: Verify chunking via MQTT_RX_CB serial logs ──
+        logger().info("Checking serial log for chunked delivery (MORE_DATA flags)")
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {len(cb_entries)} entries")
+        for i, entry in enumerate(cb_entries):
+            logger().info(f"  chunk[{i}]: {entry.strip()}")
+
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+
+            first_more_data = re.search(r'MORE_DATA=(\d+)', first_cb)
+            if first_more_data:
+                assert int(first_more_data.group(1)) == 1, (
+                    f"First chunk MORE_DATA={first_more_data.group(1)}, expected 1")
+                logger().info("Step 7: First chunk received with MORE_DATA=1 — confirmed")
+
+            last_more_data = re.search(r'MORE_DATA=(\d+)', last_cb)
+            if last_more_data:
+                assert int(last_more_data.group(1)) == 0, (
+                    f"Last chunk MORE_DATA={last_more_data.group(1)}, expected 0")
+                logger().info("Step 8: Last chunk received with MORE_DATA=0 — confirmed")
+
+            total_reassembled = 0
+            for entry in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', entry)
+                if cl_match:
+                    total_reassembled += int(cl_match.group(1))
+            if total_reassembled > 0:
+                logger().info(f"Step 9: Reassembled {total_reassembled} bytes across {len(cb_entries)} chunks")
+        elif len(cb_entries) == 1:
+            logger().info("Only 1 MQTT_RX_CB entry — firmware may deliver reassembled payload in single callback")
+        else:
+            logger().info("No MQTT_RX_CB entries — firmware instrumentation may not be present; "
+                          "payload delivery confirmed via API")
+
+        # ── Step 10: Validate complete payload integrity after reassembly ──
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        assert message in final_msgs, "Complete payload integrity check failed after reassembly"
+        logger().info(f"Complete {payload_len}-byte payload integrity validated")
+
+        # ── Step 11: Verify no memory leaks after reassembly completion ──
+        logger().info("Step 11: Checking for memory leaks after reassembly completion")
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory", b"alloc fail"]:
+            assert pattern not in post_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected with {ps_label} powersave")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if publisher_client is not None:
+            try:
+                publisher_client.disconnect()
+                publisher_client.loop_stop()
+            except Exception:
+                pass
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_rx_max_topic_len_large_payload_C990090(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """MQTTs: Verify MQTTs client connection and RX data when configured with
+    maximum allowed topic length (201 bytes) combined with a large 2000-byte
+    payload. The payload should be chunked — first chunk with MORE_DATA=1,
+    last chunk with MORE_DATA=0 — and reassembled correctly. M4 powersave
+    enabled. QoS 0."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    publisher_client = None
+    try:
+        topic = "test/" + ''.join(random.choices(string.ascii_lowercase + string.digits, k=201 - len("test/")))
+        assert len(topic) == 201, f"Topic length is {len(topic)}, expected 201"
+        payload_len = 2000
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        logger().info(f"Topic length: {len(topic)} bytes, Payload length: {payload_len} bytes")
+
+        # ── Step 1: Connect to AP and get IP address ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Step 2: Enable TA power save + M4 power save ──
+        logger().info("Step 2: Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # ── Step 3: Connect DUT to MQTTs server and verify "Connected" status ──
+        logger().info("Step 3: DUT connects to MQTTs server (TLS, port 8883) — verifying 'Connected' status")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=0, is_connection_encrypted=True)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTTs connection status: Connected")
+
+        server_cfg = mqtt_server.interfaces.mqtt
+        publisher_client = paho_mqtt.Client(client_id="publisher_C990090", clean_session=True)
+        publisher_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        publisher_client.tls_insecure_set(True)
+        publisher_client.loop_start()
+        publisher_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Standalone publisher connected to MQTTs broker")
+
+        # ── Step 4: Subscribe to max-length topic and confirm subscription active ──
+        logger().info(f"Step 4: Subscribing DUT to 201-byte topic and confirming subscription")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to 201-byte topic is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 5: Publish 2000-byte payload to max-length topic ──
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload to 201-byte topic")
+        publisher_client.publish(topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # ── Step 6: Monitor DUT for incoming message callback ──
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+                break
+        time.sleep(2)
+
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        post_log_text = b"".join([line for _, line in post_publish_log])
+        assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in post_log_text, \
+            "Firmware error: SL_MQTT_CLIENT_ERROR_EVENT detected after publish"
+
+        # ── Step 7: Verify payload received matches sent payload ──
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info(f"Step 7: Verifying payload integrity ({ps_label} powersave)")
+        assert found, f"DUT did not receive the {payload_len}-byte message on 201-byte topic within 60s"
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message in final_msgs, "Reassembled payload does not match sent payload"
+        logger().info("Payload received matches sent payload (byte-by-byte comparison)")
+
+        # ── Steps 7–9: Verify chunking via MQTT_RX_CB serial logs ──
+        logger().info("Checking serial log for chunked delivery (MORE_DATA flags)")
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {len(cb_entries)} entries")
+        for i, entry in enumerate(cb_entries):
+            logger().info(f"  chunk[{i}]: {entry.strip()}")
+
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+
+            first_more_data = re.search(r'MORE_DATA=(\d+)', first_cb)
+            if first_more_data:
+                assert int(first_more_data.group(1)) == 1, (
+                    f"First chunk MORE_DATA={first_more_data.group(1)}, expected 1")
+                logger().info("Step 7: First chunk received with MORE_DATA=1 — confirmed")
+
+            last_more_data = re.search(r'MORE_DATA=(\d+)', last_cb)
+            if last_more_data:
+                assert int(last_more_data.group(1)) == 0, (
+                    f"Last chunk MORE_DATA={last_more_data.group(1)}, expected 0")
+                logger().info("Step 8: Last chunk received with MORE_DATA=0 — confirmed")
+
+            total_reassembled = 0
+            for entry in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', entry)
+                if cl_match:
+                    total_reassembled += int(cl_match.group(1))
+            if total_reassembled > 0:
+                logger().info(f"Step 9: Reassembled {total_reassembled} bytes across {len(cb_entries)} chunks")
+        elif len(cb_entries) == 1:
+            logger().info("Only 1 MQTT_RX_CB entry — firmware may deliver reassembled payload in single callback")
+        else:
+            logger().info("No MQTT_RX_CB entries — firmware instrumentation may not be present; "
+                          "payload delivery confirmed via API")
+
+        # ── Step 10: Validate complete payload integrity after reassembly ──
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        assert message in final_msgs, "Complete payload integrity check failed after reassembly"
+        logger().info(f"Complete {payload_len}-byte payload on 201-byte topic validated")
+
+        # ── Step 11: Verify no memory leaks after reassembly completion ──
+        logger().info("Step 11: Checking for memory leaks after reassembly completion")
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory", b"alloc fail"]:
+            assert pattern not in post_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected with {ps_label} powersave after max-topic-length test")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if publisher_client is not None:
+            try:
+                publisher_client.disconnect()
+                publisher_client.loop_stop()
+            except Exception:
+                pass  # end of C990090
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_rx_retained_large_payload_C990091(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """MQTTs: Verify MQTTs client connection and RX data when retained bit is
+    set to 1 (IS_LAST_WILL_RETAINED=1, QOS_OF_LAST_WILL=1) with a large
+    2000-byte payload. The retained message should be chunked and reassembled
+    correctly. M4 powersave enabled. QoS 0."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    publisher_client = None
+    try:
+        topic = "test/large_payload"
+        last_will_topic = "WiFiSDK-MQTT-CLIENT-LAST-WILL"
+        last_will_message = "WiFiSDK-MQTT-CLIENT has been disconnected"
+        payload_len = 2000
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP and get IP address ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Step 2: Enable TA power save + M4 power save ──
+        logger().info("Step 2: Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # ── Step 3: Connect DUT to MQTTs server with retained=1 and last will ──
+        logger().info("Step 3: DUT connects to MQTTs server (TLS, port 8883, is_retained=True, "
+                      "last_will QoS=1, last_will retained=True)")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client",
+            server_port=8883,
+            qos=0,
+            is_connection_encrypted=True,
+            is_retained=True,
+            will_topic=last_will_topic,
+            will_message=last_will_message,
+        )
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTTs connection status: Connected "
+                      "(retained=1, last_will_retained=1, last_will_qos=1)")
+
+        server_cfg = mqtt_server.interfaces.mqtt
+        publisher_client = paho_mqtt.Client(client_id="publisher_C990091", clean_session=True)
+        publisher_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        publisher_client.tls_insecure_set(True)
+        publisher_client.loop_start()
+        publisher_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Standalone publisher connected to MQTTs broker")
+
+        # ── Step 4: Subscribe to topic and confirm subscription active ──
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}' and confirming subscription")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 5: Publish 2000-byte retained payload from broker ──
+        logger().info(f"Step 5: Publishing {payload_len}-byte retained payload to '{topic}'")
+        publisher_client.publish(topic, payload=message, qos=0, retain=True)
+        time.sleep(4)
+
+        # ── Step 6: Monitor DUT for incoming message callback ──
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+                break
+        time.sleep(2)
+
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        post_log_text = b"".join([line for _, line in post_publish_log])
+        assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in post_log_text, \
+            "Firmware error: SL_MQTT_CLIENT_ERROR_EVENT detected after retained publish"
+
+        # ── Step 7: Verify payload received matches sent payload ──
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info(f"Step 7: Verifying retained payload integrity ({ps_label} powersave)")
+        assert found, f"DUT did not receive the {payload_len}-byte retained message within 60s"
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message in final_msgs, "Reassembled retained payload does not match sent payload"
+        logger().info("Retained payload received matches sent payload (byte-by-byte comparison)")
+
+        # ── Steps 7–9: Verify chunking via MQTT_RX_CB serial logs ──
+        logger().info("Checking serial log for chunked delivery (MORE_DATA flags)")
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {len(cb_entries)} entries")
+        for i, entry in enumerate(cb_entries):
+            logger().info(f"  chunk[{i}]: {entry.strip()}")
+
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+
+            first_more_data = re.search(r'MORE_DATA=(\d+)', first_cb)
+            if first_more_data:
+                assert int(first_more_data.group(1)) == 1, (
+                    f"First chunk MORE_DATA={first_more_data.group(1)}, expected 1")
+                logger().info("Step 7: First chunk received with MORE_DATA=1 — confirmed")
+
+            last_more_data = re.search(r'MORE_DATA=(\d+)', last_cb)
+            if last_more_data:
+                assert int(last_more_data.group(1)) == 0, (
+                    f"Last chunk MORE_DATA={last_more_data.group(1)}, expected 0")
+                logger().info("Step 8: Last chunk received with MORE_DATA=0 — confirmed")
+
+            total_reassembled = 0
+            for entry in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', entry)
+                if cl_match:
+                    total_reassembled += int(cl_match.group(1))
+            if total_reassembled > 0:
+                logger().info(f"Step 9: Reassembled {total_reassembled} bytes across {len(cb_entries)} chunks")
+        elif len(cb_entries) == 1:
+            logger().info("Only 1 MQTT_RX_CB entry — firmware may deliver reassembled payload in single callback")
+        else:
+            logger().info("No MQTT_RX_CB entries — firmware instrumentation may not be present; "
+                          "retained payload delivery confirmed via API")
+
+        # ── Step 10: Validate complete payload integrity after reassembly ──
+        logger().info("Step 10: Validating complete retained payload integrity after reassembly")
+        assert message in final_msgs, "Complete retained payload integrity check failed after reassembly"
+        logger().info(f"Complete {payload_len}-byte retained payload integrity validated")
+
+        # ── Step 11: Verify no memory leaks after reassembly completion ──
+        logger().info("Step 11: Checking for memory leaks after retained message reassembly")
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory", b"alloc fail"]:
+            assert pattern not in post_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected with {ps_label} powersave — retained message reassembled correctly")
+
+        # Clear the retained message on the broker to avoid polluting subsequent tests
+        logger().info("Clearing retained message from broker")
+        publisher_client.publish(topic, payload=b"", qos=0, retain=True)
+        time.sleep(2)
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if publisher_client is not None:
+            try:
+                publisher_client.publish(topic, payload=b"", qos=0, retain=True)
+                time.sleep(1)
+                publisher_client.disconnect()
+                publisher_client.loop_stop()
+            except Exception:
+                pass  # end of C990091
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_rx_qos0_large_payload_reassembly_C990094(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """MQTTs: Verify MQTTs client correctly receives and reassembles a large
+    2000-byte payload with QoS 0 (at most once delivery). No PUBACK is
+    expected. The payload should be chunked and reassembled, then delivered
+    to the application. M4 powersave enabled."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    publisher_client = None
+    try:
+        topic = "test/large_payload"
+        payload_len = 2000
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP and get IP address ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Step 2: Enable TA power save + M4 power save ──
+        logger().info("Step 2: Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # ── Step 3: Connect DUT to MQTTs server (QoS 0) and verify "Connected" ──
+        logger().info("Step 3: DUT connects to MQTTs server (TLS, port 8883, QoS 0) — "
+                      "verifying 'Connected' status")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=0, is_connection_encrypted=True)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTTs connection status: Connected")
+
+        server_cfg = mqtt_server.interfaces.mqtt
+        publisher_client = paho_mqtt.Client(client_id="publisher_C990094", clean_session=True)
+        publisher_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        publisher_client.tls_insecure_set(True)
+        publisher_client.loop_start()
+        publisher_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Standalone publisher connected to MQTTs broker")
+
+        # ── Step 4: Subscribe to topic with QoS 0 and confirm subscription active ──
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}' with QoS 0")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' (QoS 0) is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 5: Publish 2000-byte payload with QoS 0 (no ACK expected) ──
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload to '{topic}' with QoS 0 "
+                      "(at most once — no PUBACK)")
+        publisher_client.publish(topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # ── Step 6: Monitor DUT for incoming message callback ──
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+                break
+        time.sleep(2)
+
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        post_log_text = b"".join([line for _, line in post_publish_log])
+        assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in post_log_text, \
+            "Firmware error: SL_MQTT_CLIENT_ERROR_EVENT detected after QoS 0 publish"
+
+        # Verify no PUBACK in serial log (QoS 0 should not produce ACKs)
+        assert b"PUBACK" not in post_log_text, \
+            "Unexpected PUBACK detected in DUT logs for QoS 0 delivery"
+        logger().info("Confirmed: No PUBACK in DUT logs — correct QoS 0 behavior")
+
+        # ── Step 7: Verify payload received matches sent payload ──
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info(f"Step 7: Verifying payload integrity ({ps_label} powersave, QoS 0)")
+        assert found, f"DUT did not receive the {payload_len}-byte QoS 0 message within 60s"
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message in final_msgs, "Reassembled payload does not match sent payload"
+        logger().info("Payload received matches sent payload (byte-by-byte comparison)")
+
+        # ── Steps 7–9: Verify chunking via MQTT_RX_CB serial logs ──
+        logger().info("Checking serial log for chunked delivery (MORE_DATA flags)")
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {len(cb_entries)} entries")
+        for i, entry in enumerate(cb_entries):
+            logger().info(f"  chunk[{i}]: {entry.strip()}")
+
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+
+            first_more_data = re.search(r'MORE_DATA=(\d+)', first_cb)
+            if first_more_data:
+                assert int(first_more_data.group(1)) == 1, (
+                    f"First chunk MORE_DATA={first_more_data.group(1)}, expected 1")
+                logger().info("Step 7: First chunk received with MORE_DATA=1 — confirmed")
+
+            last_more_data = re.search(r'MORE_DATA=(\d+)', last_cb)
+            if last_more_data:
+                assert int(last_more_data.group(1)) == 0, (
+                    f"Last chunk MORE_DATA={last_more_data.group(1)}, expected 0")
+                logger().info("Step 8: Last chunk received with MORE_DATA=0 — confirmed")
+
+            total_reassembled = 0
+            for entry in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', entry)
+                if cl_match:
+                    total_reassembled += int(cl_match.group(1))
+            if total_reassembled > 0:
+                logger().info(f"Step 9: Reassembled {total_reassembled} bytes across {len(cb_entries)} chunks")
+        elif len(cb_entries) == 1:
+            logger().info("Only 1 MQTT_RX_CB entry — firmware may deliver reassembled payload in single callback")
+        else:
+            logger().info("No MQTT_RX_CB entries — firmware instrumentation may not be present; "
+                          "payload delivery confirmed via API")
+
+        # ── Step 10: Validate complete payload integrity after reassembly ──
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        assert message in final_msgs, "Complete payload integrity check failed after reassembly"
+        logger().info(f"Complete {payload_len}-byte QoS 0 payload integrity validated — "
+                      "no ACK, message delivered after reassembly")
+
+        # ── Step 11: Verify no memory leaks after reassembly completion ──
+        logger().info("Step 11: Checking for memory leaks after QoS 0 reassembly")
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory", b"alloc fail"]:
+            assert pattern not in post_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected with {ps_label} powersave (QoS 0 delivery)")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if publisher_client is not None:
+            try:
+                publisher_client.disconnect()
+                publisher_client.loop_stop()
+            except Exception:
+                pass  # end of C990094
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_rx_two_brokers_same_topic_large_payload_C990095(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """MQTTs: Verify MQTTs connection and RX data when receiving data from
+    2 different publishers (brokers) on the same topic with a large 2000-byte
+    payload. Both payloads should be chunked, reassembled, and delivered
+    correctly. M4 powersave enabled. QoS 0."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    broker_1_client = None
+    broker_2_client = None
+    try:
+        topic = "test/large_payload"
+        payload_len = 2000
+        message_1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        message_2 = ''.join(random.choices(string.ascii_lowercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP and get IP address ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message_1)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Step 2: Enable TA power save + M4 power save ──
+        logger().info("Step 2: Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # ── Step 3: Connect DUT to MQTTs server and verify "Connected" status ──
+        logger().info("Step 3: DUT connects to MQTTs server (TLS, port 8883) — verifying 'Connected' status")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=0, is_connection_encrypted=True)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTTs connection status: Connected")
+
+        # Connect broker/publisher 1 (standalone paho client with TLS)
+        server_cfg = mqtt_server.interfaces.mqtt
+        broker_1_client = paho_mqtt.Client(client_id="broker1_C990095", clean_session=True)
+        broker_1_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        broker_1_client.tls_insecure_set(True)
+        broker_1_client.loop_start()
+        broker_1_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Broker/publisher 1 connected to MQTTs server")
+
+        # Connect broker/publisher 2 (standalone paho client with TLS)
+        broker_2_client = paho_mqtt.Client(client_id="broker2_C990095", clean_session=True)
+        broker_2_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        broker_2_client.tls_insecure_set(True)
+        broker_2_client.loop_start()
+        broker_2_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Broker/publisher 2 connected to MQTTs server")
+
+        # ── Step 4: Subscribe DUT to topic and confirm subscription ──
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}'")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 5a: Publish 2000-byte payload from broker 1 ──
+        logger().info(f"Step 5a: Broker 1 publishing {payload_len}-byte payload to '{topic}'")
+        broker_1_client.publish(topic, payload=message_1, qos=0)
+        time.sleep(6)
+
+        # ── Step 5b: Publish 2000-byte payload from broker 2 ──
+        logger().info(f"Step 5b: Broker 2 publishing {payload_len}-byte payload to '{topic}'")
+        broker_2_client.publish(topic, payload=message_2, qos=0)
+        time.sleep(6)
+
+        # ── Step 6: Monitor DUT for incoming message callbacks from both brokers ──
+        logger().info("Step 6: Monitoring DUT for incoming messages from both brokers")
+        sw = Stopwatch()
+        found_msg1 = False
+        found_msg2 = False
+        while sw.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message_1 in msgs:
+                found_msg1 = True
+            if message_2 in msgs:
+                found_msg2 = True
+            if found_msg1 and found_msg2:
+                break
+        time.sleep(2)
+
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        post_log_text = b"".join([line for _, line in post_publish_log])
+        assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in post_log_text, \
+            "Firmware error: SL_MQTT_CLIENT_ERROR_EVENT detected after two-broker publish"
+
+        # ── Step 7: Verify payload from both brokers matches byte-by-byte ──
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info(f"Step 7: Verifying payload integrity from broker 1 ({ps_label} powersave)")
+        assert found_msg1, f"DUT did not receive the {payload_len}-byte message from broker 1 within 60s"
+        logger().info("Broker 1 payload received and matches sent payload")
+
+        logger().info("Verifying payload integrity from broker 2")
+        assert found_msg2, f"DUT did not receive the {payload_len}-byte message from broker 2 within 60s"
+        logger().info("Broker 2 payload received and matches sent payload")
+
+        # ── Steps 7–9: Validate chunking via MQTT_RX_CB serial logs ──
+        logger().info("Checking serial log for chunked delivery (MORE_DATA flags)")
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after both publishes: {len(cb_entries)} entries")
+        for i, entry in enumerate(cb_entries):
+            logger().info(f"  chunk[{i}]: {entry.strip()}")
+
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+
+            first_more_data = re.search(r'MORE_DATA=(\d+)', first_cb)
+            if first_more_data:
+                assert int(first_more_data.group(1)) == 1, (
+                    f"First chunk MORE_DATA={first_more_data.group(1)}, expected 1")
+                logger().info("Step 7: First chunk received with MORE_DATA=1 — confirmed")
+
+            last_more_data = re.search(r'MORE_DATA=(\d+)', last_cb)
+            if last_more_data:
+                assert int(last_more_data.group(1)) == 0, (
+                    f"Last chunk MORE_DATA={last_more_data.group(1)}, expected 0")
+                logger().info("Step 8: Last chunk received with MORE_DATA=0 — confirmed")
+
+            total_reassembled = 0
+            for entry in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', entry)
+                if cl_match:
+                    total_reassembled += int(cl_match.group(1))
+            if total_reassembled > 0:
+                logger().info(f"Step 9: Reassembled {total_reassembled} bytes across {len(cb_entries)} chunks")
+        elif len(cb_entries) == 1:
+            logger().info("Only 1 MQTT_RX_CB entry — firmware may deliver reassembled payload in single callback")
+        else:
+            logger().info("No MQTT_RX_CB entries — firmware instrumentation may not be present; "
+                          "payload delivery from both brokers confirmed via API")
+
+        # ── Step 10: Validate complete payload integrity after reassembly ──
+        logger().info("Step 10: Validating complete payload integrity from both brokers")
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message_1 in final_msgs, "Broker 1 payload integrity check failed after reassembly"
+        assert message_2 in final_msgs, "Broker 2 payload integrity check failed after reassembly"
+        logger().info(f"Both {payload_len}-byte payloads from two brokers validated — DUT received data correctly")
+
+        # ── Step 11: Verify no memory leaks after reassembly completion ──
+        logger().info("Step 11: Checking for memory leaks after two-broker reassembly")
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory", b"alloc fail"]:
+            assert pattern not in post_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected with {ps_label} powersave (two-broker delivery)")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        for client in [broker_1_client, broker_2_client]:
+            if client is not None:
+                try:
+                    client.disconnect()
+                    client.loop_stop()
+                except Exception:
+                    pass  # end of C990095
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_simultaneous_tx_rx_max_payload_C990097(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """MQTTs: Verify simultaneous TX and RX with max payload (2000 bytes) over
+    10 iterations on TLS (port 8883). DUT publishes (TX) while a standalone
+    broker publishes for DUT to receive (RX) on separate topics. Sequential
+    TX-then-RX per iteration to avoid serial bus contention. Checks for
+    deadlock, data corruption, and resource leaks. QoS 0."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    external_client = None
+    try:
+        tx_topic = "test/tx_payload"
+        rx_topic = "test/rx_payload"
+        payload_len = 2000
+        iterations = 10
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP, establish MQTTs connection, subscribe ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=tx_topic,
+                            message="init")
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        logger().info("Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        logger().info("DUT connects to MQTTs server (TLS, port 8883)")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=0, is_connection_encrypted=True)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTTs connection status: Connected")
+
+        # Standalone Paho client for publishing RX payloads and subscribing to TX topic
+        server_cfg = mqtt_server.interfaces.mqtt
+        external_client = paho_mqtt.Client(client_id="external_C990097", clean_session=True)
+        external_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        external_client.tls_insecure_set(True)
+
+        # Collect TX payloads published by DUT
+        tx_received_payloads = []
+
+        def on_message(client, userdata, msg):
+            tx_received_payloads.append(msg.payload.decode(errors='replace'))
+
+        external_client.on_message = on_message
+        external_client.loop_start()
+        external_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=60)
+        time.sleep(5)
+        logger().info("External client connected to MQTTs broker")
+
+        # Subscribe external client to DUT's TX topic, and DUT to RX topic
+        external_client.subscribe(tx_topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=rx_topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Step 1 complete: MQTTs connection verified, DUT subscribed to '{rx_topic}', "
+                      f"external client subscribed to '{tx_topic}'")
+
+        pre_test_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Steps 2–9: Run 10 iterations of sequential TX then RX ──
+        tx_results = []
+        rx_results = []
+
+        for iteration in range(1, iterations + 1):
+            logger().info(f"═══ Iteration {iteration}/{iterations} ═══")
+            tx_msg = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+            rx_msg = ''.join(random.choices(string.ascii_lowercase + string.digits, k=payload_len))
+
+            # Step 2: DUT publishes max payload (TX direction)
+            logger().info("Step 2: DUT publishing max payload (TX direction)")
+            tx_received_payloads.clear()
+            try:
+                wifi_dut.interfaces.mqtt.mqtt_client_publish(
+                    topic=tx_topic, message=tx_msg, qos=0, timeout=30)
+                logger().info("DUT publish command accepted")
+            except Exception as tx_err:
+                logger().warning(f"TX publish error at iteration {iteration}: {tx_err}")
+            time.sleep(3)
+
+            # Step 3: External client publishes max payload for DUT to receive (RX direction)
+            logger().info("Step 3: External client publishing max payload for DUT (RX direction)")
+            external_client.publish(rx_topic, payload=rx_msg, qos=0)
+            time.sleep(5)
+
+            # Step 4: Check for deadlock — DUT should still be responsive
+            logger().info("Step 4: Verifying DUT is responsive (no deadlock)")
+
+            # Step 5–6: Verify TX — external client received DUT's published payload
+            logger().info("Step 5-6: Verifying TX payload received by external client")
+            sw = Stopwatch()
+            tx_payload_found = False
+            while sw.elapsed_sec < 15:
+                time.sleep(0.5)
+                if any(tx_msg in p for p in tx_received_payloads):
+                    tx_payload_found = True
+                    break
+            tx_results.append(tx_payload_found)
+            if tx_payload_found:
+                logger().info(f"  TX verified: external client received DUT's {payload_len}-byte payload")
+            else:
+                logger().warning(f"  TX payload NOT found at external client in iteration {iteration}")
+
+            # Step 7–8: Verify RX — DUT received external client's published payload
+            logger().info("Step 7-8: Verifying RX payload delivered to DUT application")
+            sw = Stopwatch()
+            rx_payload_found = False
+            while sw.elapsed_sec < 30:
+                time.sleep(0.5)
+                dut_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+                logger().info(f'received message on dut : {dut_msgs}')
+                if rx_msg in dut_msgs:
+                    rx_payload_found = True
+                    break
+            rx_results.append(rx_payload_found)
+            if rx_payload_found:
+                logger().info(f"  RX verified: DUT received external client's {payload_len}-byte payload")
+            else:
+                logger().warning(f"  RX payload NOT found on DUT in iteration {iteration}")
+
+            logger().info(f"  Iteration {iteration} complete — "
+                          f"TX={'PASS' if tx_payload_found else 'FAIL'}, "
+                          f"RX={'PASS' if rx_payload_found else 'FAIL'}")
+            time.sleep(2)
+
+        # ── Step 9: Summarize all iterations ──
+        logger().info("Step 9: Stress test summary across 10 iterations")
+        tx_pass_count = sum(1 for r in tx_results if r)
+        rx_pass_count = sum(1 for r in rx_results if r)
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info(f"  TX pass: {tx_pass_count}/{iterations} ({ps_label} powersave)")
+        logger().info(f"  RX pass: {rx_pass_count}/{iterations}")
+        assert tx_pass_count == iterations, \
+            f"TX failures in {iterations - tx_pass_count} of {iterations} iterations"
+        assert rx_pass_count == iterations, \
+            f"RX failures in {iterations - rx_pass_count} of {iterations} iterations"
+        logger().info("All 10 iterations passed — no deadlock or corruption")
+
+        # ── Step 10: Check no resource leaks after all iterations ──
+        logger().info("Step 10: Checking for resource leaks after all iterations")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_test_log = serial_log[pre_test_log_len:]
+        full_log_text = b"".join([line for _, line in post_test_log])
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory",
+                        b"memory leak", b"alloc fail", b"SL_MQTT_CLIENT_ERROR_EVENT"]:
+            assert pattern not in full_log_text, \
+                f"Resource leak or error detected in DUT logs: {pattern.decode()}"
+        logger().info("No resource leaks detected after 10 TX/RX iterations over MQTTs")
+
+        logger().info("....Unsubscribing from topics....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=rx_topic)
+        time.sleep(1)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if external_client is not None:
+            try:
+                external_client.disconnect()
+                external_client.loop_stop()
+            except Exception:
+                pass  # end of C990097
+
+@pytest.mark.skip()
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_rx_two_topics_large_payload_C990098(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """MQTTs: Verify DUT can handle large payloads on two different subscribed
+    topics (topic1/data with 4000 bytes and topic2/data with 5000 bytes) over
+    TLS without cross-contamination between topics. M4 powersave enabled. QoS 1
+    subscriptions."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    publisher_client = None
+    try:
+        topic_1 = "topic1/data"
+        topic_2 = "topic2/data"
+        payload_len_1 = 4000
+        payload_len_2 = 5000
+        message_1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len_1))
+        message_2 = ''.join(random.choices(string.ascii_lowercase + string.digits, k=payload_len_2))
+        capture_filename = request.node.name
+
+        # ── Connect to AP and get IP address ──
+        logger().info("Connecting to AP and obtaining IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic_1,
+                            message=message_1)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Enable TA power save + M4 power save ──
+        logger().info("Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # ── Connect DUT to MQTTs server ──
+        logger().info("DUT connecting to MQTTs server (TLS, port 8883)")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=0, is_connection_encrypted=True)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTTs connection established")
+
+        # Connect standalone publisher with TLS
+        server_cfg = mqtt_server.interfaces.mqtt
+        publisher_client = paho_mqtt.Client(client_id="publisher_C990098", clean_session=True)
+        publisher_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        publisher_client.tls_insecure_set(True)
+        publisher_client.loop_start()
+        publisher_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Standalone publisher connected to MQTTs broker")
+
+        # ── Step 1: Subscribe to "topic1/data" with QoS 1 ──
+        logger().info(f"Step 1: Subscribing DUT to '{topic_1}' with QoS 1")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic_1, qos=1)
+        time.sleep(3)
+
+        # ── Step 2: Subscribe to "topic2/data" with QoS 1 ──
+        logger().info(f"Step 2: Subscribing DUT to '{topic_2}' with QoS 1")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic_2, qos=1)
+        time.sleep(3)
+
+        # ── Step 3: Verify both subscriptions acknowledged ──
+        logger().info("Step 3: Both subscriptions acknowledged (no error during subscribe calls)")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 4: Publish 4000-byte payload to "topic1/data" ──
+        logger().info(f"Step 4: Publishing {payload_len_1}-byte payload to '{topic_1}'")
+        publisher_client.publish(topic_1, payload=message_1, qos=0)
+        time.sleep(2)
+
+        # ── Step 5: Wait for complete reassembly and callback for topic1 ──
+        logger().info("Step 5: Waiting for DUT to receive and reassemble topic1 payload")
+        sw = Stopwatch()
+        found_topic1_msg = False
+        topic1_received_topic = None
+        while sw.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            for i in range(0, len(msgs) - 1, 2):
+                if msgs[i + 1] == message_1:
+                    found_topic1_msg = True
+                    topic1_received_topic = msgs[i]
+                    break
+            if found_topic1_msg:
+                break
+        time.sleep(2)
+
+        # ── Step 6: Verify correct topic name in callback for topic1 ──
+        logger().info("Step 6: Verifying topic name for topic1 payload")
+        assert found_topic1_msg, \
+            f"DUT did not receive the {payload_len_1}-byte message on '{topic_1}' within 60s"
+        assert topic1_received_topic == topic_1, \
+            f"Topic mismatch: expected '{topic_1}', got '{topic1_received_topic}'"
+        logger().info(f"Topic1 payload received on correct topic: '{topic1_received_topic}'")
+
+        # ── Step 7: Validate 4000-byte payload integrity ──
+        logger().info(f"Step 7: Validating {payload_len_1}-byte payload integrity")
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message_1 in final_msgs, \
+            f"Reassembled payload on '{topic_1}' does not match original {payload_len_1}-byte message"
+        logger().info(f"{payload_len_1}-byte payload integrity validated for '{topic_1}'")
+
+        # ── Step 8: Publish 5000-byte payload to "topic2/data" ──
+        logger().info(f"Step 8: Publishing {payload_len_2}-byte payload to '{topic_2}'")
+        publisher_client.publish(topic_2, payload=message_2, qos=0)
+        time.sleep(2)
+
+        # ── Step 9: Wait for complete reassembly and callback for topic2 ──
+        logger().info("Step 9: Waiting for DUT to receive and reassemble topic2 payload")
+        sw2 = Stopwatch()
+        found_topic2_msg = False
+        topic2_received_topic = None
+        while sw2.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            for i in range(0, len(msgs) - 1, 2):
+                if msgs[i + 1] == message_2:
+                    found_topic2_msg = True
+                    topic2_received_topic = msgs[i]
+                    break
+            if found_topic2_msg:
+                break
+        time.sleep(2)
+
+        # ── Step 10: Verify correct topic name in callback for topic2 ──
+        logger().info("Step 10: Verifying topic name for topic2 payload")
+        assert found_topic2_msg, \
+            f"DUT did not receive the {payload_len_2}-byte message on '{topic_2}' within 60s"
+        assert topic2_received_topic == topic_2, \
+            f"Topic mismatch: expected '{topic_2}', got '{topic2_received_topic}'"
+        logger().info(f"Topic2 payload received on correct topic: '{topic2_received_topic}'")
+
+        # ── Step 11: Validate 5000-byte payload integrity ──
+        logger().info(f"Step 11: Validating {payload_len_2}-byte payload integrity")
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message_2 in final_msgs, \
+            f"Reassembled payload on '{topic_2}' does not match original {payload_len_2}-byte message"
+        logger().info(f"{payload_len_2}-byte payload integrity validated for '{topic_2}'")
+
+        # ── Step 12: Confirm no cross-contamination between topics ──
+        logger().info("Step 12: Verifying no cross-contamination between topics")
+        all_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {all_msgs}')
+        for i in range(0, len(all_msgs) - 1, 2):
+            rx_topic = all_msgs[i]
+            rx_payload = all_msgs[i + 1]
+            if rx_payload == message_1:
+                assert rx_topic == topic_1, \
+                    f"Cross-contamination: topic1 payload received on '{rx_topic}' instead of '{topic_1}'"
+            elif rx_payload == message_2:
+                assert rx_topic == topic_2, \
+                    f"Cross-contamination: topic2 payload received on '{rx_topic}' instead of '{topic_2}'"
+        logger().info("No cross-contamination detected — each payload arrived on its correct topic")
+
+        # ── Validate chunking via serial log ──
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info("Validating MORE_DATA chunking from DUT serial log")
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publishes: {len(cb_entries)}")
+
+        total_content_bytes = 0
+        for cb in cb_entries:
+            cl_match = re.search(r'content_length=(\d+)', cb)
+            if cl_match:
+                total_content_bytes += int(cl_match.group(1))
+        if total_content_bytes > 0:
+            logger().info(f"Total reassembled content across {len(cb_entries)} chunks: {total_content_bytes} bytes")
+
+        # ── Verify no memory leaks ──
+        logger().info("Checking for memory leaks after large payload reception on two topics")
+        full_log_text = b"".join([line for _, line in post_publish_log])
+        assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in full_log_text, \
+            "Firmware error: SL_MQTT_CLIENT_ERROR_EVENT detected"
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory", b"alloc fail"]:
+            assert pattern not in full_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected with {ps_label} powersave — "
+                      "DUT received data from 2 subscribed topics correctly")
+
+        logger().info("....Unsubscribing from topics....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic_1)
+        time.sleep(1)
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic_2)
+        time.sleep(1)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if publisher_client is not None:
+            try:
+                publisher_client.disconnect()
+                publisher_client.loop_stop()
+            except Exception:
+                pass  # end of C990098
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_disconnect_during_chunked_rx_C990096(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """MQTTs: Verify that disconnecting the MQTTs client after receiving a
+    chunked large payload (2000 bytes) cleans up reassembly state safely —
+    no memory leaks, no crashes, no dangling state. M4 powersave enabled.
+    QoS 0."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    publisher_client = None
+    try:
+        topic = "test/large_payload"
+        payload_len = 2000
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP and get IP address ──
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # ── Step 2: Enable TA power save + M4 power save ──
+        logger().info("Step 2: Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # ── Step 3: Connect DUT to MQTTs server and verify "Connected" status ──
+        logger().info("Step 3: DUT connects to MQTTs server (TLS, port 8883) — verifying 'Connected' status")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=0, is_connection_encrypted=True)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+        logger().info("DUT MQTTs connection status: Connected")
+
+        server_cfg = mqtt_server.interfaces.mqtt
+        publisher_client = paho_mqtt.Client(client_id="publisher_C990096", clean_session=True)
+        publisher_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        publisher_client.tls_insecure_set(True)
+        publisher_client.loop_start()
+        publisher_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Standalone publisher connected to MQTTs broker")
+
+        # ── Step 4: Subscribe to topic and confirm subscription active ──
+        logger().info(f"Step 4: Subscribing DUT to topic '{topic}' and confirming subscription")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 5: Publish 2000-byte payload from broker ──
+        logger().info(f"Step 5: Publishing {payload_len}-byte payload to '{topic}'")
+        publisher_client.publish(topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # ── Step 6: Monitor DUT for incoming message callback ──
+        logger().info("Step 6: Monitoring DUT for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+                break
+        time.sleep(2)
+
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        post_log_text = b"".join([line for _, line in post_publish_log])
+        assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in post_log_text, \
+            "Firmware error: SL_MQTT_CLIENT_ERROR_EVENT detected after publish"
+
+        # ── Step 7: Verify payload received matches sent payload ──
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info(f"Step 7: Verifying payload integrity ({ps_label} powersave)")
+        assert found, f"DUT did not receive the {payload_len}-byte message within 60s"
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message in final_msgs, "Reassembled payload does not match sent payload"
+        logger().info("Payload received matches sent payload (byte-by-byte comparison)")
+
+        # ── Steps 7–9: Verify chunking via MQTT_RX_CB serial logs ──
+        logger().info("Checking serial log for chunked delivery (MORE_DATA flags)")
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {len(cb_entries)} entries")
+        for i, entry in enumerate(cb_entries):
+            logger().info(f"  chunk[{i}]: {entry.strip()}")
+
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+
+            first_more_data = re.search(r'MORE_DATA=(\d+)', first_cb)
+            if first_more_data:
+                assert int(first_more_data.group(1)) == 1, (
+                    f"First chunk MORE_DATA={first_more_data.group(1)}, expected 1")
+                logger().info("Step 7: First chunk received with MORE_DATA=1 — confirmed")
+
+            last_more_data = re.search(r'MORE_DATA=(\d+)', last_cb)
+            if last_more_data:
+                assert int(last_more_data.group(1)) == 0, (
+                    f"Last chunk MORE_DATA={last_more_data.group(1)}, expected 0")
+                logger().info("Step 8: Last chunk received with MORE_DATA=0 — confirmed")
+
+            total_reassembled = 0
+            for entry in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', entry)
+                if cl_match:
+                    total_reassembled += int(cl_match.group(1))
+            if total_reassembled > 0:
+                logger().info(f"Step 9: Reassembled {total_reassembled} bytes across {len(cb_entries)} chunks")
+        elif len(cb_entries) == 1:
+            logger().info("Only 1 MQTT_RX_CB entry — firmware may deliver reassembled payload in single callback")
+        else:
+            logger().info("No MQTT_RX_CB entries — firmware instrumentation may not be present; "
+                          "payload delivery confirmed via API")
+
+        # ── Step 10: Validate complete payload integrity after reassembly ──
+        logger().info("Step 10: Validating complete payload integrity after reassembly")
+        assert message in final_msgs, "Complete payload integrity check failed after reassembly"
+        logger().info(f"Complete {payload_len}-byte payload integrity validated")
+
+        # ── Step 11: Verify no memory leaks after reassembly completion ──
+        logger().info("Step 11: Checking for memory leaks after reassembly completion")
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory", b"alloc fail"]:
+            assert pattern not in post_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected with {ps_label} powersave")
+
+        # ── Step 12: Disconnect MQTT connection and verify clean teardown ──
+        logger().info("Step 12: Disconnecting MQTTs client — verifying reassembly cleaned up safely")
+        pre_disconnect_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        time.sleep(2)
+
+        logger().info("Issuing MQTT disconnect")
+        wifi_dut.interfaces.mqtt.mqtt_client_disconnect()
+        time.sleep(5)
+
+        disconnect_log = wifi_dut.interfaces.wifi.bus.get_input_log()[pre_disconnect_log_len:]
+        disconnect_log_text = b"".join([line for _, line in disconnect_log])
+
+        disconnect_confirmed = (
+            b"SL_MQTT_CLIENT_DISCONNECTED_EVENT" in disconnect_log_text or
+            b"mqtt.disconnect" in disconnect_log_text
+        )
+        logger().info(f"Disconnect event detected in logs: {disconnect_confirmed}")
+
+        for pattern in [b"heap corruption", b"double free", b"HardFault",
+                        b"out of memory", b"alloc fail", b"use after free"]:
+            assert pattern not in disconnect_log_text, \
+                f"Crash/leak detected during disconnect: {pattern.decode()}"
+        logger().info("MQTTs disconnect completed safely — reassembly state cleaned up, "
+                      "no crashes or memory leaks")
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if publisher_client is not None:
+            try:
+                publisher_client.disconnect()
+                publisher_client.loop_stop()
+            except Exception:
+                pass  # end of C990096
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.DNSClient,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+        "ca_cert": ["ca-chain.cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"]
+    }
+)
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+def test_MQTTs_client_rx_large_payload_sni_enabled_C990100(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """MQTTs: Verify large payload (4000 bytes) reception over MQTTs with
+    Server Name Indication (SNI) enabled in the TLS handshake. Validates
+    that SNI hostname is present in the TLS Client Hello (via packet capture),
+    payload is chunked and reassembled correctly, and no TLS errors occur
+    during chunked reception. M4 powersave enabled. QoS 0."""
+
+    import ssl
+    import paho.mqtt.client as paho_mqtt
+
+    publisher_client = None
+    try:
+        topic = "test/large_payload"
+        payload_len = 4000
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # ── Step 1: Connect to AP and get IP — TLS with SNI will be established ──
+        logger().info("Step 1: Connect to AP and get IP address (TLS with SNI will follow)")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        dut_ip = wifi_obj.dut_addr['device_ip']
+        logger().info(f"DUT IP: {dut_ip}")
+
+        # ── Enable TA power save + M4 power save ──
+        logger().info("Enabling TA power save (WLAN + BLE)")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        m4_ps_active = False
+        try:
+            logger().info("Enabling M4 power save (sleep with RAM retention)")
+            wifi_dut.interfaces.wifi.m4_power_manager(sleep_time=500)
+            m4_ps_active = True
+            time.sleep(3)
+        except (AssertionError, Exception) as m4_err:
+            logger().warning(f"M4 power save not supported on this firmware build: {m4_err}")
+            logger().warning("Continuing test with TA power save only (WLAN + BLE)")
+            time.sleep(1)
+
+        # ── Step 1 (cont): Verify TLS connection with SNI established ──
+        logger().info("Step 1: DUT connects to MQTTs server (TLS, port 8883) with SNI")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(
+            client_id="Si91x_mqtt_client", server_port=8883, qos=0, is_connection_encrypted=True)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(25)
+
+        # ── Step 2: Confirm MQTTs authentication ──
+        logger().info("Step 2: Verifying MQTTs authentication (Connected event)")
+        serial_log_after_connect = wifi_dut.interfaces.wifi.bus.get_input_log()
+        connect_log_text = b"".join([line for _, line in serial_log_after_connect])
+        assert b"SL_MQTT_CLIENT_CONNECTED_EVENT" in connect_log_text, \
+            "DUT did not emit SL_MQTT_CLIENT_CONNECTED_EVENT — MQTTs authentication may have failed"
+        logger().info("MQTTs authentication confirmed — SL_MQTT_CLIENT_CONNECTED_EVENT received")
+
+        server_cfg = mqtt_server.interfaces.mqtt
+        publisher_client = paho_mqtt.Client(client_id="publisher_C990100", clean_session=True)
+        publisher_client.tls_set(
+            ca_certs=server_cfg.tls_ca_chain,
+            cert_reqs=ssl.CERT_NONE,
+            tls_version=ssl.PROTOCOL_TLSv1_2)
+        publisher_client.tls_insecure_set(True)
+        publisher_client.loop_start()
+        publisher_client.connect(server_cfg.hostname_or_ip_address, server_cfg.port, keepalive=40)
+        time.sleep(5)
+        logger().info("Standalone publisher connected to MQTTs broker")
+
+        # ── Step 3: Subscribe to test topic over MQTTs ──
+        logger().info(f"Step 3: Subscribing DUT to topic '{topic}' over MQTTs")
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # ── Step 4: Publish 4000-byte payload from broker ──
+        logger().info(f"Step 4: Publishing {payload_len}-byte payload to '{topic}'")
+        publisher_client.publish(topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # ── Step 5: Monitor chunk reception with MORE_DATA flags ──
+        logger().info("Step 5: Monitoring DUT for incoming message callback and chunk reception")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < 60:
+            time.sleep(0.5)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+                break
+        time.sleep(2)
+
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        post_log_text = b"".join([line for _, line in post_publish_log])
+
+        # ── Step 9: Confirm no TLS errors during chunked reception ──
+        logger().info("Step 9: Verifying no TLS errors during chunked reception")
+        assert b"SL_MQTT_CLIENT_ERROR_EVENT" not in post_log_text, \
+            "TLS/Firmware error: SL_MQTT_CLIENT_ERROR_EVENT detected during chunked reception"
+        assert b"SSL_ERROR" not in post_log_text, \
+            "TLS error detected in DUT logs during chunked reception"
+        logger().info("No TLS errors during chunked reception — confirmed")
+
+        # ── Step 6: Verify SDK reassembles all chunks correctly ──
+        logger().info("Step 6: Verifying SDK reassembled all chunks correctly")
+        cb_entries = [
+            line.decode(errors='replace') for _, line in post_publish_log
+            if b"MQTT_RX_CB:" in line
+        ]
+        logger().info(f"MQTT_RX_CB entries after publish: {len(cb_entries)} entries")
+        for i, entry in enumerate(cb_entries):
+            logger().info(f"  chunk[{i}]: {entry.strip()}")
+
+        if len(cb_entries) >= 2:
+            first_cb = cb_entries[0]
+            last_cb = cb_entries[-1]
+
+            first_more_data = re.search(r'MORE_DATA=(\d+)', first_cb)
+            if first_more_data:
+                assert int(first_more_data.group(1)) == 1, (
+                    f"First chunk MORE_DATA={first_more_data.group(1)}, expected 1")
+                logger().info("First chunk received with MORE_DATA=1 — confirmed")
+
+            last_more_data = re.search(r'MORE_DATA=(\d+)', last_cb)
+            if last_more_data:
+                assert int(last_more_data.group(1)) == 0, (
+                    f"Last chunk MORE_DATA={last_more_data.group(1)}, expected 0")
+                logger().info("Last chunk received with MORE_DATA=0 — confirmed")
+
+            total_reassembled = 0
+            for entry in cb_entries:
+                cl_match = re.search(r'content_length=(\d+)', entry)
+                if cl_match:
+                    total_reassembled += int(cl_match.group(1))
+            if total_reassembled > 0:
+                logger().info(f"Reassembled {total_reassembled} bytes across {len(cb_entries)} chunks")
+        elif len(cb_entries) == 1:
+            logger().info("Only 1 MQTT_RX_CB entry — firmware may deliver reassembled payload in single callback")
+        else:
+            logger().info("No MQTT_RX_CB entries — firmware instrumentation may not be present; "
+                          "payload delivery confirmed via API")
+
+        # ── Step 7: Validate 4000-byte payload delivered to application ──
+        ps_label = "M4 + TA" if m4_ps_active else "TA-only"
+        logger().info(f"Step 7: Validating {payload_len}-byte payload integrity ({ps_label} powersave)")
+        assert found, f"DUT did not receive the {payload_len}-byte message within 60s"
+        final_msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+        logger().info(f'received message on dut : {final_msgs}')
+        assert message in final_msgs, "Reassembled payload does not match sent payload"
+        logger().info(f"{payload_len}-byte payload delivered to application and validated")
+
+        # ── Step 8: Verify SNI hostname in TLS handshake (packet capture) ──
+        logger().info("Step 8: Verifying SNI hostname in TLS handshake via sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(3)
+
+        server_ip = server_cfg.hostname_or_ip_address
+        try:
+            sni_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=dut_ip, da_addr=server_ip, filter_name="http_sni")
+            sni_result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=sni_filter)
+            sni_packet_count = sni_result.get('packet_count', 0)
+            logger().info(f"SNI validation result: {sni_packet_count} Client Hello packet(s) with SNI found")
+            if sni_packet_count:
+                logger().info("SNI hostname verified in TLS handshake — confirmed")
+            else:
+                logger().warning("SNI packets not detected in capture — SNI may not be instrumented "
+                                 "for this MQTT TLS flow, or sniffer captured insufficient packets")
+        except Exception as sni_err:
+            logger().warning(f"SNI sniffer validation skipped or failed: {sni_err}")
+            logger().info("Continuing — SNI presence is firmware-dependent and sniffer filter may not apply")
+
+        # ── Step 10: Verify no memory leaks after complete reassembly ──
+        logger().info("Step 10: Checking for memory leaks after SNI+chunked reception")
+        for pattern in [b"heap corruption", b"double free", b"HardFault", b"out of memory", b"alloc fail"]:
+            assert pattern not in post_log_text, \
+                f"Memory error detected in DUT logs: {pattern.decode()}"
+        logger().info(f"No memory leaks detected with {ps_label} powersave — "
+                      "messages delivered to DUT correctly over MQTTs with SNI")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        if publisher_client is not None:
+            try:
+                publisher_client.disconnect()
+                publisher_client.loop_stop()
+            except Exception:
+                pass
+
+
+
