@@ -1,0 +1,142 @@
+firmware:
+  efx32:
+    load_binary:
+      file_name: &firmware_file_anchor 'SiWG917-B.2.15.5.3.0.1.rps'
+
+    write_firmware:
+      file_name: 'zephyr_ta_4_0_3.rps'
+
+firmware_version_file: *firmware_file_anchor
+# List of devices to be reset when needed
+# reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
+reset: [efx32]
+
+firmware_applications:
+    # List of markers for test cases
+    wifitest:
+    # List of devices and their firmware images for this marker
+    - device_type: 'rs911x'
+      device_subtype: 'rs9116'
+      filename:
+        load_binary:
+          file_name: 'SiWG917-A.1.0.0.0.23.bin'
+        write_firmware:
+          file_name: '917_ccp/generic_test_agent_without_aws.rps'
+
+
+    test_concurrent_mode:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: '917_ccp/concurrent_test_agent.rps'
+
+    test_ap_ht_caps:
+    - device_type: 'efx32'
+      device_subtype: 'efr32'
+      filename: '917_ccp/ap_htcaps_enable.rps'
+
+    test_wlan_aws_enable:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/aws_test_agent.rps'
+
+    test_wlan_rts:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/rts_test_agent.rps'
+
+    test_wlan_powersave_mode2_without_ram_ret:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/generic_test_agent_wt_aws_wt_ram_ret.rps'
+
+    test_wlan_powersave_mode3_lp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/generic_test_agent_without_aws.rps'
+
+    test_wlan_powersave_mode3_ulp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/generic_test_agent_without_aws.rps'
+
+    test_coex_custom:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/coex_custom_test_agent.rps'
+
+    test_multi_gatt_conn:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/multi_gatt_generic_test_agent.rps'
+
+    test_wlan_powersave_mode2_lp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/generic_test_agent_without_aws.rps'
+
+    test_twt_sta:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_rcf2_daf57c7579_twt.rps'
+
+    test_nvm3:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ccp/nvm_test_agent_soc.rps'
+
+    test_ipv6:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_rcf2_daf57c7579_ipv6.rps'
+
+    test_lwip_stack:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_lwip_stack.rps'
+
+    test_azure:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_rcf2_daf57c7579_azure.rps'
+
+    test_480K_M4SS_192K:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_rcf2_daf57c7579_generic192k.rps'
+
+    test_416K_M4SS_256K:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_cf_416K.rps'
+
+    test_352K_M4SS_320K:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_cf_352K.rps'
+
+    load_ta_and_m4:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename:
+          load_binary:
+            file_name: 'SiWG917-B.2.13.5.2.2.4.rps'
+          write_firmware:
+            file_name: '917_ccp/test_agent_soc_ifc2_c7d161bbc7_generic192k.rps'
+    test_tls:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        #filename: 'zephyr_tls_client_server.rps'
+#        filename: 'zephyr_aws.rps'
+        filename: 'zephyr_fw_tls.rps'
+
+    test_fast_psp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'zephyr_fast_ps_4_0_3.rps'
+#        filename: 'zephyr_fast_psp_pm_disabled_4_0_3.rps'
+
+    test_bg_scan:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'zephyr_bgscan.rps'
+  #        filename: 'zephyr_fast_psp_pm_disabled_4_0_3.rps'
