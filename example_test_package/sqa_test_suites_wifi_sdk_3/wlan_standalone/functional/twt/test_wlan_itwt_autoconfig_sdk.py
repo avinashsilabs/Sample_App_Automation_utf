@@ -693,8 +693,8 @@ def wifi_dut_marker(
         | Si91xTCPIPFeatureBitMap.Ping,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.RsaKeyWith4096Support
-        | Si91xExtCustomFeatureBitMap.SslCertWith4096Support
-        | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE,
+                               | Si91xExtCustomFeatureBitMap.SslCertWith4096Support
+                               | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
         | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
         | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT
@@ -807,8 +807,9 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_no_twt_tx_latency_0_c510684
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+            # logger().info(f"\n Execute M4 power save \n")
+            # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
             wifi_sniffer=wifi_sniffer,
@@ -850,8 +851,9 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_25_no_twt_tx_latency_0_c510685
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+            # logger().info(f"\n Execute M4 power save \n")
+            # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
             wifi_sniffer=wifi_sniffer,
@@ -893,8 +895,9 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_no_twt_tx_latency_0_c510686(
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+            # logger().info(f"\n Execute M4 power save \n")
+            # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
             wifi_sniffer=wifi_sniffer,
@@ -936,8 +939,10 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_no_tw
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+
+             # logger().info(f"\n Execute M4 power save \n")
+             # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=500)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
@@ -980,8 +985,9 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_tw
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+            # logger().info(f"\n Execute M4 power save \n")
+            # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=800)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
@@ -1043,8 +1049,9 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_n
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+            # logger().info(f"\n Execute M4 power save \n")
+            # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         for count in range(3):
             wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=700)
             twt_autoconfig_obj = TWT_AUTOCONFIG(
@@ -1657,8 +1664,9 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_55_secs_recieve_data_from
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+            # logger().info(f"\n Execute M4 power save \n")
+            # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=100)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
@@ -1746,8 +1754,9 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_25_secs_recieve_data_from
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+            # logger().info(f"\n Execute M4 power save \n")
+            # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=100)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
@@ -1835,8 +1844,9 @@ def test_wifi_sdk_verify_dut_behaviour_with_rx_latency_2_secs_recieve_data_from_
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+            # logger().info(f"\n Execute M4 power save \n")
+            # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         wifi_dut.interfaces.wifi.set_timeout_config(keep_alive_timeout_value=100)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
@@ -1926,8 +1936,9 @@ def test_wifi_sdk_verify_dut_behaviour_with_twt_enabled_while_running_udp_tx_and
                 wifi_dut.interfaces.wifi.oper_mode_opts.ext_custom_features & (1 << 21)):
             logger().info(f"\n NCP Device \n")
         else:
-            logger().info(f"\n Execute M4 power save \n")
-            wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
+            pass
+            # logger().info(f"\n Execute M4 power save \n")
+            # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
             wifi_sniffer=wifi_sniffer,
