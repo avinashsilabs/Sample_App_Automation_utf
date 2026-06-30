@@ -1639,7 +1639,7 @@ def test_wifi_sdk_verify_tcp_keep_alive_functionality_twt_enabled_with_LI_900ms_
     """
     try:
         keepalive_time = 30
-        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=900)
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(interface="client", listen_interval=900)
         wlan_obj = WLanTwTThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
                                  sl_collections=sl_collections,
                                  wifi_sniffer=wifi_sniffer, sniffer_filter=sniffer_filter, sniffer_capture='586161',
