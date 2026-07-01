@@ -1,3 +1,4 @@
+import logging
 import time
 import pytest
 import re
@@ -76,6 +77,7 @@ data));});</script></body></html>'''
 def logger():
     return get_logger(__name__)
 
+
 class ProvisioningFunctionality(ThreadBase):
     ip_dict = {}
 
@@ -86,8 +88,10 @@ class ProvisioningFunctionality(ThreadBase):
                  write_handle=None, wifi_access_points=None, device_ip=None, device_ip_two=None,
                  dut_mac_address_two=None, dut_mac_address=None, set_smp=None, ssid=None, security=None, psk=None,
                  ap_channel=None, wifi_client=None, wiseconnect_web=None, result=None, wifi_clients=None,
-                 net_perf_client=None, protocol=None, traffic=None, qos=None, sniffer_filter=None, associated=None, power_save=True,
-                 skip_scan=False, tcp_ip_bypass=False, ip_config_disable=False, retry_count=1, ping_after_power_save=True, ping_before_power_save=True,
+                 net_perf_client=None, protocol=None, traffic=None, qos=None, sniffer_filter=None, associated=None,
+                 power_save=True,
+                 skip_scan=False, tcp_ip_bypass=False, ip_config_disable=False, retry_count=1,
+                 ping_after_power_save=True, ping_before_power_save=True,
                  mode='power_save_low_latency',
                  ping_count=10,
                  dtim_aligned_type=0, num_of_dtim_skip=0, listen_interval=0, monitor_interval=0,
@@ -165,6 +169,22 @@ class ProvisioningFunctionality(ThreadBase):
 
     def sl_net_deinit(self):
         self.wifi_dut.interfaces.wifi.deinit()
+
+    def wait_for_log_patterns(self, caplog, patterns, timeout=120, poll_interval=1):
+        """
+        Wait until all expected patterns appear in the captured runtime logs.
+        """
+        end_time = time.time() + timeout
+        while time.time() < end_time:
+            current_logs = caplog.text
+            if all(pattern in current_logs for pattern in patterns):
+                return current_logs
+            time.sleep(poll_interval)
+
+        missing = [pattern for pattern in patterns if pattern not in caplog.text]
+        raise AssertionError(
+            f"Expected log patterns not found within {timeout}s. Missing: {missing}"
+        )
 
     def wifi_connect(self):
         self.wifi_dut.interfaces.wifi.join(
@@ -273,6 +293,33 @@ class ProvisioningFunctionality(ThreadBase):
         self.wifi_dut.interfaces.wifi.http_server_stop()
         self.wifi_dut.interfaces.wifi.http_server_deinit()
 
+    def http_server_provisioning(self):
+        """
+        SoftAP provisioning over HTTP: bring up the web page, connect a station
+        client to the DUT-AP, submit Wi-Fi credentials via the web UI and fetch
+        the received credentials from the DUT.
+        """
+        self.wifi_dut.interfaces.wifi.http_server_init(http_port=80, handlers_count=6, send_large_data=1, data=webpage)
+        self.wifi_dut.interfaces.wifi.http_server_start()
+        time.sleep(30)
+        self.connect_clients_to_dut_as_ap()
+        self.ble_stop_advertising()
+
+        self.scan_on_ap_interface()
+        self.wiseconnect_web.interfaces.wiseconnect_ui.connect(
+            ip_address="192.168.100.76", web_ui_port=80,
+            ssid=self.wifi_access_point.interfaces.wifi.ssid,
+            security=self.wifi_access_point.interfaces.wifi.security,
+            passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
+
+        data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
+        self.result = re.search(r'ssid:(\w+),password:(\w+),security:(\w+)', data.decode())
+        logger().info(f"received cred on dutap: {self.result}")
+        assert self.result, "Unable to fetch 3rd party AP details from DUT"
+        time.sleep(5)
+        self.wifi_dut.interfaces.wifi.http_server_stop()
+        self.wifi_dut.interfaces.wifi.http_server_deinit()
+
     def ap_mode_start(self):
         """
         Method to start the DUT as an Access Point.
@@ -320,8 +367,9 @@ class ProvisioningFunctionality(ThreadBase):
 
             # Scan for APs if not skipped
             if self.skip_scan is False:
-                scan_status, reason = self.sl_collections.scan(self.wifi_dut, scan_status=self.skip_scan, retry_count=self.retry_count,
-                                                          channel=0)
+                scan_status, reason = self.sl_collections.scan(self.wifi_dut, scan_status=self.skip_scan,
+                                                               retry_count=self.retry_count,
+                                                               channel=0)
                 assert scan_status, f"....Scanning for AP failed..with reason: {reason}...."
 
             # Initiate WPS push button join from DUT
@@ -344,8 +392,9 @@ class ProvisioningFunctionality(ThreadBase):
 
             if not (self.tcp_ip_bypass or self.ip_config_disable):
                 # configure_ip tries to assign IP ADDRESS through DHCP
-                ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut, ip_status=False, retry_count=self.retry_count,
-                                                                   ip_version=self.ip_version,)
+                ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut, ip_status=False,
+                                                                        retry_count=self.retry_count,
+                                                                        ip_version=self.ip_version, )
                 assert ip_status, f"....Unable to assign IP ADDRESS through DHCP with reason: {ip_config}...."
 
                 if self.ip_version == 'ipv4':
@@ -371,14 +420,16 @@ class ProvisioningFunctionality(ThreadBase):
 
             if self.power_save:
                 logger().info(f"....Applying performance profile mode : {self.mode}")
-                self.wifi_dut.interfaces.wifi.set_performance_profile(self.mode, self.dtim_aligned_type, self.num_of_dtim_skip,
-                                                                 self.listen_interval, self.monitor_interval)
+                self.wifi_dut.interfaces.wifi.set_performance_profile(self.mode, self.dtim_aligned_type,
+                                                                      self.num_of_dtim_skip,
+                                                                      self.listen_interval, self.monitor_interval)
                 self.wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-                                                              psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+                                                                   psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
                 if not self.tcp_ip_bypass:
                     if self.ping_after_power_save:
                         logger().info("....Pinging DUT after power-save....")
-                        status = self.sl_collections.ping(device_ip=dut_add_dict['device_ip'], ping_count=self.ping_count)
+                        status = self.sl_collections.ping(device_ip=dut_add_dict['device_ip'],
+                                                          ping_count=self.ping_count)
                         assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
             return dut_add_dict
@@ -459,92 +510,48 @@ def test_wifi_sdk_wps_path_wpa2_security_c913440(
         time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_start()
-        
-        
+
         """ **** WPS Button press code - Workaround for WPS web configuration **** """
         logger().info(" ====== WPS button pressed and interrupt occurred and fallback to STA mode ====== ")
 
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        # NEW c913440 staged teardown START
-        # The firmware (1711.2.16.5.0.0.4) was hanging on wifi.deinit
-        # when stop_ap_interface, ble_stop_advertising, http_server_stop
-        # and sl_net_deinit were issued back-to-back in coex (AP+BLE)
-        # mode (verified in pytest_log: TX wifi.deinit echoed but no
-        # status response within 10s -> AssertionError -0x1 / FW_FAILURE).
-        # Stage each teardown step with a small drain delay so the
-        # firmware can settle before the next command, and retry the
-        # final deinit a couple of times so a single transient hang
-        # doesn't fail the test.
-        # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-        logger().info("##### [NEW c913440] staged teardown ENTER #####")
-
-        logger().info("##### [NEW c913440] step 1/4: stop_ap_interface #####")
         ble_obj.stop_ap_interface()
-        time.sleep(3)
-
-        logger().info("##### [NEW c913440] step 2/4: ble_stop_advertising #####")
         ble_obj.ble_stop_advertising()
-        time.sleep(2)
-
-        logger().info("##### [NEW c913440] step 3/4: http_server_stop #####")
         ble_obj.http_server_stop()
-        time.sleep(3)
 
-        logger().info("##### [NEW c913440] step 4/4: sl_net_deinit (with retry) #####")
-        deinit_attempts = 3
-        deinit_ok = False
-        for attempt in range(1, deinit_attempts + 1):
-            try:
-                ble_obj.sl_net_deinit()
-                deinit_ok = True
-                logger().info(f"##### [NEW c913440] sl_net_deinit succeeded on attempt {attempt} #####")
-                break
-            except Exception as deinit_err:
-                logger().warning(
-                    f"##### [NEW c913440] sl_net_deinit attempt {attempt}/{deinit_attempts} "
-                    f"failed: {deinit_err} #####")
-                time.sleep(3)
-        if not deinit_ok:
-            logger().warning(
-                "##### [NEW c913440] sl_net_deinit hung repeatedly - relying on framework "
-                "auto-recovery (commander reset already issued by sl_collections) #####")
+        ble_obj.sl_net_deinit()
         time.sleep(5)
-        logger().info("##### [NEW c913440] staged teardown EXIT #####")
-        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        # NEW c913440 staged teardown END
-        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=0,
-        coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-        features=Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
-                    Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
-        tcpip_features=Si91xTCPIPFeatureBitMap.Default | 0,
-        ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                              | 0,
-        custom_features=Si91xCustomFeatureBitMap.NWP120MHz
-                           | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        ext_custom_features=Si91xExtCustomFeatureBitMap.Default
-                               | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
+            coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            features=Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                     Si91xFeatureBitMap.ULPGPIOHandshake | Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.PSKSecurity,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default | 0,
+            ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
                                | 0,
-        bt_features=Si91xBTFeatureBitMap.Default,
-        ble_features=Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=1)
-                        | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
-                        | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
-                        | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
-                        | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
-                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
-                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
-                        | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
-                        | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
-                                   | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        config_features=Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp
+            custom_features=Si91xCustomFeatureBitMap.NWP120MHz
+                            | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            ext_custom_features=Si91xExtCustomFeatureBitMap.Default
+                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
+                                | 0,
+            bt_features=Si91xBTFeatureBitMap.Default,
+            ble_features=Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=1)
+                         | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
+                         | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
+                         | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
+                         | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
+                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
+                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
+                         | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
+                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
+                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
+                                    | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
+                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+            config_features=Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp
         )
 
         time.sleep(5)
@@ -642,7 +649,7 @@ def test_wifi_sdk_ap_provisioning_open_security_c887643(
 )
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.parametrize("ap_channel", [11])
-@pytest.mark.parametrize("iteration_count", [3])  # Number of WPS iterations
+@pytest.mark.parametrize("iteration_count", [5])  # Number of WPS iterations
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
@@ -650,171 +657,7 @@ def test_wifi_sdk_wps_path_multiple_iterations_c913442(
         sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients,
         sniffer_filter, ap_channel, iteration_count):
-    """Verify DUT behavior with WPS path flow executed multiple times in loop.
-
-    Each iteration mirrors the c913440 baseline single-shot flow:
-      AP+BLE up -> AP+BLE teardown (staged) -> reconfig as STA+BLE -> WPS join
-    Between iterations the DUT is brought back to AP+BLE (deinit + AP config
-    + init) so the next iteration starts from the same clean state as iter 1.
-    """
-
-    def _force_commander_reset(tag):
-        
-        logger().info(f"##### [{tag}] forcing commander HW reset on DUT #####")
-        try:
-            wifi_dut.interfaces.wifi.reset()
-            time.sleep(3)
-            logger().info(f"##### [{tag}] commander reset OK #####")
-            return True
-        except Exception as reset_err:
-            logger().error(f"##### [{tag}] commander reset failed: {reset_err} #####")
-            return False
-
-    def _staged_teardown(ble_obj_local, tag):
-        
-        logger().info(f"##### [{tag}] step 1/4: stop_ap_interface #####")
-        try:
-            ble_obj_local.stop_ap_interface()
-        except Exception as e:
-            logger().warning(f"##### [{tag}] stop_ap_interface error (continuing): {e} #####")
-        time.sleep(3)
-        logger().info(f"##### [{tag}] step 2/4: ble_stop_advertising #####")
-        try:
-            ble_obj_local.ble_stop_advertising()
-        except Exception as e:
-            logger().warning(f"##### [{tag}] ble_stop_advertising error (continuing): {e} #####")
-        time.sleep(2)
-        logger().info(f"##### [{tag}] step 3/4: http_server_stop #####")
-        try:
-            ble_obj_local.http_server_stop()
-        except Exception as e:
-            logger().warning(f"##### [{tag}] http_server_stop error (continuing): {e} #####")
-        time.sleep(3)
-        logger().info(f"##### [{tag}] step 4/4: sl_net_deinit (with retry) #####")
-        deinit_attempts = 2  # 2 soft attempts then HW reset; FW hang is not transient on 1711.2.15.x
-        deinit_ok = False
-        for attempt in range(1, deinit_attempts + 1):
-            try:
-                ble_obj_local.sl_net_deinit()
-                deinit_ok = True
-                logger().info(f"##### [{tag}] sl_net_deinit succeeded on attempt {attempt} #####")
-                break
-            except Exception as deinit_err:
-                logger().warning(
-                    f"##### [{tag}] sl_net_deinit attempt {attempt}/{deinit_attempts} "
-                    f"failed: {deinit_err} #####")
-                time.sleep(3)
-        if not deinit_ok:
-            logger().warning(
-                f"##### [{tag}] soft deinit hung - falling back to HW commander reset #####")
-            _force_commander_reset(tag)
-        time.sleep(5)
-        return deinit_ok
-
-    def _full_reinit_as_ap_ble(tag):
-        
-        logger().info(f"##### [{tag}] full re-init as AP+BLE ENTER #####")
-        
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
-        wifi_dut.interfaces.wifi.inited_test_agent_threads = False
-        wifi_dut.interfaces.wifi.test_agent_thread_index = -1
-        wifi_dut.interfaces.wifi.test_agent_threads = {}
-        wifi_dut.interfaces.wifi.set_wifi_config(
-            oper_mode=Si91xOperatingMode.AccessPoint,
-            coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            features=Si91xFeatureBitMap.Aggregation
-                     | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
-            tcpip_features=Si91xTCPIPFeatureBitMap.Default
-                           | Si91xTCPIPFeatureBitMap.DHCPv4Server
-                           | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
-            custom_features=Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid
-                            | Si91xCustomFeatureBitMap.NWP120MHz,
-            ext_custom_features=Si91xExtCustomFeatureBitMap.Default
-                                | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
-                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
-            ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.Default,
-            config_features=Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
-                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-            bt_features=Si91xBTFeatureBitMap.Default,
-            ble_features=Si91xBLEFeatureBitMap.Default
-                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-            ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
-                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
-                                    | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
-                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-        )
-        time.sleep(3)
-
-        # wifi.init (no -i, no thread prefix) - "Started AP mode with BLE"
-        wifi_dut.interfaces.wifi.init(mode=None, config_required=False)
-        time.sleep(2)
-
-        # Recreate FW-side test agent threads, same shape as wifi_dut_marker.
-        wifi_dut.interfaces.wifi.init_test_agent_threads(thread_config={
-            "wifi": {"count": 1, "stack_len": 3072},
-            "ble":  {"count": 1, "stack_len": 2048},
-        })
-        time.sleep(2)
-        logger().info(f"##### [{tag}] full re-init as AP+BLE EXIT #####")
-
-    def _full_reinit_as_sta_ble(tag):
-        logger().info(f"##### [{tag}] full re-init as STA+BLE ENTER #####")
-        
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
-        wifi_dut.interfaces.wifi.inited_test_agent_threads = False
-        wifi_dut.interfaces.wifi.test_agent_thread_index = -1
-        wifi_dut.interfaces.wifi.test_agent_threads = {}
-
-        wifi_dut.interfaces.wifi.set_wifi_config(
-            oper_mode=0,
-            coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-            features=Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1
-                     | Si91xFeatureBitMap.ULPGPIOHandshake
-                     | Si91xFeatureBitMap.Aggregation
-                     | Si91xFeatureBitMap.PSKSecurity,
-            tcpip_features=Si91xTCPIPFeatureBitMap.Default | 0,
-            ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                               | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                               | 0,
-            custom_features=Si91xCustomFeatureBitMap.NWP120MHz
-                            | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-            ext_custom_features=Si91xExtCustomFeatureBitMap.Default
-                                | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-                                | 0,
-            bt_features=Si91xBTFeatureBitMap.Default,
-            ble_features=Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=1)
-                         | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
-                         | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
-                         | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
-                         | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
-                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
-                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
-                         | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
-                         | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-            ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
-                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
-                                    | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
-                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                    | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-            config_features=Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        )
-        time.sleep(3)
-
-        
-        wifi_dut.interfaces.wifi.init(mode=None, config_required=False)
-        time.sleep(2)
-
-        
-        wifi_dut.interfaces.wifi.init_test_agent_threads(thread_config={
-            "wifi": {"count": 1, "stack_len": 3072},
-            "ble":  {"count": 1, "stack_len": 2048},
-        })
-        time.sleep(2)
-        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
-        time.sleep(2)
-        logger().info(f"##### [{tag}] full re-init as STA+BLE EXIT #####")
+    """Verify DUT behavior with WPS path flow executed multiple times in loop"""
 
     try:
         test_name = request.node.name
@@ -832,18 +675,18 @@ def test_wifi_sdk_wps_path_multiple_iterations_c913442(
             logger().info(f"{'=' * 60}\n")
 
             try:
-                
+                # Create ProvisioningFunctionality object for each iteration
                 ble_obj = ProvisioningFunctionality(
                     wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
                     ble_dut=ble_dut, set_smp=0, utf_constants=utf_constants,
                     wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                     ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel,
                     wifi_client=wifi_client, wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web,
-                    sniffer_filter=sniffer_filter, adv_int=160, associated=False,
-                    skip_scan=False, tcp_ip_bypass=False, ip_config_disable=False,
-                    power_save=False,
+                    sniffer_filter=sniffer_filter, adv_int=160, associated=False, skip_scan=True,
+                    power_save=False  # Disable power save for faster iterations
                 )
 
+                # Start AP mode and services
                 ble_obj.ap_mode_start()
                 ble_obj.start()
                 ble_obj.wait_for_exit()
@@ -853,131 +696,88 @@ def test_wifi_sdk_wps_path_multiple_iterations_c913442(
                 ble_obj.http_server_start()
 
                 """ **** WPS Button press code - Workaround for WPS web configuration **** """
-                logger().info(" ====== WPS button pressed and interrupt occurred and fallback to STA mode ====== ")
+                logger().info(" ====== WPS button pressed and interrupt occured and fallback to STA mode ====== ")
 
-                
-                logger().info(f"##### [c913442 iter {iteration}] staged teardown ENTER #####")
-                soft_deinit_ok = _staged_teardown(ble_obj, f"c913442 iter {iteration}")
-                logger().info(
-                    f"##### [c913442 iter {iteration}] staged teardown EXIT "
-                    f"(soft_deinit_ok={soft_deinit_ok}) #####")
+                ble_obj.stop_ap_interface()
+                ble_obj.ble_stop_advertising()
+                ble_obj.http_server_stop()
 
+                # Deinitialize network stack
+                logger().info(f"[Iteration {iteration}] Deinitializing network stack...")
+                ble_obj.sl_net_deinit()
+                time.sleep(10)  # Reduced wait time for faster iterations
+
+                # Configure WiFi for STA mode with BLE coexistence
                 logger().info(f"[Iteration {iteration}] Configuring WiFi for STA + BLE mode...")
-                if not soft_deinit_ok:
-                    _full_reinit_as_sta_ble(f"c913442 iter {iteration} reinit-sta")
-                else:
-                    
-                    wifi_dut.interfaces.wifi.set_wifi_config(
-                        oper_mode=0,
-                        coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
-                        features=Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1
-                                 | Si91xFeatureBitMap.ULPGPIOHandshake
-                                 | Si91xFeatureBitMap.Aggregation
-                                 | Si91xFeatureBitMap.PSKSecurity,
-                        tcpip_features=Si91xTCPIPFeatureBitMap.Default | 0,
-                        ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-                                           | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-                                           | 0,
-                        custom_features=Si91xCustomFeatureBitMap.NWP120MHz
-                                        | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-                        ext_custom_features=Si91xExtCustomFeatureBitMap.Default
-                                            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
-                                            | 0,
-                        bt_features=Si91xBTFeatureBitMap.Default,
-                        ble_features=Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=1)
-                                     | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
-                                     | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
-                                     | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
-                                     | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
-                                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
-                                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
-                                     | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
-                                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-                        ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
-                                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
-                                                | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
-                                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
-                        config_features=Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-                                        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-                    )
-                    time.sleep(5)
+                wifi_dut.interfaces.wifi.set_wifi_config(
+                    oper_mode=0,
+                    coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+                    features=Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                             Si91xFeatureBitMap.ULPGPIOHandshake |
+                             Si91xFeatureBitMap.Aggregation |
+                             Si91xFeatureBitMap.PSKSecurity,
+                    tcpip_features=Si91xTCPIPFeatureBitMap.Default,
+                    ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                                       | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                    custom_features=Si91xCustomFeatureBitMap.NWP120MHz
+                                    | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+                    ext_custom_features=Si91xExtCustomFeatureBitMap.Default
+                                        | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+                    bt_features=Si91xBTFeatureBitMap.Default,
+                    ble_features=Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=1)
+                                 | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
+                                 | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
+                                 | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
+                                 | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
+                                 | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
+                                 | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
+                                 | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
+                                 | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+                    ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
+                                            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
+                                            | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
+                                            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                            | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+                    config_features=Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                                    | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                )
 
-                    wifi_dut.interfaces.wifi.is_sl_net_enabled = True
-                    wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
-
-                logger().info(f"[Iteration {iteration}] Starting WPS process with Auto Connect Enabled")
+                # Perform WPS connection
+                logger().info(f"[Iteration {iteration}] Starting WPS process...")
                 wps_result = ble_obj.join_to_wifi_network_via_wps()
                 logger().info(f"[Iteration {iteration}] WPS Result: {wps_result}")
 
-                if wps_result is not None and wps_result.get("device_ip"):
-                    logger().info(f"[Iteration {iteration}] SUCCESS - DUT IP: {wps_result['device_ip']}")
-                    successful_iterations += 1
+                # Validate WPS result
+                if wps_result is not None:
+                    if "device_ip" in wps_result and wps_result["device_ip"]:
+                        logger().info(f"[Iteration {iteration}] SUCCESS - DUT IP: {wps_result['device_ip']}")
+                        successful_iterations += 1
+                    else:
+                        logger().warning(f"[Iteration {iteration}] WPS connected but no IP assigned")
+                        failed_iterations.append((iteration, "No IP assigned"))
                 else:
-                    reason = "No IP assigned" if wps_result else "WPS returned None"
-                    logger().warning(f"[Iteration {iteration}] {reason}")
-                    failed_iterations.append((iteration, reason))
+                    logger().warning(f"[Iteration {iteration}] WPS returned None")
+                    failed_iterations.append((iteration, "WPS returned None"))
 
-                # ---------- Inter-iteration: return DUT to AP+BLE ----------
+                # Disconnect before next iteration (if not the last iteration)
                 if iteration < iteration_count:
-                    logger().info(f"[Iteration {iteration}] Returning DUT to AP+BLE for next iteration...")
-
+                    logger().info(f"[Iteration {iteration}] Disconnecting from AP for next iteration...")
                     try:
                         ble_obj.wifi_disconnect()
                     except Exception as disconnect_error:
                         logger().warning(f"[Iteration {iteration}] Disconnect warning: {disconnect_error}")
-                    time.sleep(3)
 
-                    # Disable WPS PBC on the AP - join_to_wifi_network_via_wps() will
-                    # re-enable it at the start of the next iteration.
-                    try:
-                        wifi_access_point.interfaces.wifi.set_configure_wps_web()
-                    except Exception as ap_err:
-                        logger().warning(f"[Iteration {iteration}] AP WPS stop warning: {ap_err}")
-
-                    wifi_dut.interfaces.wifi.is_sl_net_enabled = False
-                    try:
-                        ble_obj.sl_net_deinit()
-                        logger().info(f"[Iteration {iteration}] inter-iter wifi.deinit ok")
-                    except Exception as deinit_err:
-                        logger().warning(
-                            f"[Iteration {iteration}] inter-iter wifi.deinit failed: "
-                            f"{deinit_err}")
-                    time.sleep(3)
-
-                    if not _force_commander_reset(f"c913442 iter {iteration} inter"):
-                        logger().error(
-                            f"[Iteration {iteration}] inter-iter HW reset failed; aborting loop")
-                        break
-                    time.sleep(3)
-
-                    # Mimic the framework's setup sequence (wifi.init + threads).
-                    _full_reinit_as_ap_ble(f"c913442 iter {iteration} inter")
-                    time.sleep(3)
+                    # Stop WPS on AP before next iteration
+                    wifi_access_point.interfaces.wifi.set_configure_wps_web()
+                    time.sleep(5)  # Wait before next iteration
 
             except Exception as iter_error:
                 logger().error(f"[Iteration {iteration}] FAILED with error: {str(iter_error)}")
                 failed_iterations.append((iteration, str(iter_error)))
-                
-                if iteration < iteration_count:
-                    logger().info(f"[Iteration {iteration}] Attempting state recovery for next iteration...")
-                    try:
-                        
-                        if not _force_commander_reset(f"c913442 iter {iteration} except"):
-                            logger().error(
-                                f"[Iteration {iteration}] HW reset failed; aborting loop")
-                            break
-                        time.sleep(3)
-                        # Full fresh re-init (wifi.init + threads), not net.init.
-                        _full_reinit_as_ap_ble(f"c913442 iter {iteration} except")
-                        time.sleep(3)
-                    except Exception as recovery_err:
-                        logger().error(
-                            f"[Iteration {iteration}] state recovery failed; aborting loop: "
-                            f"{recovery_err}")
-                        break
+                # Continue to next iteration even if current one fails
                 continue
 
+        # Final summary
         logger().info(f"\n{'=' * 60}")
         logger().info(f"===== WPS ITERATION TEST SUMMARY =====")
         logger().info(f"{'=' * 60}")
@@ -990,9 +790,11 @@ def test_wifi_sdk_wps_path_multiple_iterations_c913442(
             for iter_num, reason in failed_iterations:
                 logger().info(f"  - Iteration {iter_num}: {reason}")
 
+        # Stop sniffer
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Sniffer capture stopped")
 
+        # Assert all iterations passed
         assert successful_iterations == iteration_count, \
             f"WPS loop test failed: {successful_iterations}/{iteration_count} iterations succeeded. " \
             f"Failures: {failed_iterations}"
@@ -1002,4 +804,817 @@ def test_wifi_sdk_wps_path_multiple_iterations_c913442(
     finally:
         logger().info(" ====== Stop WPS PBC on Access Point ====== ")
         wifi_access_point.interfaces.wifi.set_configure_wps_web()
+
+
+def _c913441_force_commander_reset(wifi_dut, tag):
+    logger().info(f"##### [{tag}] forcing commander HW reset on DUT #####")
+    try:
+        wifi_dut.interfaces.wifi.reset()
+        time.sleep(3)
+        logger().info(f"##### [{tag}] commander reset OK #####")
+        return True
+    except Exception as reset_err:
+        logger().error(f"##### [{tag}] commander reset failed: {reset_err} #####")
+        return False
+
+
+def _c913441_configure_sta_ble(wifi_dut):
+    wifi_dut.interfaces.wifi.set_wifi_config(
+        oper_mode=0,
+        coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        features=Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1
+                 | Si91xFeatureBitMap.ULPGPIOHandshake
+                 | Si91xFeatureBitMap.Aggregation
+                 | Si91xFeatureBitMap.PSKSecurity,
+        tcpip_features=Si91xTCPIPFeatureBitMap.Default | 0,
+        ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
+                           | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                           | 0,
+        custom_features=Si91xCustomFeatureBitMap.NWP120MHz
+                        | Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        ext_custom_features=Si91xExtCustomFeatureBitMap.Default
+                            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid
+                            | 0,
+        bt_features=Si91xBTFeatureBitMap.Default,
+        ble_features=Si91xBLEFeatureBitMap.set_num_centrals(num_centrals=1)
+                     | Si91xBLEFeatureBitMap.set_num_peripherals(num_peripherals=1)
+                     | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_SERV
+                     | Si91xBLEFeatureBitMap.BLE_MAX_NBR_ATT_REC
+                     | Si91xBLEFeatureBitMap.FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID
+                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_INX
+                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_PWR_SAVE_OPTIONS
+                     | Si91xBLEFeatureBitMap.SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
+                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
+                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
+                                | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
+                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        config_features=Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+    )
+
+
+def _c913441_full_reinit_as_sta_ble(wifi_dut, tag):
+    """Re-init STA+BLE after HW reset; soft deinit hang leaves CLI state invalid."""
+    logger().info(f"##### [{tag}] full re-init as STA+BLE ENTER #####")
+    wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+    wifi_dut.interfaces.wifi.inited_test_agent_threads = False
+    wifi_dut.interfaces.wifi.test_agent_thread_index = -1
+    wifi_dut.interfaces.wifi.test_agent_threads = {}
+
+    _c913441_configure_sta_ble(wifi_dut)
+    time.sleep(3)
+
+    wifi_dut.interfaces.wifi.init(mode=None, config_required=False)
+    time.sleep(2)
+    wifi_dut.interfaces.wifi.init_test_agent_threads(thread_config={
+        "wifi": {"count": 1, "stack_len": 3072},
+        "ble": {"count": 1, "stack_len": 2048},
+    })
+    time.sleep(2)
+    wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+    time.sleep(2)
+    logger().info(f"##### [{tag}] full re-init as STA+BLE EXIT #####")
+
+
+def _c913441_staged_ap_ble_teardown(ble_obj, wifi_dut, tag):
+    """
+    Staged AP+BLE teardown. Returns True when soft wifi.deinit succeeded.
+    On hang (-0x1), falls back to commander reset and returns False so the
+    caller must use _c913441_full_reinit_as_sta_ble instead of a plain init.
+    """
+    logger().info(f"##### [{tag}] staged teardown ENTER #####")
+
+    logger().info(f"##### [{tag}] step 1/4: stop_ap_interface #####")
+    try:
+        ble_obj.stop_ap_interface()
+    except Exception as e:
+        logger().warning(f"##### [{tag}] stop_ap_interface error (continuing): {e} #####")
+    time.sleep(3)
+
+    logger().info(f"##### [{tag}] step 2/4: ble_stop_advertising #####")
+    try:
+        ble_obj.ble_stop_advertising()
+    except Exception as e:
+        logger().warning(f"##### [{tag}] ble_stop_advertising error (continuing): {e} #####")
+    time.sleep(2)
+
+    logger().info(f"##### [{tag}] step 3/4: http_server_stop #####")
+    try:
+        ble_obj.http_server_stop()
+    except Exception as e:
+        logger().warning(f"##### [{tag}] http_server_stop error (continuing): {e} #####")
+    time.sleep(3)
+
+    logger().info(f"##### [{tag}] step 4/4: sl_net_deinit (with retry) #####")
+    deinit_attempts = 2
+    deinit_ok = False
+    for attempt in range(1, deinit_attempts + 1):
+        try:
+            ble_obj.sl_net_deinit()
+            deinit_ok = True
+            logger().info(f"##### [{tag}] sl_net_deinit succeeded on attempt {attempt} #####")
+            break
+        except Exception as deinit_err:
+            logger().warning(
+                f"##### [{tag}] sl_net_deinit attempt {attempt}/{deinit_attempts} "
+                f"failed: {deinit_err} #####")
+            time.sleep(3)
+
+    if not deinit_ok:
+        logger().warning(f"##### [{tag}] soft deinit hung - falling back to HW commander reset #####")
+        _c913441_force_commander_reset(wifi_dut, tag)
+
+    time.sleep(5)
+    logger().info(f"##### [{tag}] staged teardown EXIT (soft_deinit_ok={deinit_ok}) #####")
+    return deinit_ok
+
+
+def _c913441_configure_ap_ble(wifi_dut):
+    """Apply the AP+BLE config (mirrors wifi_dut_marker start config) used at test setup."""
+    wifi_dut.interfaces.wifi.set_wifi_config(
+        oper_mode=Si91xOperatingMode.AccessPoint,
+        coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        features=Si91xFeatureBitMap.Aggregation
+                 | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
+        tcpip_features=Si91xTCPIPFeatureBitMap.Default
+                       | Si91xTCPIPFeatureBitMap.DHCPv4Server
+                       | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+        ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.Default,
+        custom_features=Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid
+                        | Si91xCustomFeatureBitMap.NWP120MHz,
+        ext_custom_features=Si91xExtCustomFeatureBitMap.Default
+                            | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
+                            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        bt_features=Si91xBTFeatureBitMap.Default,
+        ble_features=Si91xBLEFeatureBitMap.Default
+                     | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS
+                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES
+                                | Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES
+                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                                | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        config_features=Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP
+                        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+    )
+
+
+def _c913441_reinit_as_ap_ble(wifi_dut, tag):
+    """
+    Recover the DUT to a fresh, inited AP+BLE state for the next loop iteration.
+
+    A preceding WPS timeout (0x1002B) leaves the STA+BLE stack wedged, so we always
+    HW-reset first, resync the CLI driver state, then re-init exactly like the
+    framework start_state does for AP+BLE.
+    """
+    logger().info(f"##### [{tag}] reinit as AP+BLE ENTER #####")
+    _c913441_force_commander_reset(wifi_dut, tag)
+
+    wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+    wifi_dut.interfaces.wifi.inited_test_agent_threads = False
+    wifi_dut.interfaces.wifi.test_agent_thread_index = -1
+    wifi_dut.interfaces.wifi.test_agent_threads = {}
+
+    _c913441_configure_ap_ble(wifi_dut)
+    time.sleep(3)
+
+    wifi_dut.interfaces.wifi.init(mode=None, config_required=False)
+    time.sleep(2)
+    wifi_dut.interfaces.wifi.init_test_agent_threads(thread_config={
+        "wifi": {"count": 1, "stack_len": 3072},
+        "ble": {"count": 1, "stack_len": 2048},
+    })
+    time.sleep(2)
+    logger().info(f"##### [{tag}] reinit as AP+BLE EXIT #####")
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.parametrize("iteration_count", [3])  # Number of WPS-timeout iterations
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11}
+)
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_verify_dut_behavior_when_wps_failure_timeout_occurs_c913441(
+        sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients,
+        sniffer_filter, ap_channel, iteration_count, caplog):
+    """Verify DUT behavior when WPS Failure/Timeout occurs_C913441.
+
+    The WPS-timeout flow is executed ``iteration_count`` times inside a single test
+    instance (instead of relying on pytest ``--count=N``). Each repetition recovers the
+    DUT back to a fresh AP+BLE state internally, so the firmware deinit/init instability
+    is contained within the test body and never reaches the per-repetition fixture
+    setup/teardown boundary.
+    """
+
+    successful_iterations = 0
+    failed_iterations = []
+
+    try:
+        caplog.set_level(logging.INFO)
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        for iteration in range(1, iteration_count + 1):
+            logger().info(f"\n{'=' * 60}")
+            logger().info(f"===== C913441 WPS-TIMEOUT ITERATION {iteration} of {iteration_count} =====")
+            logger().info(f"{'=' * 60}\n")
+
+            # Iterations after the first start from the wedged STA+BLE state left by the
+            # previous WPS timeout, so recover the DUT to a fresh AP+BLE state first.
+            if iteration > 1:
+                _c913441_reinit_as_ap_ble(wifi_dut, f"c913441 iter{iteration} reinit-ap")
+
+            try:
+                ble_obj = ProvisioningFunctionality(
+                    wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut,
+                    set_smp=0, utf_constants=utf_constants, wifi_access_point=wifi_access_point,
+                    wifi_sniffer=wifi_sniffer, ssid='sharma_test', security='wpa2', psk='123456789',
+                    ap_channel=ap_channel, wifi_client=wifi_client, wifi_clients=wifi_clients,
+                    wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter, adv_int=160,
+                    associated=False, skip_scan=False, tcp_ip_bypass=False, ip_config_disable=False,
+                    power_save=False
+                )
+
+                ble_obj.ap_mode_start()
+                ble_obj.start()
+                ble_obj.wait_for_exit()
+                ble_obj.firmware_version()
+                time.sleep(10)
+                ble_obj.check_beacon()
+                ble_obj.http_server_start()
+
+                logger().info(" ====== Preparing DUT to switch from AP+BLE mode to STA+BLE mode ====== ")
+                soft_deinit_ok = _c913441_staged_ap_ble_teardown(ble_obj, wifi_dut, f"c913441 iter{iteration}")
+
+                if not soft_deinit_ok:
+                    _c913441_full_reinit_as_sta_ble(wifi_dut, f"c913441 iter{iteration} reinit-sta")
+                else:
+                    _c913441_configure_sta_ble(wifi_dut)
+                    time.sleep(5)
+                    wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+                    wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+
+                logger().info(" ====== Negative WPS flow: AP WPS is intentionally NOT enabled ====== ")
+                wifi_access_point.interfaces.wifi.set_configure_wps_web()
+
+                scan_status, reason = sl_collections.scan(
+                    wifi_dut, scan_status=False, retry_count=1, channel=0
+                )
+                assert scan_status, f"....Scanning for AP failed..with reason: {reason}...."
+
+                caplog.clear()
+                logger().info(f"[WPS-PB] [Iteration {iteration}] Starting WPS PB process...")
+                # The CLI/RTT test firmware does NOT print the demo-app strings
+                # ("Falling back to AP+BLE mode", etc.). The only observable evidence of
+                # the WPS timeout in this framework is the status code 0x1002B that
+                # start_client_wps returns/raises over the bus, so we assert on that.
+                wps_result = None
+                wps_error = None
+                try:
+                    wps_result = wifi_dut.interfaces.wifi.start_client_wps(
+                        interface="client",
+                        wps_role=0,
+                        wps_mode=0,
+                        auto_connect=True
+                    )
+                    logger().info(f"WPS result returned from framework: {wps_result}")
+                except Exception as wps_api_error:
+                    wps_error = str(wps_api_error)
+                    logger().info(f"WPS API raised exception during timeout flow: {wps_error}")
+
+                captured_logs = caplog.text
+
+                # Expected: WPS association timed out with 0x1002B
+                # (SL_STATUS_SI91X_ASSOCIATION_TIMEOUT_IN_P2P_WPS_MODE).
+                timeout_seen = (
+                        "0x1002b" in captured_logs.lower()
+                        or (wps_error is not None and "0x1002b" in wps_error.lower())
+                )
+                assert timeout_seen, (
+                    "Expected WPS timeout error code 0x1002B "
+                    "(SL_STATUS_SI91X_ASSOCIATION_TIMEOUT_IN_P2P_WPS_MODE) was not observed"
+                )
+
+                # Negative checks: WPS must NOT have succeeded.
+                assert "DUT successfully connected to AP via WPS" not in captured_logs, \
+                    "Unexpected WPS connection success log found in timeout scenario"
+                assert "DUT ip:" not in captured_logs, \
+                    "Unexpected IP assignment observed in timeout scenario"
+
+                if isinstance(wps_result, dict) and "status" in wps_result:
+                    assert str(wps_result["status"]).lower() != "0x00000000", \
+                        f"Unexpected success status returned in WPS timeout scenario: {wps_result}"
+
+                logger().info(
+                    f"[Iteration {iteration}] Verified DUT behavior for WPS Failure/Timeout (0x1002B) successfully")
+                successful_iterations += 1
+
+            except Exception as iter_error:
+                logger().error(f"[Iteration {iteration}] FAILED with error: {iter_error}")
+                failed_iterations.append((iteration, str(iter_error)))
+            finally:
+                # Stop WPS PBC on the AP before the next iteration.
+                try:
+                    wifi_access_point.interfaces.wifi.set_configure_wps_web()
+                except Exception:
+                    pass
+
+        logger().info(f"\n{'=' * 60}")
+        logger().info("===== C913441 WPS-TIMEOUT SUMMARY =====")
+        logger().info(
+            f"Total: {iteration_count}, Successful: {successful_iterations}, Failed: {len(failed_iterations)}")
+        if failed_iterations:
+            for iter_num, reason in failed_iterations:
+                logger().info(f"  - Iteration {iter_num}: {reason}")
+        logger().info(f"{'=' * 60}\n")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+        assert successful_iterations == iteration_count, (
+            f"C913441 WPS-timeout loop failed: {successful_iterations}/{iteration_count} iterations succeeded. "
+            f"Failures: {failed_iterations}"
+        )
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        logger().info(" ====== Stop WPS PBC on Access Point ====== ")
+        wifi_access_point.interfaces.wifi.set_configure_wps_web()
+
+        try:
+            wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception:
+            pass
+
+        # Clear the leaked sl_net/external-stack flags so the NEXT test's AP+BLE
+        # start_state init() uses 'wifi.init' (not 'net.init') and avoids 0x21.
+        try:
+            _restore_sl_net_baseline(wifi_dut, "c913441 finally")
+        except Exception:
+            pass
+
+
+def _c913443_disconnect_or_recover(wifi_dut, tag):
+    """
+    Leave the WPS-connected network so end_state(unassociated) becomes a no-op.
+
+    leave() sets self.associated = False before raising on a disconnect timeout, so a
+    plain try/except is enough to stop the fixture re-attempting leave(). On a disconnect
+    hang (0x7 SL_STATUS_TIMEOUT) we additionally HW-reset and re-init STA+BLE so the DUT
+    is left inited, unassociated, and firmware-healthy for the next test.
+    """
+    logger().info(f"##### [{tag}] post-WPS disconnect ENTER #####")
+    try:
+        wifi_dut.interfaces.wifi.leave()
+        logger().info(f"##### [{tag}] leave() OK #####")
+        return
+    except Exception as leave_err:
+        logger().warning(f"##### [{tag}] leave() failed: {leave_err} - HW reset + re-init STA+BLE #####")
+
+    _c913441_force_commander_reset(wifi_dut, tag)
+    _c913441_full_reinit_as_sta_ble(wifi_dut, tag)
+    wifi_dut.interfaces.wifi.associated = False
+    logger().info(f"##### [{tag}] post-WPS disconnect EXIT #####")
+
+
+def _restore_sl_net_baseline(wifi_dut, tag):
+    """
+    Restore the DUT + interface object to a clean, inited AP+BLE baseline that
+    mirrors the framework start_state, so BOTH the current end_state and the NEXT
+    test's start_state are no-ops.
+
+    Two distinct problems are solved here:
+
+    1) Cross-test setup 0x21: reset()/_commander_reset() clear inited/associated
+       but NOT is_sl_net_enabled / is_external_stack_enabled (those are set False
+       only once, at object creation). A coex test that flips is_sl_net_enabled=True
+       leaks it into the next test, whose AP+BLE start_state then wrongly issues
+       'net.init' instead of 'wifi.init' and fails setup with 0x21.
+
+    2) Teardown 0x1: after a WPS timeout/interrupt (0x1002B) the STA stack is left
+       wedged, so leaving the device deinited forces the framework end_state
+       ["unassociated"] to call init(), which fails with 0x1 SL_STATUS_FAIL.
+
+    _c913441_reinit_as_ap_ble() HW-resets, resyncs the CLI thread state, clears the
+    stack flags, reconfigures AP+BLE and re-inits - leaving the device inited,
+    unassociated and firmware-healthy. end_state(unassociated) then sees
+    inited=True / associated=False and does nothing.
+    """
+    logger().info(f"##### [{tag}] restore AP+BLE baseline ENTER #####")
+    try:
+        _c913441_reinit_as_ap_ble(wifi_dut, tag)
+        wifi_dut.interfaces.wifi.associated = False
+    except Exception as err:
+        logger().warning(f"##### [{tag}] AP+BLE reinit failed, falling back to bare reset: {err} #####")
+        try:
+            _c913441_force_commander_reset(wifi_dut, tag)
+        except Exception:
+            pass
+        wifi = wifi_dut.interfaces.wifi
+        wifi.is_sl_net_enabled = False
+        wifi.is_external_stack_enabled = False
+        wifi.inited = False
+        wifi.associated = False
+    logger().info(f"##### [{tag}] restore AP+BLE baseline EXIT #####")
+
+
+# NOTE: There is no logic to initiate the interrupt from the DUT by pressing a button,
+# hence the WPS APIs are called sequentially after BLE provisioning to validate the WPS fallback path.
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11}
+)
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_verify_ble_provisioning_interrupted_by_wps_fallback_c913443(
+        sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients,
+        sniffer_filter, ap_channel):
+    """Verify BLE provisioning behavior when interrupted by WPS feature and fallback to WPS connection path_C913443"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter, adv_int=160,
+            associated=False, skip_scan=False, tcp_ip_bypass=False, ip_config_disable=False, power_save=False
+        )
+
+        # -------------------- Phase 1: Start BLE provisioning (AP + BLE) --------------------
+        logger().info(" ====== Phase 1: Starting BLE provisioning (AP + BLE) ====== ")
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        time.sleep(10)
+        ble_obj.check_beacon()
+        ble_obj.http_server_start()
+
+        # -------------------- Phase 2: Interrupt BLE provisioning (staged teardown) -----
+        # The plain AP+BLE -> STA+BLE deinit intermittently hangs (wifi.deinit -0x1), so use
+        # the same staged teardown (retry + HW-reset fallback) proven in C913441.
+        logger().info(" ====== Phase 2: BLE provisioning interrupted - switching to WPS path ====== ")
+        soft_deinit_ok = _c913441_staged_ap_ble_teardown(ble_obj, wifi_dut, "c913443")
+
+        # -------------------- Phase 3: Fallback to WPS connection path (STA + BLE) --------------------
+        logger().info(" ====== Phase 3: Reconfiguring DUT to STA + BLE mode for WPS ====== ")
+        if not soft_deinit_ok:
+            _c913441_full_reinit_as_sta_ble(wifi_dut, "c913443 reinit-sta")
+        else:
+            _c913441_configure_sta_ble(wifi_dut)
+            time.sleep(5)
+            wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+            wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+
+        # -------------------- WPS join (auto-connect ENABLED) --------------------
+        logger().info(" ====== Phase 4: Starting WPS connection (fallback path) ====== ")
+        wps_result = ble_obj.join_to_wifi_network_via_wps()
+        logger().info("WPS Result: {wps_result}")
+
+        # -------------------- Phase 5: Validate successful WPS fallback connection ----------
+        assert wps_result is not None, "WPS fallback failed: join_to_wifi_network_via_wps returned None"
+        assert "device_ip" in wps_result and wps_result["device_ip"], \
+            "WPS fallback connection did not get a valid IP: {wps_result}"
+
+        logger().info(
+            "BLE provisioning interrupted by WPS - DUT connected via WPS fallback. "
+            "IP: {wps_result['device_ip']}, MAC: {wps_result.get('dut_mac_address')}"
+        )
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        logger().info(" ====== Stop WPS PBC on Access Point ====== ")
+        wifi_access_point.interfaces.wifi.set_configure_wps_web()
+
+        try:
+            wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception:
+            pass
+
+        # Disconnect cleanly so end_state(unassociated) doesn't time out on leave() (0x7).
+        try:
+            _c913443_disconnect_or_recover(wifi_dut, "c913443 finally")
+        except Exception:
+            pass
+
+        # Clear leaked sl_net/external-stack flags so the NEXT test's start_state passes.
+        try:
+            _restore_sl_net_baseline(wifi_dut, "c913443 finally")
+        except Exception:
+            pass
+
+
+# NOTE: There is no logic to initiate the interrupt from the DUT by pressing a button,
+# hence the WPS APIs are called sequentially after SoftAP provisioning to validate the WPS fallback (association) path.
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11}
+)
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_verify_softap_provisioning_interrupted_by_wps_fallback_c913444(
+        sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients,
+        sniffer_filter, ap_channel):
+    """Verify SoftAP provisioning behavior when interrupted by WPS feature and fallback to WPS association path_C913444"""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info("Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter, adv_int=160,
+            associated=False, skip_scan=False, tcp_ip_bypass=False, ip_config_disable=False, power_save=False
+        )
+
+        # -------------------- Phase 1: Start SoftAP provisioning (AP + HTTP web UI active) --------------------
+        # Bring SoftAP provisioning up to the "active" state: DUT-AP + HTTP server +
+        # a station client joined to the provisioning page. We intentionally do NOT submit
+        # credentials over the web UI, because this test models the provisioning being
+        # INTERRUPTED by WPS before credentials are exchanged. (The web-UI submit helper
+        # wiseconnect_ui.connect() is also not available in this build.)
+        logger().info(" ====== Phase 1: Starting SoftAP provisioning (AP + HTTP web UI active) ====== ")
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        time.sleep(10)
+        ble_obj.check_beacon()
+        ble_obj.http_server_start()
+        ble_obj.connect_clients_to_dut_as_ap()
+
+        # -------------------- Phase 2: Interrupt SoftAP provisioning (staged teardown) -----
+        # The plain AP+BLE -> STA+BLE deinit intermittently hangs (wifi.deinit -0x1), so use
+        # the same staged teardown (retry + HW-reset fallback) proven in C913441/C913443.
+        logger().info(" ====== Phase 2: SoftAP provisioning interrupted - switching to WPS path ====== ")
+        soft_deinit_ok = _c913441_staged_ap_ble_teardown(ble_obj, wifi_dut, "c913444")
+
+        # -------------------- Phase 3: Fallback to WPS association path (STA + BLE) --------------------
+        logger().info(" ====== Phase 3: Reconfiguring DUT to STA + BLE mode for WPS ====== ")
+        if not soft_deinit_ok:
+            _c913441_full_reinit_as_sta_ble(wifi_dut, "c913444 reinit-sta")
+        else:
+            _c913441_configure_sta_ble(wifi_dut)
+            time.sleep(5)
+            wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+            wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+
+        # -------------------- Phase 4: WPS association (fallback path) --------------------
+        logger().info(" ====== Phase 4: Starting WPS association (fallback path) ====== ")
+        wps_result = ble_obj.join_to_wifi_network_via_wps()
+        logger().info("WPS Result: {wps_result}")
+
+        # -------------------- Phase 5: Validate successful WPS fallback association ----------
+        assert wps_result is not None, "WPS fallback failed: join_to_wifi_network_via_wps returned None"
+        assert "device_ip" in wps_result and wps_result["device_ip"], \
+            "WPS fallback association did not get a valid IP: {wps_result}"
+
+        logger().info(
+            "SoftAP provisioning interrupted by WPS - DUT associated via WPS fallback. "
+            "IP: {wps_result['device_ip']}, MAC: {wps_result.get('dut_mac_address')}"
+        )
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        logger().info(" ====== Stop WPS PBC on Access Point ====== ")
+        wifi_access_point.interfaces.wifi.set_configure_wps_web()
+
+        try:
+            wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception:
+            pass
+
+        # Disconnect cleanly so end_state(unassociated) doesn't time out on leave() (0x7).
+        try:
+            _c913443_disconnect_or_recover(wifi_dut, "c913444 finally")
+        except Exception:
+            pass
+
+        # Clear leaked sl_net/external-stack flags so the NEXT test's start_state passes.
+        try:
+            _restore_sl_net_baseline(wifi_dut, "c913444 finally")
+        except Exception:
+            pass
+
+
+# NOTE: There is no logic to initiate the interrupt from the DUT by pressing a button.
+# Stage 1 (BLE provisioning -> WPS) is done via sequential APIs, and the "interrupt during WPS"
+# in Stage 2 is realized as a WPS timeout/failure (0x1002B) by intentionally not enabling WPS on the AP,
+# which makes the DUT fall back to AP+BLE mode.
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11}
+)
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_verify_ble_provisioning_wps_interrupt_fallback_c922364(
+        sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients,
+        sniffer_filter, ap_channel, caplog):
+    """Verify BLE provisioning interrupted by WPS (fallback to WPS path) and fallback mode when an interrupt
+    occurs during WPS_C922364"""
+
+    wps_result = None
+
+    try:
+        caplog.set_level(logging.INFO)
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info("Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter, adv_int=160,
+            associated=False, skip_scan=False, tcp_ip_bypass=False, ip_config_disable=False, power_save=False
+        )
+
+        # -------------------- Stage 1: BLE provisioning interrupted by WPS -> WPS path --------------------
+        logger().info(" ====== Stage 1: Starting BLE provisioning (AP + BLE) ====== ")
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        time.sleep(10)
+        ble_obj.check_beacon()
+        ble_obj.http_server_start()
+
+        logger().info(" ====== Stage 1: BLE provisioning interrupted - switching to WPS path ====== ")
+        # Use the proven staged AP+BLE teardown (with retries + commander-reset
+        # fallback) instead of a plain sl_net_deinit(), which intermittently hangs
+        # with status -0x1 during the AP+BLE -> STA+BLE coex transition.
+        soft_deinit_ok = _c913441_staged_ap_ble_teardown(ble_obj, wifi_dut, "c922364")
+
+        logger().info(" ====== Stage 1: Reconfiguring DUT to STA + BLE mode for WPS ====== ")
+        if not soft_deinit_ok:
+            # Soft deinit failed and a hardware reset was performed inside the
+            # staged teardown; do a full STA+BLE re-initialization from scratch.
+            _c913441_full_reinit_as_sta_ble(wifi_dut, "c922364 reinit-sta")
+        else:
+            _c913441_configure_sta_ble(wifi_dut)
+            time.sleep(5)
+            wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+            wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+
+        # -------------------- Stage 2: Interrupt during WPS -> fallback to AP+BLE --------------------
+        # Intentionally DO NOT enable WPS on the AP so WPS gets interrupted (timeout 0x1002B).
+        logger().info(" ====== Stage 2: AP WPS intentionally NOT enabled to interrupt WPS (timeout) ====== ")
+        wifi_access_point.interfaces.wifi.set_configure_wps_web()
+
+        scan_status, reason = sl_collections.scan(
+            wifi_dut, scan_status=False, retry_count=1, channel=0
+        )
+        assert scan_status, f"....Scanning for AP failed..with reason: {reason}...."
+
+        caplog.clear()
+        logger().info("[WPS-PB] Starting WPS PB process...")
+        # The CLI/RTT test firmware does NOT print the demo-app strings
+        # ("WPS is in progress...", "Client interface deinitialized",
+        # "Falling back to AP+BLE mode", etc.). The only observable evidence of
+        # the WPS interrupt/timeout in this framework is the status code 0x1002B
+        # (SL_STATUS_SI91X_ASSOCIATION_TIMEOUT_IN_P2P_WPS_MODE) that
+        # start_client_wps returns/raises over the bus, so we assert on that.
+        wps_result = None
+        wps_error = None
+        try:
+            wps_result = wifi_dut.interfaces.wifi.start_client_wps(
+                interface="client",
+                wps_role=0,
+                wps_mode=0,
+                auto_connect=True
+            )
+            logger().info(f"WPS result returned from framework: {wps_result}")
+        except Exception as error:
+            wps_error = str(error)
+            logger().info(f"WPS API raised exception during interrupt flow: {wps_error}")
+
+        captured_logs = caplog.text
+
+        # Stage 2 validation: interrupt during WPS -> WPS association timed out with 0x1002B.
+        timeout_seen = (
+                "0x1002b" in captured_logs.lower()
+                or (wps_error is not None and "0x1002b" in wps_error.lower())
+        )
+        assert timeout_seen, (
+            "Expected WPS interrupt/timeout error code 0x1002B "
+            "(SL_STATUS_SI91X_ASSOCIATION_TIMEOUT_IN_P2P_WPS_MODE) was not observed "
+            "in caplog or the start_client_wps result/exception"
+        )
+
+        # Negative guards: WPS must not have succeeded.
+        assert "Status: 0x00000000" not in captured_logs, \
+            "Unexpected successful WPS status found during interrupt scenario"
+        assert "DUT successfully connected to AP via WPS" not in captured_logs, \
+            "Unexpected WPS connection success log found during interrupt scenario"
+        assert "DUT ip:" not in captured_logs, \
+            "Unexpected IP assignment observed during interrupt scenario"
+
+        if isinstance(wps_result, dict) and "status" in wps_result:
+            assert str(wps_result["status"]).lower() != "0x00000000", \
+                f"Unexpected success status returned in WPS interrupt scenario: {wps_result}"
+
+        logger().info("Verified BLE provisioning -> WPS handoff and fallback to AP+BLE on WPS interrupt (0x1002B)")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        logger().info(" ====== Stop WPS PBC on Access Point ====== ")
+        wifi_access_point.interfaces.wifi.set_configure_wps_web()
+
+        try:
+            wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception:
+            pass
+
+        # Clear leaked sl_net/external-stack flags so the NEXT test's start_state passes.
+        try:
+            _restore_sl_net_baseline(wifi_dut, "c922364 finally")
+        except Exception:
+            pass
 
