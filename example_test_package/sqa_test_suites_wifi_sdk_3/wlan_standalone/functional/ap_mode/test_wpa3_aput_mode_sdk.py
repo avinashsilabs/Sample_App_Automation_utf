@@ -54,7 +54,7 @@ class WifiConnectionThread(ThreadBase):
 
     def run(self):
         if self.test_case_no == 537919:
-            ssid = "Concurent_ap"
+            ssid = "wpa3_ap"
             security = "wpa3"
             password = "Automation@Silabs"
             channel = "1"
@@ -63,7 +63,7 @@ class WifiConnectionThread(ThreadBase):
             ht_caps = 1
             keepalive_type = 1
         if self.test_case_no == 537918:
-            ssid = "Concurent_ap"
+            ssid = "wpa3_ap"
             security = "wpa3"
             password = "Automation@Silabs"
             channel = "1"
@@ -72,16 +72,24 @@ class WifiConnectionThread(ThreadBase):
             ht_caps = 1
             keepalive_type = 3
         if self.test_case_no == 463726:
-            ssid = "Concurent_ap"
+            ssid = "wpa3_ap"
             security = "wpa3"
             password = "Automation@Silabs"
             channel = "1"
             dtim_count = "1"
             beacon_interval = "100"
             ht_caps = 1
-        if self.test_case_no == 468602 or self.test_case_no == 468523 or self.test_case_no == 468525 or \
-                self.test_case_no == 468526 or self.test_case_no == 468604 or self.test_case_no == 468622:
-            ssid = "Concurent_ap"
+        if self.test_case_no == 468525 or self.test_case_no == 468622:
+            ssid = "wpa3_ap"
+            security = "wpa3"
+            password = "Automation@Silabs"
+            channel = "1"
+            dtim_count = "1"
+            beacon_interval = "100"
+            ht_caps = 1
+        if self.test_case_no == 468602 or self.test_case_no == 468523 or \
+                self.test_case_no == 468526 or self.test_case_no == 468604:
+            ssid = "wpa3_ap"
             security = "wpa3_transition"
             password = "Automation@Silabs"
             channel = "1"
@@ -96,7 +104,7 @@ class WifiConnectionThread(ThreadBase):
                                                        static_gateway="192.168.100.76")
         if self.test_case_no == 537919 or self.test_case_no == 537918:
             self.wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
-                                               dtim_beacon_count=dtim_count, beacon_interval=beacon_interval,
+                                                   dtim_beacon_count=dtim_count, beacon_interval=beacon_interval,
                                                    encryption=None, ht_caps=ht_caps, keepalive_type=keepalive_type)
         elif self.test_case_no == 468523 or self.test_case_no == 468525:
             self.wifi_dut.interfaces.wifi.start_ap(ssid=ssid, security=security, channel=channel, psk=password,
@@ -120,32 +128,37 @@ class WifiConnectionThread(ThreadBase):
         static_subnet = "255.255.255.0"
         static_gateway = "192.168.100.76"
         ip_version = 'ipv4'
-        ssid = "Concurent_ap"
+        ssid = "wpa3_ap"
         channel = 1
         password = "Automation@Silabs"
         self.remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
         time.sleep(2)
         if self.test_case_no == 468602:
             self.remote_wiseconnect3.interfaces.sapi.join(ssid=ssid,
-                                                     security="wpa2",
-                                                     passphrase=password,
-                                                     channel=channel, timeout=60)
-        elif self.test_case_no == 468525 or self.test_case_no == 468526 or self.test_case_no == 468604:
+                                                          security="wpa2",
+                                                          passphrase=password,
+                                                          channel=channel, timeout=60)
+        elif self.test_case_no == 468526 or self.test_case_no == 468604:
             self.remote_wiseconnect3.interfaces.sapi.join(ssid=ssid,
-                                                     security="wpa3_transition",
-                                                     passphrase=password,
-                                                     channel=channel, timeout=60)
+                                                          security="wpa3_transition",
+                                                          passphrase=password,
+                                                          channel=channel, timeout=60)
+        elif self.test_case_no == 468525:
+            self.remote_wiseconnect3.interfaces.sapi.join(ssid=ssid,
+                                                          security="wpa3",
+                                                          passphrase=password,
+                                                          channel=channel, timeout=60)
         else:
             self.remote_wiseconnect3.interfaces.sapi.join(ssid=ssid,
-                                                     security="wpa3",
-                                                     passphrase=password,
-                                                     channel=channel, timeout=60)
+                                                          security="wpa3",
+                                                          passphrase=password,
+                                                          channel=channel, timeout=60)
         self.remote_wiseconnect3.interfaces.sapi.start_ip(ip_version=ip_version, static_ip=static_ip,
-                                                     static_subnet=static_subnet,
-                                                     static_gateway=static_gateway, timeout=10)
+                                                          static_subnet=static_subnet,
+                                                          static_gateway=static_gateway, timeout=10)
         time.sleep(2)
         self.remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_gateway, num_ping_attempts=self.ping_count,
-                                           ping_timeout=10,  ip_version='ipv4', ping_size=64)
+                                                      ping_timeout=10, ip_version='ipv4', ping_size=64)
         time.sleep(2)
 
         if self.test_case_no == 468622:
@@ -154,7 +167,7 @@ class WifiConnectionThread(ThreadBase):
                 self.remote_wiseconnect3.interfaces.sapi.leave()
                 time.sleep(10)
                 self.remote_wiseconnect3.interfaces.sapi.join(ssid=ssid,
-                                                              security="wpa3_transition",
+                                                              security="wpa3",
                                                               passphrase=password,
                                                               channel=channel, timeout=60)
                 self.remote_wiseconnect3.interfaces.sapi.start_ip(ip_version=ip_version, static_ip=static_ip,
@@ -228,7 +241,7 @@ class WifiPingThread(ThreadBase):
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
@@ -245,8 +258,8 @@ def test_wifi_sdk_conn_wpa3_in_aput_func_deauth_C537919(wifi_sniffer, wifi_dut, 
         logger().info(f"DUT MAC is : {sec_sdk_mac}")
         time.sleep(2)
         sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, test_name=test_name, wifi_sniffer=wifi_sniffer,
-                                             test_case_no=537919, remote_wiseconnect3=remote_wiseconnect3,
-                                             sl_collections=sl_collections, ping_count=ping_count)
+                                       test_case_no=537919, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
         sec_obj.start()
         sec_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -301,13 +314,13 @@ def test_wifi_sdk_conn_wpa3_in_aput_func_deauth_C537919(wifi_sniffer, wifi_dut, 
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
 @pytest.mark.test_src_map_id('C537918')
 def test_wifi_sdk_conn_wpa3_in_aput_func_Keep_alive_C537918(wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+                                                            remote_wiseconnect3, sniffer_filter, sl_collections):
     """ Verify WPA3 functionality with Keep alive based"""
     try:
         test_name = request.node.name
@@ -318,8 +331,8 @@ def test_wifi_sdk_conn_wpa3_in_aput_func_Keep_alive_C537918(wifi_sniffer, wifi_d
         logger().info(f"DUT MAC is : {sec_sdk_mac}")
         time.sleep(2)
         sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, test_name=test_name, wifi_sniffer=wifi_sniffer,
-                                             test_case_no=537918, remote_wiseconnect3=remote_wiseconnect3,
-                                             sl_collections=sl_collections, ping_count=ping_count)
+                                       test_case_no=537918, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
         sec_obj.start()
         sec_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -374,13 +387,14 @@ def test_wifi_sdk_conn_wpa3_in_aput_func_Keep_alive_C537918(wifi_sniffer, wifi_d
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
-@pytest.mark.legacy_deployed
+# @pytest.mark.legacy_deployed - "Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)"
+@pytest.mark.skip("Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)")
 @pytest.mark.test_src_map_id('C468602')
 def test_wifi_sdk_aput_wpa3_with_wpa2_sta_C468602(wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+                                                  remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify WPA3 Transition functionality in APUT mode by connecting WPA2 STA do ping or any data transfer"""
     try:
         test_name = request.node.name
@@ -391,8 +405,8 @@ def test_wifi_sdk_aput_wpa3_with_wpa2_sta_C468602(wifi_sniffer, wifi_dut, utf_co
         logger().info(f"DUT MAC is : {sec_sdk_mac}")
         time.sleep(2)
         sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, test_name=test_name, wifi_sniffer=wifi_sniffer,
-                                             test_case_no=468602, remote_wiseconnect3=remote_wiseconnect3,
-                                             sl_collections=sl_collections, ping_count=ping_count)
+                                       test_case_no=468602, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
         sec_obj.start()
         sec_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -447,13 +461,13 @@ def test_wifi_sdk_aput_wpa3_with_wpa2_sta_C468602(wifi_sniffer, wifi_dut, utf_co
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
 @pytest.mark.test_src_map_id('C463726')
 def test_wifi_sdk_aput_wpa3_with_wpa3_sta_func_C463726(wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+                                                       remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify Connect and ping 3rd party STA and Verify the APUT in functionality in WPA3 H2E mode."""
     try:
         test_name = request.node.name
@@ -464,8 +478,8 @@ def test_wifi_sdk_aput_wpa3_with_wpa3_sta_func_C463726(wifi_sniffer, wifi_dut, u
         logger().info(f"DUT MAC is : {sec_sdk_mac}")
         time.sleep(2)
         sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, test_name=test_name, wifi_sniffer=wifi_sniffer,
-                                             test_case_no=463726, remote_wiseconnect3=remote_wiseconnect3,
-                                             sl_collections=sl_collections, ping_count=ping_count)
+                                       test_case_no=463726, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
         sec_obj.start()
         sec_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -520,13 +534,13 @@ def test_wifi_sdk_aput_wpa3_with_wpa3_sta_func_C463726(wifi_sniffer, wifi_dut, u
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
 @pytest.mark.test_src_map_id('C468608')
 def test_wifi_sdk_aput_wpa3_with_full_sae_C468608(wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+                                                  remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify PMKSA func in APUT mode with WPA3 sec when STA is con-ting for the first time full SAE should happen"""
     try:
         test_name = request.node.name
@@ -537,8 +551,8 @@ def test_wifi_sdk_aput_wpa3_with_full_sae_C468608(wifi_sniffer, wifi_dut, utf_co
         logger().info(f"DUT MAC is : {sec_sdk_mac}")
         time.sleep(2)
         sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, test_name=test_name, wifi_sniffer=wifi_sniffer,
-                                             test_case_no=463726, remote_wiseconnect3=remote_wiseconnect3,
-                                             sl_collections=sl_collections, ping_count=ping_count)
+                                       test_case_no=463726, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
         sec_obj.start()
         sec_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -593,16 +607,16 @@ def test_wifi_sdk_aput_wpa3_with_full_sae_C468608(wifi_sniffer, wifi_dut, utf_co
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
 @pytest.mark.test_src_map_id('C463725')
 def test_wifi_sdk_aput_wpa3_with_pmf_h2e_C463725(wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+                                                 remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify APUT beacon(Check PMF(Required, capable),RSNX IE along with H2E only membership) in WPA3 H2E mode"""
     try:
-        ssid = "Concurent_ap"
+        ssid = "wpa3_ap"
         security = "wpa3"
         password = "Automation@Silabs"
         channel = "1"
@@ -675,13 +689,14 @@ def test_wifi_sdk_aput_wpa3_with_pmf_h2e_C463725(wifi_sniffer, wifi_dut, utf_con
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
-@pytest.mark.legacy_deployed
+# @pytest.mark.legacy_deployed - "Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)"
+@pytest.mark.skip("Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)")
 @pytest.mark.test_src_map_id('C468614')
 def test_wifi_sdk_aput_wpa3_with_full_transition_C468614(wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+                                                         remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify PMKSA func in APUT mode with WPA3 transition sec when STA is con-ting for the first time
         full SAE should happen"""
     try:
@@ -693,8 +708,8 @@ def test_wifi_sdk_aput_wpa3_with_full_transition_C468614(wifi_sniffer, wifi_dut,
         logger().info(f"DUT MAC is : {sec_sdk_mac}")
         time.sleep(2)
         sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, test_name=test_name, wifi_sniffer=wifi_sniffer,
-                                             test_case_no=468602, remote_wiseconnect3=remote_wiseconnect3,
-                                             sl_collections=sl_collections, ping_count=ping_count)
+                                       test_case_no=468602, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
         sec_obj.start()
         sec_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -749,17 +764,18 @@ def test_wifi_sdk_aput_wpa3_with_full_transition_C468614(wifi_sniffer, wifi_dut,
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
-@pytest.mark.legacy_deployed
+# @pytest.mark.legacy_deployed - "Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)"
+@pytest.mark.skip("Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)")
 @pytest.mark.test_src_map_id('C468599')
 def test_wifi_sdk_aput_wpa3_with_trasition_C468599(wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+                                                   remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify WPA3 Transition func in APUT mode by enabling MFP capable only and check in
       beacon RSN element should have AKM suite 2 and 8"""
     try:
-        ssid = "Concurent_ap"
+        ssid = "wpa3_ap"
         security = "wpa3_transition"
         password = "Automation@Silabs"
         channel = "1"
@@ -832,10 +848,11 @@ def test_wifi_sdk_aput_wpa3_with_trasition_C468599(wifi_sniffer, wifi_dut, utf_c
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
-@pytest.mark.legacy_deployed
+# @pytest.mark.legacy_deployed - "Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)"
+@pytest.mark.skip("Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)")
 @pytest.mark.test_src_map_id('C468523')
 def test_wifi_sdk_wpa3_in_enable_tdi_C468523(wifi_sniffer, wifi_dut, utf_constants, request, remote_wiseconnect3,
                                              sniffer_filter, sl_collections):
@@ -850,8 +867,8 @@ def test_wifi_sdk_wpa3_in_enable_tdi_C468523(wifi_sniffer, wifi_dut, utf_constan
         logger().info(f"DUT MAC is : {sec_sdk_mac}")
         time.sleep(2)
         sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, test_name=test_name, wifi_sniffer=wifi_sniffer,
-                                             test_case_no=468523, remote_wiseconnect3=remote_wiseconnect3,
-                                             sl_collections=sl_collections, ping_count=ping_count)
+                                       test_case_no=468523, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
         sec_obj.start()
         sec_obj.wait_for_exit()
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
@@ -871,7 +888,7 @@ def test_wifi_sdk_wpa3_in_enable_tdi_C468523(wifi_sniffer, wifi_dut, utf_constan
 @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA2', "passphrase": "Automation@Silabs", "ssid": 'Concurent_ap', "channel": 1})
+                    wifi={"security": 'WPA2', "passphrase": "Automation@Silabs", "ssid": 'wpa3_ap', "channel": 1})
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -910,13 +927,15 @@ def test_wifi_sdk_wpa3_in_enable_tdi_C468523(wifi_sniffer, wifi_dut, utf_constan
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
 @pytest.mark.test_src_map_id('C468525')
-def test_wifi_sdk_wpa3_enable_tdi_aput_3rd_party_ap_C468525(wifi_access_point, wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+# SI91X-21328 - As WPA3_Transition mode is not supported in ap mode now and this test cases does not requires transition mode so security is changed to wpa3
+def test_wifi_sdk_wpa3_enable_tdi_aput_3rd_party_ap_C468525(wifi_access_point, wifi_sniffer, wifi_dut, utf_constants,
+                                                            request,
+                                                            remote_wiseconnect3, sniffer_filter, sl_collections):
     """Enable TDI functionality in APUT mode with WPA3 transition mode , configure third party AP with same SSID as
     APUT but security in WPA2 after STA gets connected with APUT stop AP and check whether STA is able to connect to
     WPA2 enabled AP or not"""
@@ -933,8 +952,8 @@ def test_wifi_sdk_wpa3_enable_tdi_aput_3rd_party_ap_C468525(wifi_access_point, w
         wifi_access_point.interfaces.wifi.stop_ap()
         time.sleep(10)
         sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, test_name=test_name, wifi_sniffer=wifi_sniffer,
-                                             test_case_no=468525, remote_wiseconnect3=remote_wiseconnect3,
-                                             sl_collections=sl_collections, ping_count=ping_count)
+                                       test_case_no=468525, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
         sec_obj.start()
         sec_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
@@ -967,7 +986,7 @@ def test_wifi_sdk_wpa3_enable_tdi_aput_3rd_party_ap_C468525(wifi_access_point, w
 @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.config('wifi_access_point',
-                    wifi={"security": 'WPA2', "passphrase": "Automation@Silabs", "ssid": 'Concurent_ap', "channel": 1})
+                    wifi={"security": 'WPA2', "passphrase": "Automation@Silabs", "ssid": 'wpa3_ap', "channel": 1})
 @pytest.mark.config(
     "wifi_dut",
     wifi=
@@ -1006,13 +1025,15 @@ def test_wifi_sdk_wpa3_enable_tdi_aput_3rd_party_ap_C468525(wifi_access_point, w
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
-@pytest.mark.legacy_deployed
+# @pytest.mark.legacy_deployed - "Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)"
+@pytest.mark.skip("Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)")
 @pytest.mark.test_src_map_id('C468526')
-def test_wifi_sdk_wpa3_disable_tdi_aput_3rd_party_ap_C468526(wifi_access_point, wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+def test_wifi_sdk_wpa3_disable_tdi_aput_3rd_party_ap_C468526(wifi_access_point, wifi_sniffer, wifi_dut, utf_constants,
+                                                             request,
+                                                             remote_wiseconnect3, sniffer_filter, sl_collections):
     """Disable TDI functionality in APUT mode with WPA3 transition mode , configure third party AP with same SSID as
     APUT but security in WPA2 after STA gets connected with APUT stop AP and check whether STA is able to connect to
     WPA2 enabled AP or not"""
@@ -1029,8 +1050,8 @@ def test_wifi_sdk_wpa3_disable_tdi_aput_3rd_party_ap_C468526(wifi_access_point, 
         wifi_access_point.interfaces.wifi.stop_ap()
         time.sleep(10)
         sec_obj = WifiConnectionThread(wifi_dut=wifi_dut, test_name=test_name, wifi_sniffer=wifi_sniffer,
-                                             test_case_no=468526, remote_wiseconnect3=remote_wiseconnect3,
-                                             sl_collections=sl_collections, ping_count=ping_count)
+                                       test_case_no=468526, remote_wiseconnect3=remote_wiseconnect3,
+                                       sl_collections=sl_collections, ping_count=ping_count)
         sec_obj.start()
         sec_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
@@ -1098,16 +1119,17 @@ def test_wifi_sdk_wpa3_disable_tdi_aput_3rd_party_ap_C468526(wifi_access_point, 
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
-@pytest.mark.legacy_deployed
+# @pytest.mark.legacy_deployed - "Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)"
+@pytest.mark.skip("Removed as WPA3_Transition mode is not supported in ap mode now(SI91X-21328)")
 @pytest.mark.test_src_map_id('C468604')
 def test_wifi_sdk_aput_wpa3_with_start_stop_C468604(wifi_sniffer, wifi_dut, utf_constants, request,
-                                                        remote_wiseconnect3, sniffer_filter, sl_collections):
+                                                    remote_wiseconnect3, sniffer_filter, sl_collections):
     """Verify WPA3 Transition functionality in APUT mode by connecting WPA3 transition enabled STA do start and stop AP
 for every 1 minute ping or any data transfe"""
-    ssid = "Concurent_ap"
+    ssid = "wpa3_ap"
     security = "wpa3_transition"
     password = "Automation@Silabs"
     channel = "1"
@@ -1194,7 +1216,7 @@ for every 1 minute ping or any data transfe"""
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
@@ -1202,7 +1224,7 @@ for every 1 minute ping or any data transfe"""
 def test_wifi_sdk_null_based_keep_alive_c463728(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                 sl_collections):
     """Verify APUT Keep alive functionality(Sending NULL packet to STA on timer expire) in WPA3 H2E mode"""
-    ssid = "Concurent_ap"
+    ssid = "wpa3_ap"
     security = "wpa3"
     password = "Automation@Silabs"
     channel = "1"
@@ -1214,7 +1236,7 @@ def test_wifi_sdk_null_based_keep_alive_c463728(wifi_sniffer, wifi_dut, remote_w
     static_subnet = "255.255.255.0"
     static_gateway = "192.168.100.76"
     client_idle_timeout = 10
-    keep_alive_time = (beacon_interval * 32 * client_idle_timeout)/1000
+    keep_alive_time = (beacon_interval * 32 * client_idle_timeout) / 1000
     try:
         aput_mac = wifi_dut.interfaces.wifi.get_mac_address()
         sta_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
@@ -1237,14 +1259,17 @@ def test_wifi_sdk_null_based_keep_alive_c463728(wifi_sniffer, wifi_dut, remote_w
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
         )
         remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
-        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel, timeout=60)
+        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel,
+                                                 timeout=60)
 
         remote_wiseconnect3.interfaces.sapi.reset()
 
-        logger().info(f"**** Setting APUT IDLE for {keep_alive_time*3.8} seconds")
-        time.sleep(keep_alive_time*3.8)
+        logger().info(f"**** Setting APUT IDLE for {keep_alive_time * 3.8} seconds")
+        time.sleep(keep_alive_time * 3.8)
 
-        null_packets = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter2='    Arrival Time:')['find_packet_num']
+        null_packets = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                          packet_filter2='    Arrival Time:')[
+            'find_packet_num']
         assert int(null_packets) == 3, "Not able to find 3 null-function"
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count']
@@ -1302,7 +1327,7 @@ def test_wifi_sdk_null_based_keep_alive_c463728(wifi_sniffer, wifi_dut, remote_w
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
@@ -1310,7 +1335,7 @@ def test_wifi_sdk_null_based_keep_alive_c463728(wifi_sniffer, wifi_dut, remote_w
 def test_wifi_sdk_deauth_based_keep_alive_c463729(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                   sl_collections):
     """Verify APUT Keep alive functionality(Triggering deauth directly on timer expire) in WPA3 H2E mode"""
-    ssid = "Concurent_ap"
+    ssid = "wpa3_ap"
     security = "wpa3"
     password = "Automation@Silabs"
     channel = "1"
@@ -1342,12 +1367,13 @@ def test_wifi_sdk_deauth_based_keep_alive_c463729(wifi_sniffer, wifi_dut, remote
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
         )
         remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
-        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel, timeout=60)
+        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel,
+                                                 timeout=60)
 
         remote_wiseconnect3.interfaces.sapi.reset()
 
-        logger().info(f"**** Setting APUT IDLE for {keep_alive_time*2} seconds")
-        time.sleep(keep_alive_time*2)
+        logger().info(f"**** Setting APUT IDLE for {keep_alive_time * 2} seconds")
+        time.sleep(keep_alive_time * 2)
 
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
 
@@ -1397,7 +1423,7 @@ def test_wifi_sdk_deauth_based_keep_alive_c463729(wifi_sniffer, wifi_dut, remote
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
@@ -1405,7 +1431,7 @@ def test_wifi_sdk_deauth_based_keep_alive_c463729(wifi_sniffer, wifi_dut, remote
 def test_wifi_sdk_keep_alive_disable_c463730(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                              sl_collections):
     """Verify APUT functionality when keep alive is disable so when STA is IDLE AP should not discard STA"""
-    ssid = "Concurent_ap"
+    ssid = "wpa3_ap"
     security = "wpa3"
     password = "Automation@Silabs"
     channel = "1"
@@ -1436,7 +1462,8 @@ def test_wifi_sdk_keep_alive_disable_c463730(wifi_sniffer, wifi_dut, remote_wise
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
         )
         remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
-        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel, timeout=60)
+        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel,
+                                                 timeout=60)
         remote_wiseconnect3.interfaces.sapi.reset()
         logger().info("**** Setting APUT IDLE for 60 seconds")
         time.sleep(60)
@@ -1489,7 +1516,7 @@ def test_wifi_sdk_keep_alive_disable_c463730(wifi_sniffer, wifi_dut, remote_wise
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
@@ -1498,7 +1525,7 @@ def test_wifi_sdk_keep_alive_disable_c463730(wifi_sniffer, wifi_dut, remote_wise
 def test_wifi_sdk_calculate_assoc_time_c463731(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                sl_collections):
     """Verify 3rd party association time with APUT in WPA3 H2E mode(150 to 180 ms)"""
-    ssid = "Concurent_ap"
+    ssid = "wpa3_ap"
     security = "wpa3"
     password = "Automation@Silabs"
     channel = "1"
@@ -1527,13 +1554,15 @@ def test_wifi_sdk_calculate_assoc_time_c463731(wifi_sniffer, wifi_dut, remote_wi
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
         )
         remote_wiseconnect3.interfaces.sapi.scan(channel=None, ssid=None)
-        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel, timeout=60)
+        remote_wiseconnect3.interfaces.sapi.join(ssid=ssid, security="wpa3", passphrase=password, channel=channel,
+                                                 timeout=60)
         remote_wiseconnect3.interfaces.sapi.start_ip(static_gateway=static_gateway)
         remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_ip)
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=aput_mac,
                                                                                         ta_addr=sta_mac,
                                                                                         filter_name='assoc_req_resp')
-        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter2='    Arrival Time:')
+        wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                           packet_filter2='    Arrival Time:')
 
         filter_file = open(f'./reports/filter2_file.txt', 'r')
         lines = filter_file.read()
@@ -1547,7 +1576,7 @@ def test_wifi_sdk_calculate_assoc_time_c463731(wifi_sniffer, wifi_dut, remote_wi
     finally:
         wifi_dut.interfaces.wifi.stop_soft_ap_interface()
         wifi_sniffer.interfaces.capture.stop_capture()
-        
+
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
@@ -1588,7 +1617,7 @@ def test_wifi_sdk_calculate_assoc_time_c463731(wifi_sniffer, wifi_dut, remote_wi
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.legacy_deployed
@@ -1596,7 +1625,7 @@ def test_wifi_sdk_calculate_assoc_time_c463731(wifi_sniffer, wifi_dut, remote_wi
 def test_wifi_sdk_min_and_max_keepalive_c537917(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                 sl_collections):
     """Verify WPA3 functionality with minimum and maximum keep alive values """
-    ssid = "Concurent_ap"
+    ssid = "wpa3_ap"
     security = "wpa3"
     password = "Automation@Silabs"
     channel = "1"
@@ -1660,7 +1689,7 @@ def test_wifi_sdk_min_and_max_keepalive_c537917(wifi_sniffer, wifi_dut, remote_w
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter2)['packet_count']
 
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
-                                                                              packet_filter2='    Arrival Time:')[
+                                                                      packet_filter2='    Arrival Time:')[
                 'find_packet_num']
 
             filter_file = open(f'./reports/filter2_file.txt', 'r')
@@ -1718,14 +1747,14 @@ def test_wifi_sdk_min_and_max_keepalive_c537917(wifi_sniffer, wifi_dut, remote_w
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.test_src_map_id('C463734')
 def test_wifi_sdk_rejoin_functionality_c463734(wifi_sniffer, wifi_dut, remote_wiseconnect3, sniffer_filter,
                                                sl_collections):
     """Verify rejoin functionality with APUT WPA3 H2E mode"""
-    ssid = "Concurent_ap"
+    ssid = "wpa3_ap"
     security = "wpa3"
     password = "Automation@Silabs"
     channel = "1"
@@ -1824,11 +1853,12 @@ def test_wifi_sdk_rejoin_functionality_c463734(wifi_sniffer, wifi_dut, remote_wi
                                Si91xExtCustomFeatureBitMap.FeatureLowPower |
                                Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode |
                                Si91xExtCustomFeatureBitMap.IEEE802_11W,
-        "security": "WPA3", "ssid": "Concurent_ap", "passphrase": "Automation@123", "channel": 1
+        "security": "WPA3", "ssid": "wpa3_ap", "passphrase": "Automation@123", "channel": 1
     },
 )
 @pytest.mark.deployed_25q4
 @pytest.mark.test_src_map_id('C468622')
+# SI91X-21328 - As WPA3_Transition mode is not supported in ap mode now and this test cases does not requires transition mode so security is changed to wpa3
 def test_wifi_sdk_APUT_wpa3_functionality_client_interface_up_down_c468622(wifi_sniffer, wifi_dut, remote_wiseconnect3,
                                                                            sniffer_filter, request, utf_constants,
                                                                            sl_collections):
@@ -1926,13 +1956,13 @@ def test_wifi_sdk_wpa3_transition_in_apmode_C468601(
         remote_wiseconnect3.interfaces.sapi.scan(channel=0)
         time.sleep(2)
         remote_wiseconnect3.interfaces.sapi.join(ssid=ssid,
-                                                      security=security,
-                                                      passphrase=password,
-                                                      channel=1, timeout=60)
+                                                 security=security,
+                                                 passphrase=password,
+                                                 channel=1, timeout=60)
         remote_wiseconnect3.interfaces.sapi.start_ip()
         time.sleep(2)
         remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_gateway, num_ping_attempts=ping_count,
-                                                      ping_timeout=10, ip_version='ipv4', ping_size=64)
+                                                 ping_timeout=10, ip_version='ipv4', ping_size=64)
         time.sleep(2)
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop Sniffer finally")
