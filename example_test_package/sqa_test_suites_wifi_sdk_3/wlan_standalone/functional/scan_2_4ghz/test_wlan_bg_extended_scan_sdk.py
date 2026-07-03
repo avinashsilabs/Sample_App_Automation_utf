@@ -14,7 +14,10 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCoexMode,
     Si91xFeatureBitMap,
     Si91xTCPIPFeatureBitMap,
+    Si91xCustomFeatureBitMap,
     Si91xExtCustomFeatureBitMap,
+    Si91xExtTCPIPFeatureBitMap,
+    Si91xConfigFeatureBitMap,
     Si91xJoinFeatureBitMap,
     Si91xRegion,
     Si91xRegionCode,
@@ -22,23 +25,23 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveProcedureTypes,
 )
 from utf_wiseconnect_3.tests.sl_status import SLStatus
-from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.softap_provisioning.\
+from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.softap_provisioning. \
     test_ap_ble_provisioning_softap_sdk import (
-        ProvisioningFunctionality as SoftApProvisioningFunctionality,
-        wifi_dut_marker as softap_wifi_dut_marker,
-        webpage,
-    )
-from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_bg_extended_scan.\
+    ProvisioningFunctionality as SoftApProvisioningFunctionality,
+    wifi_dut_marker as softap_wifi_dut_marker,
+    webpage,
+)
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_bg_extended_scan. \
     test_ap_ble_provisioning_bg_extended_scan_sdk import (
-        _perform_bg_extended_scan as _perform_bg_extended_scan_provisioning,
-    )
-from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_bg_extended_scan.\
+    _perform_bg_extended_scan as _perform_bg_extended_scan_provisioning,
+)
+from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_bg_extended_scan. \
     test_sta_ble_extended_bgscan_sdk import (
-        _assert_extended_bgscan_channels_only,
-        _configure_advanced_scan,
-        _perform_bg_extended_scan,
-        wifi_dut_marker as sta_ble_wifi_dut_marker,
-    )
+    _assert_extended_bgscan_channels_only,
+    _configure_advanced_scan,
+    _perform_bg_extended_scan,
+    wifi_dut_marker as sta_ble_wifi_dut_marker,
+)
 
 
 def logger():
@@ -72,7 +75,25 @@ ble_dut/ble_client, sniffer.
 STA setup: single wifi_access_point; sniffer optional for debug capture.
 
     Author: Venkatesulu Ekambaram
+
+These functions run below test steps for DUT-Si91x
+    1. Connect DUT (WiFi client) to a third-party Access Point
+    2. Start sniffer capture on the AP channel
+    3. Perform background extended scan while running iperf traffic
+       (TCP/UDP, TX/RX); for the connect/disconnect test the flow is
+       connect -> extended BG scan -> disconnect repeated in a loop
+    4. Validate BG extended scan results/channels and sniffer probe requests
+
+setup requirement:
+    1. DUT (Soc917)
+    2. Third-party Access Point
+    3. Raspberry Pi (wifi_client / net_perf_client for iperf)
+    4. Sniffer (NUC device)
+
+Author: Shailesh Kharecha
+
 """
+
 
 class SoftApBgScanProvisioningFunctionality(SoftApProvisioningFunctionality):
     """
@@ -258,6 +279,7 @@ class SoftApBgScanProvisioningFunctionality(SoftApProvisioningFunctionality):
         self.wifi_dut.interfaces.wifi.http_server_stop()
         self.wifi_dut.interfaces.wifi.http_server_deinit()
 
+
 class SoftApBgScanThread(ThreadBase):
     """
     SoftAP + HTTP provisioning (AP/HTTP path only), then BG extended scan.
@@ -297,8 +319,8 @@ class SoftApBgScanThread(ThreadBase):
         """IEEE802_11W only for WPA3 / WPA2-WPA3 home AP (C978110, C978111)."""
         features = Si91xExtCustomFeatureBitMap.Default
         if cls._home_ap_security(wifi_access_point) in (
-            SecurityMode.WPA3,
-            SecurityMode.WPA2WPA3MixedMode,
+                SecurityMode.WPA3,
+                SecurityMode.WPA2WPA3MixedMode,
         ):
             features |= Si91xExtCustomFeatureBitMap.IEEE802_11W
         return features
@@ -645,13 +667,13 @@ class StaWpa3BgExtendedScanFunctionality:
         _configure_advanced_scan(self.wifi_dut, advanced_scan_bitmap=advanced_scan_bitmap)
 
     def _trigger_sta_bg_scan(
-        self,
-        advanced_scan_bitmap,
-        timeout=90,
-        bg_scan_periodicity=None,
-        scan_bitmap_2_4=None,
-        expected_status=SLStatus.SL_STATUS_OK,
-        reconfigure=True,
+            self,
+            advanced_scan_bitmap,
+            timeout=90,
+            bg_scan_periodicity=None,
+            scan_bitmap_2_4=None,
+            expected_status=SLStatus.SL_STATUS_OK,
+            reconfigure=True,
     ):
         """
         Trigger BG scan from STA helper class.
@@ -680,11 +702,11 @@ class StaWpa3BgExtendedScanFunctionality:
         return self.wifi_dut.interfaces.wifi.scan(**scan_kwargs)
 
     def perform_bg_extended_scan(
-        self,
-        advanced_scan_bitmap,
-        scan_bitmap_2_4=None,
-        timeout=90,
-        bg_scan_periodicity=None,
+            self,
+            advanced_scan_bitmap,
+            scan_bitmap_2_4=None,
+            timeout=90,
+            bg_scan_periodicity=None,
     ):
         """trigger BG extended scan and return results."""
         scan_kwargs = {
@@ -708,11 +730,11 @@ class StaWpa3BgExtendedScanFunctionality:
         logger().info("%sBG extended scan returned %s AP entries", prefix, count)
 
     def run_periodic_bg_scan_cycles(
-        self,
-        advanced_scan_bitmap,
-        cycles=3,
-        periodicity=10,
-        scan_bitmap_2_4=None,
+            self,
+            advanced_scan_bitmap,
+            cycles=3,
+            periodicity=10,
+            scan_bitmap_2_4=None,
     ):
         """Run periodic BG extended scans and assert >11 APs each cycle."""
         extended_results_enabled = bool(advanced_scan_bitmap & (1 << 7))
@@ -755,13 +777,13 @@ class StaWpa3BgExtendedScanFunctionality:
         return results
 
     def run_http_download_with_bg_scan_loop(
-        self,
-        http_server,
-        index_path,
-        advanced_scan_bitmap,
-        scan_interval=10,
-        https=False,
-        retries=3,
+            self,
+            http_server,
+            index_path,
+            advanced_scan_bitmap,
+            scan_interval=10,
+            https=False,
+            retries=3,
     ):
         """ HTTP download (5MB) with instant BG extended scan every scan_interval seconds."""
         http_error = [None]
@@ -820,11 +842,11 @@ class StaWpa3BgExtendedScanFunctionality:
         return scan_results_list
 
     def perform_csa_and_verify_bg_scan(
-        self,
-        advanced_scan_bitmap,
-        csa_channel=11,
-        csa_beacon_count=20,
-        csa_interval=1,
+            self,
+            advanced_scan_bitmap,
+            csa_channel=11,
+            csa_beacon_count=20,
+            csa_interval=1,
     ):
         """Step 7: CSA from AP, then verify BG extended scan still returns >11 APs."""
         assert hasattr(self.wifi_access_point.interfaces.wifi, "enable_disable_csa"), (
@@ -848,12 +870,12 @@ class StaWpa3BgExtendedScanFunctionality:
         return scan_results
 
     def run_congestion_bg_scan_loop(
-        self,
-        net_perf_client,
-        protocol,
-        advanced_scan_bitmap,
-        duration_sec=180,
-        scan_interval=10,
+            self,
+            net_perf_client,
+            protocol,
+            advanced_scan_bitmap,
+            duration_sec=180,
+            scan_interval=10,
     ):
         """ Create congestion with iperf traffic; BG scan loop for long run."""
         traffic_error = [None]
@@ -908,12 +930,12 @@ class StaWpa3BgExtendedScanFunctionality:
 
     @classmethod
     def filter_scan_results(
-        cls,
-        scan_results,
-        channel_filter=None,
-        security_mode_filter=None,
-        rssi_filter=None,
-        network_type_filter=None,
+            cls,
+            scan_results,
+            channel_filter=None,
+            security_mode_filter=None,
+            rssi_filter=None,
+            network_type_filter=None,
     ):
         """Apply scan result filters (channel, security, RSSI, network type)."""
         filtered = []
@@ -935,7 +957,7 @@ class StaWpa3BgExtendedScanFunctionality:
 
     def perform_wps_push_button_connect(self):
         """Step 7: WPS push-button connect after leaving current AP association."""
-        from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble.\
+        from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble. \
             test_sta_ble_wps_sdk import join_to_wifi_network_via_wps
 
         logger().info(" Leave AP and connect via WPS push button")
@@ -1007,12 +1029,165 @@ class StaWpa3BgExtendedScanFunctionality:
         )
 
 
+class ExtendedBgScanThread(ThreadBase):
+    def __init__(
+            self,
+            wifi_dut=None,
+            scan_iteration_count=1,
+            scan_gap=2,
+            scan_timeout=90,
+            bg_scan_allowed_channels=None
+
+    ):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.scan_iteration_count = scan_iteration_count
+        self.scan_gap = scan_gap
+        self.scan_timeout = scan_timeout if scan_timeout is not None else 90
+        self.bg_scan_allowed_channels = (
+            bg_scan_allowed_channels
+            if bg_scan_allowed_channels is not None
+            else list(range(1, 12))
+        )
+        self.scan_results = None
+
+    def configure_advanced_scan(self):
+        """Advanced scan bitmap (1|64|128)"""
+        # advanced_scan_bitmap = (1 << 0) | (1 << 6) | (1 << 7) #Non-Periodic
+        advanced_scan_bitmap = (1 << 0) | (1 << 7)  # Periodic
+        logger().info(
+            "Step 12 advanced-scan CLI (expected on DUT): "
+            f"wifi.set_advanced_scan_configuration -i 50 -j 20 -m 1 -o {advanced_scan_bitmap}"
+        )
+        self.wifi_dut.interfaces.wifi.set_advanced_scan_configuration(
+            adv_active_channel_time=50,
+            adv_passive_channel_time=20,
+            adv_trigger_level=-4,
+            adv_trigger_level_change=2,
+            adv_enable_multi_probe=1,
+            adv_enable_instant_scan=None,
+            has_adv_scan_bit_map=1,
+            advanced_scan_bitmap=advanced_scan_bitmap,
+            timeout=10,
+        )
+        try:
+            cfg = self.wifi_dut.interfaces.wifi.get_advanced_scan_configuration()
+            cfg_text = cfg.decode() if isinstance(cfg, bytes) else cfg
+            logger().info(f"DUT advanced-scan readback: {cfg_text}")
+        except Exception as exc:
+            logger().warning(f"wifi.get_advanced_scan_configuration failed: {exc}")
+
+    def perform_bg_extended_scan(self, validate_min_results=True, scan_count_extended=100):
+
+        logger().info(
+            f"BG extended scan CLI (expected on DUT): "
+            f"wifi.scan -m bg_scan -p 8 -n {scan_count_extended}"
+        )
+        min_results = 12 if validate_min_results else None
+        self.scan_results = self.wifi_dut.interfaces.wifi.scan(
+            ssid=None,
+            bgscan=True,
+            scan_type=8,
+            scan_count_extended=scan_count_extended,
+            timeout=self.scan_timeout,
+        )
+        count = len(self.scan_results) if self.scan_results else 0
+        if min_results is not None:
+            assert self.scan_results is not None and count >= min_results, (
+                f"BG extended scan expected >={min_results} APs, got {count}"
+            )
+        logger().info(f"BG extended scan returned {count} AP entries (min required: {min_results})")
+        return self.scan_results
+
+    def assert_bg_extended_scan_channels(self, allowed_channels=None):
+        """Reuse coex _assert_extended_bgscan_channels_only."""
+        allowed = allowed_channels or self.bg_scan_allowed_channels
+        _assert_extended_bgscan_channels_only(self.scan_results, allowed)
+
+    def run(self):
+        logger().info("Configure advanced scan and perform background extended scan")
+        time.sleep(5)
+        self.configure_advanced_scan()
+        self.perform_bg_extended_scan()
+        self.assert_bg_extended_scan_channels()
+
+
+class WifiJoin(ThreadBase):
+    device_address = {}
+
+    def __init__(self, wifi_dut=None, capture_filename=None, wifi_access_point=None, wifi_sniffer=None,
+                 sl_collections=None, sniffer_filter=None,
+                 utf_constants=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.capture_filename = capture_filename
+        self.wifi_access_point = wifi_access_point
+        self.wifi_sniffer = wifi_sniffer
+        self.sl_collections = sl_collections
+        self.dut_addr = None
+        self.utf_constants = utf_constants
+
+    def run(self):
+        try:
+            self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
+                                                                          beacon_missed_count=40,
+                                                                          first_time_retry_enable=0)
+
+            self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
+                                                                     associated=self.wifi_dut.interfaces.wifi.associated)
+
+            WifiJoin.device_address = self.dut_addr["device_ip"]
+            logger().info(f'DUT address is : {WifiJoin.device_address}')
+
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
+
+
+class TrafficThread(WifiJoin):
+    def __init__(
+            self,
+            wifi_dut=None,
+            wifi_client=None,
+            net_perf_client=None,
+            sl_collections=None,
+            protocol=None,
+            traffic_type=None,
+            host_ip=None,
+            timeout=60
+    ):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.wifi_client = wifi_client
+        self.net_perf_client = net_perf_client
+        self.sl_collections = sl_collections
+        self.protocol = protocol
+        self.traffic_type = traffic_type
+        self.timeout = timeout
+        self.host_ip = host_ip
+
+    def run(self):
+        self.host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
+        logger().info(f'Remote device ip: {self.host_ip}')
+
+        self.sl_collections.run_traffic(
+            wifi_dut=self.wifi_dut,
+            net_perf_client=self.net_perf_client,
+            protocol=self.protocol,
+            device_ip=WifiJoin.device_address,
+            host_ip=self.host_ip,
+            traffic_type=self.traffic_type,
+            timeout=self.timeout,
+        )
+        logger().info("Traffic iteration completed successfully")
+        time.sleep(3)
+
+
 @pytest.mark.config(
     "wifi_clients",
     wifi={
         0: {
             "security": "OPEN",
-            "ssid": "sharma_test",      # DUT SoftAP — must match line 49
+            "ssid": "sharma_test",  # DUT SoftAP — must match line 49
             "passphrase": "123456789",
             "country": "US",
             "channel": "11",
@@ -1262,12 +1437,12 @@ def test_wifi_sdk_softap_provisioning_bg_extended_scan_wpa2_wpa3_ww_ch13_c978111
 )
 @pytest.mark.test_src_map_id("C978112")
 def test_wifi_sdk_bg_extended_selective_channel_scan_c978112(
-    wifi_access_point,
-    wifi_dut,
-    sl_collections,
-    utf_constants,
-    wifi_sniffer,
-    request,
+        wifi_access_point,
+        wifi_dut,
+        sl_collections,
+        utf_constants,
+        wifi_sniffer,
+        request,
 ):
     """WPA3 STA: power save + BG extended selective channel scan on channels 1, 6, 11."""
     try:
@@ -1339,14 +1514,14 @@ def test_wifi_sdk_bg_extended_selective_channel_scan_c978112(
 )
 @pytest.mark.test_src_map_id("C978130")
 def test_wifi_sdk_bg_extended_scan_http_download_5mb_c978130(
-    wifi_access_point,
-    wifi_dut,
-    sl_collections,
-    utf_constants,
-    wifi_sniffer,
-    request,
-    http_server,
-    index_path,
+        wifi_access_point,
+        wifi_dut,
+        sl_collections,
+        utf_constants,
+        wifi_sniffer,
+        request,
+        http_server,
+        index_path,
 ):
     """WPA3 STA: instant BG scan every 10s while HTTP download (5MB) is ongoing."""
     try:
@@ -1401,12 +1576,12 @@ def test_wifi_sdk_bg_extended_scan_http_download_5mb_c978130(
 )
 @pytest.mark.test_src_map_id("C978131")
 def test_wifi_sdk_bg_extended_scan_during_csa_c978131(
-    wifi_access_point,
-    wifi_dut,
-    sl_collections,
-    utf_constants,
-    wifi_sniffer,
-    request,
+        wifi_access_point,
+        wifi_dut,
+        sl_collections,
+        utf_constants,
+        wifi_sniffer,
+        request,
 ):
     """WPA3 STA: BG extended scan during/after AP CSA channel switch."""
     try:
@@ -1436,3 +1611,539 @@ def test_wifi_sdk_bg_extended_scan_during_csa_c978131(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=exc)
         raise
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANBLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_extended_bg_scan_and_tcp_tx_c978113(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_client,
+        wifi_dut,
+        net_perf_client,
+        protocol,
+        request,
+        sl_collections,
+        sniffer_filter
+):
+    """Verify BG extended scan functionality during TCP TX traffic"""
+
+    try:
+        capture_filename = request.node.name
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections)
+
+        ext_scan_thread = ExtendedBgScanThread(wifi_dut=wifi_dut)
+
+        iperf = TrafficThread(wifi_dut=wifi_dut,
+                              wifi_client=wifi_client,
+                              net_perf_client=net_perf_client,
+                              sl_collections=sl_collections,
+                              protocol=protocol,
+                              traffic_type='TX',
+                              timeout=60)
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        ext_scan_thread.start()
+        iperf.start()
+
+        iperf.wait_for_exit()
+        ext_scan_thread.wait_for_exit()
+        time.sleep(30)
+        # Stop sniffer capture and validate probe requests emitted during BG scan
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info("DUT MAC: %s", dut_mac_address)
+
+        probe_request_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, da_addr="ff:ff:ff:ff:ff:ff", filter_name="probe_request")
+
+        probe_result = wifi_sniffer.interfaces.capture.sniffer_validation(
+            sniffer_validation=True, packet_filter1=probe_request_filter)
+
+        assert probe_result["packet_count"], \
+            "Sniffer: no probe request packets found during extended BG scan"
+        logger().info("Sniffer validation passed: probe requests found during BG scan")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+        raise
+    finally:
+        try:
+            if getattr(wifi_sniffer.interfaces.capture, "capture_started", False):
+                wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception as exc:
+            logger().warning(f"Sniffer capture stop failed during cleanup: {exc}")
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANBLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.TCP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_extended_bg_scan_and_tcp_rx_c978114(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_client,
+        wifi_dut,
+        net_perf_client,
+        protocol,
+        request,
+        sl_collections,
+        sniffer_filter
+):
+    """Verify BG extended scan functionality during TCP RX traffic"""
+    try:
+        capture_filename = request.node.name
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections)
+
+        ext_scan_thread = ExtendedBgScanThread(wifi_dut=wifi_dut)
+
+        iperf = TrafficThread(wifi_dut=wifi_dut,
+                              wifi_client=wifi_client,
+                              net_perf_client=net_perf_client,
+                              sl_collections=sl_collections,
+                              protocol=protocol,
+                              traffic_type='RX',
+                              timeout=60)
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        # Start sniffer capture after the DUT has joined the AP
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        ext_scan_thread.start()
+        iperf.start()
+
+        iperf.wait_for_exit()
+        ext_scan_thread.wait_for_exit()
+        time.sleep(30)
+        # Stop sniffer capture and validate probe requests emitted during BG scan
+        wifi_sniffer.interfaces.capture.stop_capture()
+        # time.sleep(10)
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info("DUT MAC: %s", dut_mac_address)
+
+        probe_request_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, da_addr="ff:ff:ff:ff:ff:ff", filter_name="probe_request")
+
+        probe_result = wifi_sniffer.interfaces.capture.sniffer_validation(
+            sniffer_validation=True, packet_filter1=probe_request_filter)
+
+        assert probe_result["packet_count"], \
+            "Sniffer: no probe request packets found during extended BG scan"
+        logger().info("Sniffer validation passed: probe requests found during BG scan")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+        raise
+    finally:
+        try:
+            if getattr(wifi_sniffer.interfaces.capture, "capture_started", False):
+                wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception as exc:
+            logger().warning(f"Sniffer capture stop failed during cleanup: {exc}")
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANOnly,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_extended_bg_scan_and_udp_tx_c978115(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_client,
+        wifi_dut,
+        net_perf_client,
+        protocol,
+        request,
+        sl_collections,
+        sniffer_filter
+):
+    """Verify BG extended scan functionality during UDP TX traffic"""
+
+    try:
+        capture_filename = request.node.name
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections)
+
+        ext_scan_thread = ExtendedBgScanThread(wifi_dut=wifi_dut)
+
+        iperf = TrafficThread(wifi_dut=wifi_dut,
+                              wifi_client=wifi_client,
+                              net_perf_client=net_perf_client,
+                              sl_collections=sl_collections,
+                              protocol=protocol,
+                              traffic_type='TX',
+                              timeout=60)
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        # Start sniffer capture after the DUT has joined the AP
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        ext_scan_thread.start()
+        iperf.start()
+
+        iperf.wait_for_exit()
+        ext_scan_thread.wait_for_exit()
+        time.sleep(30)
+        # Stop sniffer capture and validate probe requests emitted during BG scan
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info("DUT MAC: %s", dut_mac_address)
+
+        probe_request_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, da_addr="ff:ff:ff:ff:ff:ff", filter_name="probe_request")
+
+        probe_result = wifi_sniffer.interfaces.capture.sniffer_validation(
+            sniffer_validation=True, packet_filter1=probe_request_filter)
+
+        assert probe_result["packet_count"], \
+            "Sniffer: no probe request packets found during extended BG scan"
+        logger().info("Sniffer validation passed: probe requests found during BG scan")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+        raise
+    finally:
+        try:
+            if getattr(wifi_sniffer.interfaces.capture, "capture_started", False):
+                wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception as exc:
+            logger().warning(f"Sniffer capture stop failed during cleanup: {exc}")
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANBLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_extended_bg_scan_and_udp_rx_c978116(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_client,
+        wifi_dut,
+        net_perf_client,
+        protocol,
+        request,
+        sl_collections,
+        sniffer_filter
+):
+    """Verify BG extended scan functionality during UDP RX traffic"""
+
+    try:
+        capture_filename = request.node.name
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections)
+
+        ext_scan_thread = ExtendedBgScanThread(wifi_dut=wifi_dut)
+
+        iperf = TrafficThread(wifi_dut=wifi_dut,
+                              wifi_client=wifi_client,
+                              net_perf_client=net_perf_client,
+                              sl_collections=sl_collections,
+                              protocol=protocol,
+                              traffic_type='RX',
+                              timeout=60)
+
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        # Start sniffer capture after the DUT has joined the AP
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        ext_scan_thread.start()
+        iperf.start()
+
+        iperf.wait_for_exit()
+        ext_scan_thread.wait_for_exit()
+        time.sleep(30)
+        # Stop sniffer capture and validate probe requests emitted during BG scan
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info("DUT MAC: %s", dut_mac_address)
+
+        probe_request_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, da_addr="ff:ff:ff:ff:ff:ff", filter_name="probe_request")
+
+        probe_result = wifi_sniffer.interfaces.capture.sniffer_validation(
+            sniffer_validation=True, packet_filter1=probe_request_filter)
+
+        assert probe_result["packet_count"], \
+            "Sniffer: no probe request packets found during extended BG scan"
+        logger().info("Sniffer validation passed: probe requests found during BG scan")
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+        raise
+    finally:
+        try:
+            if getattr(wifi_sniffer.interfaces.capture, "capture_started", False):
+                wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception as exc:
+            logger().warning(f"Sniffer capture stop failed during cleanup: {exc}")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANBLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_connect_extended_bg_scan_disconnect_c978121(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        protocol,
+        request,
+        sl_collections,
+        sniffer_filter
+):
+    """Verify connect -> extended BG scan -> disconnect functionality in a loop"""
+    loop_count = 2
+
+    try:
+        for iteration in range(loop_count):
+            logger().info(
+                "===== connect / extended_bg_scan / disconnect iteration %s/%s =====",
+                iteration + 1,
+                loop_count,
+            )
+
+            capture_filename = f"{request.node.name}_iter{iteration + 1}"
+            wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename,
+                                wifi_access_point=wifi_access_point,
+                                wifi_sniffer=wifi_sniffer, sl_collections=sl_collections)
+
+            ext_scan_thread = ExtendedBgScanThread(wifi_dut=wifi_dut)
+
+            # connect
+            wifi_obj.start()
+            wifi_obj.wait_for_exit()
+
+            # Start sniffer capture after the DUT has joined the AP
+            wifi_sniffer.interfaces.capture.configure_interface(
+                channel=wifi_access_point.interfaces.wifi.channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+            # extended bg scan
+            ext_scan_thread.start()
+            ext_scan_thread.wait_for_exit()
+            time.sleep(60)
+            # disconnect
+            wifi_dut.interfaces.wifi.leave()
+            logger().info("DUT disconnected after iteration %s/%s", iteration + 1, loop_count)
+            time.sleep(2)
+
+            # stop sniffer capture and validate after WLAN disconnection
+            wifi_sniffer.interfaces.capture.stop_capture()
+
+            dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+            logger().info("DUT MAC: %s", dut_mac_address)
+
+            # validate the DUT emitted probe requests during the BG scan
+            probe_request_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                sa_addr=dut_mac_address, da_addr="ff:ff:ff:ff:ff:ff", filter_name="probe_request")
+
+            probe_result = wifi_sniffer.interfaces.capture.sniffer_validation(
+                sniffer_validation=True, packet_filter1=probe_request_filter)
+
+            assert probe_result["packet_count"], \
+                f"Sniffer: no probe request packets found during extended BG scan (iteration {iteration + 1})"
+            logger().info(
+                "Sniffer validation passed: probe requests found during BG scan (iteration %s/%s)",
+                iteration + 1,
+                loop_count,
+            )
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=error)
+        raise
+    finally:
+        try:
+            if getattr(wifi_sniffer.interfaces.capture, "capture_started", False):
+                wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception as exc:
+            logger().warning(f"Sniffer capture stop failed during cleanup: {exc}")
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 2, "stack_len": 4096}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLANBLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
+@pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+def test_connect_extended_bg_scan_disconnect_in_loop_for_long_run_c978123(
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_client,
+        wifi_dut,
+        net_perf_client,
+        protocol,
+        request,
+        sl_collections,
+        sniffer_filter
+):
+    """Run connect -> extended BG scan -> disconnect in a loop for a long run (12 hours)."""
+
+    run_duration_sec = 12 * 60 * 60  # 12 hours
+    start_time = time.time()
+    end_time = start_time + run_duration_sec
+    iteration = 0
+
+    while time.time() < end_time:
+        iteration += 1
+        elapsed_hours = (time.time() - start_time) / 3600.0
+        logger().info(
+            "===== long run iteration %s | elapsed %.2f h / 12 h =====",
+            iteration,
+            elapsed_hours,
+        )
+
+        capture_filename = f"{request.node.name}_iter{iteration}"
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename,
+                            wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, sl_collections=sl_collections)
+
+        ext_scan_thread = ExtendedBgScanThread(wifi_dut=wifi_dut)
+
+        # connect
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+
+        # Start sniffer capture after the DUT has joined the AP
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
+
+        # extended bg scan
+        ext_scan_thread.start()
+        ext_scan_thread.wait_for_exit()
+
+        # disconnect
+        wifi_dut.interfaces.wifi.leave()
+        logger().info("DUT disconnected after long run iteration %s", iteration)
+        time.sleep(2)
+        time.sleep(30)
+        # stop sniffer capture and validate after WLAN disconnection
+        wifi_sniffer.interfaces.capture.stop_capture()
+        time.sleep(10)
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info("DUT MAC: %s", dut_mac_address)
+
+        # validate the DUT emitted probe requests during the BG scan
+        probe_request_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=dut_mac_address, da_addr="ff:ff:ff:ff:ff:ff", filter_name="probe_request")
+
+        probe_result = wifi_sniffer.interfaces.capture.sniffer_validation(
+            sniffer_validation=True, packet_filter1=probe_request_filter)
+
+        assert probe_result["packet_count"], \
+            f"Sniffer: no probe request packets found during extended BG scan (long run iteration {iteration})"
+        logger().info(
+            "Sniffer validation passed: probe requests found during BG scan (long run iteration %s)",
+            iteration,
+        )
+
+    logger().info(
+        "Long run completed: %s iterations over %.2f hours",
+        iteration,
+        (time.time() - start_time) / 3600.0,
+    )
