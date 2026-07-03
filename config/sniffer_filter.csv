@@ -245,4 +245,5 @@ vendor_information_element,(wlan.tag.number == 221 and wlan.tag.length == {{tag_
 gratuitous_packet, (arp and arp.src.proto_ipv4 == arp.dst.proto_ipv4),
 arp_reply_pkt, (wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (arp.opcode == 2),
 dhcp_decline, (wlan.sa == {{ sa_addr }}), and (dhcp.option.dhcp == 4),
+mqtt_fragment_check,(mqtt.topic == "{{ topic_name }}"), and (mqtt && tcp.segment.count),
 no_adc_conflict, (arp.opcode == 2), and (arp.src.proto_ipv4 == {{dut_ip}}) and (eth.src != {{sa_addr}}),,,
