@@ -1481,7 +1481,7 @@ def test_standby_power_twt_disable_mqtt_ka_C129921(firmware_loader, power_meter,
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.parametrize("keep_alive_time", [60])
 @pytest.mark.test_src_map_id('C129925')
-def test_standby_power_twt_enable_mqtt_ka_C129925(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+def test_standby_power_twt_enable_mqtt_ka_C1875505(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                   sl_collections, mqtt_server, keep_alive_time, wifi_sniffer, request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
     obtained_test_name = request.node.name
@@ -1542,8 +1542,9 @@ def test_standby_power_twt_enable_mqtt_ka_C129925(firmware_loader, power_meter, 
     time.sleep(2)
 
     m4_obj.start()
-    time.sleep(80)
+    time.sleep(10)
     pm_obj.start()
+    time.sleep(70)
     pm_obj.wait_for_exit()
     m4_obj.wait_for_exit()
 
@@ -1592,7 +1593,7 @@ def test_standby_power_twt_enable_mqtt_ka_C129925(firmware_loader, power_meter, 
 @pytest.mark.end_state("wifi_dut", wifi=["disassociated"])
 @pytest.mark.parametrize("keep_alive_time", [60])
 @pytest.mark.test_src_map_id('C129926')
-def test_standby_power_announced_twt_enable_mqtt_ka_C129926(firmware_loader, power_meter, wifi_access_point, wifi_dut,
+def test_standby_power_announced_twt_enable_mqtt_ka_C1875506(firmware_loader, power_meter, wifi_access_point, wifi_dut,
                                                             sl_collections, mqtt_server, keep_alive_time, wifi_sniffer,
                                                             request, performance_data, custom_performance_fixture):
     performance_file_root_dir, perf_file_name = custom_performance_fixture
@@ -1654,8 +1655,9 @@ def test_standby_power_announced_twt_enable_mqtt_ka_C129926(firmware_loader, pow
     time.sleep(2)
 
     m4_obj.start()
-    time.sleep(80)
+    time.sleep(10)
     pm_obj.start()
+    time.sleep(70)
     pm_obj.wait_for_exit()
     m4_obj.wait_for_exit()
 
