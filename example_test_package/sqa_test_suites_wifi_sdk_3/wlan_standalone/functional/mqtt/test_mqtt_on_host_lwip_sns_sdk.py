@@ -18,6 +18,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
 from utf.utils.stopwatch import Stopwatch
+from utf_wiseconnect_3.tests.sl_status import SLStatus
 from utf.utils import get_tls_certificate_dir
 
 """
@@ -56,15 +57,34 @@ def logger():
     return get_logger(__name__)
 
 
+def _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=None):
+    """Release DUT TLS cert heap and recover from bad async state after a test."""
+    if mqtt_thread is not None:
+        mqtt_thread.free_certificate_allocations()
+    if wifi_dut.interfaces.wifi.is_dut_bad_state:
+        wifi_dut.interfaces.wifi.deinit_test_agent_threads()
+
+
+# TLS SNI hostname for the DUT mbedTLS client (broker cert SAN: example.com).
+MQTT_TLS_HOSTNAME = "example.com"
+
+
 def wifi_dut_marker(
     tcp_feat_bit=0,
+    wifi_stack_len=4096,
+    thread_count=1,
     ca_cert=None,
     eap_cert=None,
-    thread_count=1,
+    coex_mode=None,
+    memory_mode=None,
 ):
+    if coex_mode is None:
+        coex_mode = Si91xCoexMode.WLANOnly
+    if memory_mode is None:
+        memory_mode = Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode
     config = {
         "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLANOnly,
+        "coex_mode": coex_mode,
         "features": Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default
         | Si91xTCPIPFeatureBitMap.TCPIPBypass
@@ -72,13 +92,13 @@ def wifi_dut_marker(
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid
         | Si91xCustomFeatureBitMap.NWP160MHz,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-        | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        | memory_mode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
         | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
         | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
         | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,
         "set_send_feature_frame": True,
-        "thread_config": {"wifi": {"count": thread_count, "stack_len": 4096}},
+        "thread_config": {"wifi": {"count": thread_count, "stack_len": wifi_stack_len}},
     }
     if ca_cert:
         config["ca_cert"] = ca_cert
@@ -104,6 +124,11 @@ class MQTTConnectionThread(ThreadBase):
         enable_tls=False,
         keepalive_time=0,
         retain=0,
+        ca_cert="ca-cert.pem",
+        server_cert="server-cert.pem",
+        server_key="server-key.pem",
+        client_id="Si91x_mqtt_client",
+        enable_bt_powersave=True,
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -121,6 +146,50 @@ class MQTTConnectionThread(ThreadBase):
         self.enable_tls = enable_tls
         self.keepalive_time = keepalive_time
         self.retain = retain
+        self.ca_cert = ca_cert
+        self.server_cert = server_cert
+        self.server_key = server_key
+        self.client_id = client_id
+        self.enable_bt_powersave = enable_bt_powersave
+        self._mqtt_is_clean_session = 1
+        self._mqtt_enable_will = 0
+        self._mqtt_retain_will = 0
+        self._mqtt_will_topic = None
+        self._mqtt_will_message = None
+        self._cert_alloc_addresses = []
+
+    def free_certificate_allocations(self):
+        if not self._cert_alloc_addresses:
+            return
+        if self.enable_tls:
+            try:
+                self.wifi_dut.interfaces.mqtt.lwip_mqtt_disconnect()
+            except Exception as ex:
+                logger().warning(
+                    f"MQTT disconnect before cert memory cleanup skipped: {ex}"
+                )
+        for address in self._cert_alloc_addresses:
+            try:
+                self.wifi_dut.interfaces.wifi.memory_free(address)
+            except Exception as ex:
+                logger().warning(
+                    f"Certificate memory cleanup failed for {address}: {ex}"
+                )
+        self._cert_alloc_addresses.clear()
+
+    def load_certificate(self, certificate):
+        cert_file = str(get_tls_certificate_dir().joinpath(certificate))
+        with open(cert_file) as f:
+            cert_contents = f.read()
+        size = len(cert_contents)
+        logger().info(f"\nLoading  Certificate {certificate} ")
+        buffer_size = (512 * (int(size / 512))) + 512
+        address = self.wifi_dut.interfaces.wifi.allocate_memory(size=buffer_size)
+        self.wifi_dut.interfaces.wifi.load_memory(
+            address, size=size, write_content=cert_contents
+        )
+        self._cert_alloc_addresses.append(address)
+        return address, size
 
     def run(self):
         self.wifi_sniffer.interfaces.capture.configure_interface(
@@ -154,10 +223,11 @@ class MQTTConnectionThread(ThreadBase):
         self.wifi_dut.interfaces.wifi.set_performance_profile(
             mode="power_save_low_latency"
         )
-        self.wifi_dut.interfaces.wifi.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave,
-        )
+        if self.enable_bt_powersave:
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(
+                psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave,
+            )
         self.dut_addr["device_ip"] = self.wifi_dut.interfaces.wifi.get_device_ip(
             device_ip=device_ip
         )
@@ -166,24 +236,44 @@ class MQTTConnectionThread(ThreadBase):
         )
         logger().info(f"\n DUT INFO: {self.dut_addr} \n")
 
-
-
-    def mqtt_connect(self):
+    def mqtt_connect(self, expected_status=SLStatus.SL_STATUS_OK, configure_tls_certs=True):
         self.wifi_dut.interfaces["mqtt"] = self.wifi_dut.interfaces.wifi
-        # ca_cert_address, ca_cert_size = self.load_certificate(certificate="ca-chain.cert.pem")
-        # server_cert_address, server_cert_size = self.load_certificate(certificate="mosquitto-utf.silabs.com.cert.pem")
-        # server_key_address, server_key_size = self.load_certificate(certificate="mosquitto-utf.silabs.com.key.pem")
-        # self.wifi_dut.interfaces.wifi.lwip_mqtt_configure(ca_cert=ca_cert_address, client_cert=server_cert_address, client_key=server_key_address, ca_cert_size=ca_cert_size
-        #                                                   , client_cert_size=server_cert_size, client_key_size=server_key_size)
-        # self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-
+        broker = self.mqtt_server.interfaces.mqtt.hostname_or_ip_address
+        if self.enable_tls and configure_tls_certs:
+            self.free_certificate_allocations()
+            ca_cert_address, ca_cert_size = self.load_certificate(certificate=self.ca_cert)
+            server_cert_address, server_cert_size = self.load_certificate(
+                certificate=self.server_cert
+            )
+            server_key_address, server_key_size = self.load_certificate(
+                certificate=self.server_key
+            )
+            self.wifi_dut.interfaces.wifi.lwip_mqtt_configure(
+                will_topic=self._mqtt_will_topic,
+                will_message=self._mqtt_will_message,
+                enable_will=self._mqtt_enable_will,
+                retain_will=self._mqtt_retain_will,
+                is_clean_session=self._mqtt_is_clean_session,
+                ca_cert=ca_cert_address,
+                client_cert=server_cert_address,
+                client_key=server_key_address,
+                ca_cert_size=ca_cert_size,
+                client_cert_size=server_cert_size,
+                client_key_size=server_key_size,
+            )
         self.wifi_dut.interfaces.mqtt.lwip_mqtt_connect(
             server=self.mqtt_server.interfaces.mqtt,
+            mqtt_server=broker,
             enable_ssl=1 if self.enable_tls else 0,
             dut_port=5001,
             broker_port=8883 if self.enable_tls else 1883,
+            connection_timeout_ms=20000 if self.enable_tls else None,
             keep_alive_interval_ms=self.keepalive_time,
+            client_id=self.client_id,
+            tls_hostname=MQTT_TLS_HOSTNAME if self.enable_tls else None,
+            expected_status=expected_status,
         )
+        self.mqtt_client.interfaces.mqtt.disable_certificate_verification = True
         self.mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(
             server=self.mqtt_server.interfaces.mqtt
         )
@@ -265,15 +355,17 @@ class MQTTConnectionThread(ThreadBase):
 
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
         "unassociated",
         "disable_external_stack"
     ],
@@ -311,6 +403,7 @@ def test_mqtts_subscribe_publish_disconnect_for_30min_C876788(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -325,6 +418,7 @@ def test_mqtts_subscribe_publish_disconnect_for_30min_C876788(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -339,17 +433,21 @@ def test_mqtts_subscribe_publish_disconnect_for_30min_C876788(
         mqtt_thread.verify_ps_validation()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
         "unassociated",
         "disable_external_stack"
     ],
@@ -387,6 +485,7 @@ def test_mqtts_subscribe_publish_disconnect_over_wifi_for_30min_C876789(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -401,6 +500,7 @@ def test_mqtts_subscribe_publish_disconnect_over_wifi_for_30min_C876789(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         sw = Stopwatch()
         while sw.elapsed_sec < time_duration:
@@ -416,18 +516,24 @@ def test_mqtts_subscribe_publish_disconnect_over_wifi_for_30min_C876789(
         mqtt_thread.verify_ps_validation()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
 @pytest.mark.skip(reason="Flaky test case - PR #3036 created to fix this")
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+        # "wifi_powersave_disable",
+        # "bt_powersave_disable",
         "unassociated",
         "disable_external_stack"
     ],
@@ -465,6 +571,7 @@ def test_mqtts_subscribe_publish_disconnect_deinit_for_30min_C876790(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -479,6 +586,7 @@ def test_mqtts_subscribe_publish_disconnect_deinit_for_30min_C876790(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         sw = Stopwatch()
         while sw.elapsed_sec < time_duration:
@@ -497,17 +605,21 @@ def test_mqtts_subscribe_publish_disconnect_deinit_for_30min_C876790(
         mqtt_thread.verify_ps_validation()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
         "unassociated",
         "disable_external_stack"
     ],
@@ -545,6 +657,7 @@ def test_mqtts_subscribe_publish_every_30_min_C876807(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -559,6 +672,7 @@ def test_mqtts_subscribe_publish_every_30_min_C876807(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -582,3 +696,5 @@ def test_mqtts_subscribe_publish_every_30_min_C876807(
         mqtt_thread.verify_ps_validation()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)

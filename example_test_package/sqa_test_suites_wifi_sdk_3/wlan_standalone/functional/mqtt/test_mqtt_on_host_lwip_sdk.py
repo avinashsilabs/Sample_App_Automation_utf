@@ -82,29 +82,65 @@ def logger():
     return get_logger(__name__)
 
 
+def _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=None, switch=None):
+    """Release DUT TLS cert heap and recover from bad async state after a test."""
+    if mqtt_thread is not None:
+        mqtt_thread.free_certificate_allocations()
+    if wifi_dut.interfaces.wifi.is_dut_bad_state:
+        wifi_dut.interfaces.wifi.deinit_test_agent_threads()
+    if switch is not None:
+        logger().info("******* Turn on Access point **********")
+        switch.interfaces.pdu_switch.turn_on(delay=60)
+
+
+# DUT trust anchor loaded at init. Matches the working log: the wolfSSL sample CA
+# (ca-cert.pem) signs both the broker's server cert AND the DUT's client cert.
+# The broker (raspi_mosquitto_tls) must serve the wolfSSL certs for this to work.
+MQTT_SSL_CA_CERT = [
+    "ca-cert.pem",
+    "SL_NET_SIGNING_CERTIFICATE",
+    "SL_NET_TLS_SERVER_CREDENTIAL_START",
+]
+
+# TLS SNI hostname for the DUT mbedTLS client (broker cert SAN: example.com).
+MQTT_TLS_HOSTNAME = "example.com"
+
+
 def wifi_dut_marker(
-    tcp_feat_bit=0,
-    wifi_stack_len=3584,
-    thread_count=1,
+        tcp_feat_bit=0,
+        wifi_stack_len=3584,
+        thread_count=1,
+        ca_cert=None,
+        coex_mode=None,
+        memory_mode=None,
 ):
+    # Defaults match the standard test footprint. Individual tests can override
+    # coex_mode / memory_mode when they need a leaner or larger host allocation
+    # (e.g. host-side mbedTLS handshakes that are heap-hungry).
+    if coex_mode is None:
+        coex_mode = Si91xCoexMode.WLAN | Si91xCoexMode.BLE
+    if memory_mode is None:
+        memory_mode = Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode
     config = {
         "oper_mode": Si91xOperatingMode.WiFiClient,
-        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "coex_mode": coex_mode,
         "features": Si91xFeatureBitMap.PSKSecurity | Si91xFeatureBitMap.Aggregation,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default
-        | Si91xTCPIPFeatureBitMap.TCPIPBypass
-        | tcp_feat_bit,
+                          | Si91xTCPIPFeatureBitMap.TCPIPBypass
+                          | tcp_feat_bit,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | Si91xCustomFeatureBitMap.NWP160MHz,
+                           | Si91xCustomFeatureBitMap.NWP160MHz,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
-        | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+                               | memory_mode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
-        | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,
+                              | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
+                              | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,
         "set_send_feature_frame": True,
         "thread_config": {"wifi": {"count": thread_count, "stack_len": wifi_stack_len}},
     }
+    if ca_cert:
+        config["ca_cert"] = ca_cert
     return pytest.mark.config("wifi_dut", wifi=config)
 
 
@@ -113,7 +149,7 @@ stop_evt = threading.Event()
 
 
 def _mqtt_yield_loop(
-    wifi_dut, stop_evt, yield_timeout_ms=20000, async_timeout=150, keepalive=10
+        wifi_dut, stop_evt, yield_timeout_ms=20000, async_timeout=150, keepalive=10
 ):
     while not stop_evt.is_set():
         wifi_dut.interfaces.wifi.lwip_mqtt_yield(
@@ -124,28 +160,29 @@ def _mqtt_yield_loop(
 
 class MQTTConnectionThread(ThreadBase):
     def __init__(
-        self,
-        wifi_dut=None,
-        wifi_access_point=None,
-        wifi_sniffer=None,
-        topic=None,
-        request=None,
-        mqtt_server=None,
-        mqtt_client=None,
-        message=None,
-        sl_collections=None,
-        client_id=None,
-        qos=None,
-        profile=None,
-        dut_mac_address=None,
-        sniffer_filter=None,
-        enable_tls=False,
-        keepalive_time=0,
-        idle_time=120,
-        retain=0,
-        ca_cert="ca-chain.cert.pem",
-        server_cert="mosquitto-utf.silabs.com.cert.pem",
-        server_key="mosquitto-utf.silabs.com.key.pem",
+            self,
+            wifi_dut=None,
+            wifi_access_point=None,
+            wifi_sniffer=None,
+            topic=None,
+            request=None,
+            mqtt_server=None,
+            mqtt_client=None,
+            message=None,
+            sl_collections=None,
+            client_id=None,
+            qos=None,
+            profile=None,
+            dut_mac_address=None,
+            sniffer_filter=None,
+            enable_tls=False,
+            keepalive_time=0,
+            idle_time=120,
+            retain=0,
+            ca_cert="ca-cert.pem",
+            server_cert="server-cert.pem",
+            server_key="server-key.pem",
+            enable_bt_powersave=True,
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -170,6 +207,32 @@ class MQTTConnectionThread(ThreadBase):
         self.ca_cert = ca_cert
         self.server_cert = server_cert
         self.server_key = server_key
+        self.enable_bt_powersave = enable_bt_powersave
+        self._mqtt_is_clean_session = 1
+        self._mqtt_enable_will = 0
+        self._mqtt_retain_will = 0
+        self._mqtt_will_topic = None
+        self._mqtt_will_message = None
+        self._cert_alloc_addresses = []
+
+    def free_certificate_allocations(self):
+        if not self._cert_alloc_addresses:
+            return
+        if self.enable_tls:
+            try:
+                self.wifi_dut.interfaces.mqtt.lwip_mqtt_disconnect()
+            except Exception as ex:
+                logger().warning(
+                    f"MQTT disconnect before cert memory cleanup skipped: {ex}"
+                )
+        for address in self._cert_alloc_addresses:
+            try:
+                self.wifi_dut.interfaces.wifi.memory_free(address)
+            except Exception as ex:
+                logger().warning(
+                    f"Certificate memory cleanup failed for {address}: {ex}"
+                )
+        self._cert_alloc_addresses.clear()
 
     def run(self):
         self.wifi_sniffer.interfaces.capture.configure_interface(
@@ -208,10 +271,14 @@ class MQTTConnectionThread(ThreadBase):
         self.wifi_dut.interfaces.wifi.set_performance_profile(
             mode="power_save_low_latency"
         )
-        self.wifi_dut.interfaces.wifi.enable_bt_power_save(
-            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave,
-        )
+        # BT power save is only meaningful when the BT/BLE stack is present. For
+        # WLAN-only tests (no BLE coex) the DUT rejects bt_power_save_profile with
+        # 0xFFFFFFFF, so allow tests to skip it.
+        if self.enable_bt_powersave:
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(
+                psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave,
+            )
         logger().info("....PINGING DUT AFTER POWER-SAVE....")
         status = ping(self.dut_addr["device_ip"], 10)
         assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
@@ -227,12 +294,13 @@ class MQTTConnectionThread(ThreadBase):
         size = len(cert_contents)
         logger().info(f"\nLoading  Certificate {certificate} ")
         buffer_size = (
-            512 * (int(size / 512))
-        ) + 512  # buffer_size should be more than size
+                              512 * (int(size / 512))
+                      ) + 512  # buffer_size should be more than size
         address = self.wifi_dut.interfaces.wifi.allocate_memory(size=buffer_size)
         self.wifi_dut.interfaces.wifi.load_memory(
             address, size=size, write_content=cert_contents
         )
+        self._cert_alloc_addresses.append(address)
         return address, size
 
     def rejoin_async_event(self):
@@ -255,16 +323,21 @@ class MQTTConnectionThread(ThreadBase):
         return True
 
     def lwip_mqtt_configure(
-        self,
-        will_topic=None,
-        will_message=None,
-        enable_will=0,
-        retain_will=0,
-        is_clean_session=1,
+            self,
+            will_topic=None,
+            will_message=None,
+            enable_will=0,
+            retain_will=0,
+            is_clean_session=1,
     ):
         logger().info(
             f"\n Configuring MQTT on DUT with Parameters will_topic:: {will_topic}, will_message:: {will_message}, enable_will::{enable_will}, retain_will:: {retain_will}\n"
         )
+        self._mqtt_is_clean_session = is_clean_session
+        self._mqtt_enable_will = enable_will
+        self._mqtt_retain_will = retain_will
+        self._mqtt_will_topic = will_topic
+        self._mqtt_will_message = will_message
         self.wifi_dut.interfaces.wifi.lwip_mqtt_configure(
             will_topic=will_topic,
             will_message=will_message,
@@ -273,32 +346,44 @@ class MQTTConnectionThread(ThreadBase):
             is_clean_session=is_clean_session,
         )
 
-    def mqtt_connect(self, expected_status=SLStatus.SL_STATUS_OK):
+    def mqtt_connect(self, expected_status=SLStatus.SL_STATUS_OK, configure_tls_certs=True):
         self.wifi_dut.interfaces["mqtt"] = self.wifi_dut.interfaces.wifi
-        # ca_cert_address, ca_cert_size = self.load_certificate(certificate=self.ca_cert)
-        # server_cert_address, server_cert_size = self.load_certificate(
-        #     certificate=self.server_cert
-        # )
-        # server_key_address, server_key_size = self.load_certificate(
-        #     certificate=self.server_key
-        # )
-        # self.wifi_dut.interfaces.wifi.lwip_mqtt_configure(
-        #     ca_cert=ca_cert_address,
-        #     client_cert=server_cert_address,
-        #     client_key=server_key_address,
-        #     ca_cert_size=ca_cert_size,
-        #     client_cert_size=server_cert_size,
-        #     client_key_size=server_key_size,
-        # )
+        broker = self.mqtt_server.interfaces.mqtt.hostname_or_ip_address
+        if self.enable_tls and configure_tls_certs:
+            self.free_certificate_allocations()
+            ca_cert_address, ca_cert_size = self.load_certificate(certificate=self.ca_cert)
+            server_cert_address, server_cert_size = self.load_certificate(
+                certificate=self.server_cert
+            )
+            server_key_address, server_key_size = self.load_certificate(
+                certificate=self.server_key
+            )
+            self.wifi_dut.interfaces.wifi.lwip_mqtt_configure(
+                will_topic=self._mqtt_will_topic,
+                will_message=self._mqtt_will_message,
+                enable_will=self._mqtt_enable_will,
+                retain_will=self._mqtt_retain_will,
+                is_clean_session=self._mqtt_is_clean_session,
+                ca_cert=ca_cert_address,
+                client_cert=server_cert_address,
+                client_key=server_key_address,
+                ca_cert_size=ca_cert_size,
+                client_cert_size=server_cert_size,
+                client_key_size=server_key_size,
+            )
         self.wifi_dut.interfaces.mqtt.lwip_mqtt_connect(
             server=self.mqtt_server.interfaces.mqtt,
+            mqtt_server=broker,
             enable_ssl=1 if self.enable_tls else 0,
             dut_port=5001,
             broker_port=8883 if self.enable_tls else 1883,
+            connection_timeout_ms=20000 if self.enable_tls else None,
             keep_alive_interval_ms=self.keepalive_time,
             client_id=self.client_id,
+            tls_hostname=MQTT_TLS_HOSTNAME if self.enable_tls else None,
             expected_status=expected_status,
         )
+        self.mqtt_client.interfaces.mqtt.disable_certificate_verification = True
         self.mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(
             server=self.mqtt_server.interfaces.mqtt
         )
@@ -333,10 +418,10 @@ class MQTTConnectionThread(ThreadBase):
             f" Received MQTT message on MQTT Client - Topic: {msgs[0].topic}, Message: {msgs[0].payload.decode()}, QOS: {msgs[0].qos} "
         )
         assert (
-            msgs[0].topic == self.topic
+                msgs[0].topic == self.topic
         ), "No message received by mqtt-client on subscribed topic"
         assert (
-            msgs[0].qos == self.qos
+                msgs[0].qos == self.qos
         ), "DUT sent message with wrong QOS. expected is QOS1"
         assert msgs[0].payload.decode() == self.message, (
             "No message is received by mqtt-client on subscribed topic or "
@@ -374,15 +459,15 @@ class MQTTConnectionThread(ThreadBase):
         assert snif_pkt_count, "\n PS-POLL Packets are not captured in the Sniffer \n"
 
     def get_mqtt_list(
-        self, dut_mac_address, decryption_key: str, print_layers: list
+            self, dut_mac_address, decryption_key: str, print_layers: list
     ) -> Dict[str, int]:
         mqtt_capture_list = []
         current_time = time.time()
         updated_capture_file = (
-            "filter_"
-            + self.capture_filename
-            + "_"
-            + str(datetime.fromtimestamp(current_time).strftime("%H_%M_%S"))
+                "filter_"
+                + self.capture_filename
+                + "_"
+                + str(datetime.fromtimestamp(current_time).strftime("%H_%M_%S"))
         )
         file_name = f"./reports/{updated_capture_file}.pcap"
         local_capture_file = file_name
@@ -396,10 +481,10 @@ class MQTTConnectionThread(ThreadBase):
         with self.wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
             sftp.get(wlan_filter_file, local_capture_file)
         for packet in self.wifi_sniffer.interfaces.capture.iter_packets(
-            decrypt_packets=True,
-            encryption_type="WPA-PWD",
-            decryption_key=decryption_key,
-            capture_file_filter=local_capture_file,
+                decrypt_packets=True,
+                encryption_type="WPA-PWD",
+                decryption_key=decryption_key,
+                capture_file_filter=local_capture_file,
         ):
             for layer in packet.layers:
                 layer_name = layer.layer_name.lower()
@@ -420,19 +505,19 @@ class MQTTConnectionThread(ThreadBase):
         return mqtt_capture_list
 
     def ssl_tcp_packet_check(
-        self,
-        decryption_key: str,
-        dut_mac_address,
-        ap_bssid,
-        print_layers: list,
-        capture_filename,
+            self,
+            decryption_key: str,
+            dut_mac_address,
+            ap_bssid,
+            print_layers: list,
+            capture_filename,
     ) -> list:
         current_time = time.time()
         updated_capture_file = (
-            "filter_ssl"
-            + capture_filename
-            + "_"
-            + str(datetime.fromtimestamp(current_time).strftime("%H_%M_%S"))
+                "filter_ssl"
+                + capture_filename
+                + "_"
+                + str(datetime.fromtimestamp(current_time).strftime("%H_%M_%S"))
         )
         file_name = f"./reports/{updated_capture_file}.pcap"
         local_capture_file = file_name
@@ -450,10 +535,10 @@ class MQTTConnectionThread(ThreadBase):
         with self.wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
             sftp.get(wlan_filter_file, local_capture_file)
         for packet in self.wifi_sniffer.interfaces.capture.iter_packets(
-            decrypt_packets=True,
-            encryption_type="WPA-PWD",
-            decryption_key=decryption_key,
-            capture_file_filter=local_capture_file,
+                decrypt_packets=True,
+                encryption_type="WPA-PWD",
+                decryption_key=decryption_key,
+                capture_file_filter=local_capture_file,
         ):
             for layer in packet.layers:
                 layer_name = layer.layer_name.lower()
@@ -471,13 +556,13 @@ class MQTTConnectionThread(ThreadBase):
                     )
                     for layerp in filtered_packet:
                         if (
-                            re.search(".*Receiver address:", layerp)
-                            and re.search(".*Transmitter address:", layerp)
+                                re.search(".*Receiver address:", layerp)
+                                and re.search(".*Transmitter address:", layerp)
                         ) or (re.search(".*TLS:", layerp)):
                             if re.search(".*TLS:", layerp):
                                 tls_layer_pkt = layerp
                             if re.search(".*Receiver address:", layerp) and re.search(
-                                ".*Transmitter address:", layerp
+                                    ".*Transmitter address:", layerp
                             ):
                                 Received = re.compile(
                                     r"Receiver address: (([0-9a-fA-F]:?){12})"
@@ -499,14 +584,14 @@ class MQTTConnectionThread(ThreadBase):
                                 ap_bssid_mod = ap_bssid.lower()
 
                             if (
-                                (
-                                    ra_address == dut_mac_address_mod
-                                    or ra_address == ap_bssid_mod
-                                )
-                                and (
-                                    ta_address == dut_mac_address_mod
-                                    or ta_address == ap_bssid_mod
-                                )
+                                    (
+                                            ra_address == dut_mac_address_mod
+                                            or ra_address == ap_bssid_mod
+                                    )
+                                    and (
+                                            ta_address == dut_mac_address_mod
+                                            or ta_address == ap_bssid_mod
+                                    )
                             ) and tls_layer_pkt:
                                 logger().info(
                                     f"{Transmitter_address}>>>>>>{receiver_address}"
@@ -635,13 +720,13 @@ class MQTTConnectionThread(ThreadBase):
 
 class ParallelThread(ThreadBase):
     def __init__(
-        self,
-        wifi_dut=None,
-        mqtt_client=None,
-        topic=None,
-        message=None,
-        qos=None,
-        iterations=1,
+            self,
+            wifi_dut=None,
+            mqtt_client=None,
+            topic=None,
+            message=None,
+            qos=None,
+            iterations=1,
     ):
         super().__init__()
         self.topic = topic
@@ -671,10 +756,10 @@ class ParallelThread(ThreadBase):
                 f" Received MQTT message on MQTT Client - Topic: {msgs[0].topic}, Message: {msgs[0].payload.decode()}, QOS: {msgs[0].qos} "
             )
             assert (
-                msgs[0].topic == self.topic
+                    msgs[0].topic == self.topic
             ), "No message received by mqtt-client on subscribed topic"
             assert (
-                msgs[0].qos == self.qos
+                    msgs[0].qos == self.qos
             ), "DUT sent message with wrong QOS. expected is QOS1"
             assert msgs[0].payload.decode() == self.message, (
                 "No message is received by mqtt-client on subscribed topic or "
@@ -685,13 +770,13 @@ class ParallelThread(ThreadBase):
 
 class MQTTClientThread(ThreadBase):
     def __init__(
-        self,
-        wifi_dut=None,
-        mqtt_client=None,
-        topic=None,
-        message=None,
-        qos=None,
-        iterations=1,
+            self,
+            wifi_dut=None,
+            mqtt_client=None,
+            topic=None,
+            message=None,
+            qos=None,
+            iterations=1,
     ):
         super().__init__()
         self.topic = topic
@@ -731,8 +816,6 @@ class MQTTClientThread(ThreadBase):
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
         "unassociated",
         "disable_external_stack"
     ],
@@ -748,14 +831,14 @@ class MQTTClientThread(ThreadBase):
 )
 @pytest.mark.test_src_map_id('C876776')
 def test_mqtt_subscribe_publish_with_qos0_on_host_lwip_C876776(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876776"
     client_id = "Si91x_mqtt_client"
@@ -768,6 +851,7 @@ def test_mqtt_subscribe_publish_with_qos0_on_host_lwip_C876776(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -791,22 +875,33 @@ def test_mqtt_subscribe_publish_with_qos0_on_host_lwip_C876776(
         mqtt_thread.subscribe_and_publish(qos=qos)
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+# C876777 is a host-LWIP MQTTS test that stalled with SL_STATUS_TIMEOUT. The
+# passing reference run (cli_log) used coex = WLAN-only and the base 192 kB
+# memory mode (NWP 480K / M4 192K) - i.e. NO BLE/BT stacks and maximum NWP
+# memory. This override matches that footprint exactly: WLAN-only, and the base
+# memory mode (Feature192kBMemoryMode == 0, so no 256/320/384 bit is set).
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
-        "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+        # "lwip_mqtt_disconnect",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -822,15 +917,16 @@ def test_mqtt_subscribe_publish_with_qos0_on_host_lwip_C876776(
 )
 @pytest.mark.test_src_map_id('C876777')
 def test_mqtts_subscribe_publish_with_qos0_on_host_lwip_C876777(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
+    """MQTTS QOS0 on host LWIP: connect with enable_ssl=1, subscribe QOS0, receive on topic."""
     topic = "Topic_C876777"
     client_id = "Si91x_mqtt_client"
     qos = Si91xMqttQos.QOS0
@@ -842,6 +938,7 @@ def test_mqtts_subscribe_publish_with_qos0_on_host_lwip_C876777(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -858,6 +955,7 @@ def test_mqtts_subscribe_publish_with_qos0_on_host_lwip_C876777(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -865,11 +963,14 @@ def test_mqtts_subscribe_publish_with_qos0_on_host_lwip_C876777(
         mqtt_thread.subscribe_and_publish(qos=qos)
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
 @wifi_dut_marker()
@@ -878,8 +979,7 @@ def test_mqtts_subscribe_publish_with_qos0_on_host_lwip_C876777(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -895,14 +995,14 @@ def test_mqtts_subscribe_publish_with_qos0_on_host_lwip_C876777(
 )
 @pytest.mark.test_src_map_id('C876778')
 def test_mqtt_subscribe_publish_with_qos1_on_host_lwip_C876778(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876778"
     client_id = "Si91x_mqtt_client"
@@ -915,6 +1015,7 @@ def test_mqtt_subscribe_publish_with_qos1_on_host_lwip_C876778(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -938,22 +1039,28 @@ def test_mqtt_subscribe_publish_with_qos1_on_host_lwip_C876778(
         mqtt_thread.subscribe_and_publish(qos=qos)
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -969,14 +1076,14 @@ def test_mqtt_subscribe_publish_with_qos1_on_host_lwip_C876778(
 )
 @pytest.mark.test_src_map_id('C876779')
 def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876779"
     client_id = "Si91x_mqtt_client"
@@ -989,6 +1096,7 @@ def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1005,6 +1113,7 @@ def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -1012,11 +1121,14 @@ def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
         mqtt_thread.subscribe_and_publish(qos=qos)
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
 @wifi_dut_marker()
@@ -1025,8 +1137,7 @@ def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1043,14 +1154,14 @@ def test_mqtts_subscribe_publish_with_qos1_on_host_lwip_C876779(
 @pytest.mark.WLAN_Dev_sanity_917
 @pytest.mark.test_src_map_id('C876780')
 def test_mqtt_subscribe_publish_with_qos2_on_host_lwip_C876780(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876780"
     client_id = "Si91x_mqtt_client"
@@ -1063,6 +1174,7 @@ def test_mqtt_subscribe_publish_with_qos2_on_host_lwip_C876780(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1086,22 +1198,28 @@ def test_mqtt_subscribe_publish_with_qos2_on_host_lwip_C876780(
         mqtt_thread.subscribe_and_publish(qos=qos)
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1117,14 +1235,14 @@ def test_mqtt_subscribe_publish_with_qos2_on_host_lwip_C876780(
 )
 @pytest.mark.test_src_map_id('C876781')
 def test_mqtts_subscribe_publish_with_qos2_on_host_lwip_C876781(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876781"
     client_id = "Si91x_mqtt_client"
@@ -1137,6 +1255,7 @@ def test_mqtts_subscribe_publish_with_qos2_on_host_lwip_C876781(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1153,6 +1272,7 @@ def test_mqtts_subscribe_publish_with_qos2_on_host_lwip_C876781(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -1160,22 +1280,29 @@ def test_mqtts_subscribe_publish_with_qos2_on_host_lwip_C876781(
         mqtt_thread.subscribe_and_publish(qos=qos)
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL, thread_count=2)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+    thread_count=2,
+)
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1191,14 +1318,14 @@ def test_mqtts_subscribe_publish_with_qos2_on_host_lwip_C876781(
 )
 @pytest.mark.test_src_map_id('C876782')
 def test_mqtts_publish_using_qos1_on_diff_topics_using_threads_C876782(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     primary_topic = "".join(
         random.choices(string.ascii_uppercase + string.digits, k=40)
@@ -1216,6 +1343,7 @@ def test_mqtts_publish_using_qos1_on_diff_topics_using_threads_C876782(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1232,6 +1360,7 @@ def test_mqtts_publish_using_qos1_on_diff_topics_using_threads_C876782(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         primary_thread = ParallelThread(
             wifi_dut=wifi_dut,
@@ -1264,22 +1393,29 @@ def test_mqtts_publish_using_qos1_on_diff_topics_using_threads_C876782(
         secondary_thread.wait_for_exit()
         wifi_dut.interfaces.wifi.lwip_mqtt_unsubscribe(topic=primary_topic)
         wifi_dut.interfaces.wifi.lwip_mqtt_unsubscribe(topic=secondary_topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         mqtt_thread.verify_ps_validation()
         wifi_sniffer.interfaces.capture.stop_capture()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL, thread_count=2)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+    thread_count=2,
+)
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1295,14 +1431,14 @@ def test_mqtts_publish_using_qos1_on_diff_topics_using_threads_C876782(
 )
 @pytest.mark.test_src_map_id('C876783')
 def test_mqtts_publish_using_qos2_on_diff_topics_using_threads_C876783(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     primary_topic = "".join(
         random.choices(string.ascii_uppercase + string.digits, k=10)
@@ -1320,6 +1456,7 @@ def test_mqtts_publish_using_qos2_on_diff_topics_using_threads_C876783(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1336,6 +1473,7 @@ def test_mqtts_publish_using_qos2_on_diff_topics_using_threads_C876783(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         primary_thread = ParallelThread(
             wifi_dut=wifi_dut,
@@ -1368,15 +1506,22 @@ def test_mqtts_publish_using_qos2_on_diff_topics_using_threads_C876783(
         secondary_thread.wait_for_exit()
         wifi_dut.interfaces.wifi.lwip_mqtt_unsubscribe(topic=primary_topic)
         wifi_dut.interfaces.wifi.lwip_mqtt_unsubscribe(topic=secondary_topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
 @wifi_dut_marker(
-    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL, thread_count=2, wifi_stack_len=4096
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+    thread_count=2,
+    wifi_stack_len=4096,
 )
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
@@ -1384,8 +1529,7 @@ def test_mqtts_publish_using_qos2_on_diff_topics_using_threads_C876783(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1401,14 +1545,14 @@ def test_mqtts_publish_using_qos2_on_diff_topics_using_threads_C876783(
 )
 @pytest.mark.test_src_map_id('C876784')
 def test_mqtts_publish_subscribe_using_different_topics_C876784(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     primary_topic = "".join(
         random.choices(string.ascii_uppercase + string.digits, k=10)
@@ -1426,6 +1570,7 @@ def test_mqtts_publish_subscribe_using_different_topics_C876784(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1442,6 +1587,7 @@ def test_mqtts_publish_subscribe_using_different_topics_C876784(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         primary_thread = ParallelThread(
             wifi_dut=wifi_dut,
@@ -1471,22 +1617,28 @@ def test_mqtts_publish_subscribe_using_different_topics_C876784(
         primary_thread.wait_for_exit()
         secondary_thread.wait_for_exit()
         wifi_dut.interfaces.wifi.lwip_mqtt_unsubscribe(topic=secondary_topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1502,14 +1654,14 @@ def test_mqtts_publish_subscribe_using_different_topics_C876784(
 )
 @pytest.mark.test_src_map_id('C876785')
 def test_mqtts_publish_with_max_supported_length_qos2_C876785(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876785"
     client_id = "Si91x_mqtt_client"
@@ -1522,6 +1674,7 @@ def test_mqtts_publish_with_max_supported_length_qos2_C876785(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1538,6 +1691,7 @@ def test_mqtts_publish_with_max_supported_length_qos2_C876785(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -1549,14 +1703,21 @@ def test_mqtts_publish_with_max_supported_length_qos2_C876785(
         )
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(0, 120)])
@@ -1564,8 +1725,7 @@ def test_mqtts_publish_with_max_supported_length_qos2_C876785(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1581,16 +1741,16 @@ def test_mqtts_publish_with_max_supported_length_qos2_C876785(
 )
 @pytest.mark.test_src_map_id('C876786')
 def test_mqtts_keepalive_functionality_with_zero_keepalive_time_C876786(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
-    keep_alive_time,
-    idle_time,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
+        keep_alive_time,
+        idle_time,
 ):
     topic = "Topic_C876786"
     client_id = "Si91x_mqtt_client"
@@ -1603,6 +1763,7 @@ def test_mqtts_keepalive_functionality_with_zero_keepalive_time_C876786(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1619,6 +1780,7 @@ def test_mqtts_keepalive_functionality_with_zero_keepalive_time_C876786(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
             keepalive_time=keep_alive_time,
             idle_time=idle_time,
         )
@@ -1631,9 +1793,12 @@ def test_mqtts_keepalive_functionality_with_zero_keepalive_time_C876786(
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.validate_ssl_connection(validate_keep_alive=True)
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
 @wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
@@ -1644,8 +1809,7 @@ def test_mqtts_keepalive_functionality_with_zero_keepalive_time_C876786(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1661,16 +1825,16 @@ def test_mqtts_keepalive_functionality_with_zero_keepalive_time_C876786(
 )
 @pytest.mark.test_src_map_id('C876787')
 def test_mqtt_keepalive_functionality_with_30sec_keepalive_time_C876787(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
-    keep_alive_time,
-    idle_time,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
+        keep_alive_time,
+        idle_time,
 ):
     stop_evt.clear()
     topic = "Topic_C876787"
@@ -1684,6 +1848,7 @@ def test_mqtt_keepalive_functionality_with_30sec_keepalive_time_C876787(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1726,9 +1891,9 @@ def test_mqtt_keepalive_functionality_with_30sec_keepalive_time_C876787(
                 f"len of publish ack is {len(publish_ack)} and number of ping request packets observed is : {len(ping_request)} publish ack : {publish_ack}, ping request : {ping_request}"
             )
             assert (
-                (keep_alive_time - 5)
-                < (float(ping_request[0]) - float(publish_ack[-1]))
-                <= (keep_alive_time + 5)
+                    (keep_alive_time - 5)
+                    < (float(ping_request[0]) - float(publish_ack[-1]))
+                    <= (keep_alive_time + 5)
             ), (
                 f"mqtt ping request is not observed even after {keep_alive_time} is "
                 f"exhausted or before {keep_alive_time - 5} "
@@ -1742,9 +1907,9 @@ def test_mqtt_keepalive_functionality_with_30sec_keepalive_time_C876787(
                 if i == len(ping_request) - 1:
                     break
                 assert (
-                    (keep_alive_time - 5)
-                    < (float(ping_request[i + 1]) - float(ping_request[i]))
-                    <= (keep_alive_time + 5)
+                        (keep_alive_time - 5)
+                        < (float(ping_request[i + 1]) - float(ping_request[i]))
+                        <= (keep_alive_time + 5)
                 ), (
                     f"mqtt ping request is not observed even after {keep_alive_time} is "
                     f"exhausted or before {keep_alive_time - 5} and the ping re"
@@ -1756,21 +1921,27 @@ def test_mqtt_keepalive_functionality_with_30sec_keepalive_time_C876787(
 
         logger().info("....Unsubscribing from the topic....")
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1786,15 +1957,15 @@ def test_mqtt_keepalive_functionality_with_30sec_keepalive_time_C876787(
 )
 @pytest.mark.test_src_map_id('C876791')
 def test_mqtts_publish_after_rejoin_successful_C876791(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
-    switch,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
+        switch,
 ):
     topic = "Topic_C876791"
     client_id = "Si91x_mqtt_client"
@@ -1807,6 +1978,7 @@ def test_mqtts_publish_after_rejoin_successful_C876791(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1823,6 +1995,7 @@ def test_mqtts_publish_after_rejoin_successful_C876791(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
             max_retry_attempts=0,
@@ -1866,35 +2039,38 @@ def test_mqtts_publish_after_rejoin_successful_C876791(
                         f"Received MQTT message on DUT - Topic: {yield_topic}, Message: {yield_message}"
                     )
                     assert (
-                        yield_topic == topic
+                            yield_topic == topic
                     ), "Mismatch in MQTT topic received on DUT"
                     assert (
-                        yield_message == message
+                            yield_message == message
                     ), "Mismatch in MQTT message received on DUT"
                 else:
                     raise AssertionError("No MQTT message received on DUT")
                 if _ == 4:
                     ap_power_off = True
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
         mqtt_thread.validate_ssl_connection()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        logger().info("******* Turn on Access point **********")
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread, switch=switch)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -1910,15 +2086,15 @@ def test_mqtts_publish_after_rejoin_successful_C876791(
 )
 @pytest.mark.test_src_map_id('C876792')
 def test_mqtts_connection_after_rejoin_error_event_C876792(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
-    switch,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
+        switch,
 ):
     topic = "Topic_C876792"
     client_id = "Si91x_mqtt_client"
@@ -1931,6 +2107,7 @@ def test_mqtts_connection_after_rejoin_error_event_C876792(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -1947,6 +2124,7 @@ def test_mqtts_connection_after_rejoin_error_event_C876792(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
             max_retry_attempts=5,
@@ -2017,35 +2195,38 @@ def test_mqtts_connection_after_rejoin_error_event_C876792(
                         f"Received MQTT message on DUT - Topic: {yield_topic}, Message: {yield_message}"
                     )
                     assert (
-                        yield_topic == topic
+                            yield_topic == topic
                     ), "Mismatch in MQTT topic received on DUT"
                     assert (
-                        yield_message == message
+                            yield_message == message
                     ), "Mismatch in MQTT message received on DUT"
                 else:
                     raise AssertionError("No MQTT message received on DUT")
                 if _ == 4:
                     ap_power_off = True
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
         mqtt_thread.validate_ssl_connection()
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        logger().info("******* Turn on Access point **********")
-        switch.interfaces.pdu_switch.turn_on(delay=60)
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread, switch=switch)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -2062,14 +2243,14 @@ def test_mqtts_connection_after_rejoin_error_event_C876792(
 )
 @pytest.mark.test_src_map_id('C876793')
 def test_mqtts_subscribe_publish_with_dhcp_lease_120_secs_c876793(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876793"
     client_id = "Si91x_mqtt_client"
@@ -2082,6 +2263,7 @@ def test_mqtts_subscribe_publish_with_dhcp_lease_120_secs_c876793(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -2098,6 +2280,7 @@ def test_mqtts_subscribe_publish_with_dhcp_lease_120_secs_c876793(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -2111,12 +2294,15 @@ def test_mqtts_subscribe_publish_with_dhcp_lease_120_secs_c876793(
             )
             mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
         mqtt_thread.validate_ssl_connection()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
 @wifi_dut_marker()
@@ -2126,8 +2312,7 @@ def test_mqtts_subscribe_publish_with_dhcp_lease_120_secs_c876793(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -2143,14 +2328,14 @@ def test_mqtts_subscribe_publish_with_dhcp_lease_120_secs_c876793(
 )
 @pytest.mark.test_src_map_id('C876794')
 def test_mqtt_connection_with_last_will_and_retained_bit_set_c876794(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876794"
     will_topic = "".join(random.choices(string.ascii_uppercase + string.digits, k=10))
@@ -2166,6 +2351,7 @@ def test_mqtt_connection_with_last_will_and_retained_bit_set_c876794(
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
     flag = False
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -2195,15 +2381,16 @@ def test_mqtt_connection_with_last_will_and_retained_bit_set_c876794(
         mqtt_thread.subscribe_and_publish(qos=qos)
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
         decryption_key = f"{wifi_access_point.interfaces.wifi.passphrase}:{wifi_access_point.interfaces.wifi.ssid}"
         current_time = time.time()
         updated_capture_file = (
-            "filter_"
-            + request.node.name
-            + "_"
-            + str(datetime.fromtimestamp(current_time).strftime("%H_%M_%S"))
+                "filter_"
+                + request.node.name
+                + "_"
+                + str(datetime.fromtimestamp(current_time).strftime("%H_%M_%S"))
         )
         file_name = f"./reports/{updated_capture_file}.pcap"
         local_capture_file = file_name
@@ -2217,15 +2404,15 @@ def test_mqtt_connection_with_last_will_and_retained_bit_set_c876794(
         with wifi_sniffer.interfaces.capture.shell.client.open_sftp() as sftp:
             sftp.get(wlan_filter_file, local_capture_file)
         for packet in wifi_sniffer.interfaces.capture.iter_packets(
-            decrypt_packets=True,
-            encryption_type="WPA-PWD",
-            decryption_key=decryption_key,
-            capture_file_filter=local_capture_file,
+                decrypt_packets=True,
+                encryption_type="WPA-PWD",
+                decryption_key=decryption_key,
+                capture_file_filter=local_capture_file,
         ):
             for layer in packet.layers:
                 layer_name = layer.layer_name.lower()
                 if layer_name == "mqtt" and " Message Type: Connect Command" in str(
-                    layer
+                        layer
                 ):
                     mqtt_connect_text = str(layer)
                     logger().info(f"WLAN LAYER DATA : {mqtt_connect_text}")
@@ -2247,17 +2434,22 @@ def test_mqtt_connection_with_last_will_and_retained_bit_set_c876794(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -2273,14 +2465,14 @@ def test_mqtt_connection_with_last_will_and_retained_bit_set_c876794(
 )
 @pytest.mark.test_src_map_id('C876795')
 def test_mqtts_subscription_with_single_and_multilevel_wild_characters_c876795(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "sensors/+/temperature/#"
     published_topics = [
@@ -2298,6 +2490,7 @@ def test_mqtts_subscription_with_single_and_multilevel_wild_characters_c876795(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -2314,6 +2507,7 @@ def test_mqtts_subscription_with_single_and_multilevel_wild_characters_c876795(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -2338,23 +2532,29 @@ def test_mqtts_subscription_with_single_and_multilevel_wild_characters_c876795(
             else:
                 raise AssertionError("No MQTT message received on DUT")
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
         mqtt_thread.validate_ssl_connection()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -2370,14 +2570,14 @@ def test_mqtts_subscription_with_single_and_multilevel_wild_characters_c876795(
 )
 @pytest.mark.test_src_map_id('C876798')
 def test_mqtts_connection_with_persistent_and_clean_session_c876798(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876798"
     client_id = "Si91x_mqtt_client"
@@ -2390,6 +2590,7 @@ def test_mqtts_connection_with_persistent_and_clean_session_c876798(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -2406,6 +2607,7 @@ def test_mqtts_connection_with_persistent_and_clean_session_c876798(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -2422,23 +2624,29 @@ def test_mqtts_connection_with_persistent_and_clean_session_c876798(
         mqtt_thread.subscribe_and_publish(qos=qos)
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
         mqtt_thread.validate_ssl_connection()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -2454,14 +2662,14 @@ def test_mqtts_connection_with_persistent_and_clean_session_c876798(
 )
 @pytest.mark.test_src_map_id('C876799')
 def test_mqtts_negative_scenario_publish_1400_bytes_message_c876799(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876799"
     client_id = "Si91x_mqtt_client"
@@ -2474,6 +2682,7 @@ def test_mqtts_negative_scenario_publish_1400_bytes_message_c876799(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -2490,6 +2699,7 @@ def test_mqtts_negative_scenario_publish_1400_bytes_message_c876799(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -2513,22 +2723,28 @@ def test_mqtts_negative_scenario_publish_1400_bytes_message_c876799(
                 "MQTT Publish did not fail for larger than maximum supported message length"
             )
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -2544,14 +2760,14 @@ def test_mqtts_negative_scenario_publish_1400_bytes_message_c876799(
 )
 @pytest.mark.test_src_map_id('C876800')
 def test_mqtts_connection_with_empty_client_id_c876800(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "Topic_C876800"
     client_id = "''"
@@ -2564,6 +2780,7 @@ def test_mqtts_connection_with_empty_client_id_c876800(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -2580,6 +2797,7 @@ def test_mqtts_connection_with_empty_client_id_c876800(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -2588,23 +2806,29 @@ def test_mqtts_connection_with_empty_client_id_c876800(
         mqtt_thread.subscribe_and_publish(qos=qos)
         mqtt_thread.validate_mqtt_messages()
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
         mqtt_thread.validate_ssl_connection()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -2620,14 +2844,14 @@ def test_mqtts_connection_with_empty_client_id_c876800(
 )
 @pytest.mark.test_src_map_id('C876801')
 def test_mqtts_connection_failure_with_invalid_expired_certs_c876801(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     topic = "".join(random.choices(string.ascii_uppercase + string.digits, k=500))
     client_id = "Si91x_mqtt_client"
@@ -2640,6 +2864,7 @@ def test_mqtts_connection_failure_with_invalid_expired_certs_c876801(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -2656,6 +2881,7 @@ def test_mqtts_connection_failure_with_invalid_expired_certs_c876801(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -2676,21 +2902,29 @@ def test_mqtts_connection_failure_with_invalid_expired_certs_c876801(
             client_cert_size=server_cert_size,
             client_key_size=server_key_size,
         )
-        mqtt_thread.mqtt_connect(expected_status=SLStatus.SL_STATUS_FAIL)
+        mqtt_thread.mqtt_connect(
+            expected_status=SLStatus.SL_STATUS_FAIL,
+            configure_tls_certs=False,
+        )
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
 
-@wifi_dut_marker(tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL)
+@wifi_dut_marker(
+    tcp_feat_bit=Si91xTCPIPFeatureBitMap.SSL,
+    coex_mode=Si91xCoexMode.WLANOnly,
+    memory_mode=Si91xExtCustomFeatureBitMap.Feature192kBMemoryMode,
+)
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
     wifi=[
         "lwip_mqtt_disconnect",
-        "wifi_powersave_disable",
-        "bt_powersave_disable",
+
         "unassociated",
         "disable_external_stack"
     ],
@@ -2706,14 +2940,14 @@ def test_mqtts_connection_failure_with_invalid_expired_certs_c876801(
 )
 @pytest.mark.test_src_map_id('C876803')
 def test_mqtts_subscription_over_4_topics_with_retain_c876803(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    mqtt_server,
-    mqtt_client,
-    sniffer_filter,
-    sl_collections,
-    request,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        mqtt_server,
+        mqtt_client,
+        sniffer_filter,
+        sl_collections,
+        request,
 ):
     retain = 1
     topic1 = "Topic1/C876803"
@@ -2729,6 +2963,7 @@ def test_mqtts_subscription_over_4_topics_with_retain_c876803(
         "passphrase": "1234567890",
         "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
     }
+    mqtt_thread = None
     try:
         mqtt_thread = MQTTConnectionThread(
             wifi_dut=wifi_dut,
@@ -2745,6 +2980,7 @@ def test_mqtts_subscription_over_4_topics_with_retain_c876803(
             profile=profile,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
+            enable_bt_powersave=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
@@ -2765,8 +3001,11 @@ def test_mqtts_subscription_over_4_topics_with_retain_c876803(
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic2)
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic3)
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic4)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
         mqtt_thread.verify_ps_validation()
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
