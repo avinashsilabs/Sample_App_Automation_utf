@@ -380,7 +380,8 @@ class MQTTConnectionThread(ThreadBase):
     },
 )
 @pytest.mark.test_src_map_id('C876788')
-def test_mqtts_subscribe_publish_disconnect_for_30min_C876788(
+@pytest.mark.firmware_app("test_lwip_stack")
+def test_mqtts_subscribe_publish_disconnect_for_30min_C876788(firmware_loader,
     wifi_dut,
     wifi_access_point,
     wifi_sniffer,
@@ -462,7 +463,8 @@ def test_mqtts_subscribe_publish_disconnect_for_30min_C876788(
     },
 )
 @pytest.mark.test_src_map_id('C876789')
-def test_mqtts_subscribe_publish_disconnect_over_wifi_for_30min_C876789(
+@pytest.mark.firmware_app("test_lwip_stack")
+def test_mqtts_subscribe_publish_disconnect_over_wifi_for_30min_C876789(firmware_loader,
     wifi_dut,
     wifi_access_point,
     wifi_sniffer,
@@ -548,7 +550,8 @@ def test_mqtts_subscribe_publish_disconnect_over_wifi_for_30min_C876789(
     },
 )
 @pytest.mark.test_src_map_id('C876790')
-def test_mqtts_subscribe_publish_disconnect_deinit_for_30min_C876790(
+@pytest.mark.firmware_app("test_lwip_stack")
+def test_mqtts_subscribe_publish_disconnect_deinit_for_30min_C876790(firmware_loader,
     wifi_dut,
     wifi_access_point,
     wifi_sniffer,
@@ -634,7 +637,8 @@ def test_mqtts_subscribe_publish_disconnect_deinit_for_30min_C876790(
     },
 )
 @pytest.mark.test_src_map_id('C876807')
-def test_mqtts_subscribe_publish_every_30_min_C876807(
+@pytest.mark.firmware_app("test_lwip_stack")
+def test_mqtts_subscribe_publish_every_30_min_C876807(firmware_loader,
     wifi_dut,
     wifi_access_point,
     wifi_sniffer,
