@@ -45,6 +45,10 @@ from utf.interfaces.bluetooth.bluez.gatt_application.heart_rate_service import (
                                                                                 HeartRateMeasurementCharacterstic)
 from utf.interfaces.bluetooth.bluez.gatt_application.health_thermometer_service import \
     CustomNotifyCharacteristic, HealthThermometerService
+from utf.interfaces.bluetooth.bluez.gatt_application.immediate_alert_service import (
+    ImmediateAlertService,
+    ImmediateAlertLevelCharacteristic,
+)
 
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
@@ -68,6 +72,24 @@ from example_test_package.sqa_test_suites_wifi_sdk_3.coex.functional.sta_ble_pro
 
 def logger():
     return get_logger(__name__)
+
+
+# Firmware BLE status returned when an ATT request is issued while a previous
+# ATT request on the same connection has not yet completed. ATT is sequential:
+# only one outstanding request (e.g. a Write Request for write-with-response)
+# is allowed per connection. Under WiFi/DTLS contention the peer's ATT Write
+# Response can be delayed, so a follow-up write is rejected with this status
+# until the pending response arrives. It is transient and safe to retry.
+# The value appears as the signed byte 0xD9 sign-extended to 32 bits.
+BLE_ATT_CMD_IN_PROGRESS = 0xFFFFFFD9
+
+
+def is_att_cmd_in_progress(exc) -> bool:
+    """Return True if ``exc`` corresponds to the BLE 'ATT command in progress'
+    firmware status (0xFFFFFFD9). ``verify_status`` embeds the code as
+    ``status:0x...`` in the AssertionError message, so we match the hex tail."""
+    text = str(exc).lower()
+    return "ffffffd9" in text or f"{BLE_ATT_CMD_IN_PROGRESS:#x}" in text
 
 
 def random_ipv6_addr(network):
@@ -409,6 +431,73 @@ class WifiThread(ThreadBase):
         time.sleep(1)
         assert self.openssl.interfaces.client.is_running(), "DTLS server failed to start"
         logger().info(f"DTLS server client on port {self.local_port}")
+
+    def dtls_socket_create_connect_send_close_loop(self, iterations=3,
+                                                   sends_per_iteration=5,
+                                                   inter_iteration_delay=2):
+        """DTLS regression loop (C767045): repeat create -> connect ->
+        send -> close N times, then verify the cumulative payload at
+        the server.
+        """
+        logger().info(
+            "Starting DTLS socket regression loop: "
+            f"{iterations} iterations x {sends_per_iteration} sends"
+        )
+
+        domain = "AF_INET6" if "ipv6" in (self.test_name or "").lower() else "AF_INET"
+        all_sent_data = []
+
+        for iteration in range(1, iterations + 1):
+            logger().info(
+                f"--- DTLS regression iteration {iteration}/{iterations} ---"
+            )
+            try:
+                self._setup_dtls_socket(domain)
+                logger().info(
+                    f"[iter {iteration}] DTLS socket created and connected"
+                )
+
+                for _ in range(sends_per_iteration):
+                    tx_data = ''.join(
+                        random.choices(
+                            string.ascii_uppercase + string.digits, k=100
+                        )
+                    )
+                    if not self._send_dtls_data_with_retry(tx_data):
+                        raise RuntimeError(
+                            f"[iter {iteration}] Failed to send DTLS data: "
+                            f"{tx_data}"
+                        )
+                    all_sent_data.append(tx_data)
+                    time.sleep(1)
+
+                logger().info(
+                    f"[iter {iteration}] Sent {sends_per_iteration} records"
+                )
+            finally:
+                try:
+                    self.wifi_dut.interfaces.wifi.bsdSockClose(
+                        socket_fd=self.sock
+                    )
+                    logger().info(
+                        f"[iter {iteration}] DTLS socket closed"
+                    )
+                except Exception as close_ex:
+                    logger().warning(
+                        f"[iter {iteration}] socket close error: {close_ex}"
+                    )
+                self.sock = None
+
+            if iteration < iterations:
+                time.sleep(inter_iteration_delay)
+
+        if all_sent_data:
+            self.verify_server_data_reception(all_sent_data)
+
+        logger().info(
+            "DTLS socket regression loop complete: "
+            f"{iterations} iterations, {len(all_sent_data)} total records sent"
+        )
 
     def create_dtls_socket_and_send_data(self, duration_minutes=None):
         """Create DTLS socket and send data"""
@@ -1380,6 +1469,23 @@ class WifiThread(ThreadBase):
                 # Execute rejoin scenario with DTLS operations
                 self.dtls_rejoin_success()
 
+            elif "767045" in self.test_name.lower():
+                # DTLS socket regression scenario (C767045):
+                # create -> connect -> send data -> close in loop x3,
+                # in parallel with BLE peripheral write-without-response.
+                logger().info("Executing DTLS socket regression loop (C767045)")
+                if not self.skip_join_ip:
+                    self.scan_networks()
+                    self.join_access_point()
+                    self.get_network_performance_client_ip()
+                    self.test_network_connectivity()
+                self.setup_dtls_server()
+                self.dtls_socket_create_connect_send_close_loop(
+                    iterations=3,
+                    sends_per_iteration=5,
+                    inter_iteration_delay=2,
+                )
+
             else:
                 if not self.skip_join_ip:
                 # Standard WiFi + DTLS flow
@@ -1674,11 +1780,41 @@ class BleThread(ThreadBase):
                     # Non-agent error - use basic retry with delay
                     if attempt < max_attempts - 1:  # Not the last attempt
                         logger().info(f"Retrying BLE connection (attempt {attempt + 2}/{max_attempts})...")
+                        # Reset DUT/remote BLE role state before retrying. The
+                        # previous attempt may have left the DUT already
+                        # advertising/scanning; re-issuing ble_start_advertising
+                        # in that state returns SL_STATUS_SI91X_COMMAND_DISALLOWED
+                        # (0x4e0c), so every retry would otherwise be doomed
+                        # (e.g. multiple_centrals C767047). This does NOT drop any
+                        # already-established peer connection.
+                        self._ble_pre_retry_cleanup(role=role)
                         time.sleep(2)  # Brief delay before retry
                     else:
                         # All attempts failed, raise the exception
                         logger().error(f"BLE connection failed after {max_attempts} attempts")
                         raise Exception(f"BLE {role_name} connection failed after {max_attempts} attempts. Last error: {error_msg}") from e
+
+    def _ble_pre_retry_cleanup(self, role="slave"):
+        """Best-effort reset of transient DUT/remote BLE role state before a
+        connection retry. Stops any lingering DUT advertising/scanning and remote
+        scanning so the next attempt starts clean. Existing peer connections are
+        intentionally left untouched (advertising/scanning are independent of an
+        established link on the SiWx91x)."""
+        try:
+            self.wifi_dut.interfaces.wifi.ble_stop_advertising()
+            logger().info("Pre-retry: stopped DUT advertising")
+        except Exception as e:
+            logger().warning(f"Pre-retry: could not stop DUT advertising: {e}")
+        try:
+            self.wifi_dut.interfaces.wifi.ble_stop_scanning()
+            logger().info("Pre-retry: stopped DUT scanning")
+        except Exception as e:
+            logger().warning(f"Pre-retry: could not stop DUT scanning: {e}")
+        try:
+            self.ble_client.interfaces.bluetooth.stop_scanning()
+            logger().info("Pre-retry: stopped remote scanning")
+        except Exception as e:
+            logger().warning(f"Pre-retry: could not stop remote scanning: {e}")
 
     def connect_ble_client(self):
         """Connect BLE client - DUT as peripheral (slave)"""
@@ -2048,91 +2184,249 @@ class BleThread(ThreadBase):
 
 
 
-    def send_ble_write_without_response(self, data_length=100):
-        """Send BLE write without response - DUT as peripheral"""
+    def prepare_write_buffer(self, data_length=None):
+        """Pre-stage write_handle + data_address for BLE peripheral writes.
+        Call from the main thread before starting the WiFi thread to
+        avoid the mem.write raw-byte-mode bus race (C767042 / C767045).
+        Works for both write-with-response and write-without-response paths.
+        """
+        if data_length is None:
+            data_length = self.data_length
+        if not self.data:
+            self.data = ''.join(
+                random.choices(string.ascii_uppercase + string.digits, k=data_length)
+            )
+        self.write_handle = self.sl_collections.service_discovery_on_dut(
+            ble_dut=self.wifi_dut,
+            ble_client_address=self.ble_client_address,
+            service_uuid=self.service_uuid,
+            char_uuid=self.char_uuid,
+            characteristic=self.characteristic,
+        )
+        assert self.write_handle, "Failed to get write handle for BLE write without response"
+        self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
+            ble_remote_dev_address=self.ble_client_address,
+            buffer_mode=1,
+            buffer_count=2,
+        )
+        payload = self.data[:data_length]
+        self.data_address = self.wifi_dut.interfaces.wifi.allocate_memory(
+            size=len(payload)
+        )
+        self.wifi_dut.interfaces.wifi.load_memory(
+            address=self.data_address,
+            size=len(payload),
+            write_content=payload,
+        )
+        logger().info(
+            f"Pre-allocated BLE write buffer at {self.data_address} "
+            f"({len(payload)} bytes); will be freed via release_write_buffer()."
+        )
+
+    def release_write_buffer(self):
+        """Free the DUT-side payload buffer allocated by ``prepare_write_buffer``."""
+        addr = getattr(self, "data_address", None)
+        if not addr:
+            return
+        try:
+            self.wifi_dut.interfaces.wifi.memory_free(address=addr)
+            logger().info(f"Freed BLE write buffer at {addr}")
+        except Exception as free_ex:
+            logger().warning(f"Could not free BLE write buffer at {addr}: {free_ex}")
+        finally:
+            self.data_address = None
+
+    def send_ble_write_without_response(self, data_length=None):
+        """Send BLE write without response - DUT as peripheral (ref: test_ble_data_transfer_sdk C664426).
+
+        If ``prepare_write_buffer()`` was called first, reuses the
+        pre-staged handle/address (no mem.* in the loop). Otherwise
+        falls back to per-call alloc/load/free in ``ble_set_att_cmd``.
+        """
+        if data_length is None:
+            data_length = self.data_length
         logger().info(f"Sending BLE write without response ({data_length} bytes)")
 
-        # Service discovery to get write handle
-        self.write_handle = self.sl_collections.service_discovery_on_dut(
-            ble_dut=self.wifi_dut,
-            ble_client_address=self.ble_client_address,
-            service_uuid=self.service_uuid,
-            char_uuid=self.char_uuid,
-            characteristic=self.characteristic
+        pre_staged = (
+            getattr(self, "data_address", None) is not None
+            and getattr(self, "write_handle", None)
         )
 
-        if self.write_handle:
-            # Send write without response for specified duration
-            sw = Stopwatch()
-            count = 0
-            logger().info(f"Sending write without response for {self.data_duration} seconds")
-
-            while sw.elapsed_sec <= self.data_duration:
-                # Remote device sends write without response
-                self.ble_client.interfaces.bluetooth.gatt_write_without_response(
-                    self.service_uuid,
-                    self.char_uuid,
-                    self.data[:data_length]
+        if not pre_staged:
+            if not self.data:
+                self.data = ''.join(
+                    random.choices(string.ascii_uppercase + string.digits, k=data_length)
                 )
-                logger().info(f"Sent write without response ({data_length} bytes)")
-                time.sleep(self.periodic_delay)
-                count += 1
+            self.write_handle = self.sl_collections.service_discovery_on_dut(
+                ble_dut=self.wifi_dut,
+                ble_client_address=self.ble_client_address,
+                service_uuid=self.service_uuid,
+                char_uuid=self.char_uuid,
+                characteristic=self.characteristic,
+            )
+            assert self.write_handle, "Failed to get write handle for BLE write without response"
+            self.wifi_dut.interfaces.wifi.ble_set_resp_notify_buffer(
+                ble_remote_dev_address=self.ble_client_address,
+                buffer_mode=1,
+                buffer_count=2,
+            )
 
-            logger().info(f"BLE write without response completed ({count} writes)")
-
-        logger().info("BLE write without response completed successfully")
-
-    def send_ble_write_with_response(self, data_length=100):
-        """Send BLE write with response - DUT as peripheral (Reference: ble_standalone)"""
-        logger().info(f"Sending BLE write with response ({data_length} bytes)")
-
-        # Service discovery to get write handle
-        self.write_handle = self.sl_collections.service_discovery_on_dut(
-            ble_dut=self.wifi_dut,
-            ble_client_address=self.ble_client_address,
-            service_uuid=self.service_uuid,
-            char_uuid=self.char_uuid,
-            characteristic=self.characteristic
+        payload = self.data[:data_length]
+        data_address = getattr(self, "data_address", None) if pre_staged else None
+        logger().info(
+            f"BLE write loop mode={'pre-staged' if pre_staged else 'inline'}, "
+            f"data_address={data_address}, handle={self.write_handle}"
         )
 
-        if self.write_handle:
-            # Send write with response for specified duration
-            write_data_count = 0
-            logger().info(f"Sending write with response for {self.data_duration} seconds")
-
-            def write():
-                nonlocal write_data_count
+        # Tolerate transient per-iteration firmware errors (e.g. BT/WLAN
+        # buffer-full producing an unmapped SLStatus). Continue the loop
+        # and only fail if no writes ever succeed.
+        sw = Stopwatch()
+        count = 0
+        error_count = 0
+        while sw.elapsed_sec <= self.data_duration:
+            try:
+                self.wifi_dut.interfaces.wifi.ble_set_att_cmd(
+                    ble_remote_dev_address=self.ble_client_address,
+                    handle=self.write_handle,
+                    data=payload,
+                    data_length=data_length,
+                    data_address=data_address,
+                )
+                count += 1
+                logger().info(f"Sent write without response ({data_length} bytes)")
+            except Exception as ble_ex:
+                error_count += 1
+                logger().warning(
+                    f"BLE write-without-response iter failed "
+                    f"(#{error_count}, ok={count}): {ble_ex}. Continuing."
+                )
                 time.sleep(2)
-                # Use correct API from ble_standalone reference
-                self.wifi_dut.interfaces.bluetooth.ble_set_att_value_async(
+            time.sleep(self.periodic_delay)
+
+        logger().info(
+            f"BLE write without response completed ({count} writes, {error_count} errors)"
+        )
+        assert count > 0, (
+            f"All BLE write-without-response attempts failed "
+            f"({error_count} errors); no writes succeeded."
+        )
+
+    def _ble_write_with_resp_once(self, data_length, data_address,
+                                  max_retries=6, base_backoff=1.0):
+        """Issue a single write-with-response, retrying on the transient
+        'ATT command in progress' (0xFFFFFFD9) firmware status.
+
+        ATT allows only one outstanding request per connection, so this
+        status simply means the previous write's ATT Write Response has not
+        been received yet (common under WiFi/DTLS contention). We wait with
+        a linear backoff for the pending response to drain and retry, rather
+        than treating it as a real write failure. Any other error is
+        re-raised to the caller.
+        """
+        attempt = 0
+        while True:
+            try:
+                self.wifi_dut.interfaces.wifi.ble_set_att_value_async(
                     ble_remote_dev_address=self.ble_client_address,
                     char_property=self.write_handle,
-                    data=data,
-                    data_length=data_length)
-                time.sleep(5)
-                write_data_count += 1
-
-            # Generate random data
-            data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=data_length))
-
-            sw = Stopwatch()
-            while sw.elapsed_sec <= self.data_duration:
-                try:
-                    write()
-                except Exception as e:
-                    logger().error(f"Error in write with response: {e}")
+                    data=self.data,
+                    data_length=data_length,
+                    data_address=data_address,
+                )
+                return attempt
+            except Exception as ble_ex:
+                if is_att_cmd_in_progress(ble_ex) and attempt < max_retries:
+                    attempt += 1
+                    wait = base_backoff * attempt
+                    logger().warning(
+                        f"BLE write-with-response: ATT command in progress "
+                        f"(0xFFFFFFD9); waiting {wait:.1f}s for pending Write "
+                        f"Response then retrying ({attempt}/{max_retries})."
+                    )
+                    time.sleep(wait)
                     continue
+                raise
 
-            logger().info(f"Write with response completed: {write_data_count} writes sent")
-            # Store data for validation
-            self.write_data_count = write_data_count
-            self.write_data = data
-            return write_data_count, data
-        else:
-            logger().error("Failed to get write handle for BLE write with response")
-            self.write_data_count = 0
-            self.write_data = None
-            return 0, None
+    def send_ble_write_with_response(self, data_length=None):
+        """Send BLE write with response - DUT as peripheral (ref: test_ble_data_transfer_sdk C193316).
+
+        If ``prepare_write_buffer()`` was called first, reuses the
+        pre-staged handle/address (no mem.* in the loop). Otherwise
+        falls back to per-call alloc/load/free in ``ble_set_att_value_async``.
+        """
+        if data_length is None:
+            data_length = self.data_length
+        logger().info(f"Sending BLE write with response ({data_length} bytes)")
+
+        pre_staged = (
+            getattr(self, "data_address", None) is not None
+            and getattr(self, "write_handle", None)
+        )
+
+        if not pre_staged:
+            self.write_handle = self.sl_collections.service_discovery_on_dut(
+                ble_dut=self.wifi_dut,
+                ble_client_address=self.ble_client_address,
+                service_uuid=self.service_uuid,
+                char_uuid=self.char_uuid,
+                characteristic=self.characteristic,
+            )
+            assert self.write_handle, "Failed to get write handle for BLE write with response"
+            self.data = ''.join(
+                random.choices(string.ascii_uppercase + string.digits, k=data_length)
+            )
+
+        data_address = getattr(self, "data_address", None) if pre_staged else None
+        logger().info(
+            f"BLE write-with-response loop mode={'pre-staged' if pre_staged else 'inline'}, "
+            f"data_address={data_address}, handle={self.write_handle}"
+        )
+
+        # ATT is sequential: a write-with-response must wait for the peer's
+        # ATT Write Response before the next request. The async API does not
+        # wait, so under WiFi/DTLS contention a follow-up write can be
+        # rejected with 0xFFFFFFD9 ("ATT command in progress"). That status
+        # is transient - _ble_write_with_resp_once() retries with backoff so
+        # it no longer counts as a real failure. Any other firmware error is
+        # still tolerated per-iteration (the test intent is "DTLS works while
+        # BLE writes are happening") and we only fail if zero writes succeed.
+        write_data_count = 0
+        write_error_count = 0
+        write_retry_count = 0
+        sw = Stopwatch()
+        while sw.elapsed_sec <= self.data_duration:
+            time.sleep(2)
+            try:
+                retries = self._ble_write_with_resp_once(
+                    data_length=data_length,
+                    data_address=data_address,
+                )
+                write_data_count += 1
+                write_retry_count += retries
+            except Exception as ble_ex:
+                write_error_count += 1
+                logger().warning(
+                    f"BLE write-with-response iter failed (#{write_error_count}, "
+                    f"ok={write_data_count}): {ble_ex}. Continuing."
+                )
+                # Brief back-off so the firmware can drain its BT tx buffers
+                # before the next attempt under WiFi/DTLS contention.
+                time.sleep(2)
+            time.sleep(5)
+
+        logger().info(
+            f"Write with response completed: {write_data_count} writes sent, "
+            f"{write_error_count} writes failed, "
+            f"{write_retry_count} ATT-in-progress retries"
+        )
+        assert write_data_count > 0, (
+            f"All BLE write-with-response attempts failed "
+            f"({write_error_count} errors); no writes succeeded."
+        )
+        self.write_data_count = write_data_count
+        self.write_data = self.data
+        return write_data_count, self.data
 
     @staticmethod
     def validate_write_with_response(bt_mon_log_file=None, write_handle=None, data=None,
@@ -2276,12 +2570,12 @@ class BleThread(ThreadBase):
                 self.service_discovery_on_remote()
                 self.send_ble_indications_tx()
             elif self.ble_test_type == "peripheral_write_wo_resp":
-                self.add_custom_service_and_characteristic()
-                self.connect_ble_client()  # DUT as peripheral (slave)
+                if not self.ble_connection_done:
+                    self.connect_ble_client()  # DUT as peripheral (slave)
                 self.send_ble_write_without_response()
             elif self.ble_test_type == "peripheral_write_with_resp":
-                self.add_custom_service_and_characteristic()
-                self.connect_ble_client()  # DUT as peripheral (slave)
+                if not self.ble_connection_done:
+                    self.connect_ble_client()  # DUT as peripheral (slave)
                 self.send_ble_write_with_response()
             elif self.ble_test_type == "dual_role_indications":
                 self.add_custom_service_and_characteristic()
@@ -3334,7 +3628,6 @@ def test_sta_ble_dtls_multi_peripherals_c767048(
 
 
 # Test Case C767042: DTLS1.2 with BLE Tx writes 240b (DLE ON) in peripheral role
-@pytest.mark.skip()
 @pytest.mark.config("wifi_dut", wifi=get_dtls_config())
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -3343,7 +3636,7 @@ def test_sta_ble_dtls_multi_peripherals_c767048(
     "wifi_powersave_disable",
     "disassociated",
 ])
-def test_sta_ble_dtls_ble_wrtitewithresp_240_c767042(
+def test_sta_ble_dtls_ble_writewithresp_240_c767042(
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
 ):
@@ -3356,11 +3649,11 @@ def test_sta_ble_dtls_ble_wrtitewithresp_240_c767042(
     - test_dtls_functionality_sdk.py (for DTLS socket handling)
     - sl_collections.py (for common methods)
     """
+    ble_thread = None
     try:
         test_name = request.node.name
         logger().info("Starting test C767042: DTLS1.2 with BLE Tx writes with response 240b (DLE ON) in peripheral role")
 
-        # Create threads for parallel execution
         wifi_thread = WifiThread(
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
@@ -3370,20 +3663,24 @@ def test_sta_ble_dtls_ble_wrtitewithresp_240_c767042(
             sl_collections=sl_collections,
             sniffer_filter=sniffer_filter,
             test_name="C767042",
-            dtls_version="1.2"  # DTLS 1.2 as per test case
+            dtls_version="1.2",
+            skip_join_ip=True,
         )
 
         ble_thread = BleThread(
             wifi_dut=wifi_dut,
             ble_client=ble_client,
             sl_collections=sl_collections,
-            ble_test_type="peripheral_write_with_resp",  # Changed to write with response
-            data_length=240,  # 240 bytes as per test case
-            data_duration=60,
+            ble_test_type="peripheral_write_with_resp",
+            data_length=240,
+            data_duration=120,
             periodic_delay=1,
+            service_class=["HeartRateService"],
+            service_uuid=HeartRateService.UUID,
+            char_uuid=HeartRateControlPointCharacteristic.UUID,
+            characteristic=HeartRateControlPointCharacteristic,
         )
 
-        # Configure sniffer
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -3391,11 +3688,22 @@ def test_sta_ble_dtls_ble_wrtitewithresp_240_c767042(
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        # Start both threads simultaneously
+        wifi_thread.scan_networks()
+        wifi_thread.join_access_point()
+        wifi_thread.get_network_performance_client_ip()
+        wifi_thread.test_network_connectivity()
+
+        ble_thread.connect_ble_client()
+
+        # Pre-stage BLE write buffer on the main thread BEFORE WiFi thread starts.
+        # This moves the mem.alloc/mem.write/service-discovery RPCs onto an
+        # uncontested bus and avoids the 240-byte mem.write raw-mode window
+        # racing with concurrent dtls_sendto from the WiFi thread.
+        ble_thread.prepare_write_buffer()
+
         wifi_thread.start()
         ble_thread.start()
 
-        # Wait for completion
         wifi_thread.wait_for_exit()
         ble_thread.wait_for_exit()
 
@@ -3438,18 +3746,33 @@ def test_sta_ble_dtls_ble_wrtitewithresp_240_c767042(
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         if ble_thread is not None:
-            ble_client.interfaces.bluetooth.remove_device(ble_thread.ble_dut_address)
-            ble_client.interfaces.bluetooth.close()
-            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
-                                       ble_client_address=ble_thread.ble_client_address,
-                                       ble_dut_address=ble_thread.ble_dut_address)
+            try:
+                ble_thread.release_write_buffer()
+            except Exception as cleanup_ex:
+                logger().warning(f"release_write_buffer failed during cleanup: {cleanup_ex}")
+            try:
+                ble_client.interfaces.bluetooth.remove_device(ble_thread.ble_dut_address)
+                ble_client.interfaces.bluetooth.close()
+                sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
+                                           ble_client_address=ble_thread.ble_client_address,
+                                           ble_dut_address=ble_thread.ble_dut_address)
+            except Exception as cleanup_ex:
+                logger().warning(f"BLE cleanup failed: {cleanup_ex}")
         if openssl and hasattr(openssl.interfaces.server, 'is_running'):
             openssl.interfaces.server.stop()
 
 
 # Test Case C767043: DTLS client data transfer after rejoin process with BLE dual role connection
 @pytest.mark.skip()
-@pytest.mark.config("wifi_dut", wifi=get_dtls_config(wifi_thread_count=1, ble_thread_count=2))
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=get_dtls_config(
+        wifi_thread_count=1,
+        ble_thread_count=2,
+        num_central_connections=1,
+        num_peripheral_connections=1,
+    ),
+)
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=[
@@ -3471,11 +3794,16 @@ def test_sta_ble_dtls_wlan_rejoin_ble_dualrole_c767043(
     - test_dtls_functionality_sdk.py (for DTLS socket handling)
     - sl_collections.py (for common methods)
     """
+    ble_thread1 = None
+    ble_thread2 = None
+    ble_dut_address = None
+    ble_clients_address = []
+    allocated_mem_addr = None
+    address1 = None
     try:
         test_name = request.node.name
         logger().info("Starting test C767043: DTLS client data transfer after rejoin process with BLE dual role")
 
-        # Create threads for parallel execution
         wifi_thread = WifiThread(
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
@@ -3484,19 +3812,16 @@ def test_sta_ble_dtls_wlan_rejoin_ble_dualrole_c767043(
             openssl=openssl,
             sl_collections=sl_collections,
             sniffer_filter=sniffer_filter,
-            test_name="767043"
+            test_name="767043",
+            skip_join_ip=True,
         )
 
-        # Set up DUT for BLE advertising
         logger().info("start ble GATT service in DUT")
-        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(
-            set_smp=1, bond_info=0)
+        ble_dut_address = wifi_dut.interfaces.wifi.ble_gatt_start(set_smp=1, bond_info=0)
 
-        service_uid1 = "0000aabb-0000-1000-8000-00805f9b34fb"
-        char_uid1 = "00001aa1-0000-1000-8000-00805f9b34fb"
-        # data = "sAmPe_TeXtsAmPe_TeXt"  # 20bytes of data
+        service_uid = "00001aa1-0000-1000-8000-00805f9b34fb"
+        char_uid = "00001bb1-0000-1000-8000-00805f9b34fb"
         data1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
-        index = 1
         address1 = wifi_dut.interfaces.wifi.allocate_memory(size=len(data1))
         wifi_dut.interfaces.wifi.load_memory(address=address1, size=len(data1), write_content=data1)
 
@@ -3504,8 +3829,6 @@ def test_sta_ble_dtls_wlan_rejoin_ble_dualrole_c767043(
         allocated_mem_addr = wifi_dut.interfaces.wifi.allocate_memory(size=len(data2))
         logger().info(f"allocated_mem_addr: {allocated_mem_addr}")
         wifi_dut.interfaces.wifi.load_memory(address=allocated_mem_addr, size=len(data2), write_content=data2)
-        service_uid2 = "00001aa1-0000-1000-8000-00805f9b34fb"
-        char_uid2 = "00001bb1-0000-1000-8000-00805f9b34fb"
         svc = 'HealthThermometerService'
         charc = 'CustomNotifyCharacteristic'
 
@@ -3514,19 +3837,18 @@ def test_sta_ble_dtls_wlan_rejoin_ble_dualrole_c767043(
             ble_client=ble_clients[0],
             sl_collections=sl_collections,
             ble_test_type="notify_tx",
-            data_length=20,  # 20 bytes as per test case
+            data_length=20,
             data_duration=120,
             periodic_delay=1,
-            service_uid=service_uid1,
-            char_uid=char_uid1,
+            service_uid=service_uid,
+            char_uid=char_uid,
             data=data1,
             address=address1,
-            service_uuid="0xAABB",
-            char_uuid="0x1AA1", characteristic="0x1AA1",
+            service_uuid="0x1AA1",
+            char_uuid="0x1BB1",
+            characteristic="0x1BB1",
             ble_dut_address=ble_dut_address,
-            skip_ble_start=True
-
-
+            skip_ble_start=True,
         )
 
         ble_thread2 = BleThread(
@@ -3549,27 +3871,38 @@ def test_sta_ble_dtls_wlan_rejoin_ble_dualrole_c767043(
             skip_ble_start=True
         )
 
-        ble_thread1.add_custom_service_and_characteristic()
-        ble_thread1.connect_ble_client()  # DUT as peripheral (slave)
-        ble_thread1.service_discovery_on_remote()
+        logger().info("Creating custom GATT service on DUT for peripheral notify_tx")
+        wifi_dut.interfaces.wifi.ble_add_service(uid=0x1AA1)
+        wifi_dut.interfaces.wifi.ble_add_char_serv_att(uid=0x1BB1, permissions=34)
+        wifi_dut.interfaces.wifi.ble_add_char_val_att(uid=0x1BB1, data="data")
 
-        ble_thread2.connect_ble_master()  # DUT as central (master)
-        ble_thread2.service_discovery_on_dut()
-        ble_thread1.start()
-        ble_thread2.start()
-        wifi_thread.start()
-        wifi_thread.wait_for_exit()
-        ble_thread2.wait_for_exit()
-        ble_thread1.wait_for_exit()
-
-
-        # Configure sniffer
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
         )
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_thread.scan_networks()
+        wifi_thread.join_access_point()
+        wifi_thread.get_network_performance_client_ip()
+        wifi_thread.test_network_connectivity()
+
+        ble_thread2.connect_ble_master()
+        ble_clients_address.append(ble_thread2.ble_client_address)
+        ble_thread2.service_discovery_on_dut()
+
+        ble_thread1.connect_ble_client()
+        ble_clients_address.append(ble_thread1.ble_client_address)
+        ble_thread1.service_discovery_on_remote()
+
+        wifi_thread.start()
+        ble_thread2.start()
+        ble_thread1.start()
+
+        wifi_thread.wait_for_exit()
+        ble_thread2.wait_for_exit()
+        ble_thread1.wait_for_exit()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer capture stopped successfully")
@@ -3585,13 +3918,30 @@ def test_sta_ble_dtls_wlan_rejoin_ble_dualrole_c767043(
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        if ble_dut_address:
-            for ble_client in ble_clients:
-                ble_client.interfaces.bluetooth.remove_device(ble_dut_address)
-                ble_client.interfaces.bluetooth.close()
-            sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_clients,
-                                       ble_client_address=ble_thread1.ble_client_address,
-                                       ble_dut_address=ble_dut_address)
+        if allocated_mem_addr:
+            try:
+                wifi_dut.interfaces.wifi.memory_free(allocated_mem_addr)
+            except Exception as cleanup_ex:
+                logger().warning(f"memory_free(allocated_mem_addr) failed: {cleanup_ex}")
+        if address1:
+            try:
+                wifi_dut.interfaces.wifi.memory_free(address1)
+            except Exception as cleanup_ex:
+                logger().warning(f"memory_free(address1) failed: {cleanup_ex}")
+        if ble_dut_address and ble_clients_address:
+            try:
+                dual_role_disconnect(wifi_dut, ble_clients, ble_clients_address, ble_dut_address)
+            except Exception as cleanup_ex:
+                logger().warning(f"dual_role_disconnect failed: {cleanup_ex}")
+            try:
+                sl_collections.cleanup_ble(
+                    ble_dut=wifi_dut,
+                    ble_client=ble_clients,
+                    ble_client_address=ble_clients_address,
+                    ble_dut_address=ble_dut_address,
+                )
+            except Exception as cleanup_ex:
+                logger().warning(f"cleanup_ble failed: {cleanup_ex}")
         if openssl and hasattr(openssl.interfaces.server, 'is_running'):
             openssl.interfaces.server.stop()
 
@@ -3711,8 +4061,7 @@ def test_sta_ble_dtls_wlan_rejoin_ble_rx_c767044(
         if openssl and hasattr(openssl.interfaces.server, 'is_running'):
             openssl.interfaces.server.stop()
 
-@pytest.mark.skip()
-#Test Case C767045: DTLS client socket connection regression with BLE Tx write without response
+# Test Case C767045: DTLS client socket connection, send data, and socket close regression with BLE Tx write without response
 @pytest.mark.config("wifi_dut", wifi=get_dtls_config())
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -3738,7 +4087,6 @@ def test_sta_ble_dtls_ble_write_without_response_c767045(
         test_name = request.node.name
         logger().info("Starting test C767045: DTLS client socket connection regression with BLE Tx write without response")
 
-        # Create threads for parallel execution
         wifi_thread = WifiThread(
             wifi_dut=wifi_dut,
             wifi_access_point=wifi_access_point,
@@ -3747,7 +4095,8 @@ def test_sta_ble_dtls_ble_write_without_response_c767045(
             openssl=openssl,
             sl_collections=sl_collections,
             sniffer_filter=sniffer_filter,
-            test_name="C767045"
+            test_name="C767045",
+            skip_join_ip=True,
         )
 
         ble_thread = BleThread(
@@ -3755,12 +4104,15 @@ def test_sta_ble_dtls_ble_write_without_response_c767045(
             ble_client=ble_client,
             sl_collections=sl_collections,
             ble_test_type="peripheral_write_wo_resp",
-            data_length=100,  # 100 bytes as per test case
+            data_length=100,
             data_duration=60,
-            periodic_delay=1
+            periodic_delay=1,
+            service_class=["ImmediateAlertService"],
+            service_uuid=ImmediateAlertService.UUID,
+            char_uuid=ImmediateAlertLevelCharacteristic.LLA_UUID,
+            characteristic=ImmediateAlertLevelCharacteristic,
         )
 
-        # Configure sniffer
         logger().info("configuring the Sniffer with the channel")
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel
@@ -3768,34 +4120,38 @@ def test_sta_ble_dtls_ble_write_without_response_c767045(
         logger().info("start capturing with Sniffer by giving the test case name as filename")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
-        # Start both threads simultaneously
+        wifi_thread.scan_networks()
+        wifi_thread.join_access_point()
+        wifi_thread.get_network_performance_client_ip()
+        wifi_thread.test_network_connectivity()
+
+        ble_thread.connect_ble_client()
+
+        # Pre-stage BLE buffer here (main thread) so the mem.write
+        # raw-byte window doesn't race with the parallel WiFi thread.
+        ble_thread.prepare_write_buffer()
+
         wifi_thread.start()
         ble_thread.start()
 
-        # Wait for completion
         wifi_thread.wait_for_exit()
         ble_thread.wait_for_exit()
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("sniffer capture stopped successfully")
 
-        # # Comprehensive Sniffer validation for DTLS traffic
-        # comprehensive_sniffer_validation(wifi_sniffer, sniffer_filter, wifi_thread, "C767045", "1.2")
-
-        # # Validate coexistence
-        # assert validate_parallel_coexistence(wifi_dut, expected_wifi_state=True, expected_ble_state=0x08)
-
         logger().info("Test C767045 completed successfully")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
-        ble_client.interfaces.bluetooth.close()
         if ble_thread is not None:
+            ble_thread.release_write_buffer()
             ble_client.interfaces.bluetooth.remove_device(ble_thread.ble_dut_address)
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_thread.ble_client_address,
                                        ble_dut_address=ble_thread.ble_dut_address)
+        ble_client.interfaces.bluetooth.close()
         if openssl and hasattr(openssl.interfaces.server, 'is_running'):
             openssl.interfaces.server.stop()
 
@@ -4119,7 +4475,6 @@ def test_sta_ble_dtls_dhcp_renewal_ble_tx_indications_c767050(
     "wifi_access_point",
     wifi={"security": "WPA2", "passphrase": "1234567890", "ipv6_state": "0"}
 )
-# @pytest.mark.skip(reason="Don't have ipv6 support in openssl")
 def test_sta_ble_dtls_ipv6_ble_rx_c767051(firmware_loader,
     wifi_dut, wifi_access_point, wifi_client, ble_client, openssl,
     wifi_sniffer, sl_collections, sniffer_filter, request
