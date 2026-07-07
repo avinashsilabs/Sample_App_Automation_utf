@@ -115,8 +115,8 @@ class WifiJoin(ThreadBase):
 )
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
-@pytest.mark.test_src_map_id('C19780')
-def test_zephyr_secure_http_fw_upgrade_overnight_c19780(http_server,
+@pytest.mark.test_src_map_id('C19771')
+def test_zephyr_secure_http_fw_upgrade_overnight_c19771(http_server,
                                                         wifi_sniffer,
                                                         wifi_access_point,
                                                         wifi_dut, request, wifi_client,
@@ -142,6 +142,7 @@ def test_zephyr_secure_http_fw_upgrade_overnight_c19780(http_server,
                                     zephyr_wifi_collections=zephyr_wifi_collections, http_server=http_server,
                                     test_case_no=12348)
                 wifi_obj.start()
+                wifi_obj.start()
                 wifi_obj.wait_for_exit()
                 wifi_sniffer.interfaces.capture.stop_capture()
                 time.sleep(2)
@@ -165,7 +166,7 @@ def test_zephyr_secure_http_fw_upgrade_overnight_c19780(http_server,
                     logger().warning(f"TOOK TOO LONG TIME TO DOWNLOAD FW {time_duration}")
                 else:
                     logger().info(f"time taken to upgrade firmware using http otaf {time_duration} seconds")
-                logger().info(f"\n ***firmware versions not matched after loading firmware through otaf \n")
+
                 logger().info("Stop Sniffer finally")
                 wifi_sniffer.interfaces.capture.stop_capture()
                 fw_after_upgrade = wifi_obj.get_firmware_status()

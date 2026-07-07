@@ -79,8 +79,8 @@ class WifiJoinThread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C49347')
-def test_wifi_ipv4_allocate_static_ip_address_c49347(
+@pytest.mark.test_src_map_id('C792365')
+def test_wifi_ipv4_allocate_static_ip_address_c792365(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
     """This test case verifies assignment of static ip address to DUT"""

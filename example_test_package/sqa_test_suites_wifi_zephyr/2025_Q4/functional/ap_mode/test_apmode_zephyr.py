@@ -474,8 +474,8 @@ class IperfThread(ThreadBase):
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C851262')
-def test_wifi_zephyr_dutap_2_4_channel_in_5_ghz_band_c851262(wifi_sniffer, wifi_dut,
+@pytest.mark.test_src_map_id('C551262')
+def test_wifi_zephyr_dutap_2_4_channel_in_5_ghz_band_C551262(wifi_sniffer, wifi_dut,
                                                              utf_constants, zephyr_wifi_collections, wifi_client,
                                                              sniffer_filter
                                                              ):
@@ -619,10 +619,10 @@ def test_wifi_zephyr_apmode_connectivity_with_wrong_psk_cli_c19437(wifi_sniffer,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('TC3956114098')
-def test_wifi_zephyr_client_limit_10(wifi_sniffer, wifi_dut,
-                                     utf_constants, zephyr_wifi_collections, wifi_clients,
-                                     sniffer_filter, request):
+@pytest.mark.test_src_map_id('C996274')
+def test_wifi_zephyr_client_limit_10_c996274(wifi_sniffer, wifi_dut,
+                                             utf_constants, zephyr_wifi_collections, wifi_clients,
+                                             sniffer_filter, request):
     """Check whether wifi.ap_config sends error when max client limit is set to 10"""
     try:
         capture_filename = request.node.name
@@ -666,10 +666,11 @@ def test_wifi_zephyr_client_limit_10(wifi_sniffer, wifi_dut,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('TC5300419105')
-def test_wifi_zephyr_ap_functionality_when_bandwidth_20mhz_selected(wifi_sniffer, wifi_dut,
-                                                                    utf_constants, zephyr_wifi_collections, wifi_client,
-                                                                    sniffer_filter, request):
+@pytest.mark.test_src_map_id('c996275')
+def test_wifi_zephyr_ap_functionality_when_bandwidth_20mhz_selected_c996275(wifi_sniffer, wifi_dut,
+                                                                            utf_constants, zephyr_wifi_collections,
+                                                                            wifi_client,
+                                                                            sniffer_filter, request):
     try:
         capture_filename = request.node.name
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -737,11 +738,11 @@ def test_wifi_zephyr_ap_functionality_when_bandwidth_20mhz_selected(wifi_sniffer
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
-@pytest.mark.test_src_map_id('C19446')
-def test_wifi_sdk_dut_apmode_11n_htcaps_support_c19446(wifi_sniffer, wifi_dut, channel, protocol,
-                                                       zephyr_wifi_collections, wifi_clients, utf_constants,
-                                                       sniffer_filter,
-                                                       net_perf_client, request):
+@pytest.mark.test_src_map_id('c19447')
+def test_wifi_zephyr_dut_apmode_11n_htcaps_support_c19447(wifi_sniffer, wifi_dut, channel, protocol,
+                                                          zephyr_wifi_collections, wifi_clients, utf_constants,
+                                                          sniffer_filter,
+                                                          net_perf_client, request):
     """HT CAP Functionality ,High through put capabilities in AP mode"""
     try:
         capture_filename = request.node.name
@@ -808,9 +809,9 @@ def test_wifi_sdk_dut_apmode_11n_htcaps_support_c19446(wifi_sniffer, wifi_dut, c
 )
 @pytest.mark.parametrize("channel", [11])
 @pytest.mark.test_src_map_id('C19449')
-def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_clients, channel,
-                                                  wifi_access_point,
-                                                  utf_constants, zephyr_wifi_collections, sniffer_filter, request):
+def test_wifi_zephyr_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_clients, channel,
+                                                     wifi_access_point,
+                                                     utf_constants, zephyr_wifi_collections, sniffer_filter, request):
     """Soft Reset functionality when dUT moving from STA mode to AP mode"""
     try:
         capture_filename = request.node.name
@@ -876,9 +877,9 @@ def test_wifi_sdk_dut_soft_reset_sta_to_ap_c19449(wifi_sniffer, wifi_dut, wifi_c
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
 @pytest.mark.test_src_map_id('C37589')
-def test_wifi_sdk_dutap_verify_channel_0_c37589(wifi_dut,
-                                                utf_constants, zephyr_wifi_collections, wifi_client, sniffer_filter,
-                                                net_perf_client, protocol):
+def test_wifi_zephyr_dut_ap_verify_channel_0_c37589(wifi_dut,
+                                                    utf_constants, zephyr_wifi_collections, wifi_client, sniffer_filter,
+                                                    net_perf_client, protocol):
     """Verify AP functionality in ACS (CH as 0) mode in 2G"""
     try:
         wifi_dut.interfaces.wifi.mode_change()
@@ -941,11 +942,11 @@ def test_wifi_sdk_dutap_verify_channel_0_c37589(wifi_dut,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C551263')
-def test_wifi_sdk_sta_association_to_aput_hidden_ssid_open_security_c551263(wifi_sniffer, wifi_dut,
-                                                                            utf_constants, zephyr_wifi_collections,
-                                                                            wifi_client,
-                                                                            sniffer_filter, request):
+@pytest.mark.test_src_map_id('c586186')
+def test_wifi_zephyr_sta_association_to_aput_hidden_ssid_open_security_c586186(wifi_sniffer, wifi_dut,
+                                                                               utf_constants, zephyr_wifi_collections,
+                                                                               wifi_client,
+                                                                               sniffer_filter, request):
     """Check the 3rd party STA Association to APUT with Hidden SSID in open security mode"""
     try:
         capture_filename = request.node.name
@@ -1023,11 +1024,11 @@ def test_wifi_sdk_sta_association_to_aput_hidden_ssid_open_security_c551263(wifi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C551263')
-def test_wifi_sdk_sta_association_to_aput_hidden_ssid_wpa2_security_c551263(wifi_sniffer, wifi_dut,
-                                                                            utf_constants, zephyr_wifi_collections,
-                                                                            wifi_client,
-                                                                            sniffer_filter, request):
+@pytest.mark.test_src_map_id('c535822')
+def test_wifi_zephyr_sta_association_to_aput_hidden_ssid_wpa2_security_c535822(wifi_sniffer, wifi_dut,
+                                                                               utf_constants, zephyr_wifi_collections,
+                                                                               wifi_client,
+                                                                               sniffer_filter, request):
     """Check the 3rd party STA Association to APUT with Hidden SSID Mode in WPA2 security mode"""
     try:
         capture_filename = request.node.name
@@ -1105,11 +1106,11 @@ def test_wifi_sdk_sta_association_to_aput_hidden_ssid_wpa2_security_c551263(wifi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C751262')
-def test_wifi_sdk_dutap_bandwidth_40mhz_c751262(wifi_sniffer, wifi_dut,
-                                                utf_constants, zephyr_wifi_collections, wifi_client,
-                                                sniffer_filter
-                                                ):
+@pytest.mark.test_src_map_id('c996277')
+def test_wifi_zephyr_dutap_bandwidth_40mhz_c996277(wifi_sniffer, wifi_dut,
+                                                   utf_constants, zephyr_wifi_collections, wifi_client,
+                                                   sniffer_filter
+                                                   ):
     """verify whether DUT is able to send Error or not when configuring 40MHZ bandwidth"""
     wifi_dut.interfaces.wifi.mode_change()
     zephyr_wifi_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
@@ -1148,13 +1149,13 @@ def test_wifi_sdk_dutap_bandwidth_40mhz_c751262(wifi_sniffer, wifi_dut,
     }
 )
 @pytest.mark.parametrize("channel", [11])
-@pytest.mark.test_src_map_id('C139446')
-def test_wifi_sdk_dut_apmode_disconnect_client_c139446(wifi_sniffer, wifi_dut, channel,
-                                                       zephyr_wifi_collections, wifi_clients,
-                                                       utf_constants,
-                                                       sniffer_filter,
-                                                       request
-                                                       ):
+@pytest.mark.test_src_map_id('c996278')
+def test_wifi_zephyr_dut_apmode_disconnect_client_c996278(wifi_sniffer, wifi_dut, channel,
+                                                          zephyr_wifi_collections, wifi_clients,
+                                                          utf_constants,
+                                                          sniffer_filter,
+                                                          request
+                                                          ):
     """Disconnect connected STA using the CLI MAC address"""
     try:
         capture_filename = request.node.name
@@ -1200,11 +1201,11 @@ def test_wifi_sdk_dut_apmode_disconnect_client_c139446(wifi_sniffer, wifi_dut, c
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C551262')
-def test_wifi_sdk_dutap_verify_5g_channel_in_2_4_ghz_c551262(wifi_sniffer, wifi_dut,
-                                                             utf_constants, zephyr_wifi_collections, wifi_client,
-                                                             sniffer_filter
-                                                             ):
+@pytest.mark.test_src_map_id('c19435')
+def test_wifi_zephyr_dut_ap_verify_5g_channel_in_2_4_ghz_c19435(wifi_sniffer, wifi_dut,
+                                                                utf_constants, zephyr_wifi_collections, wifi_client,
+                                                                sniffer_filter
+                                                                ):
     """verify whether DUT is able to send Error or not when configuring 5GHZ channels in 2.4G band"""
     wifi_dut.interfaces.wifi.mode_change()
     zephyr_wifi_collections.configure_dut_in_static_ip(wifi_dut, static_ip="192.168.100.76",
@@ -1238,7 +1239,7 @@ def test_wifi_sdk_dutap_verify_5g_channel_in_2_4_ghz_c551262(wifi_sniffer, wifi_
     }
 )
 @pytest.mark.parametrize("channel", [1, 6, 11])
-@pytest.mark.test_src_map_id('C551263')
+@pytest.mark.test_src_map_id('c996279')
 def test_wifi_zephyr_sta_different_channels_aput_c551263(wifi_sniffer, wifi_dut,
                                                          zephyr_wifi_collections, utf_constants, wifi_client,
                                                          sniffer_filter,
@@ -1308,13 +1309,12 @@ def test_wifi_zephyr_sta_different_channels_aput_c551263(wifi_sniffer, wifi_dut,
     }
 )
 @pytest.mark.parametrize("channel", [11])
-@pytest.mark.test_src_map_id('C139446')
-def test_wifi_sdk_dut_apmode_disconnect_client_when_client_limit_1_c139446(wifi_sniffer, wifi_dut, channel,
-                                                                           zephyr_wifi_collections, wifi_clients,
-                                                                           utf_constants,
-                                                                           sniffer_filter,
-                                                                           request
-                                                                           ):
+def test_wifi_zephyr_dut_apmode_disconnect_client_when_client_limit_1_c996279(wifi_sniffer, wifi_dut, channel,
+                                                                              zephyr_wifi_collections, wifi_clients,
+                                                                              utf_constants,
+                                                                              sniffer_filter,
+                                                                              request
+                                                                              ):
     """ Disconnect the connected STA when max client limit is set to 1"""
 
     try:
@@ -1381,11 +1381,11 @@ def test_wifi_sdk_dut_apmode_disconnect_client_when_client_limit_1_c139446(wifi_
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C109447')
-def test_wifi_zephyr_dut_apmode_get_wireless_config_security_open_c109447(wifi_sniffer, wifi_dut,
-                                                                          utf_constants, zephyr_wifi_collections,
-                                                                          wifi_client,
-                                                                          sniffer_filter, request):
+@pytest.mark.test_src_map_id('c19176')
+def test_wifi_zephyr_dut_apmode_get_wireless_stats_security_open_c19176(wifi_sniffer, wifi_dut,
+                                                                        utf_constants, zephyr_wifi_collections,
+                                                                        wifi_client,
+                                                                        sniffer_filter, request):
     """ Check whether the DUT is able to give stats in open mode"""
     try:
         capture_filename = request.node.name
@@ -1464,13 +1464,13 @@ def test_wifi_zephyr_dut_apmode_get_wireless_config_security_open_c109447(wifi_s
     }
 )
 @pytest.mark.parametrize("channel", [11])
-@pytest.mark.test_src_map_id('C109446')
-def test_wifi_sdk_dut_apmode_get_wireless_config_security_wpa2_c109446(wifi_sniffer, wifi_dut, channel,
-                                                                       zephyr_wifi_collections, wifi_clients,
-                                                                       utf_constants,
-                                                                       sniffer_filter,
-                                                                       request
-                                                                       ):
+@pytest.mark.test_src_map_id('c564146')
+def test_wifi_zephyr_dut_apmode_get_wireless_config_security_wpa2_c564146(wifi_sniffer, wifi_dut, channel,
+                                                                          zephyr_wifi_collections, wifi_clients,
+                                                                          utf_constants,
+                                                                          sniffer_filter,
+                                                                          request
+                                                                          ):
     """Check stats info in AP mode"""
     try:
         capture_filename = request.node.name
@@ -1527,14 +1527,14 @@ def test_wifi_sdk_dut_apmode_get_wireless_config_security_wpa2_c109446(wifi_snif
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C129447')
-def test_wifi_sdk_dut_apmode_get_wireless_config_while_sta_conn_disconnect_multiple_times_c129447(wifi_sniffer,
-                                                                                                  wifi_dut,
-                                                                                                  utf_constants,
-                                                                                                  zephyr_wifi_collections,
-                                                                                                  wifi_client,
-                                                                                                  sniffer_filter,
-                                                                                                  request):
+@pytest.mark.test_src_map_id('c689175')
+def test_wifi_zephyr_dut_apmode_get_wireless_config_while_sta_conn_disconnect_multiple_times_c689175(wifi_sniffer,
+                                                                                                     wifi_dut,
+                                                                                                     utf_constants,
+                                                                                                     zephyr_wifi_collections,
+                                                                                                     wifi_client,
+                                                                                                     sniffer_filter,
+                                                                                                     request):
     """Run stats command multiple times when STA connect and disconnect to AP multiple times"""
     try:
         capture_filename = request.node.name
@@ -1621,8 +1621,8 @@ def test_wifi_sdk_dut_apmode_get_wireless_config_while_sta_conn_disconnect_multi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C551263')
-def test_wifi_zephyr_sta_association_to_aput_in_wpa_security_c551263(wifi_sniffer, wifi_dut,
+@pytest.mark.test_src_map_id('c996281')
+def test_wifi_zephyr_sta_association_to_aput_in_wpa_security_c996281(wifi_sniffer, wifi_dut,
                                                                      utf_constants, zephyr_wifi_collections,
                                                                      wifi_client,
                                                                      sniffer_filter, request):
@@ -1691,13 +1691,13 @@ def test_wifi_zephyr_sta_association_to_aput_in_wpa_security_c551263(wifi_sniffe
     }
 )
 @pytest.mark.parametrize("channel", [11])
-@pytest.mark.test_src_map_id('TC4513163165')
-def test_wifi_sdk_dut_apmode_disable_functionality(wifi_sniffer, wifi_dut, channel,
-                                                   zephyr_wifi_collections, wifi_clients,
-                                                   utf_constants,
-                                                   sniffer_filter,
-                                                   request
-                                                   ):
+@pytest.mark.test_src_map_id('c996282')
+def test_wifi_zephyr_dut_apmode_disable_functionality_c996282(wifi_sniffer, wifi_dut, channel,
+                                                              zephyr_wifi_collections, wifi_clients,
+                                                              utf_constants,
+                                                              sniffer_filter,
+                                                              request
+                                                              ):
     """Verify AP mode disable functionality"""
     try:
         capture_filename = request.node.name
@@ -1751,9 +1751,10 @@ def test_wifi_sdk_dut_apmode_disable_functionality(wifi_sniffer, wifi_dut, chann
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C37589')
-def test_wifi_zephyr_dutap_rts_threshold_set_to_0_c37589(wifi_dut, wifi_sniffer, utf_constants, zephyr_wifi_collections,
-                                                         wifi_client, sniffer_filter, net_perf_client, request):
+@pytest.mark.test_src_map_id('c996262')
+def test_wifi_zephyr_dutap_rts_threshold_set_to_0_c996262(wifi_dut, wifi_sniffer, utf_constants,
+                                                          zephyr_wifi_collections,
+                                                          wifi_client, sniffer_filter, net_perf_client, request):
     """ Verify whether DUT is sending RTS packets for every data packet if we configure RTS Threshold as '0'"""
     try:
         capture_filename = request.node.name
@@ -1824,8 +1825,8 @@ def test_wifi_zephyr_dutap_rts_threshold_set_to_0_c37589(wifi_dut, wifi_sniffer,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C551266')
-def test_neg_wifi_zephyr_ap_us_region_channel_13_c551266(wifi_dut, zephyr_wifi_collections):
+@pytest.mark.test_src_map_id('c996267')
+def test_neg_wifi_zephyr_ap_us_region_channel_13_c996267(wifi_dut, zephyr_wifi_collections):
     """Verify DUT functionality when configuring in channel 13, and region is set to US"""
     try:
         wifi_dut.interfaces.wifi.mode_change()
@@ -1844,7 +1845,6 @@ def test_neg_wifi_zephyr_ap_us_region_channel_13_c551266(wifi_dut, zephyr_wifi_c
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
-
 
 
 @pytest.mark.config(
@@ -1886,10 +1886,10 @@ def test_neg_wifi_zephyr_ap_us_region_channel_13_c551266(wifi_dut, zephyr_wifi_c
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('TC5522468179')
-def test_wifi_zephyr_dutap_max_client_limit_4(wifi_sniffer, wifi_dut, wifi_clients,
-                                              zephyr_wifi_collections, utf_constants,
-                                              sniffer_filter, request):
+@pytest.mark.test_src_map_id('c996273')
+def test_wifi_zephyr_dutap_max_client_limit_4_c996273(wifi_sniffer, wifi_dut, wifi_clients,
+                                                      zephyr_wifi_collections, utf_constants,
+                                                      sniffer_filter, request):
     """AP functionality, If many clients are connected & disconnected multiple times"""
     try:
         max_client_limit = 4
@@ -1939,10 +1939,10 @@ def test_wifi_zephyr_dutap_max_client_limit_4(wifi_sniffer, wifi_dut, wifi_clien
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('TC4772067187')
-def test_wifi_zephyr_client_limit_1(wifi_sniffer, wifi_dut,
-                                    utf_constants, zephyr_wifi_collections, wifi_clients,
-                                    sniffer_filter, request):
+@pytest.mark.test_src_map_id('c996272')
+def test_wifi_zephyr_client_limit_1_c996272(wifi_sniffer, wifi_dut,
+                                            utf_constants, zephyr_wifi_collections, wifi_clients,
+                                            sniffer_filter, request):
     try:
         capture_filename = request.node.name
         logger().info("********** configuring the sniffer with access point channel **********")
@@ -2038,10 +2038,10 @@ def test_wifi_zephyr_client_limit_1(wifi_sniffer, wifi_dut,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C19432')
-def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi_dut, wifi_clients,
-                                                              zephyr_wifi_collections, utf_constants,
-                                                              sniffer_filter, request):
+@pytest.mark.test_src_map_id('c19432')
+def test_wifi_zephyr_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi_dut, wifi_clients,
+                                                                 zephyr_wifi_collections, utf_constants,
+                                                                 sniffer_filter, request):
     """AP functionality, If many clients are connected & disconnected multiple times"""
     try:
         capture_filename = request.node.name
@@ -2103,10 +2103,10 @@ def test_wifi_sdk_dutap_multiclient_connect_disconnect_c19432(wifi_sniffer, wifi
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C19442')
-def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_dut,
-                                                          wifi_clients, zephyr_wifi_collections, utf_constants,
-                                                          sniffer_filter, request):
+@pytest.mark.test_src_map_id('c19430')
+def test_wifi_zephyr_max_stas_connect_and_ping_c19430_c19432(wifi_sniffer, wifi_dut,
+                                                             wifi_clients, zephyr_wifi_collections, utf_constants,
+                                                             sniffer_filter, request):
     """Verify ping functionality with multiple clients"""
     try:
         capture_filename = request.node.name
@@ -2174,10 +2174,10 @@ def test_wifi_sdk_max_stas_connect_and_ping_c19430_c19442(wifi_sniffer, wifi_dut
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C19432')
-def test_wifi_zephyr_dutap_disconnect_multiple_clients_c19432(wifi_sniffer, wifi_dut, wifi_clients,
-                                                              zephyr_wifi_collections, utf_constants,
-                                                              sniffer_filter, request):
+@pytest.mark.test_src_map_id('c996280')
+def test_wifi_zephyr_dutap_disconnect_multiple_clients_c996280(wifi_sniffer, wifi_dut, wifi_clients,
+                                                               zephyr_wifi_collections, utf_constants,
+                                                               sniffer_filter, request):
     """Disconnect all connected clients from AP"""
     try:
         capture_filename = request.node.name
@@ -2239,7 +2239,7 @@ def test_wifi_zephyr_dutap_disconnect_multiple_clients_c19432(wifi_sniffer, wifi
     }
 )
 @pytest.mark.parametrize("channel", [11])
-@pytest.mark.test_src_map_id('C19450')
+@pytest.mark.test_src_map_id('C996276')
 def test_wifi_zephyr_dut_ap_mode_soft_reset_ap_to_sta_c19450(wifi_sniffer, wifi_dut, wifi_clients, channel,
                                                              wifi_access_point, utf_constants, zephyr_wifi_collections,
                                                              sniffer_filter, request
@@ -2310,12 +2310,12 @@ def test_wifi_zephyr_dut_ap_mode_soft_reset_ap_to_sta_c19450(wifi_sniffer, wifi_
     }
 )
 @pytest.mark.parametrize("channel", [11])
-@pytest.mark.test_src_map_id('C19449')
-def test_wifi_sdk_dut_soft_reset_sta_to_ap_viceversa_for_multiple_times_c19449(wifi_sniffer, wifi_dut, wifi_clients,
-                                                                               channel,
-                                                                               wifi_access_point,
-                                                                               utf_constants, zephyr_wifi_collections,
-                                                                               sniffer_filter, request):
+def test_wifi_zephyr_dut_soft_reset_sta_to_ap_viceversa_for_multiple_times_c996276(wifi_sniffer, wifi_dut, wifi_clients,
+                                                                                   channel,
+                                                                                   wifi_access_point,
+                                                                                   utf_constants,
+                                                                                   zephyr_wifi_collections,
+                                                                                   sniffer_filter, request):
     """Soft Reset functionality when dUT moving from STA mode to AP mode"""
     try:
         iteration_count = utf_constants.get("sta_to_ap_reset_long_run")
@@ -2371,7 +2371,6 @@ def test_wifi_sdk_dut_soft_reset_sta_to_ap_viceversa_for_multiple_times_c19449(w
         wifi_dut.interfaces.wifi.stop_ap()
 
 
-'''
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -2452,6 +2451,7 @@ def test_wifi_zephyr_sta_inactive_for_5_minutes_c19439(wifi_sniffer, wifi_dut, w
         time.sleep(20)
 
 
+'''
 @pytest.mark.config(
     "wifi_clients",
     wifi={
@@ -2477,7 +2477,7 @@ def test_wifi_zephyr_sta_inactive_for_5_minutes_c19439(wifi_sniffer, wifi_dut, w
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-def test_wifi_zephyr_ap_keep_alive_10_sec_c19439(wifi_sniffer, wifi_dut, wifi_clients,
+def test_wifi_zephyr_ap_keep_alive_10_sec_c996270(wifi_sniffer, wifi_dut, wifi_clients,
                                                  zephyr_wifi_collections, sniffer_filter, switch, request):
     """APUT's functionality when the station is inactive for 5 minutes"""
     try:
@@ -2559,7 +2559,7 @@ def test_wifi_zephyr_ap_keep_alive_10_sec_c19439(wifi_sniffer, wifi_dut, wifi_cl
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-def test_wifi_zephyr_ap_keep_alive_120_sec_c19439(wifi_sniffer, wifi_dut, wifi_clients,
+def test_wifi_zephyr_ap_keep_alive_120_sec_c996271(wifi_sniffer, wifi_dut, wifi_clients,
                                                   zephyr_wifi_collections, sniffer_filter, switch, request):
     """APUT's functionality when the station is inactive for 5 minutes"""
     try:

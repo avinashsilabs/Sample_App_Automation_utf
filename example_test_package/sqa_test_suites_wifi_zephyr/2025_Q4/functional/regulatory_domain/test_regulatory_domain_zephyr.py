@@ -36,10 +36,10 @@ def logger():
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Korea", "channel": 12})
-@pytest.mark.test_src_map_id('C19511')
-def test_zephyr_verify_connection_in_korea_region_c19511(wifi_dut, wifi_access_point, wifi_sniffer,
-                                                         zephyr_wifi_collections,
-                                                         request, sniffer_filter):
+@pytest.mark.test_src_map_id('C996264')
+def test_zephyr_verify_connection_in_korea_region_c996264(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                          zephyr_wifi_collections,
+                                                          request, sniffer_filter):
     """
     Verify whether DUT is able to connect in channel 12 in korea region
     """
@@ -93,10 +93,11 @@ def test_zephyr_verify_connection_in_korea_region_c19511(wifi_dut, wifi_access_p
     }
 )
 @pytest.mark.config('wifi_access_point', wifi={"region": "Australia", "channel": 13})
-@pytest.mark.test_src_map_id('C19511')
-def test_zephyr_verify_connection_in_us_region_when_aus_selected_in_ap_c19511(wifi_dut, wifi_access_point, wifi_sniffer,
-                                                                              zephyr_wifi_collections,
-                                                                              request):
+@pytest.mark.test_src_map_id('C996265')
+def test_zephyr_verify_connection_in_us_region_when_aus_selected_in_ap_c996265(wifi_dut, wifi_access_point,
+                                                                               wifi_sniffer,
+                                                                               zephyr_wifi_collections,
+                                                                               request):
     """
     Verify whether DUT is able to scan in channel 13 when US region is selected
     """

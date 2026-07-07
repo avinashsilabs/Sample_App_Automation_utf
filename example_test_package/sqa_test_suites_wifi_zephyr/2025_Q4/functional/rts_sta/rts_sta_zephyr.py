@@ -85,7 +85,7 @@ def rts_cts_data_sequence_check(wifi_sniffer, dut_mac, ap_bssid, rts_threshold, 
 
     }
 )
-def test_zephyr_verify_rts_threshold_256_c19511(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
+def test_zephyr_verify_rts_threshold_256_c996260(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
                                                 request, sniffer_filter):
     """
     Verify whether DUT is not sending any RTS packet for every data packet if we configure RTS Threshold as '256'
@@ -120,7 +120,7 @@ def test_zephyr_verify_rts_threshold_256_c19511(wifi_dut, wifi_access_point, wif
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("\n\nValidating RTS,CTS,DATA Packets in sniffer capture")
         status = rts_cts_data_sequence_check(wifi_sniffer, dut_mac_address, ap_bssid, rts_threshold=256,
-                                             test_case="test_C19511")
+                                             test_case="test_C996260")
         assert status, "Unable to find sequence RTS--->CTS--->DATA packets with data length more than rts_threshold value"
         packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
                                                                                        da_addr=ap_bssid,
@@ -142,7 +142,7 @@ def test_zephyr_verify_rts_threshold_256_c19511(wifi_dut, wifi_access_point, wif
 
     }
 )
-def test_zephyr_verify_rts_threshold_0_c19512(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
+def test_zephyr_verify_rts_threshold_0_c996259(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
                                               request, sniffer_filter):
     """
     Verify whether DUT is sending RTS packets for every data packet if we configure RTS Threshold as '0'
@@ -178,7 +178,7 @@ def test_zephyr_verify_rts_threshold_0_c19512(wifi_dut, wifi_access_point, wifi_
 
         logger().info("\n\nValidating RTS,CTS,DATA Packets in sniffer capture")
         status = rts_cts_data_sequence_check(wifi_sniffer, dut_mac_address, ap_bssid, rts_threshold=0,
-                                             test_case="test_C19512")
+                                             test_case="test_C996259")
         assert status, "Unable to find sequence RTS--->CTS--->DATA packets with data length more than rts_threshold value"
         packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
                                                                                        da_addr=ap_bssid,
@@ -200,7 +200,7 @@ def test_zephyr_verify_rts_threshold_0_c19512(wifi_dut, wifi_access_point, wifi_
 
     }
 )
-def test_zephyr_verify_rts_threshold_2347_c19513(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
+def test_zephyr_verify_rts_threshold_2347_c996261(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
                                                  request, sniffer_filter):
     """
     Verify whether DUT is not sending any RTS packet for every data packet if we configure RTS Threshold as '2347'
@@ -236,7 +236,7 @@ def test_zephyr_verify_rts_threshold_2347_c19513(wifi_dut, wifi_access_point, wi
 
         logger().info("\n\nValidating RTS,CTS,DATA Packets in sniffer capture")
         status = rts_cts_data_sequence_check(wifi_sniffer, dut_mac_address, ap_bssid, rts_threshold=2347,
-                                             test_case="test_c19513")
+                                             test_case="test_c996261")
         assert not status, "Found sequence RTS--->CTS--->DATA packets with data length more than rts_threshold value which is not expected"
         logger().info("DUT did not send RTS packets which is expected as per the testcase")
         packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
@@ -259,7 +259,7 @@ def test_zephyr_verify_rts_threshold_2347_c19513(wifi_dut, wifi_access_point, wi
 
     }
 )
-def test_zephyr_invalid_rts_c537946(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections, request):
+def test_zephyr_invalid_rts_c996263(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections, request):
     """
     Verify DUT is throwing error or not by setting Invalid RTS threshold.
     """

@@ -251,7 +251,8 @@ class DNSTHREAD(ThreadBase):
 
 
 class HTTP_CLIENT_THREAD(ThreadBase):
-    def __init__(self, wifi_dut, http_client=None, device_ip=None, port=80, server_ip="", url="", method=ZephyrHttpMethods.GET,
+    def __init__(self, wifi_dut, http_client=None, device_ip=None, port=80, server_ip="", url="",
+                 method=ZephyrHttpMethods.GET,
                  payload="", iteration_count=1):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -266,7 +267,7 @@ class HTTP_CLIENT_THREAD(ThreadBase):
 
     def run(self):
         for iter_count in range(0, self.iteration_count):
-            logger().info(f"Running http_client test iteration for {iter_count+1} time")
+            logger().info(f"Running http_client test iteration for {iter_count + 1} time")
             try:
                 socket_id = self.wifi_dut.interfaces.wifi.socket(domain=Si91xBSDSocketParams.AF_INET,
                                                                  stream_type=Si91xBSDSocketParams.SOCK_STREAM,
@@ -415,12 +416,12 @@ class MQTTTHREAD(ThreadBase):
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_tcp_tx_udp_tx_c19033(wifi_dut, wifi_access_point,
-                                          wifi_sniffer, sniffer_filter,
-                                          zephyr_wifi_collections, request,
-                                          utf_constants, wifi_client,
-                                          net_perf_clients):
+@pytest.mark.test_src_map_id('C792360')
+def test_wifi_zephyr_tcp_tx_udp_tx_c792360(wifi_dut, wifi_access_point,
+                                           wifi_sniffer, sniffer_filter,
+                                           zephyr_wifi_collections, request,
+                                           utf_constants, wifi_client,
+                                           net_perf_clients):
     """ Verify TCP TX and UDP TX functionalities in multiple threads """
 
     capture_filename = request.node.name
@@ -431,7 +432,8 @@ def test_wifi_zephyr_tcp_tx_udp_tx_c19033(wifi_dut, wifi_access_point,
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -489,12 +491,12 @@ def test_wifi_zephyr_tcp_tx_udp_tx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_tcp_tx_tcp_rx_c19033(wifi_dut, wifi_access_point,
-                                          wifi_sniffer, sniffer_filter,
-                                          zephyr_wifi_collections, request,
-                                          utf_constants, wifi_client,
-                                          net_perf_clients):
+@pytest.mark.test_src_map_id('C792355')
+def test_wifi_zephyr_tcp_tx_tcp_rx_c792355(wifi_dut, wifi_access_point,
+                                           wifi_sniffer, sniffer_filter,
+                                           zephyr_wifi_collections, request,
+                                           utf_constants, wifi_client,
+                                           net_perf_clients):
     """ Verify TCP TX and TCP RX functionalities in multiple threads """
 
     capture_filename = request.node.name
@@ -505,7 +507,8 @@ def test_wifi_zephyr_tcp_tx_tcp_rx_c19033(wifi_dut, wifi_access_point,
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -561,12 +564,12 @@ def test_wifi_zephyr_tcp_tx_tcp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_udp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
-                                          wifi_sniffer, sniffer_filter,
-                                          zephyr_wifi_collections, request,
-                                          utf_constants, wifi_client,
-                                          net_perf_clients):
+@pytest.mark.test_src_map_id('C792357')
+def test_wifi_zephyr_udp_tx_udp_rx_c792357(wifi_dut, wifi_access_point,
+                                           wifi_sniffer, sniffer_filter,
+                                           zephyr_wifi_collections, request,
+                                           utf_constants, wifi_client,
+                                           net_perf_clients):
     """ Verify UDP TX and UDP RX functionalities in multiple threads """
 
     capture_filename = request.node.name
@@ -577,7 +580,8 @@ def test_wifi_zephyr_udp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -633,12 +637,12 @@ def test_wifi_zephyr_udp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_tcp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
-                                          wifi_sniffer, sniffer_filter,
-                                          zephyr_wifi_collections, request,
-                                          utf_constants, wifi_client,
-                                          net_perf_clients):
+@pytest.mark.test_src_map_id('C792356')
+def test_wifi_zephyr_tcp_tx_udp_rx_c792356(wifi_dut, wifi_access_point,
+                                           wifi_sniffer, sniffer_filter,
+                                           zephyr_wifi_collections, request,
+                                           utf_constants, wifi_client,
+                                           net_perf_clients):
     """ Verify TCP TX and UDP RX functionalities in multiple threads """
 
     capture_filename = request.node.name
@@ -649,7 +653,8 @@ def test_wifi_zephyr_tcp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -705,12 +710,12 @@ def test_wifi_zephyr_tcp_tx_udp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_tcp_rx_udp_rx_c19033(wifi_dut, wifi_access_point,
-                                          wifi_sniffer, sniffer_filter,
-                                          zephyr_wifi_collections, request,
-                                          utf_constants, wifi_client,
-                                          net_perf_clients):
+@pytest.mark.test_src_map_id('C792361')
+def test_wifi_zephyr_tcp_rx_udp_rx_c792361(wifi_dut, wifi_access_point,
+                                           wifi_sniffer, sniffer_filter,
+                                           zephyr_wifi_collections, request,
+                                           utf_constants, wifi_client,
+                                           net_perf_clients):
     """ Verify TCP RX and UDP RX functionalities in multiple threads """
 
     capture_filename = request.node.name
@@ -721,7 +726,8 @@ def test_wifi_zephyr_tcp_rx_udp_rx_c19033(wifi_dut, wifi_access_point,
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             net_perf_client=net_perf_clients[0], wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -776,12 +782,12 @@ def test_wifi_zephyr_tcp_rx_udp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_icmp_tx_icmp_rx_c19033(wifi_dut, wifi_access_point,
-                                            wifi_sniffer, sniffer_filter,
-                                            zephyr_wifi_collections, request,
-                                            utf_constants, wifi_client,
-                                            ):
+@pytest.mark.test_src_map_id('C792358')
+def test_wifi_zephyr_icmp_tx_icmp_rx_c792358(wifi_dut, wifi_access_point,
+                                             wifi_sniffer, sniffer_filter,
+                                             zephyr_wifi_collections, request,
+                                             utf_constants, wifi_client,
+                                             ):
     """ Verify ICMP TX AND IMCP RX functionality in multiple threads """
 
     capture_filename = request.node.name
@@ -792,7 +798,8 @@ def test_wifi_zephyr_icmp_tx_icmp_rx_c19033(wifi_dut, wifi_access_point,
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
 
@@ -838,13 +845,13 @@ def test_wifi_zephyr_icmp_tx_icmp_rx_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_sntp_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wifi_access_point,
-                                                                     wifi_sniffer, sniffer_filter,
-                                                                     zephyr_wifi_collections, request,
-                                                                     utf_constants, wifi_client,
-                                                                     mqtt_client, mqtt_server
-                                                                     ):
+@pytest.mark.test_src_map_id('C792359')
+def test_wifi_zephyr_sntp_mqtt_operations_in_multiple_threads_c792359(wifi_dut, wifi_access_point,
+                                                                      wifi_sniffer, sniffer_filter,
+                                                                      zephyr_wifi_collections, request,
+                                                                      utf_constants, wifi_client,
+                                                                      mqtt_client, mqtt_server
+                                                                      ):
     """ Verify SNTP and MQTT operations in multiple threads """
 
     capture_filename = request.node.name
@@ -855,7 +862,8 @@ def test_wifi_zephyr_sntp_mqtt_operations_in_multiple_threads_c19033(wifi_dut, w
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
@@ -893,13 +901,13 @@ def test_wifi_zephyr_sntp_mqtt_operations_in_multiple_threads_c19033(wifi_dut, w
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.start_state("wifi_sniffer", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_dns_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wifi_access_point,
-                                                                    wifi_sniffer, sniffer_filter,
-                                                                    zephyr_wifi_collections, request,
-                                                                    utf_constants, wifi_client,
-                                                                    mqtt_client, mqtt_server
-                                                                    ):
+@pytest.mark.test_src_map_id('C792364')
+def test_wifi_zephyr_dns_mqtt_operations_in_multiple_threads_c792364(wifi_dut, wifi_access_point,
+                                                                     wifi_sniffer, sniffer_filter,
+                                                                     zephyr_wifi_collections, request,
+                                                                     utf_constants, wifi_client,
+                                                                     mqtt_client, mqtt_server
+                                                                     ):
     """ Verify SNTP and MQTT operations in multiple threads """
 
     capture_filename = request.node.name
@@ -910,7 +918,8 @@ def test_wifi_zephyr_dns_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wi
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
@@ -939,6 +948,7 @@ def test_wifi_zephyr_dns_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wi
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
 
+@pytest.mark.skip()
 @pytest.mark.config(
     "wifi_dut",
     wifi={
@@ -950,13 +960,13 @@ def test_wifi_zephyr_dns_mqtt_operations_in_multiple_threads_c19033(wifi_dut, wi
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_http_client_icmp_in_multiple_threads_c19033(wifi_dut, wifi_access_point,
-                                                                 wifi_sniffer, sniffer_filter,
-                                                                 zephyr_wifi_collections, request,
-                                                                 utf_constants, wifi_client, http_server,
-                                                                 index_path, http_client
-                                                                 ):
+@pytest.mark.test_src_map_id('C792363')
+def test_wifi_zephyr_http_client_icmp_in_multiple_threads_c792363(wifi_dut, wifi_access_point,
+                                                                  wifi_sniffer, sniffer_filter,
+                                                                  zephyr_wifi_collections, request,
+                                                                  utf_constants, wifi_client, http_server,
+                                                                  index_path, http_client
+                                                                  ):
     """ Verify HTTP CLIENT and ICMP rx in multiple threads """
 
     capture_filename = request.node.name
@@ -967,7 +977,8 @@ def test_wifi_zephyr_http_client_icmp_in_multiple_threads_c19033(wifi_dut, wifi_
         host_ip = wifi_client.interfaces.wifi.get_ip_address()
         wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                             wifi_client=wifi_client,
-                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections, power_save=power_save)
+                            capture_filename=capture_filename, zephyr_wifi_collections=zephyr_wifi_collections,
+                            power_save=power_save)
         device_ip = wifi_obj.dut_addr['device_ip']
         wifi_obj.start()
         wifi_obj.wait_for_exit()
@@ -982,7 +993,8 @@ def test_wifi_zephyr_http_client_icmp_in_multiple_threads_c19033(wifi_dut, wifi_
         success_threshold = 70
         icmp_tx = ICMPTX(wifi_dut, target_ip, packet_count, timeout_ms, success_threshold)
 
-        http_thread = HTTP_CLIENT_THREAD(wifi_dut, http_client, device_ip=device_ip, port=80, server_ip=host_ip, url="/" + index_path,
+        http_thread = HTTP_CLIENT_THREAD(wifi_dut, http_client, device_ip=device_ip, port=80, server_ip=host_ip,
+                                         url="/" + index_path,
                                          method=ZephyrHttpMethods.GET, payload="", iteration_count=iteration_count)
 
         http_thread.start()

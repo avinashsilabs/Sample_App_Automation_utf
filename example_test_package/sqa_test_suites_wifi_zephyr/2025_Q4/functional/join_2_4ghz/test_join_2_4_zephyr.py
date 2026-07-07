@@ -400,8 +400,8 @@ def test_wifi_zephyr_verify_connectivity_with_correct_psk_after_wrong_psk_c69455
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sta_mode_ssid', "passphrase": 'test12345678', "security": 'WPA2'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C79234')
-def test_wifi_zephyr_connectivity_neg_psk_7_bytes_or_64_bytes_c79234(wifi_dut, wifi_access_point,
+@pytest.mark.test_src_map_id('C777569')
+def test_wifi_zephyr_connectivity_neg_psk_7_bytes_or_64_bytes_c777569(wifi_dut, wifi_access_point,
                                                                      wifi_sniffer,
                                                                      utf_constants, request, zephyr_wifi_collections,
                                                                      sniffer_filter):
@@ -449,11 +449,12 @@ def test_wifi_zephyr_connectivity_neg_psk_7_bytes_or_64_bytes_c79234(wifi_dut, w
 
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'TESTTEST-WPA2', "security": 'WPA2', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C19175')
-def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
+@pytest.mark.test_src_map_id('C564145')
+def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C564145(wifi_dut, wifi_access_point, wifi_sniffer, zephyr_wifi_collections,
                                                     request,
                                                     utf_constants, sniffer_filter):
     """ Test case verifies the device is able to get the wireless statistics in station mode"""
@@ -504,11 +505,12 @@ def test_wifi_zephyr_wlan_get_stats_sta_wpa2_C19175(wifi_dut, wifi_access_point,
 
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'TESTTEST-ASUS-OPEN', "security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C29175')
-def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_access_point, wifi_sniffer,
+@pytest.mark.test_src_map_id('C19175')
+def test_wifi_zephyr_wlan_get_stats_sta_open_security_C19175(wifi_dut, wifi_access_point, wifi_sniffer,
                                                              zephyr_wifi_collections,
                                                              request,
                                                              utf_constants, sniffer_filter):
@@ -560,10 +562,11 @@ def test_wifi_zephyr_wlan_get_stats_sta_open_security_C29175(wifi_dut, wifi_acce
 
     }
 )
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3'})
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-@pytest.mark.test_src_map_id('C39175')
-def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
+@pytest.mark.test_src_map_id('C564147')
+def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C564147(wifi_sniffer, wifi_access_point, wifi_dut, utf_constants,
                                                           request,
                                                           sniffer_filter, zephyr_wifi_collections):
     """ Test case verifies the device is able to get the wireless statistics in station mode in WPA3 security mode"""
@@ -581,7 +584,8 @@ def test_wifi_sdk_wlan_get_stats_sta_security_wpa3_C39175(wifi_sniffer, wifi_acc
                                                                 ping_after_power_save=True,
                                                                 retry_count=3,
                                                                 associated=wifi_dut.interfaces.wifi.associated,
-                                                                power_save=power_save, mfp=ZephyrWifiMfpOptions.WIFI_MFP_REQUIRED)
+                                                                power_save=power_save,
+                                                                mfp=ZephyrWifiMfpOptions.WIFI_MFP_REQUIRED)
 
         state, ssid, bssid, band, channel, iface_mode, link_mode, wpa3_ent_type, security, mfp, rssi, dtim_period, beacon_interval, twt_capable, current_phy_tx_rate = wifi_dut.interfaces.wifi.get_wifi_operational_stats(
             timeout=15)

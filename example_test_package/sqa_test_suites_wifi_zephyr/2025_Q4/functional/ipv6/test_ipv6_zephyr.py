@@ -11,7 +11,6 @@ from base64 import b64decode
 from threading import Thread
 
 
-
 def logger():
     return get_logger(__name__)
 
@@ -76,7 +75,8 @@ class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_sniffer=None, wifi_access_point=None, zephyr_wifi_collections=None,
                  test_name=None,
                  wifi_client=None, test_id=None, ping_before_power_save=False, ping_after_power_save=False,
-                 ipv6_addr_type="global", static_ipv6=None, ip_config_disable=False, skip_sniffer_capture=False, power_save=False):
+                 ipv6_addr_type="global", static_ipv6=None, ip_config_disable=False, skip_sniffer_capture=False,
+                 power_save=False):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_sniffer = wifi_sniffer
@@ -373,12 +373,12 @@ class IperfThraed(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_tcp_tx_ipv6_c19033(wifi_dut, wifi_access_point,
-                                        wifi_sniffer, sniffer_filter,
-                                        zephyr_wifi_collections, request,
-                                        utf_constants, wifi_client,
-                                        net_perf_clients):
+@pytest.mark.test_src_map_id('C792372')
+def test_wifi_zephyr_tcp_tx_ipv6_c792372(wifi_dut, wifi_access_point,
+                                         wifi_sniffer, sniffer_filter,
+                                         zephyr_wifi_collections, request,
+                                         utf_constants, wifi_client,
+                                         net_perf_clients):
     """ Verify TCP tx functionality with IPV6 """
 
     capture_filename = request.node.name
@@ -440,12 +440,12 @@ def test_wifi_zephyr_tcp_tx_ipv6_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_tcp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
-                                        wifi_sniffer, sniffer_filter,
-                                        zephyr_wifi_collections, request,
-                                        utf_constants, wifi_client,
-                                        net_perf_clients):
+@pytest.mark.test_src_map_id('C792374')
+def test_wifi_zephyr_tcp_rx_ipv6_c792374(wifi_dut, wifi_access_point,
+                                         wifi_sniffer, sniffer_filter,
+                                         zephyr_wifi_collections, request,
+                                         utf_constants, wifi_client,
+                                         net_perf_clients):
     """ Verify TCP rx functionality with IPV6 """
 
     capture_filename = request.node.name
@@ -507,12 +507,12 @@ def test_wifi_zephyr_tcp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_udp_tx_ipv6_c19033(wifi_dut, wifi_access_point,
-                                        wifi_sniffer, sniffer_filter,
-                                        zephyr_wifi_collections, request,
-                                        utf_constants, wifi_client,
-                                        net_perf_clients):
+@pytest.mark.test_src_map_id('C792373')
+def test_wifi_zephyr_udp_tx_ipv6_c792373(wifi_dut, wifi_access_point,
+                                         wifi_sniffer, sniffer_filter,
+                                         zephyr_wifi_collections, request,
+                                         utf_constants, wifi_client,
+                                         net_perf_clients):
     """ Verify UDP tx functionality with IPV6 """
 
     capture_filename = request.node.name
@@ -574,12 +574,12 @@ def test_wifi_zephyr_udp_tx_ipv6_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_udp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
-                                        wifi_sniffer, sniffer_filter,
-                                        zephyr_wifi_collections, request,
-                                        utf_constants, wifi_client,
-                                        net_perf_clients):
+@pytest.mark.test_src_map_id('C792375')
+def test_wifi_zephyr_udp_rx_ipv6_c792375(wifi_dut, wifi_access_point,
+                                         wifi_sniffer, sniffer_filter,
+                                         zephyr_wifi_collections, request,
+                                         utf_constants, wifi_client,
+                                         net_perf_clients):
     """ Verify UDP rx functionality with IPV6 """
 
     capture_filename = request.node.name
@@ -641,12 +641,12 @@ def test_wifi_zephyr_udp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_tcp_tx_tcp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
-                                               wifi_sniffer, sniffer_filter,
-                                               zephyr_wifi_collections, request,
-                                               utf_constants, wifi_client,
-                                               net_perf_clients):
+@pytest.mark.test_src_map_id('C993421')
+def test_wifi_zephyr_tcp_tx_tcp_rx_ipv6_c993421(wifi_dut, wifi_access_point,
+                                                wifi_sniffer, sniffer_filter,
+                                                zephyr_wifi_collections, request,
+                                                utf_constants, wifi_client,
+                                                net_perf_clients):
     """ Verify TCP tx and TCP RX functionality in multiple threads """
 
     capture_filename = request.node.name
@@ -720,12 +720,12 @@ def test_wifi_zephyr_tcp_tx_tcp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_udp_tx_tcp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
-                                               wifi_sniffer, sniffer_filter,
-                                               zephyr_wifi_collections, request,
-                                               utf_constants, wifi_client,
-                                               net_perf_clients):
+@pytest.mark.test_src_map_id('C993420')
+def test_wifi_zephyr_udp_tx_tcp_rx_ipv6_c993420(wifi_dut, wifi_access_point,
+                                                wifi_sniffer, sniffer_filter,
+                                                zephyr_wifi_collections, request,
+                                                utf_constants, wifi_client,
+                                                net_perf_clients):
     """ Verify UDP tx and TCP RX functionality in multiple threads """
 
     capture_filename = request.node.name
@@ -799,12 +799,12 @@ def test_wifi_zephyr_udp_tx_tcp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_udp_tx_udp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
-                                               wifi_sniffer, sniffer_filter,
-                                               zephyr_wifi_collections, request,
-                                               utf_constants, wifi_client,
-                                               net_perf_clients):
+@pytest.mark.test_src_map_id('C993423')
+def test_wifi_zephyr_udp_tx_udp_rx_ipv6_c993423(wifi_dut, wifi_access_point,
+                                                wifi_sniffer, sniffer_filter,
+                                                zephyr_wifi_collections, request,
+                                                utf_constants, wifi_client,
+                                                net_perf_clients):
     """ Verify UDP tx and UDP RX functionality in multiple threads """
 
     capture_filename = request.node.name
@@ -878,12 +878,12 @@ def test_wifi_zephyr_udp_tx_udp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_tcp_rx_udp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
-                                               wifi_sniffer, sniffer_filter,
-                                               zephyr_wifi_collections, request,
-                                               utf_constants, wifi_client,
-                                               net_perf_clients):
+@pytest.mark.test_src_map_id('C993424')
+def test_wifi_zephyr_tcp_rx_udp_rx_ipv6_c993424(wifi_dut, wifi_access_point,
+                                                wifi_sniffer, sniffer_filter,
+                                                zephyr_wifi_collections, request,
+                                                utf_constants, wifi_client,
+                                                net_perf_clients):
     """ Verify TCP RX and UDP RX functionality in multiple threads """
 
     capture_filename = request.node.name
@@ -959,9 +959,9 @@ def test_wifi_zephyr_tcp_rx_udp_rx_ipv6_c19033(wifi_dut, wifi_access_point,
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C119348')
 def test_wifi_zephyr_verify_stateless_dhcpv6_configuration_c119348(wifi_dut, wifi_access_point,
-                                                                wifi_sniffer,
-                                                                zephyr_wifi_collections, request, sniffer_filter,
-                                                                wifi_client):
+                                                                   wifi_sniffer,
+                                                                   zephyr_wifi_collections, request, sniffer_filter,
+                                                                   wifi_client):
     """" Configure DHCPV6 option to stateless in router,  and verify the sniffer packets after DUT gets IPV6 address """
     test_name = request.node.name
     try:
@@ -1020,9 +1020,9 @@ def test_wifi_zephyr_verify_stateless_dhcpv6_configuration_c119348(wifi_dut, wif
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.test_src_map_id('C119349')
 def test_wifi_zephyr_verify_stateful_dhcpv6_procedure_c119349(wifi_dut, wifi_access_point, wifi_sniffer,
-                                                           zephyr_wifi_collections,
-                                                           sniffer_filter, request,
-                                                           wifi_client):
+                                                              zephyr_wifi_collections,
+                                                              sniffer_filter, request,
+                                                              wifi_client):
     """" Configure DHCPV6 option to stateful in router,  and verify the sniffer packets after DUT gets IPV6 address """
     test_name = request.node.name
     try:
@@ -1089,8 +1089,8 @@ def test_wifi_zephyr_verify_stateful_dhcpv6_procedure_c119349(wifi_dut, wifi_acc
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C119348')
-def test_wifi_zephyr_dhcpv6_multiple_iterations_c119348(wifi_dut, wifi_access_point,
+@pytest.mark.test_src_map_id('C993422')
+def test_wifi_zephyr_dhcpv6_multiple_iterations_c993422(wifi_dut, wifi_access_point,
                                                         wifi_sniffer,
                                                         zephyr_wifi_collections, request, sniffer_filter,
                                                         wifi_client, utf_constants):
@@ -1144,8 +1144,8 @@ def test_wifi_zephyr_dhcpv6_multiple_iterations_c119348(wifi_dut, wifi_access_po
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C119348')
-def test_wifi_zephyr_ipv6_verify_adaptive_ping_c119348(wifi_dut, wifi_access_point,
+@pytest.mark.test_src_map_id('C993419')
+def test_wifi_zephyr_ipv6_verify_adaptive_ping_c993419(wifi_dut, wifi_access_point,
                                                        wifi_sniffer,
                                                        zephyr_wifi_collections, request, sniffer_filter,
                                                        wifi_client):
@@ -1196,8 +1196,8 @@ def test_wifi_zephyr_ipv6_verify_adaptive_ping_c119348(wifi_dut, wifi_access_poi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C119348')
-def test_wifi_zephyr_dual_stack_adaptive_ping_c119348(wifi_dut, wifi_access_point,
+@pytest.mark.test_src_map_id('C156954')
+def test_wifi_zephyr_dual_stack_adaptive_ping_c156954(wifi_dut, wifi_access_point,
                                                       wifi_sniffer,
                                                       zephyr_wifi_collections, request, sniffer_filter,
                                                       wifi_client):
@@ -1255,8 +1255,8 @@ def test_wifi_zephyr_dual_stack_adaptive_ping_c119348(wifi_dut, wifi_access_poin
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C119348')
-def test_wifi_zephyr_ipv6_imcp_from_dut_c119348(wifi_dut, wifi_access_point,
+@pytest.mark.test_src_map_id('C792406')
+def test_wifi_zephyr_ipv6_imcp_from_dut_c792406(wifi_dut, wifi_access_point,
                                                 wifi_sniffer,
                                                 zephyr_wifi_collections, request, sniffer_filter,
                                                 wifi_client):
@@ -1303,6 +1303,7 @@ def test_wifi_zephyr_ipv6_imcp_from_dut_c119348(wifi_dut, wifi_access_point,
     except Exception as e:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
 @pytest.mark.skip()
 @pytest.mark.config(
     "wifi_access_point", wifi={"ipv6_state": "0",
@@ -1320,12 +1321,12 @@ def test_wifi_zephyr_ipv6_imcp_from_dut_c119348(wifi_dut, wifi_access_point,
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.config("net_perf_client", net_perf={"host": {"TCP": {"port": 5201}, "UDP": {"port": 5202}}})
-@pytest.mark.test_src_map_id('C19033')
-def test_wifi_zephyr_udp_tx_functionality_ipv6_after_rejoin_successful_c19033(wifi_dut, wifi_access_point,
-                                                                              wifi_sniffer, sniffer_filter,
-                                                                              zephyr_wifi_collections, request,
-                                                                              utf_constants, wifi_client,
-                                                                              net_perf_clients, switch):
+@pytest.mark.test_src_map_id('c993418')
+def test_wifi_zephyr_udp_tx_functionality_ipv6_after_rejoin_successful_c993418(wifi_dut, wifi_access_point,
+                                                                               wifi_sniffer, sniffer_filter,
+                                                                               zephyr_wifi_collections, request,
+                                                                               utf_constants, wifi_client,
+                                                                               net_perf_clients, switch):
     """ Verify UDP tx functionality with IPV6 after rejoin to AP success"""
 
     capture_filename = request.node.name
@@ -1400,8 +1401,8 @@ def test_wifi_zephyr_udp_tx_functionality_ipv6_after_rejoin_successful_c19033(wi
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC127757')
-def test_wifi_zephyr_mqtt_qos0_connect_subscribe_publish_unsubscribe_ipv6_TC127757(wifi_dut, wifi_access_point,
+@pytest.mark.test_src_map_id('TC792400')
+def test_wifi_zephyr_mqtt_qos0_connect_subscribe_publish_unsubscribe_ipv6_TC792400(wifi_dut, wifi_access_point,
                                                                                    wifi_sniffer,
                                                                                    zephyr_wifi_collections, request,
                                                                                    sniffer_filter,
@@ -1458,8 +1459,8 @@ def test_wifi_zephyr_mqtt_qos0_connect_subscribe_publish_unsubscribe_ipv6_TC1277
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC127757')
-def test_wifi_zephyr_mqtt_qos1_connect_subscribe_publish_unsubscribe_ipv6_TC127757(wifi_dut, wifi_access_point,
+@pytest.mark.test_src_map_id('TC792401')
+def test_wifi_zephyr_mqtt_qos1_connect_subscribe_publish_unsubscribe_ipv6_TC792401(wifi_dut, wifi_access_point,
                                                                                    wifi_sniffer,
                                                                                    zephyr_wifi_collections, request,
                                                                                    sniffer_filter,
@@ -1516,8 +1517,8 @@ def test_wifi_zephyr_mqtt_qos1_connect_subscribe_publish_unsubscribe_ipv6_TC1277
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC127757')
-def test_wifi_zephyr_mqtt_qos2_connect_subscribe_publish_unsubscribe_ipv6_TC127757(wifi_dut, wifi_access_point,
+@pytest.mark.test_src_map_id('TC792402')
+def test_wifi_zephyr_mqtt_qos2_connect_subscribe_publish_unsubscribe_ipv6_TC792402(wifi_dut, wifi_access_point,
                                                                                    wifi_sniffer,
                                                                                    zephyr_wifi_collections, request,
                                                                                    sniffer_filter,
@@ -1577,12 +1578,12 @@ def test_wifi_zephyr_mqtt_qos2_connect_subscribe_publish_unsubscribe_ipv6_TC1277
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC0123570318')
-def test_wifi_zephyr_http_get_ipv6(wifi_dut, wifi_access_point,
-                                   wifi_sniffer,
-                                   zephyr_wifi_collections, request,
-                                   sniffer_filter,
-                                   http_server, wifi_client, index_path, http_client):
+@pytest.mark.test_src_map_id('TC792388')
+def test_wifi_zephyr_http_get_ipv6_c792388(wifi_dut, wifi_access_point,
+                                           wifi_sniffer,
+                                           zephyr_wifi_collections, request,
+                                           sniffer_filter,
+                                           http_server, wifi_client, index_path, http_client):
     """Verify HTTP get functionality on IPV6 """
     test_name = request.node.name
     try:
@@ -1610,6 +1611,65 @@ def test_wifi_zephyr_http_get_ipv6(wifi_dut, wifi_access_point,
         wlan_obj.sniffer_capture(mode='stop')
         ap_mac_address = wifi_access_point.interfaces.wifi.bssid
         packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=wlan_obj.dut_mac_address,
+                                                                                       da_addr=ap_mac_address,
+                                                                                       filter_name='power_mgmt_bit')
+        if power_save:
+            assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+                'Sniffer: Unable to find power management bit 1 in sniffer '
+
+    except Exception as e:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi='init')
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.parametrize("ca_cert", ['ca-chain.cert.pem'])
+def test_wifi_zephyr_tls_open_send_close_socket_c19347(
+        sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
+        remote_socket, wifi_client, ssl_server, ca_cert):
+    """This test case Verifies the tls client socket open, send data,close functionality"""
+    try:
+        power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+        logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
+        # server_ip = ssl_server.interfaces.ssl.server_ip
+        server_ip = wifi_client.interfaces.wifi.get_ip_address()
+        port = ssl_server.interfaces.ssl.config['device_port1']
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+                                     wifi_sniffer=wifi_sniffer,
+                                     zephyr_wifi_collections=zephyr_wifi_collections, test_name=test_name,
+                                     sniffer_filter=sniffer_filter,
+                                     wifi_client=wifi_client, power_save=power_save,
+                                     ca_cert=ca_cert, ssl_server=ssl_server)
+        wifi_thread.start()
+        wifi_thread.wait_for_exit()
+        sw = Stopwatch()
+        t_end = 300  # time in seconds
+        while sw.elapsed_sec <= t_end:
+            time_left = int((t_end - sw.elapsed_sec) / 60)
+            logger().info(f"*************** Remaining time to complete test is: '{time_left}' minutes ***************")
+            wifi_thread.tls_server_single_socket(port=port, server_ip=server_ip, data_length=100, time_seconds=30)
+
+        dut_mac_address = wifi_thread.dut_addr['dut_mac_address']
+        logger().info(f" DUT_MAC_ADDRESS : {dut_mac_address}")
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f" AP_MAC_ADDRESS: {ap_mac_address}")
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+        ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
                                                                                        da_addr=ap_mac_address,
                                                                                        filter_name='power_mgmt_bit')
         if power_save:

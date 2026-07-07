@@ -56,7 +56,8 @@ class WifiJoinThread(ThreadBase):
                                                                                   wifi_access_point=self.wifi_access_point,
                                                                                   associated=self.wifi_dut.interfaces.wifi.associated,
                                                                                   ping_after_power_save=True,
-                                                                                  enc=self.enc, ip_config_disable=1, power_save=self.power_save)
+                                                                                  enc=self.enc, ip_config_disable=1,
+                                                                                  power_save=self.power_save)
             else:
                 self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(wifi_dut=self.wifi_dut, retry_count=3,
                                                                                   wifi_access_point=self.wifi_access_point,
@@ -100,12 +101,12 @@ class WifiJoinThread(ThreadBase):
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C19293')
-def test_wifi_zephyr_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, wifi_access_point, wifi_client,
-                                                                    wifi_dut,
-                                                                    utf_constants, request, zephyr_wifi_collections,
-                                                                    dhcp_lease,
-                                                                    sniffer_filter):
+@pytest.mark.test_src_map_id('C792366')
+def test_wifi_zephyr_dhcp_renewal_time_to_2_min_renewal_func_c792366(wifi_sniffer, wifi_access_point, wifi_client,
+                                                                     wifi_dut,
+                                                                     utf_constants, request, zephyr_wifi_collections,
+                                                                     dhcp_lease,
+                                                                     sniffer_filter):
     """ The test case verifies DHCP renewal functionality when DHCP renewal time is set to 120 seconds"""
     time_delta = 60
     packet_filter2 = '        DHCP: Request (3)'
@@ -188,11 +189,11 @@ def test_wifi_zephyr_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer
     }
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C19293')
-def test_wifi_zephyr_dhcp_ip_change_notification_c19293(wifi_sniffer, wifi_access_point, wifi_client,
-                                                        wifi_dut,
-                                                        utf_constants, request, zephyr_wifi_collections,
-                                                        sniffer_filter):
+@pytest.mark.test_src_map_id('C792367')
+def test_wifi_zephyr_dhcp_ip_change_notification_c792367(wifi_sniffer, wifi_access_point, wifi_client,
+                                                         wifi_dut,
+                                                         utf_constants, request, zephyr_wifi_collections,
+                                                         sniffer_filter):
     """ The test case verifies IP change notification to host"""
     try:
         capture_filename = request.node.name

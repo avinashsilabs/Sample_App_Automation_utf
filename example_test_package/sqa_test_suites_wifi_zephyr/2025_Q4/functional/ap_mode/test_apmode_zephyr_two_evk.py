@@ -46,7 +46,6 @@ class IperfThraed(ThreadBase):
         self.async_socket = async_socket
 
     def run_traffic(self):
-
         self.sl_collections.run_traffic(wifi_dut=self.wifi_dut, net_perf_client=self.net_perf_client,
                                         protocol=self.protocol, device_ip=self.device_ip,
                                         host_ip=self.remote_ip, timeout=self.timeout,
@@ -122,9 +121,9 @@ class IperfThraedSdk(ThreadBase):
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C551266')
-def test_wifi_sdk_sta_japan_region_aput_c551266(wifi_dut,
-                                                sl_collections, zephyr_wifi_collections, remote_wiseconnect3):
+@pytest.mark.test_src_map_id('C996268')
+def test_wifi_zephyr_sta_ap_japan_region_c996266_c996268(wifi_dut,
+                                                         sl_collections, zephyr_wifi_collections, remote_wiseconnect3):
     """Verify APUT beacon with region JP, WPA2 security, Channel 14"""
     try:
         wifi_dut.interfaces.wifi.mode_change()
@@ -202,8 +201,8 @@ def test_wifi_sdk_sta_japan_region_aput_c551266(wifi_dut,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C19460')
-def test_wifi_zephyr_AP_connect_ps_enabled_device_c19460(wifi_sniffer, wifi_dut,
+@pytest.mark.test_src_map_id('C19459')
+def test_wifi_zephyr_AP_connect_ps_enabled_device_c19459(wifi_sniffer, wifi_dut,
                                                          zephyr_wifi_collections,
                                                          remote_wiseconnect3, sl_collections,
                                                          sniffer_filter, request):
@@ -302,8 +301,8 @@ def test_wifi_zephyr_AP_connect_ps_enabled_device_c19460(wifi_sniffer, wifi_dut,
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
     }
 )
-@pytest.mark.test_src_map_id('C551266')
-def test_wifi_sta_connectivity_in_wpa_c551266(wifi_dut,
+@pytest.mark.test_src_map_id('C99624')
+def test_wifi_sta_connectivity_in_wpa_c996241(wifi_dut,
                                               sl_collections, zephyr_wifi_collections, remote_wiseconnect3, request,
                                               wifi_sniffer):
     """Verify STA connectivity in WPA security mode"""
@@ -387,8 +386,8 @@ def test_wifi_sta_connectivity_in_wpa_c551266(wifi_dut,
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.test_src_map_id('C689597')
-def test_verify_ap_mode_zephyr_UDP_tx_two_clients_multithread_C689597(wifi_sniffer, wifi_dut,
+@pytest.mark.test_src_map_id('C996283')
+def test_verify_ap_mode_zephyr_UDP_tx_two_clients_multithread_C996283(wifi_sniffer, wifi_dut,
                                                                       utf_constants, zephyr_wifi_collections,
                                                                       wifi_client,
                                                                       sniffer_filter, request, remote_wiseconnect3,
@@ -433,9 +432,9 @@ def test_verify_ap_mode_zephyr_UDP_tx_two_clients_multithread_C689597(wifi_sniff
                                                  channel=11, timeout=60)
         time.sleep(2)
         remote_wiseconnect3.interfaces.sapi.start_ip(timeout=60)
-        remote_wiseconnect3.interfaces.sapi.get_ip_address()
-        client_ip2 = remote_wiseconnect3.interfaces.sapi.ping(server_ip="192.168.100.76", num_ping_attempts=30,
-                                                              ping_timeout=10, ip_version='ipv4', ping_size=64)
+        client_ip2 = remote_wiseconnect3.interfaces.sapi.get_ip_address()
+        remote_wiseconnect3.interfaces.sapi.ping(server_ip="192.168.100.76", num_ping_attempts=30,
+                                                 ping_timeout=10, ip_version='ipv4', ping_size=64)
 
         # zephyr_wifi_collections.run_traffic(wifi_dut=wifi_dut, net_perf_client=net_perf_client,
         #                                     protocol=protocol, device_ip=dut_ip,

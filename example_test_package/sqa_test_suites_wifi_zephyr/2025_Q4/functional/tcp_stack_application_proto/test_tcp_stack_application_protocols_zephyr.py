@@ -7,7 +7,7 @@ from utf.utils.logger import get_logger
 
 import random
 import string
-from utf_wifi_zephyr.devices.si91x import Si91xBSDSocketParams, ZephyrHttpMethods
+from utf_wifi_zephyr.devices.si91x import Si91xBSDSocketParams, ZephyrHttpMethods, ZephyrTlsCredentials
 from utf.interfaces.iperf.iperf_constants import IperfConstants, IperfTrafficType
 import uuid
 from datetime import datetime
@@ -97,7 +97,7 @@ class WifiJoinThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_client=None, sniffer_filter=None, wifi_sniffer=None,
                  zephyr_wifi_collections=None, test_name=None, remote_socket_factory=None, ap_mac_address=None,
                  remote_socket=None, allocate_static_ip=0, mqtt_client=None, mqtt_server=None, http_server=None,
-                 http_client=None, power_save=None):
+                 http_client=None, power_save=None, ca_cert=None, ssl_server=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -118,6 +118,8 @@ class WifiJoinThread(ThreadBase):
         self.http_server = http_server
         self.http_client = http_client
         self.power_save = power_save
+        self.ca_cert = ca_cert
+        self.ssl_server = ssl_server
 
     def run(self):
         try:
@@ -194,6 +196,82 @@ class WifiJoinThread(ThreadBase):
         self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=socket_id)
         logger().info(f"Stopping the Remote Socket Server")
         self.remote_socket.interfaces.socket.stop()
+
+    def tls_server_socket(self, port=5001, server_ip=None, data_length=100, time_seconds=30, data_transfer_type="tx"):
+
+        logger().info(f"\n Starting the Remote TLS Server \n")
+        self.ssl_server.interfaces.ssl.start_server()
+        socket_id = self.wifi_dut.interfaces.wifi.socket(domain=Si91xBSDSocketParams.AF_INET,
+                                                         stream_type=Si91xBSDSocketParams.SOCK_STREAM,
+                                                         protocol=Si91xBSDSocketParams.NET_IPPROTO_TLS_1_2
+                                                         )
+        logger().info(f"Socket open successfully : {socket_id}")
+        self.wifi_dut.interfaces.wifi.wifi_setsockopt(socket_id, 282, 1, 1)
+        self.wifi_dut.interfaces.wifi.wifi_setsockopt(socket_id, 282, 2, 0)
+
+        # self.wifi_dut.interfaces.wifi.bind(
+        #    socket_fd=socket_id, device_ip=self.dut_addr['device_ip'], port=port, timeout=5)
+
+        logger().info("DUT is connecting to server socket")
+        for count in range(3):
+            connect_status = False
+            try:
+                self.wifi_dut.interfaces.wifi.bsdSocketConnect(
+                    socket_id, server_ip, port)
+                connect_status = True
+                break
+            except:
+                logger().info(f"Socket connection failed in DUT...retry_count:{count + 1}")
+                assert connect_status, "Socket connection failed in DUT"
+        logger().info("*********** Socket connection is successful ************")
+
+        if data_transfer_type == "tx":
+            sent_data = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=data_length)
+            )
+
+            sw = Stopwatch()
+            t_end = time_seconds
+            while sw.elapsed_sec <= t_end:
+                time_left = int((t_end - sw.elapsed_sec) / 60)
+                logger().info(f"*************** Remaining time to send data: '{time_left}' minutes ***************")
+                try:
+                    status, data = self.wifi_dut.interfaces.wifi.send(
+                        socket_fd=socket_id, data=sent_data
+                    )
+                    if status != 0:
+                        return socket_id
+                    time.sleep(1)
+                    server_socket_no = 1
+                    data_receive = self.ssl_server.interfaces.ssl.data_recv_content(server_socket_no,
+                                                                                    buffer_size=data_length)
+                    logger().info(f"Data received on remote socket opened is {data_receive}")
+                    assert sent_data == data_receive.decode(), "Data sent by DUT and received on server is not matching"
+                    logger().info("Data sent by DUT and received on server is matching\n\n")
+                except Exception as e:
+                    logger().info(
+                        f"Socket Data Transfer Failed Within Duration"
+                    )
+        else:
+            sw = Stopwatch()
+            t_end = time_seconds
+            while sw.elapsed_sec <= t_end:
+                time_left = int((t_end - sw.elapsed_sec) / 60)
+                tx_buffer = "".join(
+                    random.choices(string.ascii_uppercase + string.digits, k=data_length)
+                )
+                buffer_length = len(tx_buffer)
+                self.ssl_server.interfaces.ssl.send_data_socket(1, 1, message=tx_buffer)
+                time.sleep(1)
+                buffer_rx = self.wifi_dut.interfaces.wifi.recv(socket_id, buffer_length)
+                logger().info(f"###################### Buffer Data  {buffer_rx}  ######################")
+                assert tx_buffer == buffer_rx, f"buffer length sent by remote peer and received on the socket id " \
+                                               f"{socket_id} opened in the DUT is not matched"
+                logger().info("Data sent by remote peer and received on DUT is matching")
+
+        self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=socket_id)
+        logger().info(f"Stopping the Remote Socket Server")
+        self.ssl_server.interfaces.ssl.stop_server()
 
     def udp_server_single_socket(self, port=5001, server_ip=None, data_length=100, time_seconds=30, tx_rx_test=0):
         logger().info(f"\n Starting the Remote Socket Server \n")
@@ -686,8 +764,8 @@ class WifiJoinThread(ThreadBase):
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C19347')
-def test_wifi_sdk_tcp_open_send_close_socket_c19347(
+@pytest.mark.test_src_map_id('C792368')
+def test_wifi_zephyr_tcp_open_send_close_socket_c792368(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
     """This test case Verifies the tcp client socket open, send data,close functionality"""
@@ -738,8 +816,8 @@ def test_wifi_sdk_tcp_open_send_close_socket_c19347(
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C39347')
-def test_wifi_sdk_udp_open_send_close_socket_c39347(
+@pytest.mark.test_src_map_id('C792369')
+def test_wifi_zephyr_udp_open_send_close_socket_c792369(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
     """This test case Verifies the udp client socket  open, send data,close functionality"""
@@ -791,12 +869,13 @@ def test_wifi_sdk_udp_open_send_close_socket_c39347(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C19360')
-def test_wifi_sdk_tcp_server_socket_open_listen_accept_receive_close_c19360(wifi_sniffer, wifi_dut, wifi_access_point,
-                                                                            request,
-                                                                            zephyr_wifi_collections,
-                                                                            sniffer_filter, remote_socket_factory,
-                                                                            wifi_client):
+@pytest.mark.test_src_map_id('C792370')
+def test_wifi_zephyr_tcp_server_socket_open_listen_accept_receive_close_c792370(wifi_sniffer, wifi_dut,
+                                                                                wifi_access_point,
+                                                                                request,
+                                                                                zephyr_wifi_collections,
+                                                                                sniffer_filter, remote_socket_factory,
+                                                                                wifi_client):
     """This test case Verifies the tcp server socket open, bind, listen, accept, receive data,close functionality """
     try:
         power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -880,8 +959,8 @@ def test_wifi_sdk_tcp_server_socket_open_listen_accept_receive_close_c19360(wifi
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C39348')
-def test_wifi_sdk_udp_open_receive_close_socket_c39348(
+@pytest.mark.test_src_map_id('C792371')
+def test_wifi_zephyr_udp_open_receive_close_socket_c792371(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
     """This test case Verifies the udp server socket open, bind, receive data,close functionality"""
@@ -934,8 +1013,8 @@ def test_wifi_sdk_udp_open_receive_close_socket_c39348(
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C29347')
-def test_wifi_sdk_tcp_open_send_close_socket_for_30_min_c29347(
+@pytest.mark.test_src_map_id('C996257')
+def test_wifi_zephyr_tcp_open_send_close_socket_for_30_min_c996257(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
     """This test case Verifies the tcp client socket open, send data,close functionality for multiple iterations"""
@@ -993,14 +1072,14 @@ def test_wifi_sdk_tcp_open_send_close_socket_for_30_min_c29347(
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C29360')
-def test_wifi_sdk_tcp_server_socket_open_listen_accept_receive_close_for_30_min_c29360(wifi_sniffer, wifi_dut,
-                                                                                       wifi_access_point,
-                                                                                       request,
-                                                                                       zephyr_wifi_collections,
-                                                                                       sniffer_filter,
-                                                                                       remote_socket_factory,
-                                                                                       wifi_client):
+@pytest.mark.test_src_map_id('C996258)
+def test_wifi_zephyr_tcp_server_socket_open_listen_accept_receive_close_for_30_min_c996258(wifi_sniffer, wifi_dut,
+                                                                                           wifi_access_point,
+                                                                                           request,
+                                                                                           zephyr_wifi_collections,
+                                                                                           sniffer_filter,
+                                                                                           remote_socket_factory,
+                                                                                           wifi_client):
     """The test case verified tcp server socket open, listen, accept,  receive data, and close functionality multiple iterations"""
     try:
         power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
@@ -1090,8 +1169,8 @@ def test_wifi_sdk_tcp_server_socket_open_listen_accept_receive_close_for_30_min_
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C50001')
-def test_wifi_icmp_ipv4_c50001(
+@pytest.mark.test_src_map_id('C792405)
+def test_wifi_icmp_ipv4_c792405(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections,
         wifi_sniffer, request, wifi_client):
     """
@@ -1192,8 +1271,8 @@ def test_wifi_icmp_ipv4_c50001(
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C60003')
-def test_wifi_sntp_multiple_queries_c60003(
+@pytest.mark.test_src_map_id('C792384')
+def test_wifi_sntp_multiple_queries_c792384(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections,
         wifi_sniffer, request, wifi_client):
     """
@@ -1362,8 +1441,8 @@ def test_wifi_sntp_multiple_queries_c60003(
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '123456789'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('C19347')
-def test_wifi_sdk_dns_c19347(
+@pytest.mark.test_src_map_id('C792377')
+def test_wifi_zephyr_dns_c792377(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections, wifi_sniffer, request,
         remote_socket, wifi_client):
     """This test case verifies dns functionality"""
@@ -1402,7 +1481,7 @@ def test_wifi_sdk_dns_c19347(
                 test_result = wifi_thread.icmp_send_test(
                     target_ip=target_ip,
                     packet_count=100,
-                    timeout_ms=1000,
+                    timeout_ms=3000,
                     success_threshold=80
                 )
                 # Assert test result
@@ -1432,8 +1511,8 @@ def test_wifi_sdk_dns_c19347(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.test_src_map_id('C50002')
-def test_wifi_igmp_ipv4_multicast_data_rx_c50002(
+@pytest.mark.test_src_map_id('C792382')
+def test_wifi_igmp_ipv4_multicast_data_rx_c792382(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections,
         wifi_sniffer, request, wifi_client, multicast_client, net_perf_client, protocol):
     """ The test case verifies receive functionality on multicast address"""
@@ -1571,8 +1650,8 @@ def test_wifi_igmp_ipv4_multicast_data_rx_c50002(
     "net_perf_client", net_perf={"host_role": IperfConstants.CLIENT_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
-@pytest.mark.test_src_map_id('C70002')
-def test_wifi_igmp_ipv4_multicast_data_rx_after_group_leave_c70002(
+@pytest.mark.test_src_map_id('C792383')
+def test_wifi_igmp_ipv4_multicast_data_rx_after_group_leave_c792383(
         sniffer_filter, wifi_access_point, wifi_dut, zephyr_wifi_collections,
         wifi_sniffer, request, wifi_client, multicast_client, net_perf_client, protocol):
     """ This test case verifies receive functionality on multiple address after leaving the multicast group"""
@@ -1743,8 +1822,8 @@ def test_wifi_igmp_ipv4_multicast_data_rx_after_group_leave_c70002(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC127757')
-def test_wifi_sdk_mqtt_qos0_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
+@pytest.mark.test_src_map_id('TC792397')
+def test_wifi_zephyr_mqtt_qos0_connect_subscribe_publish_unsubscribe_ipv4_TC792397(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter):
     """QOS0: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""
@@ -1797,8 +1876,8 @@ def test_wifi_sdk_mqtt_qos0_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC127757')
-def test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
+@pytest.mark.test_src_map_id('TC792398')
+def test_wifi_zephyr_mqtt_qos1_connect_subscribe_publish_unsubscribe_ipv4_TC792398(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter):
     """QOS1: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""
@@ -1851,8 +1930,8 @@ def test_wifi_sdk_mqtt_qos1_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC127757')
-def test_wifi_sdk_mqtt_qos2_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
+@pytest.mark.test_src_map_id('TC792399')
+def test_wifi_zephyr_mqtt_qos2_connect_subscribe_publish_unsubscribe_ipv4_TC792399(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter):
     """QOS2: Subscribe to MQTT server with TCP connection and publish data oversubscribed topic"""
@@ -1906,8 +1985,8 @@ def test_wifi_sdk_mqtt_qos2_connect_subscribe_publish_unsubscribe_ipv4_TC127757(
 )
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC127757')
-def test_wifi_sdk_mqtt_check_keep_alive_0_ipv4_TC127757(
+@pytest.mark.test_src_map_id('TC792404')
+def test_wifi_zephyr_mqtt_check_keep_alive_0_ipv4_TC792404(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter):
     """Verify MQTT keep-alive functionality when MQTT keep-alive time set to 0"""
@@ -1982,8 +2061,8 @@ def test_wifi_sdk_mqtt_check_keep_alive_0_ipv4_TC127757(
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
 @pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
 @pytest.mark.parametrize("keep_alive_time,idle_time", [(60, 240)])
-@pytest.mark.test_src_map_id('TC327757')
-def test_wifi_sdk_mqtt_check_keep_alive_60_ipv4_TC327757(
+@pytest.mark.test_src_map_id('TC792403')
+def test_wifi_zephyr_mqtt_check_keep_alive_60_ipv4_TC792403(
         wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, zephyr_wifi_collections,
         sniffer_filter, keep_alive_time, idle_time):
     """Verify MQTT keep-alive functionality when MQTT keep-alive time set to 60"""
@@ -2024,7 +2103,6 @@ def test_wifi_sdk_mqtt_check_keep_alive_60_ipv4_TC327757(
         if power_save:
             assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
                 'Sniffer: Unable to find power management bit 1 in sniffer '
-
 
         time.sleep(1)
         timestamp = []
@@ -2067,10 +2145,10 @@ def test_wifi_sdk_mqtt_check_keep_alive_60_ipv4_TC327757(
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC8604418607')
-def test_wifi_zephyr_websocket_tx_and_rx(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
-                                         utf_constants,
-                                         request, zephyr_wifi_collections, sniffer_filter, wifi_client):
+@pytest.mark.test_src_map_id('TC792380')
+def test_wifi_zephyr_websocket_tx_and_rx_c792380(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
+                                                 utf_constants,
+                                                 request, zephyr_wifi_collections, sniffer_filter, wifi_client):
     """
     Test Steps:
         1. Configure the DUT in Wlan alone mode for 2.4Ghz
@@ -2129,8 +2207,8 @@ def test_wifi_zephyr_websocket_tx_and_rx(wifi_dut, wifi_access_point, wifi_sniff
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC3856041615')
-def test_wifi_zephyr_http_get(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
+@pytest.mark.test_src_map_id('TC792385')
+def test_wifi_zephyr_http_get_ipv4_c792385(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
                               utf_constants,
                               request, zephyr_wifi_collections, sniffer_filter, wifi_client, index_path, http_client):
     """
@@ -2193,8 +2271,8 @@ def test_wifi_zephyr_http_get(wifi_dut, wifi_access_point, wifi_sniffer, http_se
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC7848068622')
-def test_wifi_zephyr_http_post(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
+@pytest.mark.test_src_map_id('TC792386')
+def test_wifi_zephyr_http_post_ipv4_c792386(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
                                utf_constants,
                                request, zephyr_wifi_collections, sniffer_filter, wifi_client, index_path, http_client):
     """
@@ -2257,8 +2335,8 @@ def test_wifi_zephyr_http_post(wifi_dut, wifi_access_point, wifi_sniffer, http_s
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"cgi-bin/cgi_example.py"})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
-@pytest.mark.test_src_map_id('TC9411598629')
-def test_wifi_zephyr_http_put(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
+@pytest.mark.test_src_map_id('TC792387')
+def test_wifi_zephyr_http_put_ipv4_c792387(wifi_dut, wifi_access_point, wifi_sniffer, http_server,
                               utf_constants,
                               request, zephyr_wifi_collections, sniffer_filter, wifi_client, index_path, http_client):
     """
@@ -2323,8 +2401,8 @@ def test_wifi_zephyr_http_put(wifi_dut, wifi_access_point, wifi_sniffer, http_se
 @pytest.mark.end_state("wifi_dut",
                        wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
 @pytest.mark.skip()
-@pytest.mark.test_src_map_id('C19354')
-def test_tcp_data_transfer_rejoin_c19354(wifi_sniffer, wifi_dut, wifi_access_point, request, zephyr_wifi_collections,
+@pytest.mark.test_src_map_id('C792381')
+def test_tcp_data_transfer_rejoin_c792381(wifi_sniffer, wifi_dut, wifi_access_point, request, zephyr_wifi_collections,
                                          sniffer_filter, remote_socket,
                                          wifi_client, switch):
     """ Verify TCP data transfer functionality while STA is in rejoin process"""

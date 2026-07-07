@@ -1622,7 +1622,7 @@ def test_wifi_zephyr_twt_setup_teardown_tcp_loop_c1912309(wifi_dut, wifi_access_
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
-def test_wifi_zephyr_verify_twt_setup_fails_when_ap_twt_disabled_c1912310(wifi_dut, wifi_access_point,
+def test_wifi_zephyr_verify_twt_setup_fails_when_ap_twt_disabled_c1912311(wifi_dut, wifi_access_point,
                                                                           zephyr_wifi_collections, wifi_sniffer,
                                                                           sniffer_filter):
     """[Neg] Ensure TWT setup returns a failure when TWT is disabled on the access point"""
@@ -1639,7 +1639,7 @@ def test_wifi_zephyr_verify_twt_setup_fails_when_ap_twt_disabled_c1912310(wifi_d
     try:
         wifi_sniffer.interfaces.capture.configure_interface(
             channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file='1912310')
+        wifi_sniffer.interfaces.capture.start_capture(capture_file='1912311')
         sniffer_started = True
 
         zephyr_wifi_collections.join_to_wifi_network(
