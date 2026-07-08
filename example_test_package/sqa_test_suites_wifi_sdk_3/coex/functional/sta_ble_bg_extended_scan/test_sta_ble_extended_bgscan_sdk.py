@@ -82,6 +82,23 @@ from utf_wiseconnect_3.tests.sl_status import SLStatus
 def logger():
     return get_logger(__name__)
 
+"""
+    setup requirement:
+        1. DUT(RS917)
+        2. EFR32
+        3. Raspberry PI4
+        4. Access Point(Third Party AP's)
+
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate ping from the dut
+        5. set scan ,connect, data transfer
+
+
+    Author: Swathi.Chinthala
+"""
 
 ble_obj = None
 
@@ -98,8 +115,8 @@ def _configure_advanced_scan(wifi_dut, advanced_scan_bitmap=(1 << 0) | (1 << 6) 
     wifi_dut.interfaces.wifi.set_advanced_scan_configuration(
         adv_active_channel_time=50,
         adv_passive_channel_time=20,
-        adv_trigger_level=None,
-        adv_trigger_level_change=None,
+        adv_trigger_level=-4,
+        adv_trigger_level_change=2,
         adv_enable_multi_probe=1,
         adv_enable_instant_scan=None,
         has_adv_scan_bit_map=1,
@@ -160,6 +177,29 @@ def _assert_extended_bgscan_channels_only(scan_results, allowed_channels):
     logger().info(
         f"BG extended scan channels verified: observed {sorted(observed_channels)} "
         f"(allowed {sorted(allowed)} only)"
+    )
+
+
+def _assert_scan_results_ordered_by_rssi(scan_results):
+    """
+    Verify scan results are ordered by RSSI (strongest signal first).
+
+    Each entry must have RSSI less than or equal to the previous entry, matching
+    SDK scan ordering (see test_wifi_sdk_scan_check_rssi_c19060).
+    """
+    assert scan_results, "No scan results to verify RSSI ordering"
+    previous_rssi = 0
+    for idx, entry in enumerate(scan_results):
+        assert hasattr(entry, "rssi"), f"Scan entry {idx} missing rssi"
+        rssi = entry.rssi
+        assert previous_rssi >= rssi, (
+            f"Scan list not ordered by RSSI at index {idx}: "
+            f"previous_rssi={previous_rssi} < rssi={rssi}"
+        )
+        previous_rssi = rssi
+        logger().info(f"  RSSI order [{idx}]: rssi={rssi}")
+    logger().info(
+        f"Scan results RSSI ordering verified ({len(scan_results)} entries, strongest first)"
     )
 
 
@@ -362,7 +402,7 @@ def test_sta_ble_extended_bgscan_ssid_security_rssi_C978144(
         6. Establish BLE connection with mobile device
         7. Trigger Wi-Fi background extended scan (B0=1, B6=1, B7=1)
         8. Verify BG extended scan results contain more than 11 AP entries
-        9. Verify each scan entry includes SSID and Security_Type (by rssi)
+        9. Verify each scan entry includes SSID and Security_Type; list ordered by RSSI
         10. Verify scan list size matches configured maximum
     """
     global ble_obj
@@ -423,12 +463,16 @@ def test_sta_ble_extended_bgscan_ssid_security_rssi_C978144(
             f"BG extended scan expected >11 results (IOTREQ-12128), got {len(scan_results)}"
         )
 
-        # Step 9: Each entry includes SSID and Security_Type; results typically sorted by rssi
+        # Step 9: Each entry includes SSID and Security_Type; list ordered by RSSI (strongest first)
         for idx, entry in enumerate(scan_results):
             assert hasattr(entry, "ssid"), f"Scan entry {idx} missing ssid"
             assert hasattr(entry, "security_mode"), f"Scan entry {idx} missing security_mode"
-            # ssid and security_mode should be populated (non-empty / valid)
-            logger().info(f"  [{idx}] ssid={getattr(entry, 'ssid', b'')} security_mode={getattr(entry, 'security_mode', None)} rssi={getattr(entry, 'rssi', None)}")
+            logger().info(
+                f"  [{idx}] ssid={getattr(entry, 'ssid', b'')} "
+                f"security_mode={getattr(entry, 'security_mode', None)} "
+                f"rssi={getattr(entry, 'rssi', None)}"
+            )
+        _assert_scan_results_ordered_by_rssi(scan_results)
 
         # Step 10: Scan list size follows configured maximum (no overflow; we got a list of size len(scan_results))
         logger().info(f"Scan list size: {len(scan_results)} (expected >11)")
@@ -540,67 +584,6 @@ def test_sta_ble_extended_bgscan_while_ble_adv_20ms_us_C978135(
             )
 
 
-# ---- C978136: BG extended scan while DUT BLE scanning (SI 120ms, SW 40ms) ----
-@pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "region": "Europe", "channel": 6}
-)
-@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
-@pytest.mark.start_state("wifi_dut", wifi=["init"])
-@pytest.mark.end_state(
-    "wifi_dut",
-    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
-)
-# @wifi_dut_marker()
-@wifi_dut_marker(region=1, region_code="europe")
-def test_sta_ble_extended_bgscan_while_ble_scanning_C978136(
-    wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
-    utf_constants, sl_collections, wifi_client, sniffer_filter,
-):
-    """C978136: BG extended scan while DUT BLE scanning (scan interval 120ms, window 40ms)."""
-    global ble_obj
-    ble_obj = None
-    try:
-        test_name = request.node.name
-        ping_count = utf_constants.get("ping_count")
-        wifi_sniffer.interfaces.capture.configure_interface(
-            channel=wifi_access_point.interfaces.wifi.channel
-        )
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
-
-        ble_obj = BleThreadFunctionality(
-            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
-            ble_test_type="scan", scan_interval=120, scan_window=40,
-        )
-        ble_obj.start()
-        ble_obj.wait_for_exit()
-        wifi_obj = WifiJoinThread(
-            wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
-            testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
-            ping_count=ping_count, sniffer_filter=sniffer_filter, test_type="ping",
-        )
-        wifi_obj.start()
-        wifi_obj.wait_for_exit()
-        device_ip = wifi_obj.device_ip
-        assert device_ip, "DUT has no IP"
-        assert ping(device_ip, ping_count, size=300), "Ping failed"
-        scan_results = _perform_bg_extended_scan(wifi_dut, timeout=90)
-        assert scan_results is not None and len(scan_results) > 11, (
-            f"Expected >11 results, got {len(scan_results) if scan_results else 0}"
-        )
-        wifi_sniffer.interfaces.capture.stop_capture()
-        wifi_obj.disconnect()
-    except Exception as Ex:
-        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
-        raise
-    finally:
-        ble_client.interfaces.bluetooth.close()
-        if ble_obj is not None:
-            sl_collections.cleanup_ble(
-                ble_dut=wifi_dut, ble_client=ble_client,
-                ble_client_address=getattr(ble_obj, "ble_client_address", None),
-                ble_dut_address=ble_obj.ble_dut_address,
-            )
-
 
 # ---- C978138: BG extended scan while BLE Tx Notification (WW, Ch 13) ----
 @pytest.mark.config(
@@ -676,10 +659,12 @@ def test_sta_ble_extended_bgscan_while_ble_tx_notify_C978138(
 
         ble_obj.start()
 
-        scan_results = _perform_bg_extended_scan(wifi_dut, timeout=90)
-        assert scan_results is not None and len(scan_results) > 11, (
-            f"Expected >11 results, got {len(scan_results) if scan_results else 0}"
-        )
+        with wifi_dut.interfaces.wifi._lock:
+
+            scan_results = _perform_bg_extended_scan(wifi_dut, timeout=90)
+            assert scan_results is not None and len(scan_results) > 11, (
+                f"Expected >11 results, got {len(scan_results) if scan_results else 0}"
+            )
 
         ble_obj.wait_for_exit()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -748,6 +733,7 @@ def test_sta_ble_tcp_tx_bg_extended_periodic_ble_central_500ms_C978141(
         )
         wifi_obj.join_to_ap(skip_power_save=True)
         wifi_obj.set_power_save()
+        time.sleep(20)
 
         scan_results = _perform_bg_extended_scan(
             wifi_dut, timeout=90, advanced_scan_bitmap=(1 << 0) | (1 << 7),
@@ -757,6 +743,7 @@ def test_sta_ble_tcp_tx_bg_extended_periodic_ble_central_500ms_C978141(
         )
         wifi_obj.start()
         wifi_obj.wait_for_exit()
+        time.sleep(100)
 
         wifi_sniffer.interfaces.capture.stop_capture()
         _validate_periodic_bgscan_probe_requests(
@@ -876,10 +863,10 @@ def test_sta_ble_udp_tx_rx_bg_extended_periodic_ble_peripheral_1000ms_C978143(
 )
 @wifi_dut_marker()
 def test_sta_ble_bg_extended_after_rejoin_ble_peripheral_250ms_C978147(
-    # wifi_sniffer,
+    wifi_sniffer,
     wifi_access_point, wifi_dut, ble_client, request,
     utf_constants, sl_collections, wifi_client,
-    # sniffer_filter,
+    sniffer_filter,
 ):
     """
     C978147: Verify BG extended scan after rejoin when BLE peripheral CI 250ms.
@@ -893,10 +880,10 @@ def test_sta_ble_bg_extended_after_rejoin_ble_peripheral_250ms_C978147(
         ping_count = utf_constants.get("ping_count")
         rejoin_timeout = min(utf_constants.get("rejoin_time"), 120)
 
-        # wifi_sniffer.interfaces.capture.configure_interface(
-        #     channel=wifi_access_point.interfaces.wifi.channel
-        # )
-        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
@@ -913,11 +900,11 @@ def test_sta_ble_bg_extended_after_rejoin_ble_peripheral_250ms_C978147(
         ble_obj.wait_for_exit()
 
         wifi_obj = WifiJoinThread(
-            # wifi_sniffer=wifi_sniffer,
+            wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
             testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
             ping_count=ping_count,
-            # sniffer_filter=sniffer_filter,
+            sniffer_filter=sniffer_filter,
             test_type="ping",
         )
         wifi_obj.start()
@@ -955,7 +942,7 @@ def test_sta_ble_bg_extended_after_rejoin_ble_peripheral_250ms_C978147(
             f"got {len(scan_results_after) if scan_results_after else 0}"
         )
 
-        # wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_sniffer.interfaces.capture.stop_capture()
         wifi_obj.disconnect()
         ble_obj.ble_disconnect()
     except Exception as Ex:
@@ -1011,7 +998,7 @@ def test_sta_ble_bg_extended_after_csa_ble_central_250ms_C978148(
             sl_collections=sl_collections,
             ble_test_type="master",
             dev_state=8,
-            ble_pairing=0,
+            ble_pairing=1,
             bond_info=1,
             set_smp=1,
             conn_interval=250
@@ -1127,17 +1114,18 @@ def test_sta_ble_extended_bgscan_selective_ch_1_6_11_C978139(
 
         # Selective channels 1, 6, 11 are configured via channel_bitmap_2_4 at join;
         # extended BG scan must report APs only on those channels.
-        selective_channels = [1, 6, 11]
-        scan_results = _perform_bg_extended_scan(
-            wifi_dut,
-            timeout=90,
-            scan_bitmap_2_4=channel_bitmap_2_4,
-            advanced_scan_bitmap=(1 << 0) | (1 << 7),
-        )
-        assert scan_results is not None and len(scan_results) > 11, (
-            f"Expected >11 results, got {len(scan_results) if scan_results else 0}"
-        )
-        _assert_extended_bgscan_channels_only(scan_results, selective_channels)
+        with wifi_dut.interfaces.wifi._lock:
+            selective_channels = [1, 6, 11]
+            scan_results = _perform_bg_extended_scan(
+                wifi_dut,
+                timeout=90,
+                scan_bitmap_2_4=channel_bitmap_2_4,
+                advanced_scan_bitmap=(1 << 0) | (1 << 7),
+            )
+            assert scan_results is not None and len(scan_results) > 0, (
+                f"Expected >11 results, got {len(scan_results) if scan_results else 0}"
+            )
+            _assert_extended_bgscan_channels_only(scan_results, selective_channels)
 
         ble_obj.wait_for_exit()
 
@@ -1171,10 +1159,10 @@ def test_sta_ble_extended_bgscan_selective_ch_1_6_11_C978139(
 )
 @wifi_dut_marker()
 def test_sta_ble_ble_reconnect_during_bg_extended_scan_C978140(
-    # wifi_sniffer,
+    wifi_sniffer,
     wifi_access_point, wifi_dut, ble_client, request,
     utf_constants, sl_collections, wifi_client,
-    # sniffer_filter,
+    sniffer_filter,
 ):
     """C978140: BLE reconnects (DUT peripheral CI 80ms) while BG extended scan active."""
     global ble_obj
@@ -1182,10 +1170,10 @@ def test_sta_ble_ble_reconnect_during_bg_extended_scan_C978140(
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
-        # wifi_sniffer.interfaces.capture.configure_interface(
-        #     channel=wifi_access_point.interfaces.wifi.channel
-        # )
-        # wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
 
         ble_obj = BleThread(
             wifi_dut=wifi_dut,
@@ -1200,11 +1188,11 @@ def test_sta_ble_ble_reconnect_during_bg_extended_scan_C978140(
         ble_obj.start()
         ble_obj.wait_for_exit()
         wifi_obj = WifiJoinThread(
-            # wifi_sniffer=wifi_sniffer,
+            wifi_sniffer=wifi_sniffer,
             wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
             testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
             ping_count=ping_count,
-            # sniffer_filter=sniffer_filter,
+            sniffer_filter=sniffer_filter,
             test_type="ping",
         )
         wifi_obj.start()
@@ -1255,7 +1243,8 @@ def test_sta_ble_ble_reconnect_during_bg_extended_scan_C978140(
 
 
 # ---- C978145: BLE provisioning (sta_ble_provisioning flow) + BG extended scan ----
-@sta_ble_provisioning_wifi_dut_marker(IEEE802_11W=Si91xExtCustomFeatureBitMap.IEEE802_11W, memory_config=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
+@sta_ble_provisioning_wifi_dut_marker(IEEE802_11W=Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                                      memory_config=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
 
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1337,9 +1326,8 @@ def test_sta_ble_ble_provisioning_bg_extended_scan_C978145(
         ble_client.interfaces.bluetooth.close()
 
 
-# ---- C978137: Instant BG scan (B0=1 only, up to 11 results) with BLE peripheral CI 30ms ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "region": "Europe", "channel": 13}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1347,8 +1335,8 @@ def test_sta_ble_ble_provisioning_bg_extended_scan_C978145(
     "wifi_dut",
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
 )
-@wifi_dut_marker()
-def test_sta_ble_instant_bg_scan_upto_11_C978137(
+@wifi_dut_marker(region=1, region_code="japan")
+def test_sta_ble_instant_bg_scan_upto_11_JP_C978137(
     wifi_sniffer,
     wifi_access_point,
     wifi_dut,
@@ -1684,5 +1672,69 @@ def test_sta_ble_http_download_bg_extended_scan_loop_10s_ble_peripheral_200ms_C9
             http_server.interfaces.http.stop_server()
         except Exception:
             pass
+
+
+
+# ---- C978136: BG extended scan while DUT BLE scanning (SI 120ms, SW 40ms) ----
+@pytest.mark.config(
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "region": "Europe", "channel": 6}
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
+)
+# @wifi_dut_marker()
+@wifi_dut_marker(region=1, region_code="europe")
+def test_sta_ble_extended_bgscan_while_ble_scanning_C978136(
+    wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
+    utf_constants, sl_collections, wifi_client, sniffer_filter,
+):
+    """C978136: BG extended scan while DUT BLE scanning (scan interval 120ms, window 40ms)."""
+    global ble_obj
+    ble_obj = None
+    try:
+        test_name = request.node.name
+        ping_count = utf_constants.get("ping_count")
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        ble_obj = BleThreadFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,
+            ble_test_type="scan", scan_interval=120, scan_window=40,
+        )
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        wifi_obj = WifiJoinThread(
+            wifi_sniffer=wifi_sniffer, wifi_dut=wifi_dut, wifi_access_point=wifi_access_point,
+            testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
+            ping_count=ping_count, sniffer_filter=sniffer_filter, test_type="ping",
+        )
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        device_ip = wifi_obj.device_ip
+        assert device_ip, "DUT has no IP"
+        assert ping(device_ip, ping_count, size=300), "Ping failed"
+        scan_results = _perform_bg_extended_scan(wifi_dut, timeout=90)
+        assert scan_results is not None and len(scan_results) > 11, (
+            f"Expected >11 results, got {len(scan_results) if scan_results else 0}"
+        )
+        wifi_sniffer.interfaces.capture.stop_capture()
+        wifi_obj.disconnect()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        raise
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        if ble_obj is not None:
+            sl_collections.cleanup_ble(
+                ble_dut=wifi_dut, ble_client=ble_client,
+                ble_client_address=getattr(ble_obj, "ble_client_address", None),
+                ble_dut_address=ble_obj.ble_dut_address,
+            )
+
 
 
