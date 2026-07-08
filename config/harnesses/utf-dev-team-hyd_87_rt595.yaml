@@ -245,6 +245,7 @@ devices:
                 port: 'auto'
                 vid: 0x1fc9
                 pid: 0x0090
+                options: "-u IQA3BQMQ" # this is the serial number of the device with -u as argument
                 #options: "-u BSAYBQKQ" # this is the serial number of the device with -u as argument
 
         devices:
@@ -492,6 +493,47 @@ devices:
                             shell: 'linux_shell'
             defaults: { }
 
+
+    nuc_ble_client_non_docker:
+        interfaces:
+            ssh_host:
+                type: 'shell.ssh_shell'
+                remote: '10.207.20.149' # Configure the IP address of the NUC
+                username: 'svc_sqa_automation'
+                password: 'Silicon@20252026'
+                port: 22
+                use_paramiko_expect: false
+            shell:
+                type: 'rpc.rpc_client_non_docker'
+                # the 'forward_to' property specifies the destination device and interface on the server
+                # the format is 'device:interface'
+                forward_to: 'raspi_ble_client:linux_shell'
+                host: 'ssh_host'
+                rpc_server: &nuc_direct_rpc_server
+                    remote_app_dir: '/home/svc_sqa_automation/utf_rpc_app'
+                    remote_python: 'python3'
+                    create_venv: true
+                    remote_venv: '/home/svc_sqa_automation/.venv'
+                    venv_system_site_packages: true
+                    install_requirements: true
+                    refresh_source: true
+
+            bluetooth:
+                type: 'rpc.rpc_client_non_docker'
+                forward_to: 'raspi_ble_client:bluetooth'
+                host: 'ssh_host'
+                rpc_server:
+                    <<: *nuc_direct_rpc_server
+        harness:
+            devices:
+                raspi_ble_client:
+                    interfaces:
+                        linux_shell:
+                            type: 'shell.shell'
+                        bluetooth:
+                            type: 'bluetooth.bluez'
+                            shell: 'linux_shell'
+            defaults: { }
     # this represents an MQTT broker running on the raspberry pi on port 1883 with no authentication enabled
     raspi_mosquitto:
         interfaces:
@@ -856,7 +898,7 @@ defaults:
         - raspi_ble_client
         - secondary_raspi_ble_client
 
-    ble_client: 'raspi_ble_client'
+    ble_client: 'nuc_ble_client_non_docker'
 
     bt_client: 'raspi_bt_client'
 

@@ -1,6 +1,6 @@
 firmware:
-  rs911x: &firmware_file_anchor RS9116W_rt595.rps
-  rt595: sqa_test_agent-rt595-gcc_arm3.elf
+  #rs911x: &firmware_file_anchor 1611_RS9116_WC_SI_2.16.6.0004.rps
+  rt595: sqa_test_agent-rt595-gcc_arm+bt_2.16.6.0004_ag_enable_latest.elf
 
 
 #firmware_version_file: *firmware_file_anchor
