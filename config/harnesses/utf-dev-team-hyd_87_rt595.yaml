@@ -862,6 +862,19 @@ devices:
                 remote_capture_file_path: 'C:\\Users\\Public\\Documents\\WPS_Captures'
                 personality_key: 'X500'
                 wps_server_path: 'C:\\Program Files (x86)\\Teledyne LeCroy Wireless\\Wireless Protocol Suite 3.10\\Executables\\Core'
+    
+    rf_creations_sniffer:
+        interfaces:
+            sniffer:
+                src_dir: 'utf_wiseconnect'
+                type: 'bluetooth.sniffer.rf_creations_sniffer'
+                server_url: 'http://10.207.18.41:8585/'
+
+    dummy_sniffer:
+        interfaces:
+            sniffer:
+                src_dir: 'utf_wiseconnect'
+                type: 'bluetooth.sniffer.dummy_sniffer'
 
 # The entries in the defaults section define the default devices used in the test system, as well as default
 # settings for interface types

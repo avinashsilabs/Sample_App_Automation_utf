@@ -50,4 +50,15 @@ def test_nrf5340_le_audio(ble_client):
     time.sleep(180)
    
 
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+def test_rf_creations_sniffer(ble_sniffer):
+        logger().info("Connecting to BLE sniffer...")
+        ble_sniffer.interfaces.sniffer.connect()
+        time.sleep(5)  # Capture for 5 seconds
+        logger().info("Starting BLE sniffer capture...")
+        ble_sniffer.interfaces.sniffer.start_capture()
+        time.sleep(15)  # Capture for 15 seconds
+        logger().info("Stopping BLE sniffer capture...")
+        ble_sniffer.interfaces.sniffer.stop_capture()
+        # disconnection is handled in teardown as it is invoking as part of close, so no need to call disconnect here
 
