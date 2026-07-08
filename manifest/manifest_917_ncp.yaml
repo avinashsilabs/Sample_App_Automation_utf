@@ -73,6 +73,11 @@ firmware_applications:
         device_subtype: 'efr32'
         filename: '917_ncp/coex_custom_test_agent.hex'
 
+    test_lwip_stack:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: '917_ncp/test_agent_soc_lwip_stack.hex'
+
     test_twt_sta:
       - device_type: 'efx32'
         device_subtype: 'efr32'
