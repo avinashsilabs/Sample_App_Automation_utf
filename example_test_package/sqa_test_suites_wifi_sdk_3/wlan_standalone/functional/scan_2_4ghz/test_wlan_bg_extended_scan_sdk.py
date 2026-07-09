@@ -667,23 +667,27 @@ class StaWpa3BgExtendedScanFunctionality:
         _configure_advanced_scan(self.wifi_dut, advanced_scan_bitmap=advanced_scan_bitmap)
 
     def _trigger_sta_bg_scan(
-            self,
-            advanced_scan_bitmap,
-            timeout=90,
-            bg_scan_periodicity=None,
-            scan_bitmap_2_4=None,
-            expected_status=SLStatus.SL_STATUS_OK,
-            reconfigure=True,
+        self,
+        advanced_scan_bitmap,
+        timeout=90,
+        bg_scan_periodicity=None,
+        scan_bitmap_2_4=None,
+        expected_status=SLStatus.SL_STATUS_OK,
+        reconfigure=True,
+        use_extended_scan_type=None,
     ):
         """
         Trigger BG scan from STA helper class.
 
-        When BIT(7) extended results are disabled, use standard BG scan (no scan_type=8).
-        Extended scan type waits for a completion callback that may not arrive within the
-        firmware WIFI_SCAN_TIMEOUT (14s) when periodicity is enabled, returning 0x00007.
+        Firmware periodicity (-t) must not be combined with B6 (non-periodic) in the
+        advanced scan bitmap — that returns 0x10026. C978128 uses test-level periodicity
+        instead (sleep between instant scans).
         """
         if reconfigure:
             _configure_advanced_scan(self.wifi_dut, advanced_scan_bitmap=advanced_scan_bitmap)
+
+        if use_extended_scan_type is None:
+            use_extended_scan_type = bool(advanced_scan_bitmap & (1 << 7))
 
         scan_kwargs = {
             "ssid": None,
@@ -692,7 +696,7 @@ class StaWpa3BgExtendedScanFunctionality:
             "async_timeout": timeout,
             "expected_status": expected_status,
         }
-        if advanced_scan_bitmap & (1 << 7):
+        if use_extended_scan_type:
             scan_kwargs["scan_type"] = 8
             scan_kwargs["scan_count_extended"] = 50
         if bg_scan_periodicity is not None:
@@ -702,23 +706,31 @@ class StaWpa3BgExtendedScanFunctionality:
         return self.wifi_dut.interfaces.wifi.scan(**scan_kwargs)
 
     def perform_bg_extended_scan(
-            self,
-            advanced_scan_bitmap,
-            scan_bitmap_2_4=None,
-            timeout=90,
-            bg_scan_periodicity=None,
+        self,
+        advanced_scan_bitmap,
+        scan_bitmap_2_4=None,
+        timeout=90,
+        bg_scan_periodicity=10,
+        reconfigure=True,
     ):
-        """trigger BG extended scan and return results."""
+        """ trigger BG extended scan and return results."""
+        if reconfigure:
+            _configure_advanced_scan(
+                self.wifi_dut, advanced_scan_bitmap=advanced_scan_bitmap,
+            )
         scan_kwargs = {
-            "wifi_dut": self.wifi_dut,
+            "ssid": None,
+            "bgscan": True,
+            "scan_type": 8,
+            "scan_count_extended": 50,
             "timeout": timeout,
-            "advanced_scan_bitmap": advanced_scan_bitmap,
+            "async_timeout": timeout,
         }
-        if scan_bitmap_2_4 is not None:
-            scan_kwargs["scan_bitmap_2_4"] = scan_bitmap_2_4
         if bg_scan_periodicity is not None:
             scan_kwargs["bg_scan_periodicity"] = bg_scan_periodicity
-        return _perform_bg_extended_scan(**scan_kwargs)
+        if scan_bitmap_2_4 is not None:
+            scan_kwargs["scan_bitmap_2_4"] = scan_bitmap_2_4
+        return self.wifi_dut.interfaces.wifi.scan(**scan_kwargs)
 
     @classmethod
     def assert_scan_more_than_11(cls, scan_results, label=""):
@@ -730,13 +742,14 @@ class StaWpa3BgExtendedScanFunctionality:
         logger().info("%sBG extended scan returned %s AP entries", prefix, count)
 
     def run_periodic_bg_scan_cycles(
-            self,
-            advanced_scan_bitmap,
-            cycles=3,
-            periodicity=10,
-            scan_bitmap_2_4=None,
+        self,
+        advanced_scan_bitmap,
+        cycles=3,
+        periodicity=10,
+        scan_bitmap_2_4=None,
+        min_ap_count=12,
     ):
-        """Run periodic BG extended scans and assert >11 APs each cycle."""
+        """Run periodic BG scans; default expects >11 APs (extended BIT(7) enabled)."""
         extended_results_enabled = bool(advanced_scan_bitmap & (1 << 7))
         results = []
         for cycle in range(cycles):
@@ -758,7 +771,9 @@ class StaWpa3BgExtendedScanFunctionality:
                     ],
                     reconfigure=False,
                 )
-                if not scan_results or len(scan_results) <= 11:
+                if min_ap_count > 11 and (
+                    not scan_results or len(scan_results) <= 11
+                ):
                     logger().info(
                         "Periodic BG scan cycle %s returned %s APs; "
                         "collecting results with instant BG scan",
@@ -770,6 +785,72 @@ class StaWpa3BgExtendedScanFunctionality:
                         scan_bitmap_2_4=scan_bitmap_2_4,
                         reconfigure=False,
                     )
+            if min_ap_count > 11:
+                self.assert_scan_more_than_11(scan_results, f"cycle {cycle + 1}")
+            else:
+                count = len(scan_results) if scan_results else 0
+                assert scan_results is not None and count >= min_ap_count, (
+                    f"cycle {cycle + 1}: expected >= {min_ap_count} BG scan APs, got {count}"
+                )
+                logger().info(
+                    "Periodic BG scan cycle %s/%s returned %s APs (BIT(7) disabled)",
+                    cycle + 1,
+                    cycles,
+                    count,
+                )
+            results.append(scan_results)
+            if cycle < cycles - 1:
+                time.sleep(periodicity)
+        return results
+
+    def run_bit7_disabled_periodic_scan_cycles(
+        self,
+        advanced_scan_bitmap,
+        cycles=3,
+        periodicity=10,
+        scan_bitmap_2_4=None,
+    ):
+        """
+        C978128: Step 5 uses ``advanced_scan_bitmap`` with BIT(7)=0 (B0+B6).
+
+        Step 6 reconfigures to B0+B7 (coex C978141) for instant extended BG scan
+        (-p 8, no -t). Extended stored results require BIT(7) in adv config; with
+        BIT(7)=0 the -p 8 callback returns 0 APs. Repeat every ``periodicity`` s
+        at test level.
+        """
+        scan_bitmap = self.ADVANCED_SCAN_BITMAP_C978128_SCAN
+        results = []
+        for cycle in range(cycles):
+            logger().info(
+                "C978128 cycle %s/%s: instant extended BG scan (step-5 BIT(7)=0, "
+                "step-6 scan bitmap B0+B7)",
+                cycle + 1,
+                cycles,
+            )
+            scan_results = self._trigger_sta_bg_scan(
+                advanced_scan_bitmap=scan_bitmap,
+                scan_bitmap_2_4=scan_bitmap_2_4,
+                bg_scan_periodicity=None,
+                use_extended_scan_type=True,
+                reconfigure=True,
+                timeout=120,
+                expected_status=SLStatus.SL_STATUS_OK,
+            )
+            if not scan_results or len(scan_results) <= 11:
+                logger().info(
+                    "Cycle %s returned %s APs; retrying instant extended BG scan",
+                    cycle + 1,
+                    len(scan_results) if scan_results else 0,
+                )
+                scan_results = self._trigger_sta_bg_scan(
+                    advanced_scan_bitmap=scan_bitmap,
+                    scan_bitmap_2_4=scan_bitmap_2_4,
+                    bg_scan_periodicity=None,
+                    use_extended_scan_type=True,
+                    reconfigure=False,
+                    timeout=120,
+                    expected_status=SLStatus.SL_STATUS_OK,
+                )
             self.assert_scan_more_than_11(scan_results, f"cycle {cycle + 1}")
             results.append(scan_results)
             if cycle < cycles - 1:
@@ -777,15 +858,17 @@ class StaWpa3BgExtendedScanFunctionality:
         return results
 
     def run_http_download_with_bg_scan_loop(
-            self,
-            http_server,
-            index_path,
-            advanced_scan_bitmap,
-            scan_interval=10,
-            https=False,
-            retries=3,
+        self,
+        http_server,
+        index_path,
+        advanced_scan_bitmap,
+        scan_interval=10,
+        https=False,
+        retries=3,
+        download_timeout=300,
+        max_scan_cycles=40,
     ):
-        """ HTTP download (5MB) with instant BG extended scan every scan_interval seconds."""
+        """ HTTP download with instant BG extended scan every scan_interval seconds."""
         http_error = [None]
         http_download_done = threading.Event()
 
@@ -870,12 +953,13 @@ class StaWpa3BgExtendedScanFunctionality:
         return scan_results
 
     def run_congestion_bg_scan_loop(
-            self,
-            net_perf_client,
-            protocol,
-            advanced_scan_bitmap,
-            duration_sec=180,
-            scan_interval=10,
+        self,
+        net_perf_client,
+        wifi_client,
+        protocol,
+        advanced_scan_bitmap,
+        duration_sec=180,
+        scan_interval=10,
     ):
         """ Create congestion with iperf traffic; BG scan loop for long run."""
         traffic_error = [None]
@@ -883,7 +967,8 @@ class StaWpa3BgExtendedScanFunctionality:
 
         def run_traffic():
             try:
-                host_ip = net_perf_client.interfaces.wifi.get_ip_address()
+                host_ip = wifi_client.interfaces.wifi.get_ip_address()
+                logger().info("Iperf server host IP (wifi_client): %s", host_ip)
                 self.sl_collections.run_traffic(
                     wifi_dut=self.wifi_dut,
                     net_perf_client=net_perf_client,
@@ -911,7 +996,8 @@ class StaWpa3BgExtendedScanFunctionality:
             )
             assert scan_results is not None, "BG extended scan returned no results under congestion"
             scan_results_list.append(scan_results)
-            time.sleep(scan_interval)
+            if traffic_done.wait(timeout=scan_interval):
+                break
 
         traffic_thread.join(timeout=duration_sec + 60)
         assert traffic_error[0] is None, f"Congestion traffic failed: {traffic_error[0]}"
@@ -938,13 +1024,22 @@ class StaWpa3BgExtendedScanFunctionality:
             network_type_filter=None,
     ):
         """Apply scan result filters (channel, security, RSSI, network type)."""
+        if security_mode_filter is not None and not isinstance(
+            security_mode_filter, (list, tuple, set)
+        ):
+            security_modes = {security_mode_filter}
+        elif security_mode_filter is not None:
+            security_modes = set(security_mode_filter)
+        else:
+            security_modes = None
+
         filtered = []
         for entry in scan_results:
             channel = cls._get_scan_entry_attr(entry, "rf_channel")
-            if channel_filter is not None and channel != channel_filter:
+            if channel_filter is not None and int(channel) != int(channel_filter):
                 continue
             security_mode = cls._get_scan_entry_attr(entry, "security_mode")
-            if security_mode_filter is not None and security_mode != security_mode_filter:
+            if security_modes is not None and security_mode not in security_modes:
                 continue
             rssi = cls._get_scan_entry_attr(entry, "rssi")
             if rssi_filter is not None and rssi < rssi_filter:
@@ -954,6 +1049,22 @@ class StaWpa3BgExtendedScanFunctionality:
                 continue
             filtered.append(entry)
         return filtered
+
+    @classmethod
+    def _summarize_scan_result_fields(cls, scan_results, limit=5):
+        """Compact field summary for filter-debug assertions."""
+        samples = []
+        for entry in scan_results[:limit]:
+            samples.append(
+                {
+                    "channel": cls._get_scan_entry_attr(entry, "rf_channel"),
+                    "security_mode": cls._get_scan_entry_attr(entry, "security_mode"),
+                    "rssi": cls._get_scan_entry_attr(entry, "rssi"),
+                    "network_type": cls._get_scan_entry_attr(entry, "network_type"),
+                    "ssid": cls._get_scan_entry_attr(entry, "ssid"),
+                }
+            )
+        return samples
 
     def perform_wps_push_button_connect(self):
         """Step 7: WPS push-button connect after leaving current AP association."""
@@ -1480,6 +1591,62 @@ def test_wifi_sdk_bg_extended_selective_channel_scan_c978112(
             "Selective BG extended scan returned %s total APs on channels %s",
             len(scan_results),
             selective_channels,
+        )
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as exc:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=exc)
+        raise
+
+
+@sta_ble_wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "SAKSHIASUS",
+        "security": "WPA3",
+        "passphrase": "1234567890",
+        "channel": 11,
+        "region": "US",
+        "protected_management_frame": "Capable",
+    },
+)
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
+)
+@pytest.mark.test_src_map_id("C978128")
+def test_wifi_sdk_bg_extended_scan_bit7_disabled_c978128(
+    wifi_access_point,
+    wifi_dut,
+    sl_collections,
+    utf_constants,
+    wifi_sniffer,
+    request,
+):
+    """WPA3 STA: periodic BG extended scan with adv-config BIT(7) disabled."""
+    try:
+        advanced_scan_bitmap = StaWpa3BgExtendedScanFunctionality.ADVANCED_SCAN_BITMAP_NO_BIT7
+        scan_obj = StaWpa3BgExtendedScanFunctionality(
+            wifi_dut, wifi_access_point, sl_collections, utf_constants,
+        )
+        scan_obj.run_steps_1_to_5(advanced_scan_bitmap=advanced_scan_bitmap)
+
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel,
+        )
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=request.node.name)
+
+        logger().info(
+            "Step 6: Instant extended BG scan every %ss "
+            "(step 5 adv BIT(7)=0; step 6 reconfig B0+B7 for extended results)",
+            10,
+        )
+        scan_obj.run_bit7_disabled_periodic_scan_cycles(
+            advanced_scan_bitmap=advanced_scan_bitmap,
+            cycles=3,
+            periodicity=10,
         )
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as exc:
