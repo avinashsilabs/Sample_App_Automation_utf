@@ -943,7 +943,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_500ms_no_tw
 
              # logger().info(f"\n Execute M4 power save \n")
              # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
-        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=500)
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(interface="client", listen_interval=500)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
             wifi_sniffer=wifi_sniffer,
@@ -988,7 +988,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_55_listen_interval_800ms_no_tw
             pass
             # logger().info(f"\n Execute M4 power save \n")
             # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
-        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=800)
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(interface="client", listen_interval=800)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
             wifi_sniffer=wifi_sniffer,
@@ -1053,7 +1053,7 @@ def test_wifi_sdk_verify_dut_behaviour_rx_latency_5_secs_listen_interval_700ms_n
             # logger().info(f"\n Execute M4 power save \n")
             # wifi_dut.interfaces.wifi.m4_ta_secure_handshake()
         for count in range(3):
-            wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=700)
+            wifi_dut.interfaces.wifi.wifi_set_listen_interval(interface="client", listen_interval=700)
             twt_autoconfig_obj = TWT_AUTOCONFIG(
                 wifi_dut=wifi_dut,
                 wifi_sniffer=wifi_sniffer,
@@ -1110,7 +1110,7 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
         None
     """
     try:
-        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=1000)
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(interface="client", listen_interval=1000)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
             wifi_sniffer=wifi_sniffer,
@@ -1165,7 +1165,7 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
         None
     """
     try:
-        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=1000)
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(interface="client", listen_interval=1000)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
             wifi_sniffer=wifi_sniffer,
@@ -1220,7 +1220,7 @@ def test_wifi_sdk_camera_app_verify_dut_behaviour_rx_latency_55_listen_interval_
         None
     """
     try:
-        wifi_dut.interfaces.wifi.wifi_set_listen_interval(listen_interval=500)
+        wifi_dut.interfaces.wifi.wifi_set_listen_interval(interface="client", listen_interval=500)
         twt_autoconfig_obj = TWT_AUTOCONFIG(
             wifi_dut=wifi_dut,
             wifi_sniffer=wifi_sniffer,
