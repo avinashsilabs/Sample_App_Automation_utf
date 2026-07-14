@@ -1616,19 +1616,14 @@ def test_wifi_sdk_ble_provisioning_single_SSL_socket_validation_C700183(
                                    ble_client_address=ble_obj.ble_client_address,
                                    ble_dut_address=ble_obj.ble_dut_address)
 
-@pytest.mark.skip()
+
 @wifi_dut_marker(with_certificates=True)
-@pytest.mark.end_state("wifi_dut", wifi=[])
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
 @pytest.mark.test_src_map_id('C708768')
 def test_wifi_sdk_ble_provisioning_deinit_validation_C708768(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, aws_iot_client, request,
         utf_constants):
     """Verify BLE and WLAN connection using STA+BLE provisioning app by configuring Maximum BLE Conn interval with AWS IoT connectivity"""
-    ble_obj = None
-    deinit_done = False
-
-    # Important: reset stale flag from previous repeat iteration
-    wifi_dut.interfaces.wifi.is_deinitialized = False
     try:
         # -----------------------------------------------------------------
         # Sniffer Capture
@@ -1787,71 +1782,75 @@ def test_wifi_sdk_ble_provisioning_deinit_validation_C708768(
 
             logger().info("\n\n*** Parallel Publish and Validation Completed Successfully ***\n")
 
-            # Unsubscribe and disconnect
             logger().info("\n\nCleaning up AWS connections")
             logger().info("DUT Unsubscribing from aws topic")
-            wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_raspi)
+
+            try:
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_raspi)
+            except Exception as e:
+                logger().warning(f"AWS unsubscribe failed/skipped: {e}")
 
             logger().info("Initiating aws_iot_disconnect from DUT")
-            wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+
+            try:
+                wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
+            except Exception as e:
+                logger().warning(f"AWS disconnect failed/skipped: {e}")
+
             time.sleep(10)
 
-            wifi_dut.interfaces.wifi.clear_certificate()
+            try:
+                wifi_dut.interfaces.wifi.clear_certificate()
+            except Exception as e:
+                logger().warning(f"clear_certificate failed/skipped: {e}")
 
             logger().info("\n\n******************** AWS IoT Testing Completed Successfully ********************\n\n")
 
-            wifi_sniffer.interfaces.capture.stop_capture()
-            logger().info("Stop the Sniffer")
+            try:
+                wifi_sniffer.interfaces.capture.stop_capture()
+                logger().info("Stop the Sniffer")
+            except Exception as e:
+                logger().warning(f"Sniffer stop failed/skipped: {e}")
+
+            # Bring DUT out of power-save before BLE disconnect and deinit
+            logger().info("Disabling power-save before deinit")
+
+            try:
+                wifi_dut.interfaces.wifi.wifi_powersave_disable()
+            except Exception as e:
+                logger().warning(f"wifi_powersave_disable failed/skipped: {e}")
+
+            try:
+                ble_dut.interfaces.bluetooth.bt_powersave_disable()
+            except Exception as e:
+                logger().warning(f"bt_powersave_disable failed/skipped: {e}")
+
+            time.sleep(5)
+
+            logger().info("\n\n********************* BLE Disconnect *************************\n\n")
+
+            try:
+                ble_obj.ble_disconnect()
+            except Exception as e:
+                logger().warning(f"BLE disconnect failed/skipped: {e}")
+
+            # Allow BLE disconnect event to settle before deinit
+            time.sleep(8)
 
             logger().info("\n\n********************* De-init functionality validation ********************\n\n")
-
-            wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
-
-            deinit_done = True
-            wifi_dut.interfaces.wifi.is_deinitialized = True
-
+            wifi_dut.interfaces.wifi.deinit()
             logger().info("wifi.deinit completed successfully")
+
+            logger().info("\n\n********************* Init functionality validation ********************\n\n")
+            # wifi_dut.interfaces.wifi.init(mode="client", config_required=False, timeout=30)
+            wifi_dut.interfaces.wifi.init()
+
+            fw_version = wifi_dut.interfaces.wifi.get_fw_version()
+            logger().info(f"....Firmware version of DUT is {fw_version}....")
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
-    # finally:
-    #     try:
-    #         wifi_sniffer.interfaces.capture.stop_capture()
-    #
-    #     except Exception as sniffer_ex:
-    #         logger().warning(f"Sniffer stop skipped/failed: {sniffer_ex}")
-    #     if ble_obj is not None:
-    #         if not deinit_done:
-    #             try:
-    #                 ble_obj.ble_cleanup_disconn()
-    #             except Exception as cleanup_ex:
-    #                 logger().warning(f"BLE cleanup failed/skipped: {cleanup_ex}")
-    #         else:
-    #             logger().info("Skipping DUT-side BLE/Wi-Fi cleanup because wifi.deinit was already done")
-    #         try:
-    #             if getattr(ble_obj, "ble_dut_address", None):
-    #                 ble_client.interfaces.bluetooth.remove_device(ble_obj.ble_dut_address)
-    #             else:
-    #                 logger().info("Skipping remove_device because ble_dut_address is None")
-    #         except Exception as remove_ex:
-    #             logger().warning(f"BLE remove_device failed/skipped: {remove_ex}")
-    #         try:
-    #             ble_client.interfaces.bluetooth.close()
-    #         except Exception as close_ex:
-    #             logger().warning(f"BLE client close failed/skipped: {close_ex}")
-    #         if not deinit_done:
-    #             try:
-    #                 sl_collections.cleanup_ble(
-    #                     ble_dut=wifi_dut,
-    #                     ble_client=ble_client,
-    #                     ble_client_address=ble_obj.ble_client_address,
-    #                     ble_dut_address=ble_obj.ble_dut_address,
-    #                 )
-    #             except Exception as cleanup_ble_ex:
-    #                 logger().warning(f"sl_collections.cleanup_ble failed/skipped: {cleanup_ble_ex}")
-    #         else:
-    #             logger().info("Skipping sl_collections.cleanup_ble because wifi.deinit was already done")
 
 @pytest.mark.skip()
 @wifi_dut_marker(with_certificates=True)
