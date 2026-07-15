@@ -2654,9 +2654,8 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_11n_full_sae_C468611(wifi_sniffer
                                                                     request, sl_collections, remote_wiseconnect3,
                                                                     sniffer_filter):
     try:
+        snif_pkt_count = ""
         ping_count = utf_constants.get("ping_count")
-        ap_mac = wifi_dut.interfaces.wifi.get_mac_address(2)
-        logger().info(f"\n DUT AS ACCESS POINT MAC ADDRESS: {ap_mac} \n")
         sec_sdk_mac = remote_wiseconnect3.interfaces.sapi.get_mac_address()
         logger().info(f"\n DUT AS STATION MAC ADDRESS : {sec_sdk_mac} \n")
         wifi_sniffer.interfaces.capture.configure_interface(
@@ -2672,6 +2671,8 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_11n_full_sae_C468611(wifi_sniffer
                                                        wifi_access_point=wifi_access_point,
                                                        associated=wifi_dut.interfaces.wifi.associated,
                                                        power_save=False, ping_after_power_save=False)
+        ap_mac = wifi_dut.interfaces.wifi.get_mac_address(2)
+        logger().info(f"\n DUT AS ACCESS POINT MAC ADDRESS: {ap_mac} \n")
         remote_wiseconnect3.interfaces.sapi.set_join_feature_bitmap(
             join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
         )
@@ -2699,13 +2700,15 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_11n_full_sae_C468611(wifi_sniffer
         remote_wiseconnect3.interfaces.sapi.leave()
         wifi_dut.interfaces.wifi.leave()
         wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info(f"\n ***********{ap_mac}**********")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=ap_mac,
             da_addr=sec_sdk_mac,
             filter_name="wpa3_confirm_commit_message_with_addr")
         logger().info(f"\n\n\n Sniffer Filter = {packet_filter1}\n\n")
-        snif_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
-            'find_packet_num']
+        snif_pkt_count = int(wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+            'find_packet_num'])
+        logger().info(f"\n ********** Confirm and Commit messages found in sniffer = {snif_pkt_count} ********** \n")
         assert int(
             snif_pkt_count) == 4, "\n ********** Expected 4 packets found in sniffer comprising of Confirm and Commit messages ********** \n"
 
