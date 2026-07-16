@@ -798,7 +798,7 @@ def test_wifi_sdk_conn_wpa3_in_concurrent_mode_C463723(wifi_sniffer, wifi_access
 @pytest.mark.remote_wiseconnect3("remote_wiseconnect3")
 @pytest.mark.config(
     "remote_wiseconnect3",
-    sapi={
+    wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "oper_mode": Si91xOperatingMode.WiFiClient,
         "coex_mode": Si91xCoexMode.WLANOnly,
@@ -830,7 +830,7 @@ def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_p
         beacon_interval = "100"
         ht_caps = 1
         test_name = request.node.name
-        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address(2)
         logger().info(f"DUT MAC is : {dut_mac_addr}")
         time.sleep(1)
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
@@ -845,7 +845,6 @@ def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_p
                                           dtim_beacon_count=dtim_count,
                                           beacon_interval=beacon_interval,
                                           ht_caps=ht_caps)
-        time.sleep(5)
         conc_dut_mac_addr = wifi_dut.interfaces.wifi.get_mac_address(2)
         logger().info(f"#####********>>>>>>>>Concurrent DUT_MAC is : {conc_dut_mac_addr}")
         wifi_dut.interfaces.wifi.set_join_feature_bitmap(
@@ -857,7 +856,7 @@ def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_p
                                                        power_save=False, ping_after_power_save=False)
         time.sleep(2)
         trafffic_obj = Data_transfer(wifi_dut=wifi_dut, sl_collections=sl_collections, wifi_client=wifi_client,
-                                     net_perf_client=net_perf_client, device_ip=dut_addr['device_ip'])
+                                     net_perf_client=net_perf_client, device_ip=dut_addr['device_ip'], test_case_no=463707)
         trafffic_obj.start()
         time.sleep(2)
         remote_wiseconnect3.interfaces.sapi.set_join_feature_bitmap(
@@ -875,6 +874,7 @@ def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_p
                                                      static_subnet=static_subnet,
                                                      static_gateway=static_gateway, timeout=10)
         time.sleep(30)
+        trafffic_obj.wait_for_exit()
         wifi_dut.interfaces.wifi.leave()
         time.sleep(1)
         remote_wiseconnect3.interfaces.sapi.leave()
