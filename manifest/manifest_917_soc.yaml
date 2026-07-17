@@ -93,6 +93,11 @@ firmware_applications:
         device_subtype: 'efr32'
         filename: 'test_agent_soc_lwip_stack.rps'
 
+    test_ipv6_lwip:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_4_1_1_FC_LLVM_IPV6_mem_config3.rps'
+
     test_azure:
       - device_type: 'efx32'
         device_subtype: 'efr32'

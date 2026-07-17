@@ -24,12 +24,14 @@ from retry import retry
 from utf.utils import get_tls_certificate_dir
 from AWSIoTPythonSDK.core.protocol.internal.clients import ClientStatus
 
+
 def logger():
     return get_logger(__name__)
 
 
 def text_generator(size=2000):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
+
 
 """ Test Steps:
         1. Configure the DUT in Wlan for 2.4Gh with LWIP stack default timer enabled and validate the WLAN functionality.
@@ -57,6 +59,7 @@ Map_security = {
     "WPA3_TRANSITION_ENTERPRISE": 10,
 }
 
+
 class UDPTXThread(ThreadBase):
     """This thread is responsible for TCP data transfer"""
 
@@ -71,7 +74,6 @@ class UDPTXThread(ThreadBase):
         self.net_perf_client = net_perf_client
         self.port = port
 
-
     def run(self):
         transfer_type = 2  # UDP
         throughput_type = 2  # UDP TX
@@ -84,22 +86,24 @@ class UDPTXThread(ThreadBase):
         self.net_perf_client.interfaces.net_perf.start()
 
         self.wifi_dut.interfaces.wifi.iperf(family=2, transfer_type=transfer_type, protocol=17,
-                                       local_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                       local_ip=dut_ip, remote_ip=host_ip,
-                                       remote_port=self.net_perf_client.interfaces.net_perf.server_port,
-                                       size=pkt_size, ttl=duration, throughput_type=throughput_type, timeout=timeout,
-                                       host_tcp_ip_stack_enable=1)
+                                            local_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                            local_ip=dut_ip, remote_ip=host_ip,
+                                            remote_port=self.net_perf_client.interfaces.net_perf.server_port,
+                                            size=pkt_size, ttl=duration, throughput_type=throughput_type,
+                                            timeout=timeout,
+                                            host_tcp_ip_stack_enable=1)
         tp = self.net_perf_client.interfaces.net_perf.process_output()
         assert tp is not None, f"throughput not Found"
         logger().info("\n ================ data transfer is successful ================= \n ")
         self.net_perf_client.interfaces.net_perf.iperf_process.stop(5)
         time.sleep(5)
 
+
 class TCPTXThread(ThreadBase):
     """This thread is responsible for TCP data transfer"""
 
     def __init__(self, wifi_dut=None, wifi_client=None, device_ip=None, protocol=None, keepalive_timeout=0,
-                 remote_socket_factory=None, port=5001, no_of_pkts=1, data_transfer=True):
+                 remote_socket_factory=None, port=5001, no_of_pkts=1, data_transfer=True, close=False):
         super().__init__()
         self.thread_lock = threading.Lock()
         self.wifi_dut = wifi_dut
@@ -113,6 +117,7 @@ class TCPTXThread(ThreadBase):
         self.no_of_pkts = no_of_pkts
         self.port = port
         self.data_transfer = data_transfer
+        self.close = close
 
     def tx_data_transfer(self):
         data_length = 50
@@ -141,11 +146,15 @@ class TCPTXThread(ThreadBase):
                                                                             protocol="IPPROTO_TCP")
         logger().info(f"\n ****** Socket open successfully : {self.client_socket} ****** \n")
 
+        self.wifi_dut.interfaces.wifi.lwipSocketBind(socket_fd=self.client_socket, device_ip=self.device_ip,
+                                                     server_port=local_port)
+
         if self.keepalive_timeout > 0:
             self.wifi_dut.interfaces.wifi.lwipSetSocketOpt(socket_fd=self.client_socket, option_level="SOL_SOCKET",
                                                            option_name="SO_KEEPALIVE", option_val=1)
             self.wifi_dut.interfaces.wifi.lwipSetSocketOpt(socket_fd=self.client_socket, option_level="IPPROTO_TCP",
-                                                           option_name="TCP_KEEPIDLE", option_val=30)
+                                                           option_name="TCP_KEEPALIVE",
+                                                           option_val=self.keepalive_timeout * 1000)
             logger().info(f"\n ****** Keepalive timeout {self.keepalive_timeout} sec set successfully on DUT ******\n")
 
         connect_status = False
@@ -157,7 +166,7 @@ class TCPTXThread(ThreadBase):
                 break
             except:
                 logger().info(f"\n ****** Socket connection failed in DUT...retry_count:{count + 1} ****** \n")
-        
+
         assert connect_status, "Socket connection failed in DUT after 3 attempts"
         logger().info("\n *********** Socket connection is successful ************ \n")
 
@@ -167,6 +176,9 @@ class TCPTXThread(ThreadBase):
         if self.keepalive_timeout > 0:
             logger().info("Verifying keepalive functionality by waiting for timeout period...")
             time.sleep(self.keepalive_timeout * 3)
+        if self.close:
+            self.wifi_dut.interfaces.wifi.lwipSockClose(socket_fd=self.client_socket)
+            logger().info(f"\n ****** Socket closed successfully in DUT ****** \n")
 
 
 class TCPRXThread(ThreadBase):
@@ -337,7 +349,7 @@ class WifiThread(ThreadBase):
                     epoch_match = re.search(r"Epoch Time:\s+([\d.]+)", line)
                     if epoch_match:
                         epoch_times.append(float(epoch_match.group(1)))
-                        
+
             logger().info(f"Extracted NAK epoch times: {epoch_times}")
             return epoch_times
 
@@ -363,7 +375,7 @@ class WifiThread(ThreadBase):
                                                 passphrase=self.wifi_access_point.interfaces.wifi.passphrase,
                                                 security=self.wifi_access_point.interfaces.wifi.security.name.lower(),
                                                 timeout=60)
-        ip_config = self.wifi_dut.interfaces.wifi.lwip_start_ip(timeout=30, ip_version=self.ip_version)
+        ip_config = self.wifi_dut.interfaces.wifi.lwip_start_ip(timeout=60, ip_version=self.ip_version)
 
         if self.ip_version == 'ipv6':
             # For LWIP stack, only link-local address is implemented
@@ -373,7 +385,7 @@ class WifiThread(ThreadBase):
             self.device_ip = self.wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
         logger().info(f"\n =========== DUT IP address is : {self.device_ip} =========== \n")
-
+        time.sleep(15)
         logger().info("=========== pinging DUT before power save ===============")
         if self.ip_version == 'ipv6':
             status = self.sl_collections.ping_ipv6_link_local(device_ipv6=self.device_ip, interface='wlan0',
@@ -482,7 +494,7 @@ class WifiJoinThread(ThreadBase):
 
         logger().info("=========== pinging DUT before power save ===============")
         if self.ip_version == 'ipv6':
-            status = self.sl_collections.ping_ipv6_link_local(device_ipv6=self.device_ip, interface='wlan0',
+            status = self.sl_collections.ping_ipv6_link_local(device_ipv6=self.device_ip, interface="wlan0",
                                                               ping_count=10)
         else:
             status = self.sl_collections.ping(device_ip=self.device_ip, ping_count=10)
@@ -517,13 +529,15 @@ class WifiJoinThread(ThreadBase):
         if self.stop_capture:
             self.wifi_sniffer.interfaces.capture.stop_capture()
 
+
 class AwsConnection(ThreadBase):
     """
     Class to connect, subscribe, publish data from DUT/Raspi to AWS server.
     """
 
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, sl_collections=None, test_name=None,
-                 aws_iot_client=None, client_id=None, messages=None, topic=None, qos=Si91xAwsQos.QOS1, port=8883, negative_case=False,
+                 aws_iot_client=None, client_id=None, messages=None, topic=None, qos=Si91xAwsQos.QOS1, port=8883,
+                 negative_case=False,
                  test_case=None):
         super().__init__()
         self.client_id = None
@@ -597,7 +611,7 @@ class AwsConnection(ThreadBase):
     def subscribe_from_dut(self, timeout=120):
         logger().info(f"DUT is Subscribing on topic '{self.topic}' and QOS:'{self.qos}'")
         self.wifi_dut.interfaces.wifi.aws_lwip_mqtt_subscribe_command_handler(topic=self.topic, qos_level=self.qos,
-                                                                         timeout=timeout)
+                                                                              timeout=timeout)
 
     @retry(Exception, delay=10, tries=5)
     def connect_to_aws_server_from_raspi(self):
@@ -671,7 +685,7 @@ class AwsConnection(ThreadBase):
                     raise
                 time.sleep(5)
 
-    def connect_to_aws_server_from_dut(self, keep_alive=1200, timeout=120):
+    def connect_to_aws_server_from_dut(self, timeout=120):
         ca_cert, ca_cert_size = self.load_certificate(certificate="start_field.pem")
         client_cert, client_cert_size = self.load_certificate(certificate="client-certificate.crt")
         client_key, client_key_size = self.load_certificate(certificate="private-key.key")
@@ -688,9 +702,7 @@ class AwsConnection(ThreadBase):
                                                                                  client_key_length=client_key_size,
                                                                                  timeout=timeout)
                 time.sleep(2)
-                self.wifi_dut.interfaces.wifi.aws_lwip_mqtt_connect_command_handler(client_id=self.client_id,
-                                                                                    keepalive_interval=keep_alive,
-                                                                                    timeout=timeout)
+                self.wifi_dut.interfaces.wifi.aws_lwip_mqtt_connect_command_handler(client_id=self.client_id)
                 logger().info(f"AWS connection successful on attempt {attempt + 1}")
                 return True
             except Exception as e:
@@ -719,7 +731,8 @@ class AwsConnection(ThreadBase):
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -732,7 +745,7 @@ class AwsConnection(ThreadBase):
 )
 @pytest.mark.test_src_map_id('C919174')
 def test_wifi_sdk_dhcp_2_min_renewal_func_lwip_c919174(wifi_sniffer, wifi_access_point, wifi_dut,
-                                                       request, sl_collections, sniffer_filter):
+                                                       request, sl_collections, sniffer_filter, wifi_client):
     """This test case verifies DHCP renewal time to 2 min renewal functionality in LWIP stack for 30 min duration using LWIP Stack"""
     capture_filename = request.node.name
     time_delta = 60
@@ -750,7 +763,7 @@ def test_wifi_sdk_dhcp_2_min_renewal_func_lwip_c919174(wifi_sniffer, wifi_access
     ack_status = None
     wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
-                              test_case_no=919174)
+                              test_case_no=919174, wifi_client=wifi_client)
 
     try:
         wlan_obj.start()
@@ -842,7 +855,8 @@ def test_wifi_sdk_dhcp_2_min_renewal_func_lwip_c919174(wifi_sniffer, wifi_access
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -881,7 +895,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c919180(
 
         tcp_thread = TCPTXThread(wifi_dut=wifi_dut, wifi_client=wifi_client, device_ip=wifi_thread.device_ip,
                                  protocol=protocol,
-                                 remote_socket_factory=remote_socket_factory, keepalive_timeout=30, no_of_pkts=10)
+                                 remote_socket_factory=remote_socket_factory, data_transfer=True, close=True)
         tcp_thread.start()
         tcp_thread.wait_for_exit()
 
@@ -938,7 +952,8 @@ def test_wifi_sdk_tcp_open_send_close_socket_c919180(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1031,7 +1046,8 @@ def test_wifi_sdk_verify_tcp_keep_alive_functionality_c919181(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1068,7 +1084,7 @@ def test_wifi_sdk_tcp_tx_rx_simultaneously_c919183(
         wifi_thread.start()
         wifi_thread.wait_for_exit()
         tcp_tx_thread = TCPTXThread(wifi_dut=wifi_dut, wifi_client=wifi_client, device_ip=wifi_thread.device_ip,
-                                    protocol=protocol, remote_socket_factory=remote_socket_factory, no_of_pkts=100)
+                                    protocol=protocol, remote_socket_factory=remote_socket_factory, no_of_pkts=100, close=True)
         tcp_rx_thread = TCPRXThread(wifi_dut=wifi_dut, wifi_client=wifi_client, device_ip=wifi_thread.device_ip,
                                     protocol=protocol, remote_socket_factory=remote_socket_factory, no_of_pkts=100)
         tcp_tx_thread.start()
@@ -1129,7 +1145,8 @@ def test_wifi_sdk_tcp_tx_rx_simultaneously_c919183(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1169,14 +1186,13 @@ def test_wifi_sdk_2_tcp_client_data_transfer_using_1_socket_c919184(
         logger().info("Starting data transfer on socket 1")
         tcp_tx_thread1 = TCPTXThread(wifi_dut=wifi_dut, wifi_client=wifi_client, device_ip=wifi_thread.device_ip,
                                      protocol=protocol, remote_socket_factory=remote_socket_factory, port=5001,
-                                     keepalive_timeout=30, no_of_pkts=1)
+                                     no_of_pkts=100, close=True)
         tcp_tx_thread1.start()
         tcp_tx_thread1.wait_for_exit()
 
-        logger().info("Starting data transfer on socket 2 and keep the socket 1 in idle state")
+        logger().info("Creating socket 2 and starting data transfer on socket 1")
         tcp_tx_thread2 = TCPTXThread(wifi_dut=wifi_dut, wifi_client=wifi_client, device_ip=wifi_thread.device_ip,
-                                     protocol=protocol, remote_socket_factory=remote_socket_factory, port=5002,
-                                     no_of_pkts=100)
+                                     protocol=protocol, remote_socket_factory=remote_socket_factory, port=5002)
         tcp_tx_thread2.start()
         tcp_tx_thread2.wait_for_exit()
 
@@ -1227,7 +1243,8 @@ def test_wifi_sdk_2_tcp_client_data_transfer_using_1_socket_c919184(
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1292,7 +1309,8 @@ def test_wifi_sdk_dhcp_garp_verification_c919194(sniffer_filter, wifi_access_poi
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1447,7 +1465,8 @@ def test_wifi_sdk_dhcp_deinit_init_cycle_garp_verification_c919225(sniffer_filte
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1460,7 +1479,7 @@ def test_wifi_sdk_dhcp_deinit_init_cycle_garp_verification_c919225(sniffer_filte
 )
 @pytest.mark.test_src_map_id('C919228')
 def test_wifi_sdk_dhcp_renewal_LWIP_congestion_env_c919228(wifi_sniffer, wifi_access_point, wifi_dut,
-                                                           request, sl_collections, sniffer_filter):
+                                                           request, sl_collections, sniffer_filter, wifi_client):
     """This test case verifies DHCP renewal functionality in LWIP stack under congestion environment using LWIP Stack"""
     capture_filename = request.node.name
 
@@ -1473,7 +1492,7 @@ def test_wifi_sdk_dhcp_renewal_LWIP_congestion_env_c919228(wifi_sniffer, wifi_ac
     }
     wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
-                              test_case_no=919228, leave=False, stop_capture=False)
+                              test_case_no=919228, leave=False, stop_capture=False, wifi_client=wifi_client)
 
     try:
         wlan_obj.start()
@@ -1521,7 +1540,8 @@ def test_wifi_sdk_dhcp_renewal_LWIP_congestion_env_c919228(wifi_sniffer, wifi_ac
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1614,7 +1634,8 @@ def test_wifi_sdk_dhcp_renewal_LWIP_after_AP_reboot_c919227(wifi_sniffer, wifi_a
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1627,8 +1648,9 @@ def test_wifi_sdk_dhcp_renewal_LWIP_after_AP_reboot_c919227(wifi_sniffer, wifi_a
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.test_src_map_id('C919195')
-def test_wifi_sdk_udp_tx_lwip_c919195(sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer, request,
-        net_perf_client, wifi_client, protocol):
+def test_wifi_sdk_udp_tx_lwip_c919195(sniffer_filter, wifi_access_point, wifi_dut, sl_collections, wifi_sniffer,
+                                      request,
+                                      net_perf_client, wifi_client, protocol):
     """This test case Verifies the udp client socket is open, send data,close functionality using LWIP Stack"""
     try:
         test_name = request.node.name
@@ -1687,7 +1709,8 @@ def test_wifi_sdk_udp_tx_lwip_c919195(sniffer_filter, wifi_access_point, wifi_du
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1701,7 +1724,9 @@ def test_wifi_sdk_udp_tx_lwip_c919195(sniffer_filter, wifi_access_point, wifi_du
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
 @pytest.mark.config("wifi_client", wifi={"interface": "wlan0"})
 @pytest.mark.test_src_map_id('C919190')
-def test_wifi_sdk_ipv6_functionality_lwip_c919190(sniffer_filter, wifi_access_point, wifi_dut, sl_collections,
+@pytest.mark.firmware_app("test_ipv6_lwip")
+def test_wifi_sdk_ipv6_functionality_lwip_c919190(firmware_loader, sniffer_filter, wifi_access_point, wifi_dut,
+                                                  sl_collections,
                                                   wifi_sniffer, request,
                                                   net_perf_client, wifi_client, protocol):
     """This test case Verifies the IPV6 functionality using LWIP Stack with default timer"""
@@ -1767,7 +1792,8 @@ def test_wifi_sdk_ipv6_functionality_lwip_c919190(sniffer_filter, wifi_access_po
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1779,13 +1805,15 @@ def test_wifi_sdk_ipv6_functionality_lwip_c919190(sniffer_filter, wifi_access_po
     },
 )
 @pytest.mark.test_src_map_id('C919176')
-def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
+def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections,
+                                                     sniffer_filter):
     """This test case verifies the DHCP discover functionality in LWIP stack with default timer"""
     capture_filename = request.node.name
     wlan_obj = WifiThread()
 
     try:
-        logger().info("\n =============== Configuring the Sniffer with access point channel and start the capture =============\n")
+        logger().info(
+            "\n =============== Configuring the Sniffer with access point channel and start the capture =============\n")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
 
@@ -1805,7 +1833,7 @@ def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_p
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.213", dhcp_end="192.168.50.214")
         time.sleep(60)
 
-        wifi_dut.interfaces.wifi.lwip_start_ip(expected_status=SLStatus.SL_STATUS_FAIL, timeout=60)
+        wifi_dut.interfaces.wifi.lwip_start_ip(expected_status=SLStatus.SL_STATUS_FAIL, timeout=120)
         logger().info(f"\n\n Observed the expected error code: 0x0001 (SL_STATUS_FAIL) \n\n")
 
         logger().info("Stop Sniffer finally")
@@ -1814,7 +1842,7 @@ def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_p
         wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.254")
         time.sleep(60)
 
-        ip_config = wifi_dut.interfaces.wifi.lwip_start_ip(timeout=30)
+        ip_config = wifi_dut.interfaces.wifi.lwip_start_ip(timeout=60)
         device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
 
         logger().info(f"\n =========== DUT IP address is : {device_ip} =========== \n")
@@ -1882,16 +1910,25 @@ def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_p
                         }
                         exponential_violations.append(violation)
                         expected_power += 1  # Continue with next power level
-            logger().info(f"\n================ Missed Packets with expected Time-Interval: {missed_packets} ======================\n")
-            logger().info(f"\n================ exponential violations Packets: {exponential_violations} ======================\n")
-            assert len(exponential_violations) == 0, f"DHCP discover requests do not follow exponential backoff pattern: {exponential_violations}"
-            assert len(missed_packets) <= 1, f"Need Manual Test case verification as Multiple missed DHCP discover packets detected: {missed_packets}"
+            logger().info(
+                f"\n================ Missed Packets with expected Time-Interval: {missed_packets} ======================\n")
+            logger().info(
+                f"\n================ exponential violations Packets: {exponential_violations} ======================\n")
+            assert len(
+                exponential_violations) == 0, f"DHCP discover requests do not follow exponential backoff pattern: {exponential_violations}"
+            assert len(
+                missed_packets) <= 1, f"Need Manual Test case verification as Multiple missed DHCP discover packets detected: {missed_packets}"
 
         else:
             logger().info("Insufficient DHCP timing data for exponential analysis")
 
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.254")
+
+
 
 
 @pytest.mark.config(
@@ -1910,7 +1947,9 @@ def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_p
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
+@pytest.mark.parametrize("dhcp_lease", [60])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -1918,58 +1957,59 @@ def test_wifi_sdk_dhcp_discover_failure_lwip_c919176(wifi_sniffer, wifi_access_p
         "security": "OPEN",
         "passphrase": "1234567890",
         "channel": 6,
-        "dhcp_lease": "120",
+        "dhcp_lease": "60",
     },
 )
 @pytest.mark.test_src_map_id('C919177')
-def test_wifi_sdk_dhcp_request_failure_lwip_c919177(wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
-    """This test case verifies DHCP request failure scenario  using LWIP Stack with default timer"""
+def test_wifi_sdk_dhcp_request_failure_lwip_c919177(wifi_sniffer, wifi_access_point, wifi_dut, request,
+                                                    sl_collections, sniffer_filter, dhcp_lease):
+    """This test case verifies DHCP request functionality using LWIP Stack with default timer (legacy C683174 on LWIP)"""
     capture_filename = request.node.name
+    mode = "power_save_low_latency"
     try:
-        logger().info("\n =============== Configuring the Sniffer with access point channel and start the capture =============\n")
+        logger().info("Configuring the Sniffer with access point channel.")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        logger().info("Starting capture with Sniffer, using test case name as filename.")
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
 
+        logger().info("Initiating scan...")
         scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
         time.sleep(20)
         logger().info(scan_results)
         assert len(scan_results) >= 1, "scan results not found"
 
-        dut_addr = wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Device mac address: {dut_addr}")
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
 
-        ap_addr = wifi_access_point.interfaces.wifi.bssid
-        logger().info(f"AP MAC: {ap_addr}")
-
-        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.213")
-        time.sleep(60)
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
 
         wifi_dut.interfaces.wifi.lwip_join(ssid=wifi_access_point.interfaces.wifi.ssid,
                                            passphrase=wifi_access_point.interfaces.wifi.passphrase,
                                            security=wifi_access_point.interfaces.wifi.security.name.lower(),
                                            timeout=60)
-        ip_config = wifi_dut.interfaces.wifi.lwip_start_ip(timeout=30)
+
+        ip_config = wifi_dut.interfaces.wifi.lwip_start_ip(timeout=60)
         device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
         logger().info(f"\n =========== DUT IP address is : {device_ip} =========== \n")
-        time.sleep(10)
 
-        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.214", dhcp_end="192.168.50.254")
-        time.sleep(120)
-
-        logger().info("\n ============= Disconnection will issued after verification =============== \n")
-        wifi_dut.interfaces.wifi.leave()
+        logger().info(f"....Applying performance profile mode : {mode}")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode=mode)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
 
         logger().info("Stop Sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("\n ====== Validate DHCP Ack message with new IP assigned dynamically to DUT in Sniffer Capture ====== \n")
-        packet_filter = f'((bootp.option.dhcp == 5) && (wlan.sa == {ap_addr})) && (wlan.da == {dut_addr}) && ip.dst != {device_ip}'
-        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
-            'Sniffer: DHCP ACk packet from AP to DUT (with new IP address) not found in sniffer packets'
+        filter_1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr, da_addr=da_addr,
+                                                                                  filter_name='dhcp_request')
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=filter_1)['packet_count'], \
+            'Unable to find the dhcp request sniffer packets'
 
-        device_address = {'sa_addr': dut_addr, 'da_addr': ap_addr,
-                          'ta_addr': dut_addr, 'ra_addr': ap_addr}
-        filters_name = {1: 'assoc_req_resp_eapol_4_way_handshake', 2: 'probe_req_response', 3: 'dhcp_4_way_handshake_packets'}
+        device_address = {'sa_addr': sa_addr, 'da_addr': da_addr,
+                          'ta_addr': sa_addr, 'ra_addr': da_addr}
+        filters_name = {1: 'assoc_req_resp_eapol_4_way_handshake', 2: 'probe_req_response',
+                        3: 'dhcp_4_way_handshake_packets'}
 
         output = sl_collections.sniffer_validation_for_packet_filters(
             wifi_sniffer, sniffer_filter, device_address, filters_name=filters_name)
@@ -1978,8 +2018,11 @@ def test_wifi_sdk_dhcp_request_failure_lwip_c919177(wifi_sniffer, wifi_access_po
         assert all(output.values()), 'Unable to find expected filter'
 
     except Exception as e:
-        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.254")
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        wifi_access_point.interfaces.wifi.enable_dhcp_ap(dhcp_start="192.168.50.2", dhcp_end="192.168.50.254")
+        time.sleep(60)
 
 
 @pytest.mark.config(
@@ -1998,7 +2041,8 @@ def test_wifi_sdk_dhcp_request_failure_lwip_c919177(wifi_sniffer, wifi_access_po
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2009,11 +2053,13 @@ def test_wifi_sdk_dhcp_request_failure_lwip_c919177(wifi_sniffer, wifi_access_po
     },
 )
 @pytest.mark.test_src_map_id('C919224')
-def test_wifi_sdk_dhcp_start_stop_c919224(wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
+def test_wifi_sdk_dhcp_start_stop_c919224(wifi_sniffer, wifi_access_point, wifi_dut, request, sl_collections,
+                                          sniffer_filter):
     """This test case verifies the DHCP start and stop functionality in LWIP stack using LWIP Stack with default timer"""
     capture_filename = request.node.name
     try:
-        logger().info("\n =============== Configuring the Sniffer with access point channel and start the capture =============\n")
+        logger().info(
+            "\n =============== Configuring the Sniffer with access point channel and start the capture =============\n")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename)
 
@@ -2047,7 +2093,8 @@ def test_wifi_sdk_dhcp_start_stop_c919224(wifi_sniffer, wifi_access_point, wifi_
         device_address = {'sa_addr': dut_addr, 'da_addr': ap_addr,
                           'ta_addr': dut_addr, 'ra_addr': ap_addr}
 
-        filters_name = {1: 'assoc_req_resp_eapol_4_way_handshake', 2: 'probe_req_response', 3: 'dhcp_4_way_handshake_packets'}
+        filters_name = {1: 'assoc_req_resp_eapol_4_way_handshake', 2: 'probe_req_response',
+                        3: 'dhcp_4_way_handshake_packets'}
 
         output = sl_collections.sniffer_validation_for_packet_filters(
             wifi_sniffer, sniffer_filter, device_address, filters_name=filters_name)
@@ -2090,7 +2137,8 @@ def test_wifi_sdk_dhcp_start_stop_c919224(wifi_sniffer, wifi_access_point, wifi_
 )
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.start_state("remote_wiseconnect3", wifi=["sl_net_init_client", "reset"])
-@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client", "disable_external_stack"])
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated", "sl_net_deinit_client",
+                                         "disable_external_stack"])
 @pytest.mark.end_state("remote_wiseconnect3", wifi=["sl_net_deinit_client", "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
@@ -2103,7 +2151,9 @@ def test_wifi_sdk_dhcp_start_stop_c919224(wifi_sniffer, wifi_access_point, wifi_
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.test_src_map_id('C919193')
-def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919193(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer, sniffer_filter, utf_constants, sl_collections, request, remote_wiseconnect3):
+def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919193(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+                                                          sniffer_filter, utf_constants, sl_collections, request,
+                                                          remote_wiseconnect3):
     """ To verify DHCP DORA process after DHCP conflict scenario in LWIP stack with default timer"""
     capture_filename = request.node.name
     wlan_obj = WifiThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
@@ -2117,15 +2167,16 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919193(wifi_access_point, wif
         wlan_obj.clear_device_arp_cache()
         time.sleep(2)
 
-        logger().info("\n =========== Connecting the 2nd device to Access point with same IP to create DHCP conflict =========== \n")
+        logger().info(
+            "\n =========== Connecting the 2nd device to Access point with same IP to create DHCP conflict =========== \n")
         remote_wiseconnect3.interfaces.wifi.lwip_join(ssid=wifi_access_point.interfaces.wifi.ssid,
-                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
-                                           security=wifi_access_point.interfaces.wifi.security.name.lower(),
-                                           timeout=60)
+                                                      passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                                      security=wifi_access_point.interfaces.wifi.security.name.lower(),
+                                                      timeout=60)
 
         remote_wiseconnect3.interfaces.sapi.lwip_start_ip(static_ip=wlan_obj.device_ip,
-                                                              static_subnet="255.255.255.0",
-                                                              static_gateway="192.168.50.1", timeout=10, vid = 0)
+                                                          static_subnet="255.255.255.0",
+                                                          static_gateway="192.168.50.1", timeout=10, vid=0)
 
         logger().info(f"\n ===========Ping the 2nd device with static IP: {wlan_obj.device_ip} =========== \n")
         status = sl_collections.ping(device_ip=wlan_obj.device_ip, ping_count=5)
@@ -2133,17 +2184,18 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919193(wifi_access_point, wif
 
         wifi_sniffer.interfaces.capture.stop_capture()
 
-        logger().info("\n =========== Stopped previous capture and Starting Sniffer capture again to capture the DHCP packets after DHCP conflict scenario =========== \n")
+        logger().info(
+            "\n =========== Stopped previous capture and Starting Sniffer capture again to capture the DHCP packets after DHCP conflict scenario =========== \n")
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename+"_after_conflict")
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename + "_after_conflict")
 
-        logger().info("\n =========== Connecting the 1st DUT to Access point to verify DORA process after DHCP conflict =========== \n")
+        logger().info(
+            "\n =========== Connecting the 1st DUT to Access point to verify DORA process after DHCP conflict =========== \n")
         wifi_dut.interfaces.wifi.lwip_join(ssid=wifi_access_point.interfaces.wifi.ssid,
-                                                      passphrase=wifi_access_point.interfaces.wifi.passphrase,
-                                                      security=wifi_access_point.interfaces.wifi.security.name.lower(),
-                                                      timeout=60)
+                                           passphrase=wifi_access_point.interfaces.wifi.passphrase,
+                                           security=wifi_access_point.interfaces.wifi.security.name.lower(),
+                                           timeout=60)
         wifi_dut.interfaces.wifi.lwip_start_ip(expected_status=SLStatus.SL_STATUS_FAIL, timeout=30)
-
 
         logger().info("\n =========== Stop the sniffer capture =========== \n")
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -2154,19 +2206,22 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919193(wifi_access_point, wif
         dut1_addr = wifi_dut.interfaces.wifi.get_mac_address()
         dut2_addr = remote_wiseconnect3.interfaces.wifi.get_mac_address()
 
-        logger().info("\n =========== Validating the DHCP decline packet from DUT1 in sniffer capture after DHCP conflict scenario =========== \n")
+        logger().info(
+            "\n =========== Validating the DHCP decline packet from DUT1 in sniffer capture after DHCP conflict scenario =========== \n")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=dut1_addr, filter_name="dhcp_decline")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter2="true")[
             'packet_count'], f"DHCP decline packets not found in sniffer packets"
 
-        logger().info("\n =========== Validating the DHCP discover packet from DUT1 in sniffer capture after DHCP conflict and decline scenario =========== \n")
+        logger().info(
+            "\n =========== Validating the DHCP discover packet from DUT1 in sniffer capture after DHCP conflict and decline scenario =========== \n")
         epoch_time = wlan_obj.extract_nak_epoch_time("./reports/filter2_file.txt")[0]
         packet_filter_2 = f'((wlan.sa == {dut1_addr}) and (wlan.da == ff:ff:ff:ff:ff:ff) and (dhcp.option.dhcp == 1) and (frame.time_epoch > {epoch_time}))'
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter_2)[
             'packet_count'], f"DHCP discover packets not found in sniffer packets after DHCP conflict and DHCP decline"
 
-        logger().info("\n =========== Validating the DHCP reply packet from AP to DUT1 to indicate that Offer IP is already in use =========== \n")
+        logger().info(
+            "\n =========== Validating the DHCP reply packet from AP to DUT1 to indicate that Offer IP is already in use =========== \n")
         packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
             sa_addr=dut2_addr, da_addr=dut1_addr, filter_name="arp_reply_pkt")
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
@@ -2220,7 +2275,9 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_c919193(wifi_access_point, wif
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.test_src_map_id('C919226')
-def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919226(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer, sniffer_filter, utf_constants, sl_collections, request, remote_wiseconnect3):
+def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919226(wifi_access_point, wifi_dut, wifi_client, wifi_sniffer,
+                                                               sniffer_filter, utf_constants, sl_collections, request,
+                                                               remote_wiseconnect3):
     """ To verify DHCP DORA process after DHCP conflict scenario in loop in LWIP stack with default timer"""
     capture_filename = request.node.name
     wlan_obj = WifiThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
@@ -2260,7 +2317,8 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919226(wifi_access_point
             logger().info(
                 "\n =========== Stopped previous capture and Starting Sniffer capture again to capture the DHCP packets after DHCP conflict scenario =========== \n")
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-            wifi_sniffer.interfaces.capture.start_capture(capture_file=capture_filename + f"_after_conflict_iteration_{i + 1}")
+            wifi_sniffer.interfaces.capture.start_capture(
+                capture_file=capture_filename + f"_after_conflict_iteration_{i + 1}")
 
             logger().info(
                 "\n =========== Connecting the 1st DUT to Access point to verify DORA process after DHCP conflict =========== \n")
@@ -2284,8 +2342,9 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919226(wifi_access_point
             packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
                 sa_addr=dut1_addr, filter_name="dhcp_decline")
             assert \
-            wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1, packet_filter2="true")[
-                'packet_count'], f"DHCP decline packets not found in sniffer packets"
+                wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
+                                                                   packet_filter2="true")[
+                    'packet_count'], f"DHCP decline packets not found in sniffer packets"
 
             logger().info(
                 "\n =========== Validating the DHCP discover packet from DUT1 in sniffer capture after DHCP conflict and decline scenario =========== \n")
@@ -2318,7 +2377,7 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919226(wifi_access_point
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
                           | Si91xTCPIPFeatureBitMap.DNSClient | Si91xTCPIPFeatureBitMap.Ping | Si91xTCPIPFeatureBitMap.TCPIPBypass,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
-        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
                               | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_TOTAL_SELECTS(
             1),
@@ -2326,11 +2385,15 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919226(wifi_access_point
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
         "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
+        # "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        # "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        # "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
     }
 )
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated", "disable_external_stack"])
+                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated",
+                             "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2342,7 +2405,7 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919226(wifi_access_point
 )
 @pytest.mark.test_src_map_id('C919185')
 def test_wifi_sdk_aws_tcp_shutdown_C919185(wifi_sniffer, wifi_access_point, wifi_dut, aws_iot_client, sl_collections,
-                                           sniffer_filter, utf_constants, request):
+                                           sniffer_filter, utf_constants, request, wifi_client):
     """
     Connect to AWS MQTT server subscribe to any topic, Receive data on the subscribed topic. Close the TCP connection
     and check the Connection stability.
@@ -2351,6 +2414,20 @@ def test_wifi_sdk_aws_tcp_shutdown_C919185(wifi_sniffer, wifi_access_point, wifi
     topic = "topic_c19546"
     iterations = utf_constants.get('iter_count')
     capture_filename = request.node.name
+    profile = {
+        "ssid": "ssid_profile1",
+        "channel": 6,
+        "security": "OPEN",
+        "passphrase": "1234567890",
+        "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
+    }
+    # wifi_thread = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+    #                              sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
+    #                              wifi_client=wifi_client,
+    #                              test_case_no=919180, leave=False, stop_capture=False)
+    #
+    # wifi_thread.start()
+    # wifi_thread.wait_for_exit()
     wlan_obj = WifiThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           sl_collections=sl_collections, capture_filename=capture_filename, ping_count=5,
                           test_case_no=919193, stop_capture=False, leave=False, power_save=True)
@@ -2361,7 +2438,8 @@ def test_wifi_sdk_aws_tcp_shutdown_C919185(wifi_sniffer, wifi_access_point, wifi
         time.sleep(2)
 
         for iter_count in range(2):
-            logger.info(f"\n ===================== Initiating aws test for iteration:{iter_count + 1} ================= \n")
+            logger().info(
+                f"\n ===================== Initiating aws test for iteration:{iter_count + 1} ================= \n")
             messages = []
             for i in range(3):
                 messages.append(text_generator(size=10))
@@ -2434,7 +2512,8 @@ def test_wifi_sdk_aws_tcp_shutdown_C919185(wifi_sniffer, wifi_access_point, wifi
 )
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated", "disable_external_stack"])
+                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated",
+                             "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2535,7 +2614,8 @@ def test_wifi_sdk_aws_receive_data_over_subscribed_topic_with_diff_len_C919188(w
 )
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated", "disable_external_stack"])
+                       wifi=["wifi_powersave_disable", "lwip_aws_disconnect", "disassociated",
+                             "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={
@@ -2644,7 +2724,8 @@ def test_wifi_sdk_aws_publish_data_with_different_length_C919187(wifi_sniffer, w
 )
 @pytest.mark.start_state("wifi_dut", wifi=['sl_net_init_client'])
 @pytest.mark.end_state("wifi_dut",
-                       wifi=["wifi_powersave_disable", "lwip_aws_unsubscribe", "lwip_aws_disconnect", "disassociated", "disable_external_stack"])
+                       wifi=["wifi_powersave_disable", "lwip_aws_unsubscribe", "lwip_aws_disconnect", "disassociated",
+                             "disable_external_stack"])
 @pytest.mark.config(
     "wifi_access_point",
     wifi={

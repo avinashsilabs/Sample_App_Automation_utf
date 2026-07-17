@@ -97,7 +97,7 @@ class TCPTXThread(ThreadBase):
     """This thread is responsible for TCP data transfer"""
 
     def __init__(self, wifi_dut=None, wifi_client=None, device_ip=None, protocol=None, keepalive_timeout=0,
-                 remote_socket_factory=None, port=5001, no_of_pkts=1, data_transfer=True):
+                 remote_socket_factory=None, port=5001, no_of_pkts=1, data_transfer=True, close=False):
         super().__init__()
         self.thread_lock = threading.Lock()
         self.wifi_dut = wifi_dut
@@ -111,6 +111,7 @@ class TCPTXThread(ThreadBase):
         self.no_of_pkts = no_of_pkts
         self.port = port
         self.data_transfer = data_transfer
+        self.close = close
 
     def tx_data_transfer(self):
         data_length = 50
@@ -165,6 +166,10 @@ class TCPTXThread(ThreadBase):
         if self.keepalive_timeout > 0:
             logger().info("Verifying keepalive functionality by waiting for timeout period...")
             time.sleep(self.keepalive_timeout * 3)
+
+        if self.close:
+            self.wifi_dut.interfaces.wifi.lwipSockClose(socket_fd=self.client_socket)
+            logger().info(f"\n ****** Socket closed successfully in DUT ****** \n")
 
 
 class TCPRXThread(ThreadBase):
@@ -730,7 +735,7 @@ class AwsConnection(ThreadBase):
 )
 @pytest.mark.test_src_map_id('C919291')
 def test_wifi_sdk_dhcp_2_min_renewal_func_lwip_opt_c919291(wifi_sniffer, wifi_access_point, wifi_dut,
-                                                                       request, sl_collections, sniffer_filter):
+                                                                       request, sl_collections, sniffer_filter, wifi_client):
     """This test case verifies DHCP renewal time to 2 min renewal functionality in LWIP stack for 30 min duration using LWIP Stack with optimized timer"""
     capture_filename = request.node.name
     time_delta = 60
@@ -747,7 +752,7 @@ def test_wifi_sdk_dhcp_2_min_renewal_func_lwip_opt_c919291(wifi_sniffer, wifi_ac
     req_status = None
     ack_status = None
     wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                              sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
+                              sl_collections=sl_collections, profile=profile, capture_filename=capture_filename, wifi_client=wifi_client,
                               test_case_no=919291)
 
     try:
@@ -879,7 +884,7 @@ def test_wifi_sdk_tcp_open_send_close_socket_c919297(
 
         tcp_thread = TCPTXThread(wifi_dut=wifi_dut, wifi_client=wifi_client, device_ip=wifi_thread.device_ip,
                                  protocol=protocol,
-                                 remote_socket_factory=remote_socket_factory, keepalive_timeout=30, no_of_pkts=10)
+                                 remote_socket_factory=remote_socket_factory, no_of_pkts=10, close=True)
         tcp_thread.start()
         tcp_thread.wait_for_exit()
 
@@ -1167,14 +1172,14 @@ def test_wifi_sdk_2_tcp_client_data_transfer_using_1_socket_c919301(
         logger().info("Starting data transfer on socket 1")
         tcp_tx_thread1 = TCPTXThread(wifi_dut=wifi_dut, wifi_client=wifi_client, device_ip=wifi_thread.device_ip,
                                      protocol=protocol, remote_socket_factory=remote_socket_factory, port=5001,
-                                     keepalive_timeout=30, no_of_pkts=1)
+                                     no_of_pkts=1, close=False)
         tcp_tx_thread1.start()
         tcp_tx_thread1.wait_for_exit()
 
         logger().info("Starting data transfer on socket 2 and keep the socket 1 in idle state")
         tcp_tx_thread2 = TCPTXThread(wifi_dut=wifi_dut, wifi_client=wifi_client, device_ip=wifi_thread.device_ip,
                                      protocol=protocol, remote_socket_factory=remote_socket_factory, port=5002,
-                                     no_of_pkts=100)
+                                     no_of_pkts=100, close=False)
         tcp_tx_thread2.start()
         tcp_tx_thread2.wait_for_exit()
 
@@ -1455,7 +1460,7 @@ def test_wifi_sdk_dhcp_deinit_init_cycle_garp_verification_c919318(sniffer_filte
 )
 @pytest.mark.test_src_map_id('C919321')
 def test_wifi_sdk_dhcp_renewal_LWIP_congestion_env_c919321(wifi_sniffer, wifi_access_point, wifi_dut,
-                                                                       request, sl_collections, sniffer_filter):
+                                                                       request, sl_collections, sniffer_filter, wifi_client):
     """This test case verifies DHCP renewal functionality in LWIP stack optimized timer under congestion environment"""
     capture_filename = request.node.name
 
@@ -1468,7 +1473,7 @@ def test_wifi_sdk_dhcp_renewal_LWIP_congestion_env_c919321(wifi_sniffer, wifi_ac
     }
     wlan_obj = WifiJoinThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                               sl_collections=sl_collections, profile=profile, capture_filename=capture_filename,
-                              test_case_no=919321, leave=False, stop_capture=False)
+                              test_case_no=919321, leave=False, stop_capture=False, wifi_client=wifi_client)
 
     try:
         wlan_obj.start()
@@ -2338,6 +2343,9 @@ def test_wifi_sdk_verify_dora_after_dhcp_conflict_loop_c919319(wifi_access_point
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
                            | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "set_send_feature_frame": True,
+        "ca_cert": ["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client-certificate.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+        "client_key": ["private-key.key", "SL_NET_PRIVATE_KEY", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
         "thread_config": {"wifi": {"count": 1, "stack_len": 4096}},
     }
 )
