@@ -365,7 +365,7 @@ def wifi_dut_marker(ext_custom_bit=0, tcp_feat_bit=0, ext_tcp_feat_bit=0,
 
 
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "Open", "passphrase": "12345678"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -587,7 +587,8 @@ def test_sta_ble_extended_bgscan_while_ble_adv_20ms_us_C978135(
 
 # ---- C978138: BG extended scan while BLE Tx Notification (WW, Ch 13) ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "region": "Europe", "channel": 13}
+    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "12345678",
+                               "protected_management_frame": "Capable", "region": "Europe", "channel": 13}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -595,10 +596,12 @@ def test_sta_ble_extended_bgscan_while_ble_adv_20ms_us_C978135(
     "wifi_dut",
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
 )
-@wifi_dut_marker(region=1, region_code="worldwide")
+@wifi_dut_marker(region=1, region_code="worldwide", ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 def test_sta_ble_extended_bgscan_while_ble_tx_notify_C978138(
-    wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
-    utf_constants, sl_collections, wifi_client, sniffer_filter,
+    wifi_sniffer,
+    wifi_access_point, wifi_dut, ble_client, request,
+    utf_constants, sl_collections, wifi_client,
+    sniffer_filter,
 ):
     """C978138: BG extended scan while BLE Tx Notification 240bytes (Region: WW, Ch 13)."""
     global ble_obj
@@ -648,6 +651,11 @@ def test_sta_ble_extended_bgscan_while_ble_tx_notify_C978138(
             testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
             ping_count=ping_count, sniffer_filter=sniffer_filter, test_type="ping",
         )
+
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
+                                | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+        )
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         device_ip = wifi_obj.device_ip
@@ -686,7 +694,7 @@ def test_sta_ble_extended_bgscan_while_ble_tx_notify_C978138(
 
 # ---- C978141: TCP-Tx while BG extended periodic scan, BLE central CI 500ms ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678"}
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.TCP])
@@ -731,6 +739,7 @@ def test_sta_ble_tcp_tx_bg_extended_periodic_ble_central_500ms_C978141(
             ping_count=ping_count, sniffer_filter=sniffer_filter, test_type="iperf",
             net_perf_client=net_perf_client, protocol=protocol, timeout=120,
         )
+
         wifi_obj.join_to_ap(skip_power_save=True)
         wifi_obj.set_power_save()
         time.sleep(20)
@@ -741,6 +750,7 @@ def test_sta_ble_tcp_tx_bg_extended_periodic_ble_central_500ms_C978141(
         assert scan_results is not None and len(scan_results) > 11, (
             f"BG extended scan expected >11 results, got {len(scan_results) if scan_results else 0}"
         )
+
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         time.sleep(100)
@@ -771,7 +781,8 @@ def test_sta_ble_tcp_tx_bg_extended_periodic_ble_central_500ms_C978141(
 
 # ---- C978143: UDP-Tx/Rx while BG extended periodic scan, BLE peripheral CI 1000ms ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "12345678",
+                               "protected_management_frame": "Capable"}
 )
 @pytest.mark.config("net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE})
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
@@ -781,7 +792,7 @@ def test_sta_ble_tcp_tx_bg_extended_periodic_ble_central_500ms_C978141(
     "wifi_dut",
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
 )
-@wifi_dut_marker()
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 def test_sta_ble_udp_tx_rx_bg_extended_periodic_ble_peripheral_1000ms_C978143(
     wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
     utf_constants, sl_collections, wifi_client, sniffer_filter, net_perf_client, protocol,
@@ -816,6 +827,10 @@ def test_sta_ble_udp_tx_rx_bg_extended_periodic_ble_peripheral_1000ms_C978143(
             testcase=test_name, wifi_client=wifi_client, sl_collections=sl_collections,
             ping_count=ping_count, sniffer_filter=sniffer_filter, test_type="iperf",
             net_perf_client=net_perf_client, protocol=protocol, timeout=120,
+        )
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
+                                | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
         )
         wifi_obj.join_to_ap(skip_power_save=True)
         wifi_obj.set_power_save()
@@ -853,7 +868,8 @@ def test_sta_ble_udp_tx_rx_bg_extended_periodic_ble_peripheral_1000ms_C978143(
 
 # ---- C978147: BG extended scan after rejoin (AP stop/start), BLE peripheral CI 250ms ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "12345678",
+                               "protected_management_frame": "Capable"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -861,7 +877,7 @@ def test_sta_ble_udp_tx_rx_bg_extended_periodic_ble_peripheral_1000ms_C978143(
     "wifi_dut",
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
 )
-@wifi_dut_marker()
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 def test_sta_ble_bg_extended_after_rejoin_ble_peripheral_250ms_C978147(
     wifi_sniffer,
     wifi_access_point, wifi_dut, ble_client, request,
@@ -906,6 +922,10 @@ def test_sta_ble_bg_extended_after_rejoin_ble_peripheral_250ms_C978147(
             ping_count=ping_count,
             sniffer_filter=sniffer_filter,
             test_type="ping",
+        )
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
+                                | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
         )
         wifi_obj.start()
         wifi_obj.wait_for_exit()
@@ -969,7 +989,7 @@ def test_sta_ble_bg_extended_after_rejoin_ble_peripheral_250ms_C978147(
 @wifi_dut_marker()
 # ---- C978148: BG extended scan after CSA, BLE central CI 250ms ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1047,7 +1067,8 @@ def test_sta_ble_bg_extended_after_csa_ble_central_250ms_C978148(
 
 # ---- C978139: BG extended selective channel (1, 6, 11) while BLE Rx Notification ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "12345678",
+                               "protected_management_frame": "Capable"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1055,7 +1076,7 @@ def test_sta_ble_bg_extended_after_csa_ble_central_250ms_C978148(
     "wifi_dut",
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
 )
-@wifi_dut_marker()
+@wifi_dut_marker(ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 def test_sta_ble_extended_bgscan_selective_ch_1_6_11_C978139(
     wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
     utf_constants, sl_collections, wifi_client, sniffer_filter,
@@ -1106,6 +1127,10 @@ def test_sta_ble_extended_bgscan_selective_ch_1_6_11_C978139(
             ping_count=ping_count, sniffer_filter=sniffer_filter, test_type="ping",
             channel_bitmap_2_4=channel_bitmap_2_4
         )
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
+                                | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+        )
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         device_ip = wifi_obj.device_ip
@@ -1149,7 +1174,7 @@ def test_sta_ble_extended_bgscan_selective_ch_1_6_11_C978139(
 
 # ---- C978140: BLE reconnects during BG extended scan (DUT peripheral CI 80ms) ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1241,7 +1266,6 @@ def test_sta_ble_ble_reconnect_during_bg_extended_scan_C978140(
             )
 
 
-
 # ---- C978145: BLE provisioning (sta_ble_provisioning flow) + BG extended scan ----
 @sta_ble_provisioning_wifi_dut_marker(IEEE802_11W=Si91xExtCustomFeatureBitMap.IEEE802_11W,
                                       memory_config=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode)
@@ -1327,7 +1351,8 @@ def test_sta_ble_ble_provisioning_bg_extended_scan_C978145(
 
 
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "region": "Europe", "channel": 13}
+    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "12345678",
+                               "protected_management_frame": "Capable", "region": "Europe", "channel": 13}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1335,7 +1360,7 @@ def test_sta_ble_ble_provisioning_bg_extended_scan_C978145(
     "wifi_dut",
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
 )
-@wifi_dut_marker(region=1, region_code="japan")
+@wifi_dut_marker(region=1, region_code="japan", ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 def test_sta_ble_instant_bg_scan_upto_11_JP_C978137(
     wifi_sniffer,
     wifi_access_point,
@@ -1372,6 +1397,11 @@ def test_sta_ble_instant_bg_scan_upto_11_JP_C978137(
         )
         ble_obj.start()
         ble_obj.wait_for_exit()
+
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
+                                | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+        )
 
         wifi_obj = WifiJoinThread(
             wifi_sniffer=wifi_sniffer,
@@ -1420,7 +1450,7 @@ def test_sta_ble_instant_bg_scan_upto_11_JP_C978137(
 
 # ---- C978149: BG extended scan with BLE dual role ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "12345678"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1428,7 +1458,7 @@ def test_sta_ble_instant_bg_scan_upto_11_JP_C978137(
     "wifi_dut",
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
 )
-@wifi_dut_marker(num_central_connections=1, num_peripheral_connections=1)
+@wifi_dut_marker(num_central_connections=1, num_peripheral_connections=1, ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 def test_sta_ble_bg_extended_dual_role_ble_C978149(
     wifi_sniffer, wifi_access_point, wifi_dut, ble_clients, request,
     utf_constants, sl_collections, wifi_client, sniffer_filter,
@@ -1485,6 +1515,8 @@ def test_sta_ble_bg_extended_dual_role_ble_C978149(
             sniffer_filter=sniffer_filter,
             test_type="ping",
         )
+
+
         wifi_obj.join_to_ap(skip_power_save=True)
 
         ble_obj_slave.start()
@@ -1541,7 +1573,8 @@ def test_sta_ble_bg_extended_dual_role_ble_C978149(
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", ["1MB.htm"])
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
+    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "12345678",
+                               "protected_management_frame": "Capable"}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1549,7 +1582,7 @@ def test_sta_ble_bg_extended_dual_role_ble_C978149(
     "wifi_dut",
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
 )
-@wifi_dut_marker(no_of_wifi_threads=2, no_of_ble_threads=1, wifi_stack_len=3071, ble_stack_len=2048)
+@wifi_dut_marker(no_of_wifi_threads=2, no_of_ble_threads=1, wifi_stack_len=3071, ble_stack_len=2048, ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 def test_sta_ble_http_download_bg_extended_scan_loop_10s_ble_peripheral_200ms_C978142(
     wifi_sniffer,
     wifi_access_point,
@@ -1619,6 +1652,11 @@ def test_sta_ble_http_download_bg_extended_scan_loop_10s_ble_peripheral_200ms_C9
             sniffer_filter=sniffer_filter,
             test_type="ping",
         )
+
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
+                                | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+        )
         wifi_obj.start()
         wifi_obj.wait_for_exit()
         device_ip = wifi_obj.device_ip
@@ -1677,7 +1715,8 @@ def test_sta_ble_http_download_bg_extended_scan_loop_10s_ble_peripheral_200ms_C9
 
 # ---- C978136: BG extended scan while DUT BLE scanning (SI 120ms, SW 40ms) ----
 @pytest.mark.config(
-    "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890", "region": "Europe", "channel": 6}
+    "wifi_access_point", wifi={"security": "WPA3", "passphrase": "12345678",
+                               "protected_management_frame": "Capable", "region": "Europe", "channel": 6}
 )
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi=["init"])
@@ -1686,7 +1725,7 @@ def test_sta_ble_http_download_bg_extended_scan_loop_10s_ble_peripheral_200ms_C9
     wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"],
 )
 # @wifi_dut_marker()
-@wifi_dut_marker(region=1, region_code="europe")
+@wifi_dut_marker(region=1, region_code="europe",ext_custom_bit=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 def test_sta_ble_extended_bgscan_while_ble_scanning_C978136(
     wifi_sniffer, wifi_access_point, wifi_dut, ble_client, request,
     utf_constants, sl_collections, wifi_client, sniffer_filter,
@@ -1701,6 +1740,10 @@ def test_sta_ble_extended_bgscan_while_ble_scanning_C978136(
             channel=wifi_access_point.interfaces.wifi.channel
         )
         wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        wifi_dut.interfaces.wifi.set_join_feature_bitmap(
+            join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
+                                | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+        )
 
         ble_obj = BleThreadFunctionality(
             wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections,

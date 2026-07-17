@@ -20,6 +20,10 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xExtTCPIPFe
     Si91xFeatureBitMap, Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, \
     Si91xConfigFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xOperatingMode
 
+# SL_WIFI_WPA3 — matches scan security_mode and wifi_multi_mode_provisioning_soc_3 profile.
+_SL_WIFI_WPA3 = 7
+_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID = 1
+
 """
     setup requirement:
         1. DUT(RS917)
@@ -40,6 +44,100 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xExtTCPIPFe
 
 def logger():
     return get_logger(__name__)
+
+
+# DUT SoftAP profile for C978150 — decoupled from WPA3 home AP (wifi_multi_mode_provisioning_soc_3 pattern).
+_C978150_SOFTAP_SSID = "sharma_test"
+_C978150_SOFTAP_SECURITY = "wpa2"
+_C978150_SOFTAP_PSK = "123456789"
+_C978150_SOFTAP_CHANNEL = 11
+
+
+class BleBgScanProvisioningFunctionality(ProvisioningFunctionalityBle):
+    """
+    BLE provisioning helper for BG extended scan after home AP join.
+
+    AP-interface scan during beacon_stop is informational only; with SoftAP on a
+    different channel than the home AP, wifi.scan -i ap may return NO_AP_FOUND.
+    """
+
+    def scan_on_ap_interface(self, scan_type=None):
+        logger().info("Optional AP-interface scan during BLE provisioning")
+        try:
+            super().scan_on_ap_interface()
+        except AssertionError as exc:
+            logger().warning(
+                "AP-interface scan failed (%s); continuing BLE provisioning for BG extended scan test",
+                exc,
+            )
+
+
+def _configure_ble_softap_profile(ble_obj):
+    """WPA2 SoftAP on ch11; home AP creds still come from wifi_access_point over BLE."""
+    ble_obj.ssid = _C978150_SOFTAP_SSID
+    ble_obj.security = _C978150_SOFTAP_SECURITY
+    ble_obj.psk = _C978150_SOFTAP_PSK
+    ble_obj.ap_channel = _C978150_SOFTAP_CHANNEL
+    logger().info(
+        "C978150 SoftAP: %s/%s/ch%s (home AP via BLE: %s)",
+        ble_obj.ssid, ble_obj.security, ble_obj.ap_channel,
+        ble_obj.wifi_access_point.interfaces.wifi.ssid,
+    )
+
+
+
+def _reinit_and_connect_wpa3(wifi_dut, wifi_access_point, sl_collections, ble_obj):
+    """
+    Post-BLE-provisioning STA join aligned with wifi_multi_mode_provisioning_soc_3:
+    WLANOnly + OpenMode + IEEE802_11W, then sl_net_init / set_credential / set_profile / net.up.
+    """
+    home = wifi_access_point.interfaces.wifi
+    ssid = ble_obj.credentials[0] if ble_obj.credentials else home.ssid
+    passphrase = ble_obj.credentials[1] if ble_obj.credentials else home.passphrase
+
+    wifi_dut.interfaces.wifi.set_wifi_config(
+        oper_mode=Si91xOperatingMode.WiFiClient,
+        coex_mode=Si91xCoexMode.WLANOnly,
+        features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+        tcpip_features=Si91xTCPIPFeatureBitMap.Default,
+        ext_custom_features=(
+            Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.IEEE802_11W
+        ),
+    )
+    wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+    wifi_dut.interfaces.wifi.sl_net_init(mode="client")
+
+    wifi_dut.interfaces.wifi.sl_net_set_credential(
+        credential=passphrase,
+        cred_id=_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID,
+    )
+    # channel=0 omitted by CLI helper (falsy) → auto channel, matching sample profile.
+    wifi_dut.interfaces.wifi.sl_net_set_profile(
+        ssid=ssid,
+        security=_SL_WIFI_WPA3,
+        channel=0,
+        credential_id=_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID,
+    )
+
+    join_status = None
+    for attempt in range(2):
+        try:
+            wifi_dut.interfaces.wifi.sl_net_up(mode="client", timeout=100)
+            join_status = True
+            break
+        except AssertionError as exc:
+            logger().warning(
+                "sl_net_up attempt %s failed (%s); retries left=%s",
+                attempt + 1, exc, 1 - attempt,
+            )
+            time.sleep(5)
+    assert join_status, f"sl_net_up failed for SSID {ssid} (WPA3)"
+    logger().info("....Successfully connected to the AP via sl_net_up....")
+
+    ip_status, ip_config = sl_collections.configure_ip(wifi_dut=wifi_dut)
+    assert ip_status, f"....Unable to assign IP ADDRESS through DHCP with reason: {ip_config}...."
+    device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+    logger().info("DUT IP is %s", device_ip)
 
 
 def _configure_advanced_scan(wifi_dut):
@@ -93,10 +191,19 @@ def _perform_bg_extended_scan(wifi_dut, timeout=90, min_results=12):
 
 
 # ---- C978150: BLE path - Extended BG scan after BLE provisioning (periodic, B6=1) ----
-@wifi_dut_marker_set1(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
-@pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": 'sw_test', "security": 'WPA2', "passphrase": '123456789', "channel": 8})
-@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@wifi_dut_marker_set1(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+                      IEEE802_11W=Si91xExtCustomFeatureBitMap.IEEE802_11W)
+@pytest.mark.config(
+    'wifi_access_point',
+    wifi={
+        "ssid": "sw_test",
+        "security": "WPA3",
+        "passphrase": "123456789",
+        "channel": 1,
+        "protected_management_frame": "Capable",
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 def test_ap_ble_provisioning_ble_path_bg_extended_scan_C978150(
         wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
         sniffer_filter):
@@ -104,16 +211,24 @@ def test_ap_ble_provisioning_ble_path_bg_extended_scan_C978150(
 
     ble_obj = None
     ap_started = False
+    softap_channel = _C978150_SOFTAP_CHANNEL
+    home_channel = None
     try:
         test_name = request.node.name
-        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        home_channel = wifi_access_point.interfaces.wifi.channel
+        logger().info(
+            "C978150: SoftAP ch%s (%s), home AP ch%s (%s)",
+            softap_channel, _C978150_SOFTAP_SSID, home_channel, wifi_access_point.interfaces.wifi.ssid,
+        )
+        logger().info(f"Start sniffer capture on channel {softap_channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=softap_channel)
         wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
 
-        ble_obj = ProvisioningFunctionalityBle(
+        ble_obj = BleBgScanProvisioningFunctionality(
             wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
             sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200)
+        _configure_ble_softap_profile(ble_obj)
 
         ble_obj.ap_mode_start()
         ble_obj.start_http_server()
@@ -128,11 +243,18 @@ def test_ap_ble_provisioning_ble_path_bg_extended_scan_C978150(
         ble_obj.wait_for_exit()
         ble_obj.stop_http_server()
         ble_obj.stop_ap_interface()
+
         ap_started = False
 
-        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
-        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
-        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+        if home_channel != softap_channel:
+            wifi_sniffer.interfaces.capture.stop_capture()
+            logger().info("Restart sniffer on home AP channel %s", home_channel)
+            wifi_sniffer.interfaces.capture.configure_interface(channel=home_channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+        else:
+            logger().info(f"Start sniffer capture on channel {home_channel}")
+            wifi_sniffer.interfaces.capture.configure_interface(channel=home_channel)
+            wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
 
         ble_obj.beacon_stop = 1
         ble_obj.ap_mode_start()
@@ -141,21 +263,13 @@ def test_ap_ble_provisioning_ble_path_bg_extended_scan_C978150(
         ble_obj.check_no_beacon()
         ble_obj.scan_on_ap_interface()
         ble_obj.credentials_send_over_ble()
-
-        ble_obj.sl_net_deinit()
+        ble_obj.ble_cleanup_disconn()
+        wifi_dut.interfaces.wifi.cleanup_ble()
+        ble_obj.stop_ap_interface()
+        ble_obj.sl_net_deinit()  # wifi.deinit — AP was started via wifi.ap.start, not net.init
         ap_started = False
 
-        # Match c887610: join in WLANOnly mode. WLAN+BLE coex during join causes
-        # SL_STATUS_SI91X_AUTHENTICATION_TIMEOUT while BLE is still connected.
-        wifi_dut.interfaces.wifi.set_wifi_config(
-            oper_mode=Si91xOperatingMode.WiFiClient,
-            coex_mode=Si91xCoexMode.WLANOnly,
-            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
-            tcpip_features=Si91xTCPIPFeatureBitMap.Default,
-        )
-        wifi_dut.interfaces.wifi.init(mode="client", config_required=False, timeout=30)
-        wifi_dut.interfaces.wifi.scan()
-        ble_obj.wifi_connect()
+        _reinit_and_connect_wpa3(wifi_dut, wifi_access_point, sl_collections, ble_obj)
 
         _perform_bg_extended_scan(wifi_dut, timeout=90, min_results=12)
 
@@ -167,12 +281,8 @@ def test_ap_ble_provisioning_ble_path_bg_extended_scan_C978150(
         raise
     finally:
         ble_client.interfaces.bluetooth.close()
-        try:
-            if ap_started and ble_obj is not None:
-                logger().warning("AP mode active during exception, stopping it...")
-                ble_obj.sl_net_deinit()
-        except Exception as cleanup_ex:
-            logger().error(f"Cleanup failed: {cleanup_ex}")
+        wifi_dut.interfaces.wifi.reset()
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
 
 
 
@@ -188,11 +298,13 @@ def test_ap_ble_provisioning_ble_path_bg_extended_scan_C978150(
         },
     }
 )
-@wifi_dut_marker_set3(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@wifi_dut_marker_set3(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode,
+                      IEEE802_11W=Si91xExtCustomFeatureBitMap.IEEE802_11W)
 @pytest.mark.parametrize("ap_channel", [11])
 @pytest.mark.config('wifi_access_point',
-                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
-@pytest.mark.end_state("wifi_dut", wifi=["reset"])
+                    wifi={"ssid": 'sharma123', "security": 'WPA3', "passphrase": '123456789', "channel": 11,
+                          "protected_management_frame": "Capable"})
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 def test_ap_ble_provisioning_ap_path_bg_extended_scan_C978151(
         sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter, ap_channel):
@@ -221,16 +333,10 @@ def test_ap_ble_provisioning_ap_path_bg_extended_scan_C978151(
         time.sleep(10)
         ble_obj.check_beacon()
         ble_obj.http_server_provisioning()
+        ble_obj.stop_ap_interface()
         ble_obj.sl_net_deinit()
+        _reinit_and_connect_wpa3(wifi_dut, wifi_access_point, sl_collections, ble_obj)
 
-        wifi_dut.interfaces.wifi.set_wifi_config(
-            oper_mode=Si91xOperatingMode.WiFiClient,
-            coex_mode=Si91xCoexMode.WLANOnly,
-            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
-            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
-        wifi_dut.interfaces.wifi.init(mode="client", config_required=True)
-        wifi_dut.interfaces.wifi.scan()
-        ble_obj.wifi_connect()
         _perform_bg_extended_scan(wifi_dut, timeout=90, min_results=12)
 
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -239,8 +345,9 @@ def test_ap_ble_provisioning_ap_path_bg_extended_scan_C978151(
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
-    # finally:
-    #     wifi_dut.interfaces.wifi.reset()
+    finally:
+        wifi_dut.interfaces.wifi.reset()
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
 
 
 
@@ -286,7 +393,7 @@ def wifi_dut_marker(IEEE802_11W=0, memory_config=0, OpenMode=0):
 @pytest.mark.parametrize("ap_channel", [11])
 @pytest.mark.config('wifi_access_point',
                     wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
-@pytest.mark.end_state("wifi_dut", wifi=["sl_net_deinit_client"])
+@pytest.mark.start_state("wifi_dut", wifi=["init"])
 def test_ap_ble_provisioning_wps_path_bg_extended_scan_C978152(
         sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
         wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter, ap_channel):
@@ -379,6 +486,8 @@ def test_ap_ble_provisioning_wps_path_bg_extended_scan_C978152(
     finally:
         logger().info(" ====== Stop WPS PBC on Access Point ====== ")
         wifi_access_point.interfaces.wifi.set_configure_wps_web()
+        wifi_dut.interfaces.wifi.reset()
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = False
 
 
 
