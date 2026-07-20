@@ -4362,6 +4362,9 @@ def test_wsdk_WPA2_EAP_Conn_with_wrong_eap_C113853(wifi_dut, wifi_access_point, 
         for i in range(0, iter_count):
             wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
             wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+            # Clearing th PAC file if it already loaded in DUT due to any other Fast eap method test case from any enterprise test plan.
+            wifi_dut.interfaces.wifi.clear_certificate(cert_type=Si91xCertificateType.SL_NET_PACK_FILE,
+                                                       cert_identifier=Si91xCertIdentifier.SL_NET_WIFI_EAP_CLIENT_CREDENTIAL_ID)
             wifi_dut.interfaces.wifi.set_roam_configuration(trigger_level=60, trigger_level_change=4)
             wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=4,
                                                                      beacon_missed_count=40, first_time_retry_enable=0)
