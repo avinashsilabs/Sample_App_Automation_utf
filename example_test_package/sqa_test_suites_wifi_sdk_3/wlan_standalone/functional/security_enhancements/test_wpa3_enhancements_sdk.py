@@ -689,7 +689,8 @@ def test_wifi_sdk_conn_with_conc_mode_with_bec_C463705(wifi_sniffer, wifi_access
     ''' Verify WLAN Connectivity to STAUT with WPA3 Security in Concurrent Mode when APUT is Beaconing'''
     try:
         ssid = "Concurent_ap"
-        security = "wpa3_transition"
+        # security = "wpa3_transition" -->"SI91X-21328 - As WPA3_Transition mode is not supported in ap mode now and this test cases does not requires transition mode so security is changed to wpa3"
+        security = "wpa3"
         password = "Automation@Silabs"
         channel = "11"
         dtim_count = "1"
