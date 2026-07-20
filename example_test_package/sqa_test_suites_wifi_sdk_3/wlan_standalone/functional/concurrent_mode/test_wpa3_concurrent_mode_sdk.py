@@ -882,7 +882,8 @@ def test_wifi_sdk_wpa3_when_sta_doing_udp_tx_C463707(wifi_sniffer, wifi_access_p
         wifi_sniffer.interfaces.capture.stop_capture()
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 @pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
@@ -1807,7 +1808,8 @@ def test_wifi_sdk_wpa3_conc_dtim_based_ps_enabled_C463715(wifi_sniffer, wifi_acc
         logger().info("Stop Sniffer finally")
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
-
+    finally:
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
 
 @pytest.mark.start_state("wifi_dut", wifi=["init", "reset"])
 @pytest.mark.start_state("remote_wiseconnect3", wifi=["init"])
