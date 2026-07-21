@@ -408,30 +408,17 @@ class WLanThread(ThreadBase):
         Ping the given IP address.
         """
         if ping_from == "remote":
-            # status = self.sl_collections.ping(device_ip=ip_address, ping_count=ping_count, retry_count=3)
-            # assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
-            for count in range(0, 2):
-                logger().info(f"=======>>>>>Pinging the DUT from remote side....")
-                status = ping(ip_address, ping_count)
-                if status:
-                    break
-                else:
-                    client_interface = self.wifi_client.interfaces.wifi.config["interface"]
-                    logger().info(f"=======>>>>>DUT NOT RESPONDING FOR PING REQUEST......")
-                    logger().info(f"=======>>>>>Disabling the ethernet adaptor at remote side....")
-                    self.wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {client_interface} down")
-                    time.sleep(10)
-                    logger().info(f"=======>>>>>Enabling the ethernet adaptor at remote side....")
-                    self.wifi_client.interfaces.wifi.shell.execute(f"sudo ifconfig {client_interface} up")
-                    self.wifi_client.interfaces.wifi.shell.execute(f"sudo iptables -F")
-                    time.sleep(20)
-
+            logger().info("=======>>>>>Pinging the DUT from remote side....")
+            status = self.sl_collections.ping(
+                device_ip=ip_address,
+                ping_count=ping_count,
+                retry_count=3,
+            )
             assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
         if ping_from == "dut":
             self.wifi_dut.interfaces.wifi.ping(server_ip=ip_address, ip_version=ip_version, ping_size=64,
                                                num_ping_attempts=10)
-
     def run(self):
         """
         Runs the thread.
@@ -449,9 +436,15 @@ class WLanThread(ThreadBase):
 
         if self.test_id in [156971, 206918]:
 
-            self.static_ipv6 = random_ipv6_addr("2401:3500:133c:1341::")
+            # Use remote client's /64 so static DUT IPv6 is on-link and pingable
             self.remote_ipv6 = self.wifi_client.interfaces.wifi.get_ip_address(version=6, addr_type=self.ipv6_addr_type)
             logger().info(f"remote_ipv6: {self.remote_ipv6}")
+            remote_network = ipaddress.IPv6Network(f"{self.remote_ipv6}/64", strict=False)
+            for _ in range(5):
+                self.static_ipv6 = random_ipv6_addr(str(remote_network.network_address))
+                if self.static_ipv6 != str(self.remote_ipv6):
+                    break
+            logger().info(f"static_ipv6 (same /64 as remote): {self.static_ipv6}")
 
             ip_config = self.wifi_dut.interfaces.wifi.start_ip(timeout=30, ip_version="ipv6", vid=0,
                                                                static_ipv6_address=self.static_ipv6,
@@ -480,7 +473,7 @@ class WLanThread(ThreadBase):
 
         else:
 
-            ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut, ip_status=False, retry_count=1,
+            ip_status, ip_config = self.sl_collections.configure_ip(self.wifi_dut, ip_status=False, retry_count=3,
                                                                     ip_version="ipv6")
             assert ip_status, f"....Unable to assign IPv6 ADDRESS through DHCP with reason: {ip_config}...."
             self.dut_add_dict['device_ipv6_global'] = ip_config[1]
