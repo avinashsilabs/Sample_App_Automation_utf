@@ -30,6 +30,7 @@ from utf.interfaces.iperf.iperf_constants import IperfConstants
 def logger():
     return get_logger(__name__)
 
+
 """This function runs below test steps for DUT-Si91x
         1. Configuration of DUT in 2G : BGN
         2. Association of Third party AP's
@@ -196,14 +197,20 @@ class WLanThread(ThreadBase):
                 vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                 self.validate_rssi_channel_security()
                 time.sleep(2)
-                self.wifi_sniffer.interfaces.capture.configure_interface(channel=self.wifi_access_point.interfaces.wifi.channel)
+                self.wifi_sniffer.interfaces.capture.configure_interface(
+                    channel=self.wifi_access_point.interfaces.wifi.channel)
                 self.wifi_sniffer.interfaces.capture.start_capture(capture_file=self.test_name)
                 self.wifi_dut.interfaces.wifi.join(ssid=vap_list[0],
-                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0]["passphrase"],
-                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0]["security"].name.lower(),)
+                                                   passphrase=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       "passphrase"],
+                                                   security=self.wifi_access_point.interfaces.wifi.guest_networks[0][
+                                                       "security"].name.lower(), )
 
-                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,wifi_access_point=self.wifi_access_point,associated=False,
-                                                                         ping_after_power_save=False, skip_scan=True, skip_connect=True, retry_count=3,)
+                self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
+                                                                         wifi_access_point=self.wifi_access_point,
+                                                                         associated=False,
+                                                                         ping_after_power_save=False, skip_scan=True,
+                                                                         skip_connect=True, retry_count=3, )
 
                 host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
                 logger().info(f"Remote device ip :{host_ip}")
@@ -224,7 +231,7 @@ class WLanThread(ThreadBase):
                 self.validate_rssi_channel_security()
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
                     join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
-                    | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+                                        | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
                 )
                 self.dut_addr = self.sl_collections.join_to_wifi_network(
                     wifi_dut=self.wifi_dut,
@@ -253,7 +260,7 @@ class WLanThread(ThreadBase):
                     vap_list = self.verfiy_T_and_NT_based_mbssid_in_dut_list()
                     self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
                         join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
-                        | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+                                            | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
                     )
                     self.wifi_dut.interfaces.wifi.scan()
                     time.sleep(2)
@@ -397,7 +404,7 @@ class WLanThread(ThreadBase):
                                     time.sleep(2)
                                 except:
                                     pass  # Ignore if already disconnected
-                            
+
                             self.dut_addr = self.sl_collections.join_to_eap_network(
                                 wifi_dut=self.wifi_dut,
                                 wifi_access_point=self.wifi_access_point,
@@ -409,18 +416,19 @@ class WLanThread(ThreadBase):
                             retry_count += 1
                             error_str = str(join_error)
                             logger().error(f"EAP join attempt {retry_count} failed: {error_str}")
-                            
+
                             # Check for specific authentication errors
                             if "SL_STATUS_SI91X_DEAUTHENTICATION" in error_str:
                                 logger().warning("Deauthentication detected, may need longer delay before retry")
                                 if retry_count < max_retries:
                                     time.sleep(10)  # Longer delay for deauth errors
                             elif "IEEE 802.1X authentication failed" in error_str or "0x0017" in error_str:
-                                logger().warning("IEEE 802.1X authentication failed - checking EAP certificate and credentials")
+                                logger().warning(
+                                    "IEEE 802.1X authentication failed - checking EAP certificate and credentials")
                                 # Additional delay for 802.1X auth failures
                                 if retry_count < max_retries:
                                     time.sleep(15)  # Even longer delay for 802.1X failures
-                                    
+
                                     # Try to reset EAP state
                                     try:
                                         logger().info("Attempting to reset EAP authentication state...")
@@ -431,7 +439,7 @@ class WLanThread(ThreadBase):
                                         time.sleep(2)
                                     except:
                                         pass
-                            
+
                             if retry_count >= max_retries:
                                 logger().error(f"Failed to join EAP network after {max_retries} attempts")
                                 logger().error("Last error details:")
@@ -442,7 +450,8 @@ class WLanThread(ThreadBase):
                                     logger().error("  - Verify AP is properly configured for WPA2-Enterprise")
                                 raise join_error
                             else:
-                                logger().info(f"Retrying EAP join in 5 seconds... (attempt {retry_count + 1}/{max_retries})")
+                                logger().info(
+                                    f"Retrying EAP join in 5 seconds... (attempt {retry_count + 1}/{max_retries})")
                                 time.sleep(5)
 
                     host_ip = self.wifi_client.interfaces.wifi.get_ip_address()
@@ -623,7 +632,7 @@ class WLanThread(ThreadBase):
                 time.sleep(2)
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
                     join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
-                    | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+                                        | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
                 )
                 self.dut_addr = self.sl_collections.join_to_wifi_network(
                     wifi_dut=self.wifi_dut,
@@ -650,7 +659,7 @@ class WLanThread(ThreadBase):
 
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
                     join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
-                    | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+                                        | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
                 )
                 self.wifi_dut.interfaces.wifi.scan()
                 self.wifi_dut.interfaces.wifi.join(
@@ -695,7 +704,7 @@ class WLanThread(ThreadBase):
                     ].name.lower(),
                     passphrase="1234567899",
                     expected_status=SLStatus.SL_STATUS_SI91X_DEAUTHENTICATION
-                    or SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE,
+                                    or SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE,
                 )
 
             elif self.test_case_no == 219301:
@@ -938,7 +947,8 @@ class WLanThread(ThreadBase):
                 logger().info(" ********** Starting DUT as an AP ********* ")
                 self.wifi_dut.interfaces.wifi.start_ap(
                     ssid="SILABS_AP_MODE",
-                    security="wpa3_transition",
+                    # security = "wpa3_transition" -->"SI91X-21328 - As WPA3_Transition mode is not supported in ap mode now and this test cases does not requires transition mode so security is changed to wpa3"
+                    security="wpa3",
                     channel=3,
                     dtim_beacon_count=1,
                     beacon_interval=100,
@@ -946,7 +956,7 @@ class WLanThread(ThreadBase):
 
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
                     join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
-                    | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+                                        | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
                 )
 
                 self.dut_addr = self.sl_collections.join_to_wifi_network(
@@ -971,7 +981,8 @@ class WLanThread(ThreadBase):
                 logger().info(" ********** Starting DUT as an AP ********* ")
                 self.wifi_dut.interfaces.wifi.start_ap(
                     ssid="SILABS_AP_MODE",
-                    security="wpa3_transition",
+                    # security = "wpa3_transition" -->"SI91X-21328 - As WPA3_Transition mode is not supported in ap mode now and this test cases does not requires transition mode so security is changed to wpa3"
+                    security="wpa3",
                     channel=3,
                     dtim_beacon_count=1,
                     beacon_interval=100,
@@ -980,7 +991,7 @@ class WLanThread(ThreadBase):
                 time.sleep(10)
                 self.wifi_dut.interfaces.wifi.set_join_feature_bitmap(
                     join_feature_bitmap=Si91xJoinFeatureBitMap.MgmtFrameProtectionCapable
-                    | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
+                                        | Si91xJoinFeatureBitMap.MgmtFrameProtectionRequired
                 )
                 self.wifi_dut.interfaces.wifi.scan()
                 self.wifi_dut.interfaces.wifi.join(
@@ -1596,9 +1607,9 @@ class WLanThread(ThreadBase):
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1607,13 +1618,13 @@ class WLanThread(ThreadBase):
 @pytest.mark.test_src_map_id('C219284')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219284(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
@@ -1628,7 +1639,7 @@ def test_wifi_sdk_mbssid_c219284(
         wifi_access_point=wifi_access_point,
         wifi_sniffer=wifi_sniffer,
         ping_count=ping_count,
-        test_case_no=219284, test_name=test_name, sl_collections=sl_collections,)
+        test_case_no=219284, test_name=test_name, sl_collections=sl_collections, )
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -1704,9 +1715,9 @@ def test_wifi_sdk_mbssid_c219284(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1715,13 +1726,13 @@ def test_wifi_sdk_mbssid_c219284(
 @pytest.mark.test_src_map_id('C219285')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_scan_all_vap_c219285(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
@@ -1804,9 +1815,9 @@ def test_wifi_sdk_mbssid_scan_all_vap_c219285(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1816,16 +1827,16 @@ def test_wifi_sdk_mbssid_scan_all_vap_c219285(
 @pytest.mark.legacy_deployed
 @pytest.mark.WLAN_Dev_sanity_917
 def test_wifi_sdk_mbssid_T_open_sec_c219286(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        protocol,
 ):
     test_name = request.node.name
 
@@ -1906,9 +1917,9 @@ def test_wifi_sdk_mbssid_T_open_sec_c219286(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -1917,16 +1928,16 @@ def test_wifi_sdk_mbssid_T_open_sec_c219286(
 @pytest.mark.test_src_map_id('C219287')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        protocol,
 ):
     test_name = request.node.name
 
@@ -2007,9 +2018,9 @@ def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2018,16 +2029,16 @@ def test_wifi_sdk_mbssid_T_wpa2_psk_c219287(
 @pytest.mark.test_src_map_id('C219288')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_wpa2_psk_c219288(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        protocol,
 ):
     test_name = request.node.name
     """Verify whether DUT is able to connect to NT based profile BSSID with WPA2 PSK security enabled in AP"""
@@ -2113,15 +2124,15 @@ def test_wifi_sdk_mbssid_NT_wpa2_psk_c219288(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
-        | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2130,15 +2141,15 @@ def test_wifi_sdk_mbssid_NT_wpa2_psk_c219288(
 @pytest.mark.test_src_map_id('C219289')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_wpa3_c219289(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        protocol,
 ):
     test_name = request.node.name
     """Verify whether DUT is able to connect to T profile BSSID with WPA3 Personal security enabled in AP"""
@@ -2223,15 +2234,15 @@ def test_wifi_sdk_mbssid_T_wpa3_c219289(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
-        | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2240,16 +2251,16 @@ def test_wifi_sdk_mbssid_T_wpa3_c219289(
 @pytest.mark.test_src_map_id('C219290')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_wpa3_c219290(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    multicast_client,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        multicast_client,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        protocol,
 ):
     test_name = request.node.name
 
@@ -2291,21 +2302,21 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled
-        | Si91xFeatureBitMap.PSKSecurity
-        | Si91xFeatureBitMap.Aggregation
-        | Si91xFeatureBitMap.ULPGPIOHandshake,
+                    | Si91xFeatureBitMap.PSKSecurity
+                    | Si91xFeatureBitMap.Aggregation
+                    | Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
-        | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                               | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
-        | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+                           | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2363,17 +2374,17 @@ def test_wifi_sdk_mbssid_NT_wpa3_c219290(
 @pytest.mark.test_src_map_id('C219291')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(
-    wifi_dut,
-    wifi_access_point,
-    wifi_sniffer,
-    sniffer_filter,
-    multicast_client,
-    radius_server,
-    sl_collections,
-    request,
-    net_perf_client,
-    wifi_client,
-    protocol,
+        wifi_dut,
+        wifi_access_point,
+        wifi_sniffer,
+        sniffer_filter,
+        multicast_client,
+        radius_server,
+        sl_collections,
+        request,
+        net_perf_client,
+        wifi_client,
+        protocol,
 ):
     """This test case Verifies the wpa2 enterprise connectivity while using eap tls method with multicast traffic"""
     try:
@@ -2410,22 +2421,22 @@ def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(
         "oper_mode": Si91xOperatingMode.EAPWiFiClient,
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.WPSSupportDisabled
-        | Si91xFeatureBitMap.PSKSecurity
-        | Si91xFeatureBitMap.Aggregation
-        | Si91xFeatureBitMap.ULPGPIOHandshake,
+                    | Si91xFeatureBitMap.PSKSecurity
+                    | Si91xFeatureBitMap.Aggregation
+                    | Si91xFeatureBitMap.ULPGPIOHandshake,
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
-        | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
-        | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+                          | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
         "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid
-        | Si91xCustomFeatureBitMap.RealTimeClockFromHost,
+                           | Si91xCustomFeatureBitMap.RealTimeClockFromHost,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+                               | Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "config_features": Si91xConfigFeatureBitMap.EnahanceMaxPsp
-        | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
+                           | Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2476,16 +2487,16 @@ def test_wifi_sdk_mbssid_T_wpa2_enterprise_c219291(
 @pytest.mark.legacy_deployed
 @pytest.mark.deployed_25q4
 def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        protocol,
 ):
     test_name = request.node.name
     """Verify whether DUT is able to connect to NT profile BSSID with WPA2 enterprise security enabled in AP"""
@@ -2569,9 +2580,9 @@ def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2580,17 +2591,17 @@ def test_wifi_sdk_mbssid_NT_wpa2_enterprise_c219292(
 @pytest.mark.test_src_map_id('C219293')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    switch,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        switch,
+        protocol,
 ):
     test_name = request.node.name
 
@@ -2684,9 +2695,9 @@ def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2695,17 +2706,17 @@ def test_wifi_sdk_mbssid_rejoin_T_open_sec_c219293(
 @pytest.mark.test_src_map_id('C219294')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    switch,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        switch,
+        protocol,
 ):
     test_name = request.node.name
 
@@ -2746,7 +2757,6 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
         switch.interfaces.pdu_switch.turn_on(delay=60)
         logger().info("C219284: stopping all guest BSS on AP after test")
         sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
-
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2801,9 +2811,9 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2812,17 +2822,17 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa2_c219294(
 @pytest.mark.test_src_map_id('C219295')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    protocol,
-    switch,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        protocol,
+        switch,
 ):
     test_name = request.node.name
 
@@ -2863,7 +2873,6 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
         switch.interfaces.pdu_switch.turn_on(delay=60)
         logger().info("C219284: stopping all guest BSS on AP after test")
         sl_collections.stop_all_guest_bss_on_third_party_ap(wifi_access_point=wifi_access_point)
-
 
 
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -2918,15 +2927,15 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
-        | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -2935,17 +2944,17 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa2_c219295(
 @pytest.mark.test_src_map_id('C219296')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    switch,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        switch,
+        protocol,
 ):
     test_name = request.node.name
 
@@ -3039,15 +3048,15 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
-        | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3056,17 +3065,17 @@ def test_wifi_sdk_mbssid_rejoin_T_wpa3_c219296(
 @pytest.mark.test_src_map_id('C219297')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    switch,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        switch,
+        protocol,
 ):
     test_name = request.node.name
 
@@ -3155,9 +3164,9 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3166,13 +3175,13 @@ def test_wifi_sdk_mbssid_rejoin_NT_wpa3_c219297(
 @pytest.mark.test_src_map_id('C219298')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219298(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
@@ -3253,9 +3262,9 @@ def test_wifi_sdk_mbssid_c219298(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3264,13 +3273,13 @@ def test_wifi_sdk_mbssid_c219298(
 @pytest.mark.test_src_map_id('C219299')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_negative_c219299(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
@@ -3350,9 +3359,9 @@ def test_wifi_sdk_mbssid_negative_c219299(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3361,7 +3370,7 @@ def test_wifi_sdk_mbssid_negative_c219299(
 @pytest.mark.test_src_map_id('C219300')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_connection_failure_c219300(
-    wifi_sniffer, wifi_access_point, wifi_dut, request, sniffer_filter, sl_collections
+        wifi_sniffer, wifi_access_point, wifi_dut, request, sniffer_filter, sl_collections
 ):
     test_name = request.node.name
 
@@ -3436,9 +3445,9 @@ def test_wifi_sdk_mbssid_connection_failure_c219300(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3447,13 +3456,13 @@ def test_wifi_sdk_mbssid_connection_failure_c219300(
 @pytest.mark.test_src_map_id('C219301')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219301(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
@@ -3531,9 +3540,9 @@ def test_wifi_sdk_mbssid_c219301(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3542,13 +3551,13 @@ def test_wifi_sdk_mbssid_c219301(
 @pytest.mark.test_src_map_id('C219302')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219302(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
@@ -3625,15 +3634,15 @@ def test_wifi_sdk_mbssid_c219302(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
-        | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3642,13 +3651,13 @@ def test_wifi_sdk_mbssid_c219302(
 @pytest.mark.test_src_map_id('C219319')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219319(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
@@ -3726,15 +3735,15 @@ def test_wifi_sdk_mbssid_c219319(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
-        | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3743,13 +3752,13 @@ def test_wifi_sdk_mbssid_c219319(
 @pytest.mark.test_src_map_id('C219320')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219320(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
@@ -3823,9 +3832,9 @@ def test_wifi_sdk_mbssid_c219320(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3834,13 +3843,13 @@ def test_wifi_sdk_mbssid_c219320(
 @pytest.mark.test_src_map_id('C219321')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_c219321(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
 ):
     ping_count = utf_constants.get("ping_count")
     test_name = request.node.name
@@ -3914,15 +3923,15 @@ def test_wifi_sdk_mbssid_c219321(
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
-        | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -3931,15 +3940,15 @@ def test_wifi_sdk_mbssid_c219321(
 @pytest.mark.test_src_map_id('C219307')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
 ):
     test_name = request.node.name
 
@@ -4018,15 +4027,15 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
-        | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -4035,15 +4044,15 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_open_sec_c219307(
 @pytest.mark.test_src_map_id('C219308')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
 ):
     test_name = request.node.name
 
@@ -4132,14 +4141,14 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
-        | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -4148,15 +4157,15 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_open_sec_c219308(
 @pytest.mark.test_src_map_id('C219309')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_clients,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_clients,
 ):
     test_name = request.node.name
 
@@ -4244,14 +4253,14 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
-        | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -4260,15 +4269,15 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa2_sec_c219309(
 @pytest.mark.test_src_map_id('C219310')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_clients,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_clients,
 ):
     test_name = request.node.name
 
@@ -4356,19 +4365,19 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
-        | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
-        | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -4377,15 +4386,15 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa2_sec_c219310(
 @pytest.mark.test_src_map_id('C219311')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_clients,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_clients,
 ):
     test_name = request.node.name
 
@@ -4473,19 +4482,19 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(
     wifi={
         "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
         "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
-        | Si91xTCPIPFeatureBitMap.DHCPv4Server,
+                          | Si91xTCPIPFeatureBitMap.DHCPv4Server,
         "oper_mode": Si91xOperatingMode.ConcurrentMode,
         "coex_mode": Si91xCoexMode.WLANOnly,
         "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.WaitForSocketClose
-        | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+                              | Si91xExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE
-        | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
-        | Si91xExtCustomFeatureBitMap.FeatureLowPower
-        | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
-        | Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                               | Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0
+                               | Si91xExtCustomFeatureBitMap.FeatureLowPower
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode
+                               | Si91xExtCustomFeatureBitMap.IEEE802_11W,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -4494,15 +4503,15 @@ def test_wifi_sdk_mbssid_T_profile_based_ap_wpa3_sec_c219311(
 @pytest.mark.test_src_map_id('C219312')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    utf_constants,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        utf_constants,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
 ):
     test_name = request.node.name
 
@@ -4590,9 +4599,9 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
         "features": Si91xFeatureBitMap.Default,
         "custom_features": Si91xCustomFeatureBitMap.Default,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid
-        | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
-        | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": 0,
         "ble_features": 0,
         "ble_custom_ext_features": 0,
@@ -4601,15 +4610,15 @@ def test_wifi_sdk_mbssid_NT_profile_based_ap_wpa3_sec_c219312(
 @pytest.mark.test_src_map_id('C219315')
 @pytest.mark.legacy_deployed
 def test_wifi_sdk_mbssid_T_NT_connect_disconnect_c219315(
-    wifi_sniffer,
-    wifi_access_point,
-    wifi_dut,
-    request,
-    sniffer_filter,
-    sl_collections,
-    net_perf_client,
-    wifi_client,
-    protocol,
+        wifi_sniffer,
+        wifi_access_point,
+        wifi_dut,
+        request,
+        sniffer_filter,
+        sl_collections,
+        net_perf_client,
+        wifi_client,
+        protocol,
 ):
     test_name = request.node.name
 
