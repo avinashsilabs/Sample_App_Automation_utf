@@ -1,3 +1,4 @@
+import os
 import time
 import pytest
 import string
@@ -68,13 +69,55 @@ def _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=None):
 # TLS SNI hostname for the DUT mbedTLS client (broker cert SAN: example.com).
 MQTT_TLS_HOSTNAME = "example.com"
 
+# Broker identity / CA used when restarting Mosquitto from the test (wolfSSL samples).
+# Keep in sync with test_mqtt_on_host_lwip_sdk.py.
+MQTT_BROKER_TLS_CERT = "server-cert.pem"
+MQTT_BROKER_TLS_KEY = "server-key.pem"
+MQTT_BROKER_TLS_CA = "ca-cert.pem"
+
+
+def _reconfigure_mosquitto_tls(
+    mqtt_server,
+    cert=MQTT_BROKER_TLS_CERT,
+    key=MQTT_BROKER_TLS_KEY,
+    ca=MQTT_BROKER_TLS_CA,
+    port=8883,
+):
+    """Restart Mosquitto on the Pi with wolfSSL PEMs from tls_certificates.
+
+    @pytest.mark.config cannot change MQTT TLS files: the mqtt_server fixture
+    starts Mosquitto from harness paths baked in MosquittoServer.__init__.
+    Reuse the harness-resolved directory on the Pi and swap filenames.
+    """
+    mqtt = mqtt_server.interfaces.mqtt
+    if not getattr(mqtt, "tls_enabled", False):
+        return
+    if not getattr(mqtt, "certfile", None):
+        return
+
+    cert_dir = os.path.dirname(mqtt.certfile).replace("\\", "/")
+    new_cert = f"{cert_dir}/{cert}"
+    new_key = f"{cert_dir}/{key}"
+    new_ca = f"{cert_dir}/{ca}"
+    if mqtt.certfile.replace("\\", "/") == new_cert and mqtt.keyfile.replace(
+        "\\", "/"
+    ) == new_key and mqtt.cafile.replace("\\", "/") == new_ca:
+        return
+
+    logger().info(
+        f"Reconfiguring Mosquitto TLS: certfile={cert}, keyfile={key}, cafile={ca}"
+    )
+    mqtt.stop_server()
+    mqtt.certfile = new_cert
+    mqtt.keyfile = new_key
+    mqtt.cafile = new_ca
+    mqtt.start_server(port=port)
+
 
 def wifi_dut_marker(
     tcp_feat_bit=0,
     wifi_stack_len=4096,
     thread_count=1,
-    ca_cert=None,
-    eap_cert=None,
     coex_mode=None,
     memory_mode=None,
 ):
@@ -99,11 +142,8 @@ def wifi_dut_marker(
         | Si91xExtTCPIPFeatureBitMap.EXT_TCP_IP_WINDOW_SELECT,
         "set_send_feature_frame": True,
         "thread_config": {"wifi": {"count": thread_count, "stack_len": wifi_stack_len}},
+        "thread_params": {"wifi": {"buffer_len": 1600}},
     }
-    if ca_cert:
-        config["ca_cert"] = ca_cert
-    if eap_cert:
-        config["eap_cert"] = eap_cert
     return pytest.mark.config("wifi_dut", wifi=config)
 
 
@@ -238,6 +278,9 @@ class MQTTConnectionThread(ThreadBase):
 
     def mqtt_connect(self, expected_status=SLStatus.SL_STATUS_OK, configure_tls_certs=True):
         self.wifi_dut.interfaces["mqtt"] = self.wifi_dut.interfaces.wifi
+        if self.enable_tls:
+            # Harness may still list mosquitto-utf certs; align broker to wolfSSL PEMs.
+            _reconfigure_mosquitto_tls(self.mqtt_server)
         broker = self.mqtt_server.interfaces.mqtt.hostname_or_ip_address
         if self.enable_tls and configure_tls_certs:
             self.free_certificate_allocations()

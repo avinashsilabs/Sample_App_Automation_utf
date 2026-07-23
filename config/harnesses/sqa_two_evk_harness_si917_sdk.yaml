@@ -1346,6 +1346,9 @@ defaults:
         device_filter_addresses : ''
         stop_after_elapsed_time: false
 
+    thread_params:
+        buffer_len: 1600
+
 # The logger section is optional and can be used to modify the logging level for different modules
 logger:
     DLink810AccessPoint: DEBUG

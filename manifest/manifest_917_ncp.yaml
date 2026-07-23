@@ -76,7 +76,22 @@ firmware_applications:
     test_lwip_stack:
       - device_type: 'efx32'
         device_subtype: 'efr32'
-        filename: '917_ncp/test_agent_soc_lwip_stack.hex'
+        filename: 'test_agent_soc_lwip_stack.hex'
+
+    test_lwip_default_timer:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_lwip_default.hex'
+
+    test_lwip_optimized_timer:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_lwip_optimized.hex'
+
+    test_ipv6_lwip:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_4_1_1_FC_LLVM_IPV6_mem_config3.rps'
 
     test_twt_sta:
       - device_type: 'efx32'
