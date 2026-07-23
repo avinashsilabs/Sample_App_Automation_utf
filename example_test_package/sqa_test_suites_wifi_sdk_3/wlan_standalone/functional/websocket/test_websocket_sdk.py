@@ -209,8 +209,8 @@ class WLanJoinThread(ThreadBase):
                     time.sleep(2)
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     # assert ws_handler.message_received == data
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -240,8 +240,8 @@ class WLanJoinThread(ThreadBase):
                     time.sleep(2)
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     # assert ws_handler.message_received == data
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -262,8 +262,8 @@ class WLanJoinThread(ThreadBase):
                     time.sleep(2)
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     assert ws_handler.message_received == data
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
 
                 host_ip = self.http_server.interfaces.http.hostname_or_ip_address
                 logger().info(f"\r\n Starting Sniffer Validation \r\n")
@@ -290,8 +290,8 @@ class WLanJoinThread(ThreadBase):
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     status = ping(self.dut_addr['device_ip'], self.ping_count)
                     assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -330,8 +330,8 @@ class WLanJoinThread(ThreadBase):
                     time.sleep(2)
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     # assert ws_handler.message_received == data
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -351,8 +351,9 @@ class WLanJoinThread(ThreadBase):
                     time.sleep(2)
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     # assert ws_handler.message_received == data
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                time.sleep(2)
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -376,8 +377,8 @@ class WLanJoinThread(ThreadBase):
                     time.sleep(2)
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     # assert ws_handler.message_received == data
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -450,8 +451,8 @@ class WLanJoinThread(ThreadBase):
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     assert ws_handler.message_received == data, "Data sent by dut and received on the server is not " \
                                                                 "matched "
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -495,8 +496,8 @@ class WLanJoinThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.websocket_send(
                     opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_CLOSE | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
                     higher_data_len=0, data=data)
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -592,8 +593,8 @@ class WLanJoinThread(ThreadBase):
                                                             "same "
                 self.wifi_dut.interfaces.wifi.websocket_send(opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_PING,
                                                              higher_data_len=0, data=data)
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -639,8 +640,8 @@ class WLanJoinThread(ThreadBase):
                             received_data = b64decode(received_data[0])
                             logger().info(f"The sent data from the Remote Server is {data} and received data is {received_data}")
                     assert received_data.decode() == data, "Data sent by Websocket server and received on DUT is not same"
-                self.wifi_dut.interfaces.wifi.websocket_close()
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -714,8 +715,8 @@ class WLanJoinThread(ThreadBase):
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     assert ws_handler.message_received == data, "Data sent by DUT and received on Websocket server is " \
                                                                 "not same "
-                    self.wifi_dut.interfaces.wifi.websocket_close()
-                    self.wifi_dut.interfaces.wifi.websocket_deinit()
+                    self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                    self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                     self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
@@ -744,8 +745,8 @@ class WLanJoinThread(ThreadBase):
                     logger().info(f"data received on websocket server ->{ws_handler.message_received}")
                     assert ws_handler.message_received == data, "Data sent by DUT and received on the Websocket " \
                                                                 "server is not same "
-                    self.wifi_dut.interfaces.wifi.websocket_close()
-                    self.wifi_dut.interfaces.wifi.websocket_deinit()
+                    self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                    self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                     time.sleep(1)
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
@@ -819,9 +820,9 @@ class WLanJoinThread(ThreadBase):
                     time.sleep(60)
                     assert rejoin_error_event == 1, "Rejoin failure event not received"
 
-                self.wifi_dut.interfaces.wifi.websocket_close()
+                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
                 time.sleep(2)
-                self.wifi_dut.interfaces.wifi.websocket_deinit()
+                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
                 time.sleep(2)
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
