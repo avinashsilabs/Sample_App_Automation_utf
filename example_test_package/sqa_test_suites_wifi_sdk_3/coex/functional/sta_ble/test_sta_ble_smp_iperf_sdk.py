@@ -1786,7 +1786,7 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_1_1460_BLE_slave_C133470(
 
 
 
-@pytest.mark.skip(reason="WIFI_BT_UTFHELP-4414")
+# @pytest.mark.skip(reason="WIFI_BT_UTFHELP-4414")
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "passphrase": "1234567890"}
 )
@@ -1796,6 +1796,12 @@ def test_Coex_sdk_WLAN_TCP_UDP_TX_1_1460_BLE_slave_C133470(
     "net_perf_client", net_perf={"host_role": IperfConstants.SERVER_MODE}
 )
 @pytest.mark.parametrize("protocol", [IperfConstants.UDP])
+@pytest.mark.parametrize(
+    "dut_capability, client_capability, pin_code",
+    [
+        (0, "KeyboardOnly", "-8"),  # DisplayOnly on DUT; -8 to wait for passkey
+    ],
+)
 @pytest.mark.end_state(
     "wifi_dut", wifi=["bt_powersave_disable", "wifi_powersave_disable", "disassociated"]
 )
@@ -1812,6 +1818,9 @@ def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
     sniffer_filter,
     net_perf_client,
     protocol,
+    dut_capability,
+    client_capability,
+    pin_code,
 ):
     """
     Test Steps:
@@ -1827,7 +1836,7 @@ def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
 
 
     """
-
+    ble_obj = None
     try:
         test_name = request.node.name
         ping_count = utf_constants.get("ping_count")
@@ -1850,6 +1859,11 @@ def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
             ble_test_type="master",
             ble_pairing=1,
             bond_info=1,
+            gatt=False,
+            capability=dut_capability,
+            client_capability=client_capability,
+            pin_code=pin_code,
+            conn_int=200
         )
 
         wifi_obj = WifiJoinThread(
@@ -1870,13 +1884,15 @@ def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
         wifi_obj.join_to_ap()
         wifi_obj.start()
 
-        for count in range(0, iter_count):
+        for count in range(0, 2):
+            ble_obj.set_capabilities()
             ble_obj.start()
             ble_obj.wait_for_exit()
 
             logger().info("Checking connection stability for 60 seconds")
             time.sleep(30)
             ble_obj.ble_disconnect()
+            ble_client.interfaces.bluetooth.close()
         wifi_obj.wait_for_exit()
         wifi_obj.disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1892,7 +1908,6 @@ def test_Coex_sdk_BLE_encrypt_UDP_TX_C133440(
             sl_collections.cleanup_ble(ble_dut=wifi_dut, ble_client=ble_client,
                                        ble_client_address=ble_obj.ble_client_address,
                                        ble_dut_address=ble_obj.ble_dut_address)
-
 
 
 @pytest.mark.config(
