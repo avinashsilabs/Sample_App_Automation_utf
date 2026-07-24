@@ -14,22 +14,15 @@ from utf.utf_config import UtfConfig
         2. Start the sniffer before connection
         3. Association of Third party AP's
         4. Get the valid IP address
-        5. Stop the sniffer
-        6. Analyzing all sniffer capture packets and find the different Qos access category packets 
-
-    traffic category for Iperf category
-        1. wlan.qos.priority == 0  Best Effort
-        2. wlan.qos.priority == 1  Background
-        3. wlan.qos.priority == 4  Video
-        4. wlan.qos.priority == 6  Voice
-
+        5. Send traffic of TCP/UDP/TX/RX
+    
     setup requirement:
         1. soc board
         2. Raspberry PI4
         3. Access Point(Third Party AP's)
-        4. Sniffer(NUC device)
+        4. Sniffer(NUC-device)
 
-    Author: Vinod.G
+    Author: Benazeer K 
 
 """
 
