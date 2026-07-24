@@ -103,6 +103,16 @@ firmware_applications:
         device_subtype: 'efr32'
         filename: 'test_agent_soc_lwip_optimized.rps'
 
+    test_lwip_default_timer_ipv6:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_lwip_default.rps'
+
+    test_lwip_optimized_timer_ipv6:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'test_agent_soc_lwip_optimized.rps'
+
     test_ipv6_lwip:
       - device_type: 'efx32'
         device_subtype: 'efr32'
