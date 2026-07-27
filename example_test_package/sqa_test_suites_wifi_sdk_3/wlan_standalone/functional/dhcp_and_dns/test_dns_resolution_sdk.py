@@ -104,17 +104,21 @@ class WifiJoinThread(ThreadBase):
             if self.test_case_no == 551125:
                 logger().info(f"\n==========>>>>>> Verifying DNS functionality for 30 minutes <<<<<<===========\n")
                 start_time = time.time()
+                logger().info(
+                    "==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",
+                                                              secondary_dns_server_address="10.8.4.10", timeout=50)
                 while (time.time() - start_time) < 1800:
-                    logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                    self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10", timeout=50)
                     self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 553434:
                 logger().info(f"\n==========>>>>>> Verifying DNS functionality for 24 hours <<<<<<===========\n")
                 start_time = time.time()
+                logger().info(
+                    "==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
+                self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",
+                                                              secondary_dns_server_address="10.8.4.10", timeout=50)
                 while (time.time() - start_time) < 86400:
-                    logger().info("==DNS address command is given when both primary and secondary DNS server ip addresses are given statically ==")
-                    self.wifi_dut.interfaces.wifi.set_dns_address(primary_dns_server_address="10.207.110.11",secondary_dns_server_address="10.8.4.10", timeout=50)
                     self.wifi_dut.interfaces.wifi.dns_get(domain_name="www.google.com", query_timeout=20000,ip_version="ipv4", timeout=50)
 
             if self.test_case_no == 19302 or self.test_case_no == 19303 or self.test_case_no == 19304 or self.test_case_no == 19310\
