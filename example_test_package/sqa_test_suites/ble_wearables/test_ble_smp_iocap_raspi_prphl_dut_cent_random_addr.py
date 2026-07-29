@@ -518,6 +518,7 @@ class BLESMPPairingTest:
         # Start SMP advertising from the remote device (Raspi Peripheral)
         logger().info(f"Start SMP advertising from the remote device (Raspi) with capability={self.client_capability}")
         self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
+            bt_dut_address=self.ble_dut_address,
             capability=self.client_capability,
             pin_code=self.pin_code
         )
