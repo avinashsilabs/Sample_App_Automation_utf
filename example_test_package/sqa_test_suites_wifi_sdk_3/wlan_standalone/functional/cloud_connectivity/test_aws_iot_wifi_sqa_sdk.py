@@ -279,10 +279,20 @@ class AwsConnection(ThreadBase):
         @param aws_iot_client: Fixture parameter to issue command in Raspi.
         """
         logger().info("Connecting to aws server from aws_iot_client")
+        status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
+        if status != ClientStatus.IDLE:
+            logger().info(f"Raspi AWS client status is {status}, disconnecting before reconnect")
+            try:
+                aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
+                time.sleep(5)
+            except Exception as err:
+                logger().warning(f"Raspi AWS disconnect before reconnect failed: {err}")
         aws_iot_client.interfaces.aws_iot.aws_iot_connect()
         time.sleep(5)
         status = aws_iot_client.interfaces.aws_iot.client._mqtt_core._client_status.get_status()
-        assert status == ClientStatus.STABLE, "Connecting to AWS server from aws_iot_client is failed"
+        assert status == ClientStatus.STABLE, (
+            f"Connecting to AWS server from aws_iot_client is failed, status={status}"
+        )
 
     @retry(Exception, delay=10, tries=3)
     def subscribe_from_raspi(self, aws_iot_client, topic, qos=Si91xAwsQos.QOS0):
@@ -2950,6 +2960,12 @@ def test_wifi_sdk_aws_2000_bytes_tx_data_send_to_dut_c537911(wifi_sniffer, wifi_
             aws_obj.start()
             aws_obj.wait_for_exit()
 
+            logger.info("Unsubscribing from aws topic from aws_iot_client")
+            aws_iot_client.interfaces.aws_iot.aws_iot_unsubscribe('topic_' + test_name)
+
+            logger.info("Initiating aws_iot_disconnect from aws_iot_client")
+            aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
+
             logger.info("DUT is Unsubscribing on topic")
             wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name='topic_' + test_name)
 
@@ -3035,6 +3051,13 @@ def test_wifi_sdk_aws_change_port_number_443_tx_c661500(wifi_sniffer, wifi_acces
             logger.info(f"Initiating aws test for iteration:{i + 1}")
             aws_obj.start()
             aws_obj.wait_for_exit()
+            logger.info("Unsubscribing from aws topic from aws_iot_client")
+            aws_iot_client.interfaces.aws_iot.aws_iot_unsubscribe('topic_' + test_name)
+            logger.info("Initiating aws_iot_disconnect from aws_iot_client")
+            aws_iot_client.interfaces.aws_iot.aws_iot_disconnect()
+
+            logger.info("DUT is Unsubscribing on topic")
+            wifi_dut.interfaces.wifi.aws_iot_mqtt_unsubscribe(topic_name='topic_' + test_name)
 
             logger.info("Initiating aws_iot_disconnect from DUT")
             wifi_dut.interfaces.wifi.aws_iot_mqtt_disconnect()
