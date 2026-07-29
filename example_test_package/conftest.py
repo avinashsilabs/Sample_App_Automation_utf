@@ -1,4 +1,6 @@
 import time
+import subprocess
+import sys
 
 from utf import TestResultsModelAttrs, TestUserPropertiesSource
 from utf.apis.test_rail import extract_test_case_id
@@ -100,6 +102,223 @@ def pytest_configure(config):
 
 def logger():
     return get_logger(__name__)
+
+
+@pytest.fixture(autouse=True, scope="function")
+def sl_debug_log_capture(request):
+    """
+    Fixture to capture SL debug logs for each test case using subprocess to run Log_script_v2.py.
+    
+    This fixture automatically starts the log capture in a separate process at the beginning 
+    of each test and stops it when the test completes. The logs are saved to a test-specific 
+    output file with a timestamp.
+    
+    Configure via settings:
+    - SL_DEBUG_LOG_ENABLE: Enable/disable log capture (default: False)
+    - SL_DEBUG_LOG_DEVICE: J-Link device name (default: SiWG917M111M)
+    
+    Args:
+        request: pytest FixtureRequest object providing test context
+    
+    Yields:
+        subprocess.Popen: The log capture process
+    """
+    
+    def _normalize_test_name(test_name):
+        """Normalize test name for use in file paths."""
+        return test_name.replace("[", "_").replace("]", "_").replace("::", "_")
+
+    def _get_sl_debug_log_paths(request, workspace_root, test_name):
+        """
+        Build all necessary file paths for SL debug log capture.
+        
+        Args:
+            request: pytest FixtureRequest object
+            workspace_root: Workspace root directory path
+            test_name: Normalized test name
+            
+        Returns:
+            tuple: (log_script_path, output_file, descriptor_file, log_filename)
+        """
+        from datetime import datetime
+        
+        log_script_path = os.path.join(
+            workspace_root, "utf_wiseconnect", "utf_wiseconnect", "utils", "sl_debug_log", "log_script_v2.py"
+        )
+        
+        # Get manifest file path from pytest config
+        manifest_file_path = request.config.getoption("manifest", default=None)
+        
+        if manifest_file_path:
+            # Extract manifest directory from the provided path
+            manifest_dir = os.path.dirname(manifest_file_path) if os.path.dirname(manifest_file_path) else os.path.join(workspace_root, "manifest")
+            
+            # Build full paths relative to workspace root if manifest path is relative
+            if not os.path.isabs(manifest_file_path):
+                manifest_dir = os.path.join(workspace_root, manifest_dir)
+            
+            output_file = os.path.join(manifest_dir, "test_agent.out")
+            descriptor_file = os.path.join(manifest_dir, "SYSVIEW_CaptiveCore.txt")
+        else:
+            # Fallback to default manifest directory if not specified
+            manifest_dir = os.path.join(workspace_root, "manifest")
+            output_file = os.path.join(manifest_dir, "test_agent.out")
+            descriptor_file = os.path.join(manifest_dir, "SYSVIEW_CaptiveCore.txt")
+        
+        # Get reports directory for log file
+        try:
+            reports_dir = get_or_create_reports_session_dir(request.config)
+        except Exception as e:
+            logger().warning(f"Could not get reports directory: {e}. Using current directory.")
+            reports_dir = os.getcwd()
+        
+        # Generate timestamped log filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = os.path.join(reports_dir, f"log_{test_name}_{timestamp}.txt")
+        
+        return log_script_path, output_file, descriptor_file, log_filename
+
+    def _build_sl_debug_log_command(log_script_path, device_name, output_file, descriptor_file, log_filename):
+        """
+        Build the command list to run the SL debug log script.
+        
+        Args:
+            log_script_path: Path to Log_script_v2.py
+            device_name: J-Link device name
+            output_file: ELF output file path
+            descriptor_file: SYSVIEW descriptor file path
+            log_filename: Log output file path
+            
+        Returns:
+            list: Command list for subprocess
+        """
+        return [
+            sys.executable,
+            log_script_path,
+            "--source", "rtt",
+            "--device", device_name,
+            "--out", output_file,
+            "--descriptor", descriptor_file,
+            "--max-args", "3",
+            "--log-file", log_filename
+        ]
+
+    def _start_sl_debug_log_process(cmd, test_name, device_name, manifest_file_path, descriptor_file, log_filename, output_file):
+        """
+        Start the SL debug log capture process and validate it started successfully.
+        
+        Args:
+            cmd: Command list for subprocess
+            test_name: Test name for logging
+            device_name: J-Link device name
+            manifest_file_path: Manifest file path (optional)
+            descriptor_file: SYSVIEW descriptor file path
+            log_filename: Log output file path
+            output_file: ELF output file path
+            
+        Returns:
+            subprocess.Popen: The started process, or None if failed
+        """
+        try:
+            # Start the log capture as a subprocess
+            logger().info(f"Starting SL debug log capture for test: {test_name}")
+            logger().info(f"J-Link device: {device_name}")
+            if manifest_file_path:
+                logger().info(f"Using manifest: {manifest_file_path}")
+            logger().info(f"Descriptor file: {descriptor_file}")
+            logger().info(f"Log output will be saved to: {log_filename}")
+            logger().info(f"ELF output file: {output_file}")
+            
+            # Start the process without capturing stdout/stderr so it writes directly to files
+            log_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            
+            # Give the log capture process time to initialize RTT connection
+            time.sleep(3)
+            
+            # Check if process is still running
+            if log_process.poll() is not None:
+                _, stderr = log_process.communicate()
+                logger().warning(f"Log capture process exited early. stderr: {stderr}")
+                logger().warning("Continuing test execution without log capture...")
+                return None
+            else:
+                logger().info("Log capture process is running successfully")
+                return log_process
+                
+        except Exception as e:
+            logger().error(f"Failed to start log capture: {e}")
+            logger().warning("Continuing test execution without log capture...")
+            return None
+
+    def _stop_sl_debug_log_process(log_process, test_name, log_filename):
+        """
+        Terminate and kill the SL debug log capture process.
+        
+        Args:
+            log_process: The subprocess.Popen object
+            test_name: Test name for logging
+            log_filename: Log output file path for logging
+        """
+        if log_process and log_process.poll() is None:
+            logger().info(f"Test {test_name} completed.")
+            logger().info("Stopping log capture process...")
+            try:
+                log_process.terminate()
+                # Wait briefly for graceful termination
+                try:
+                    log_process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    # Force kill if it doesn't terminate gracefully
+                    logger().warning("Log capture process did not terminate gracefully, force killing...")
+                    log_process.kill()
+                    log_process.wait()
+                logger().info(f"Log capture complete. Log file saved to: {log_filename}")
+            except Exception as e:
+                logger().warning(f"Error while stopping log capture: {e}")
+    
+    env_settings = EnvironSettings()
+    
+    # Check if SL debug log capture is enabled
+    if env_settings.SL_DEBUG_LOG_ENABLE.lower() not in ("true", "1", "yes"):
+        yield None
+        return
+    
+    # Build paths using os.path.join for consistency
+    workspace_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    test_name = _normalize_test_name(request.node.name)
+    
+    # Get all necessary file paths
+    log_script_path, output_file, descriptor_file, log_filename = _get_sl_debug_log_paths(
+        request, workspace_root, test_name
+    )
+    
+    # Get device name from settings
+    device_name = env_settings.SL_DEBUG_LOG_DEVICE
+    
+    # Build the command to run the log script as a subprocess
+    cmd = _build_sl_debug_log_command(
+        log_script_path, device_name, output_file, descriptor_file, log_filename
+    )
+    
+    # Get manifest file path for logging
+    manifest_file_path = request.config.getoption("manifest", default=None)
+    
+    # Start the log capture process
+    log_process = _start_sl_debug_log_process(
+        cmd, request.node.name, device_name, manifest_file_path, 
+        descriptor_file, log_filename, output_file
+    )
+    
+    try:
+        yield log_process
+    finally:
+        # Clean up: terminate and kill the log capture process after test completes
+        _stop_sl_debug_log_process(log_process, request.node.name, log_filename)
 
 
 @pytest.fixture(autouse=True, scope="module")

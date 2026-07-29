@@ -244,6 +244,36 @@ devices:
                 type: 'bluetooth.bluez'
                 shell: 'linux_shell'
 
+    receiver_adb_phone:
+        interfaces:
+            receiver_adb_shell:
+                type: 'shell.adb_shell'
+                connection_mode: 'device_id'
+                device_id: '31051FDH2001TV'
+                adb_path: 'adb'
+
+            adb:
+                type: 'adb'
+                device_id: '31051FDH2001TV'
+                adb_path: 'adb'
+                use_adb_shell: true
+                adb_shell: 'receiver_adb_shell'
+
+    caller_adb_phone:
+        interfaces:
+            caller_adb_shell:
+                type: 'shell.adb_shell'
+                connection_mode: 'device_id'
+                device_id: '5a36c43d'
+                adb_path: 'adb'
+
+            adb:
+                type: 'adb'
+                device_id: '5a36c43d'
+                adb_path: 'adb'
+                use_adb_shell: true
+                adb_shell: 'caller_adb_shell'
+
     raspi_bt_client:
         interfaces:
             linux_shell:
@@ -689,7 +719,6 @@ defaults:
     # List of devices on test bed, used for loading/upgrading firmware at test case level
     wiseconnect_duts:
         - 'rs9116_sapi'
-        - 'efr32_4180b'
 
     # The wifi_access_point entry is needed for any test cases that require the wifi_access_point fixture
     # This should be set to the name of the device in the "devices" section to be used as an access point
@@ -711,6 +740,13 @@ defaults:
     ble_client: 'raspi_ble_client'
 
     bt_client: 'raspi_bt_client'
+    
+    # ADB phone device for Android phone control tests
+    adb_phone: 'receiver_adb_phone'
+
+    adb_phones:
+        - 'receiver_adb_phone'
+        - 'caller_adb_phone'
 
     nrf_ble_client: 'nrf_52840_ble_client'
 
@@ -760,6 +796,11 @@ defaults:
         ble_advertising_data: 'HELLO'
         bt_local_name: "rs911x_bt_spp"
         bt_pin_code: "4321"
+
+    adb:
+        # Default phone number for ADB call tests
+        # Override per-test using @pytest.mark.config("adb_phone", adb={"target_number": "+1234567890"})
+        target_number: "7337511161" # Replace with actual test phone number
 
     aws_iot:
         hostname: "a2lqafhldpb41r-ats.iot.us-east-1.amazonaws.com"

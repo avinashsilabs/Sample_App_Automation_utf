@@ -6,15 +6,6 @@ pipeline {
         parallelsAlwaysFailFast()
         quietPeriod(20)
         disableConcurrentBuilds()
-        office365ConnectorWebhooks(
-            [
-                [   // send notifications to 'IOT Infra SW - HYD - Alerts' channel for failures only
-                    name: 'utf-dev-team-hyd-jenkins-alerts', notifyBackToNormal: true, notifyFailure: true, notifyNotBuilt: true,
-                    notifyRepeatedFailure: true, notifyUnstable: true,  notifyAborted: true,
-                    url: 'https://silabs.webhook.office.com/webhookb2/8b1f6858-1a20-4ed5-9358-a7182e6bbeb2@54dbd822-5231-4b20-944d-6f4abcd541fb/JenkinsCI/0c96b07b0334491c8f1990c97220058e/5ed37d9b-6818-4972-a549-6cd1c3ad5a31/V2HYNpnbDrC6zwmcJMwWvg_ZEdZCdFJVvmtX3KGMpTeVI1'
-                ]
-            ]
-        )
     }
     stages {
         stage('Run Sanity test') {
@@ -88,6 +79,21 @@ pipeline {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                def prev = currentBuild.previousBuild?.result
+                def isFixed = currentBuild.currentResult == 'SUCCESS' && prev != null && prev != 'SUCCESS'
+                if (currentBuild.currentResult != 'SUCCESS' || isFixed) {
+                    withCredentials([string(credentialsId: 'teams-webhook-url', variable: 'WEBHOOK_URL')]) {
+                        echo "Sending Teams alert: status=${currentBuild.currentResult}"
+                        office365ConnectorSend webhookUrl: env.WEBHOOK_URL, status: currentBuild.currentResult
+                        echo "Teams alert sent successfully"
                     }
                 }
             }
