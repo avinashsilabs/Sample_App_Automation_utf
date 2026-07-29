@@ -534,6 +534,7 @@ class BLESMPPairingTest:
         logger().info(f"Start SMP advertising from the remote device (Raspi) with capability={self.client_capability}")
         # IMPORTANT: Pass the capability to start_smp_adv so BlueZ agent registers with correct IO capability
         self.ble_client_address = self.ble_client.interfaces.bluetooth.start_smp_adv(
+            bt_dut_address=self.ble_dut_address,
             capability=self.client_capability,
             pin_code=self.pin_code
         )
