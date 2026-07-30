@@ -2,13 +2,31 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xFeatureBit
     Si91xTCPIPFeatureBitMap, Si91xCustomFeatureBitMap, Si91xExtCustomFeatureBitMap, Si91xExtTCPIPFeatureBitMap, \
     Si91xOperatingMode, Si91xCertificateType, Si91xCertIdentifier
 import time
-import re 
+import re
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
 from utf.utils.iperf.iperf_utils import get_host_ip, ping
 from utf.utils.time_measurer import TimeMeasurer
+from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.tests.sl_status import SLStatus
+
+
+def _normalize_ota_http_url(path):
+    """Ensure OTA path is a server-relative URL (leading '/')."""
+    if path is None:
+        return None
+    path = str(path).strip()
+    if not path:
+        return path
+    return path if path.startswith("/") else f"/{path}"
+
+
+def _harness_wifi_http_url():
+    """Old/alternate RPS from harness defaults.wifi.http_url."""
+    defaults = UtfConfig.instance().defaults or {}
+    wifi_defaults = defaults.get("wifi") or {}
+    return _normalize_ota_http_url(wifi_defaults.get("http_url"))
 
 """This Test plan is validating Firmware version upgrade through  HTTP OTAF with encryption
 
@@ -117,13 +135,18 @@ class WifiJoin(ThreadBase):
         return url
 
     def get_firmware_status(self):
-        self.wifi_dut.interfaces.wifi.reset()
+        # Prefer net.deinit over hard reset so wifi.set_config / opermode is not
+        # reapplied every overnight OTA iteration (config_required=False).
+        self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
         time.sleep(30)
-        logger().info("Initialising DUT after the reset....")
-        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        logger().info("Initialising DUT after deinit....")
         self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
-        self.wifi_dut.interfaces.wifi.init(load_certificate=False, mode="client")
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        self.wifi_dut.interfaces.wifi.init(
+            mode="client", config_required=False, load_certificate=False
+        )
         self.wifi_dut.interfaces.wifi.initialize_thread()
+        self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
         self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
         fw_after_upgrade = self.wifi_dut.interfaces.wifi.version()
         self.wifi_dut.interfaces.wifi.inited = False
@@ -225,23 +248,67 @@ class WifiJoin(ThreadBase):
                 logger().info(f"server ip is {self.host_ip}")
 
             if self.test_case == '510707':
+                current_rps = _normalize_ota_http_url(self.rps_path)
+                old_rps = _harness_wifi_http_url()
+                assert current_rps and old_rps and current_rps != old_rps, (
+                    "C510707 needs two different RPS files on HTTPS docroot: "
+                    f"utf_constants.rps_filename={current_rps!r} and "
+                    f"defaults.wifi.http_url={old_rps!r}"
+                )
+                logger().info(f"C510707 current rps_filename={current_rps}")
+                logger().info(f"C510707 harness wifi.http_url={old_rps}")
+
                 t_end = time.time() + self.twelve_hour
+                iteration = 0
                 while time.time() < t_end:
-                    self.fw_version_before_upgrade = self.wifi_dut.interfaces.wifi.version()
+                    iteration += 1
+                    wifi = self.wifi_dut.interfaces.wifi
+                    # Keep test-agent threads on so scan uses "t 0 A wifi.scan" (avoids 0x7).
+                    # For join+DHCP use join_ap + net.configure_ip: with
+                    # is_external_stack_enabled=True, start_ip() sends net.up while already
+                    # associated and fails with 0x10002 SCAN_ISSUED_IN_ASSOCIATED_STATE.
+                    wifi.test_agent_thread_enabled = True
+                    wifi.is_external_stack_enabled = False
+                    wifi.inited = True
+
+                    logger().info(f"*** Overnight OTA iteration {iteration} ***")
+                    if wifi.associated:
+                        try:
+                            wifi.leave()
+                        except Exception as leave_err:
+                            logger().warning(f"leave before overnight scan: {leave_err}")
+                        wifi.associated = False
+
+                    self.fw_version_before_upgrade = wifi.version()
                     logger().info(f"*** dut fw version before upgrade = {self.fw_version_before_upgrade} ***")
-                    logger().info("scanning for ap...")
-                    self.wifi_dut.interfaces.wifi.is_external_stack_enabled = False
-                    self.wifi_dut.interfaces.wifi.scan()
-                    self.wifi_dut.interfaces.wifi.join_ap(access_point=self.wifi_access_point)
-                    self.wifi_dut.interfaces.wifi.start_ip()
+
+                    # Retried scan/join/DHCP (channel=0). Single channel-scoped scan often
+                    # returns 0x10003 NO_AP_FOUND when the beacon is missed in ~100ms.
+                    self.sl_collections.join_to_wifi_network(
+                        self.wifi_dut,
+                        wifi_access_point=self.wifi_access_point,
+                        power_save=False,
+                        retry_count=3,
+                        associated=False,
+                        ping_before_power_save=False,
+                        channel=0,
+                    )
+
+                    # Odd iters: old image (http_url). Even iters: current (rps_filename).
+                    ota_http_url = old_rps if iteration % 2 else current_rps
+                    logger().info(
+                        f"Overnight iter {iteration}: OTA with "
+                        f"{'http_url (old)' if iteration % 2 else 'rps_filename (current)'} "
+                        f"= {ota_http_url!r}"
+                    )
 
                     with TimeMeasurer() as t:
-                        self.wifi_dut.interfaces.wifi.firmware_upgrade(
+                        wifi.firmware_upgrade(
                             flags=1,
                             ip_address=self.host_ip,
                             port=443,
                             host_name=self.host_ip,
-                            http_url=self.rps_path,
+                            http_url=ota_http_url,
                             timeout=150
                         )
 
@@ -249,15 +316,13 @@ class WifiJoin(ThreadBase):
                         logger().info('*** Firmware upgrade time is more ***')
                     else:
                         logger().info(f'*** Firmware upgrade time = {t.duration} ***')
-
                     logger().info(f'*** Firmware upgrade time: {t.duration} ***')
-                    self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
-                    self.wifi_dut.interfaces.wifi.is_external_stack_enabled = True
-                    self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
-                    self.wifi_dut.interfaces.wifi.init(mode="client", config_required=False, load_certificate=False)
 
-                    self.fw_version_after_upgrade = self.wifi_dut.interfaces.wifi.version()
+                    # net.deinit + re-init (no opermode); restores threads for next iter.
+                    self.fw_version_after_upgrade = self.get_firmware_status()
                     logger().info(f"*** dut fw version after upgrade = {self.fw_version_after_upgrade} ***")
+                    wifi.inited = True
+                    wifi.associated = False
 
                     if self.fw_version_before_upgrade == self.fw_version_after_upgrade:
                         logger().info("Firmware after upgrade matched with the previous firmware")
@@ -775,7 +840,17 @@ def test_wifi_sdk_https_fw_upgrade_downgrade_overnight_c510707(firmware_loader, 
 
     try:
         test_case = '510707'
+        # current image (utf_constants.rps_filename); old/alt image is harness wifi.http_url
         rps_path = utf_constants.get("rps_filename")
+        current_rps = _normalize_ota_http_url(rps_path)
+        old_rps = _harness_wifi_http_url()
+        logger().info(f"C510707 current rps_filename={current_rps}")
+        logger().info(f"C510707 harness wifi.http_url={old_rps}")
+        if not current_rps or not old_rps or current_rps == old_rps:
+            logger().warning(
+                "C510707 requires two different RPS files on the HTTPS lighttpd docroot: "
+                f"utf_constants.rps_filename={current_rps!r} and "
+                f"defaults.wifi.http_url={old_rps!r}")
         wlan_obj = WifiJoin(http_server=http_server, wifi_sniffer=wifi_sniffer,sl_collections=sl_collections,wifi_client=wifi_client,
                             wifi_access_point=wifi_access_point, wifi_dut=wifi_dut, test_case=test_case, rps_path=rps_path)
         wlan_obj.start()
