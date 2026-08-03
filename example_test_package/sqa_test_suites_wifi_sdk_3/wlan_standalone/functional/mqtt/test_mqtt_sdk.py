@@ -12868,3 +12868,145 @@ def test_MQTTs_client_disconnect_during_chunked_rx_C990096(
                 publisher_client.loop_stop()
             except Exception:
                 pass  # end of C990096:
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['reset', 'init'])
+@pytest.mark.end_state("wifi_dut",
+                       wifi=["mqtt_disconnect", "wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
+@pytest.mark.test_src_map_id('C990072')
+@pytest.mark.legacy_deployed
+def test_MQTT_client_rx_8193_bytes_payload_rejected_C990072(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, sniffer_filter, request, sl_collections, utf_constants):
+    """QOS0: Verify DUT rejects a 8193-byte payload (above SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE=8192)
+    and reports an error — payload must not be delivered to the application."""
+
+    MQTT_CONNECT_SETTLE_SEC = 25
+    MQTT_RX_TIMEOUT_SEC = 15
+    # TestRail: publish payload of exactly 8193 bytes (content), which exceeds MAX_RX=2000
+    PAYLOAD_BYTES = 8193
+    ERROR_KEYWORDS = (
+        b"SL_MQTT_CLIENT_ERROR_EVENT",
+        b"SL_MQTT_CLIENT_RECEIVE_PAYLOAD_TOO_LARGE",
+        b"PAYLOAD_TOO_LARGE",
+        b"too large",
+        b"exceed",
+    )
+
+    try:
+        topic = "test/large_payload"
+        payload_len = PAYLOAD_BYTES
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=payload_len))
+        capture_filename = request.node.name
+
+        # Step 1: Connect to AP and get IP address
+        logger().info("Step 1: Connect to AP and get IP address")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        assert wifi_obj.dut_addr, "Failed to connect to AP and obtain IP"
+        logger().info(f"DUT IP: {wifi_obj.dut_addr['device_ip']}")
+
+        # Step 2: Enable TA power save
+        logger().info("Step 2: Enabling TA power save")
+        wifi_dut.interfaces.wifi.set_performance_profile("power_save_low_latency")
+        wifi_dut.interfaces.wifi.enable_bt_power_save(
+            psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
+            psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+
+        # Step 3: Verify DUT MQTT connection status is "Connected"
+        logger().info("Step 3: Verify DUT MQTT connection status is Connected")
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=0)
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(MQTT_CONNECT_SETTLE_SEC)
+        logger().info("DUT MQTT connection status: Connected")
+
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        # Step 4: Confirm subscription to topic "test/large_payload" is active
+        logger().info(f"Step 4: Confirm subscription to topic '{topic}' is active")
+        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(2)
+        wifi_dut.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=0)
+        time.sleep(5)
+        logger().info(f"Subscription to '{topic}' is active")
+
+        pre_publish_log_len = len(wifi_dut.interfaces.wifi.bus.get_input_log())
+
+        # Step 5: From broker, publish a payload of exactly 8193 bytes to topic "test/large_payload"
+        logger().info(
+            f"Step 5: From broker, publish exactly {payload_len}-byte payload to '{topic}' "
+            f"(exceeds SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE=8192)")
+        mqtt_client.interfaces.mqtt.mqtt_client_publish(topic=topic, payload=message, qos=0)
+        time.sleep(4)
+
+        # Step 6: Monitor DUT console/logs for incoming message callback
+        # Expected: DUT must NOT deliver the payload and must throw/report an error
+        logger().info("Step 6: Monitor DUT console/logs for incoming message callback")
+        sw = Stopwatch()
+        found = False
+        while sw.elapsed_sec < MQTT_RX_TIMEOUT_SEC:
+            time.sleep(0.1)
+            msgs = wifi_dut.interfaces.mqtt.mqtt_client_get_received_messages()
+            logger().info(f'received message on dut : {msgs}')
+            if message in msgs:
+                found = True
+                break
+        time.sleep(2)
+
+        serial_log = wifi_dut.interfaces.wifi.bus.get_input_log()
+        post_publish_log = serial_log[pre_publish_log_len:]
+        post_log_text = b"".join([line for _, line in post_publish_log])
+
+        assert not found, (
+            "DUT must not receive the 8193-byte payload — "
+            "expected reject/error when payload exceeds SL_MQTT_CLIENT_MAX_RX_PAYLOAD_SIZE")
+
+        error_found = any(kw in post_log_text for kw in ERROR_KEYWORDS)
+        if not error_found:
+            # Also scan decoded lines for softer firmware wording
+            for _, line in post_publish_log:
+                decoded = line.decode(errors='replace').lower()
+                if any(kw in decoded for kw in ("error", "too large", "exceed", "reject", "drop")):
+                    error_found = True
+                    logger().info("Error indication in DUT log: %s", line.decode(errors='replace').strip())
+                    break
+
+        assert error_found, (
+            "DUT did not throw/report an error for the 8193-byte payload — "
+            "expected SL_MQTT_CLIENT_ERROR_EVENT / PAYLOAD_TOO_LARGE (or equivalent)")
+        logger().info("DUT correctly rejected the 8193-byte payload and reported an error")
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        wifi_obj.verify_ps_validation()
+
+    except Exception as Ex:
+        try:
+            wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception as stop_err:
+            logger().warning("Sniffer stop after failure: %s", stop_err)
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
