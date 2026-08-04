@@ -362,6 +362,9 @@ def test_wifi_sdk_dhcp_renewal_time_to_2_min_renewal_func_c19293(wifi_sniffer, w
         logger().info(f'DHCP Req packet time delta list after removing 0 = {dhcp_request_packets_time_delta_list}')
 
         for time_diff in dhcp_request_packets_time_delta_list:
+            if float(time_diff) < 5:
+                logger().info(f"Skipping retry/duplicate DHCP Req delta={time_diff}")
+                continue
             print(int(time_diff))
             is_between = int(time_diff) in range(50, time_delta)
             if is_between is False:
