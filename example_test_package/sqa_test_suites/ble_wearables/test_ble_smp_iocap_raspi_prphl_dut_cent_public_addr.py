@@ -1,4 +1,3 @@
-import pytest
 """
 BLE SMP Pairing IO Capability Test Suite
 
@@ -31,6 +30,7 @@ from utf.utils.stopwatch import Stopwatch
 from utf.interfaces.bluetooth import BLEDeviceState
 import re
 import yaml
+import pytest
 
 def logger():
     return get_logger(__name__)
@@ -268,6 +268,40 @@ class BLESMPPairingTest:
             raise  # Re-raise so pytest catches it
         except Exception as e:
             logger().warning(f"Could not verify command '{command_name}' response: {e}")
+
+    def _wait_for_smp_passkey_event(self, timeout=30, log_start_index=0):
+        """Wait for the 'smp sc passkey event' to appear in DUT serial logs.
+
+        The DUT firmware prints 'in smp sc passkey event' when it is ready to
+        accept a passkey via the smp_passkey CLI command.  Sending the passkey
+        before this event causes an SMP timeout (error 0x4BFC).
+
+        Args:
+            timeout: Maximum seconds to wait for the event.
+            log_start_index: Snapshot index from _get_log_snapshot() taken
+                             before the connect command was issued.
+
+        Returns:
+            True if the event was found, False on timeout.
+        """
+        serial_conn = self.wifi_dut.interfaces.wifi.bus
+        SMP_PASSKEY_EVENT_PATTERN = re.compile(r'in smp sc passkey event', re.IGNORECASE)
+
+        for elapsed in range(timeout):
+            input_log = serial_conn.get_input_log()
+            new_entries = input_log[log_start_index:]
+            for _ts, line in new_entries:
+                try:
+                    decoded = line.decode(errors="ignore")
+                except Exception:
+                    decoded = str(line)
+                if SMP_PASSKEY_EVENT_PATTERN.search(decoded):
+                    logger().info(f"\u2705 SMP SC passkey event detected after ~{elapsed}s")
+                    return True
+            time.sleep(1)
+
+        logger().warning(f"\u274c Timeout ({timeout}s) waiting for 'smp sc passkey event' in DUT logs.")
+        return False
 
     def _wait_for_ltk_in_logs(self, device_label, timeout=30, log_start_index=0):
         """Wait for LE LTK generation in DUT serial logs.
@@ -518,6 +552,49 @@ class BLESMPPairingTest:
         logger().info(f"Setting Raspi SMP params: IO={raspi_io_cap}, OOB={self.oob_data_flag}, auth_req={raspi_auth_req}")
         self.ble_client.interfaces.bluetooth.set_mitm_sc_bits(f"{raspi_io_cap} {self.oob_data_flag} {raspi_auth_req}")
         
+        test_failure = None  # Track any test failure to re-raise after cleanup
+        try:
+            self._run_test_logic(io_capability, pairing_method, passkey_direction, auth_req_value)
+        except Exception as e:
+            test_failure = e
+            logger().error(f"Test failed with error: {e}")
+        finally:
+            self._cleanup()
+        
+        if test_failure:
+            raise test_failure
+
+    def _cleanup(self):
+        """Perform cleanup actions to ensure proper state for subsequent tests."""
+        logger().info("=" * 60)
+        logger().info("CLEANUP: Ensuring proper teardown for next test case...")
+        logger().info("=" * 60)
+        try:
+            if self.ble_client_address:
+                logger().info(f"Disconnecting DUT from BLE client at {self.ble_client_address}")
+                self.wifi_dut.interfaces.wifi.btc_disconnect(ble_address=self.ble_client_address)
+                logger().info("Disconnection command sent")
+                time.sleep(2)
+        except Exception as e:
+            logger().warning(f"Cleanup: disconnect failed (may already be disconnected): {e}")
+        
+        try:
+            if self.ble_dut_address:
+                logger().info(f"Removing device {self.ble_dut_address} from Raspi")
+                self.ble_client.interfaces.bluetooth.remove_device(bt_dut_address=self.ble_dut_address)
+        except Exception as e:
+            logger().warning(f"Cleanup: remove_device failed: {e}")
+        
+        try:
+            logger().info("Closing Raspi BLE client bus")
+            self.ble_client.interfaces.bluetooth.close()
+        except Exception as e:
+            logger().warning(f"Cleanup: close failed: {e}")
+        
+        logger().info("Cleanup completed.")
+
+    def _run_test_logic(self, io_capability, pairing_method, passkey_direction, auth_req_value):
+        """Main test logic separated from cleanup to allow try/finally pattern."""
         # Set SMP pairing capability data on DUT
         logger().info(f"Setting DUT SMP pairing capability: IO={io_capability[self.dut_capability]}, OOB={self.oob_data_flag}, auth_req={auth_req_value}")
         log_snap = self._get_log_snapshot()
@@ -594,73 +671,55 @@ class BLESMPPairingTest:
                 self.ble_client.interfaces.bluetooth.set_pin(passkey)
                 
             elif passkey_direction == "raspi_displays":
-                # Secure Connections Passkey Entry: Both devices generate different passkeys
-                # Each side must enter the OTHER side's passkey
-                # Raspi enters DUT's passkey, DUT enters Raspi's passkey
-                logger().info("Passkey Entry (SC): Both devices generate passkeys - cross-entry required")
-                logger().info("Raspi will enter DUT's passkey, DUT will enter Raspi's passkey")
+                # Passkey Entry: Raspi (responder) generates and displays the passkey
+                # DUT (initiator) must enter the passkey displayed by Raspi
+                # DUT does NOT generate a passkey in this scenario
+                logger().info("Passkey Entry: Raspi displays passkey, DUT enters it")
+                logger().info("Only Raspi generates a passkey — DUT must enter it")
                 
-                dut_passkey = None
                 raspi_passkey = None
-                max_attempts = 20  # More attempts with shorter delay
+                max_attempts = 20  # Fast polling due to SMP timeout
                 
-                # Collect passkeys from both sides - FAST polling due to SMP timeout
+                # Get passkey from Raspi (the only side that generates one)
                 for attempt in range(max_attempts):
-                    # Get DUT passkey from serial log
-                    if not dut_passkey:
-                        dut_passkey = self._extract_passkey_from_log()
-                        if dut_passkey:
-                            logger().info(f"DUT generated passkey: {dut_passkey}")
-                    
-                    # Get Raspi passkey from BlueZ agent
                     if not raspi_passkey:
                         try:
                             raspi_pk = self.ble_client.interfaces.bluetooth.get_passkey()
                             if raspi_pk and str(raspi_pk) != "0":
                                 raspi_passkey = str(raspi_pk).zfill(6)
-                                logger().info(f"Raspi generated passkey: {raspi_passkey}")
+                                logger().info(f"Raspi displayed passkey: {raspi_passkey}")
                         except Exception as e:
                             logger().debug(f"Could not get Raspi passkey yet: {e}")
                     
-                    # Continue until we have both passkeys
-                    if dut_passkey and raspi_passkey:
+                    if raspi_passkey:
                         break
                     
-                    logger().info(f"Waiting for passkeys, attempt {attempt + 1}/{max_attempts} (DUT: {dut_passkey}, Raspi: {raspi_passkey})")
+                    logger().info(f"Waiting for Raspi passkey, attempt {attempt + 1}/{max_attempts}")
                     time.sleep(0.5)  # Fast polling - SMP has short timeout
                 
-                # Perform cross-entry: each side enters the OTHER side's passkey
-                if dut_passkey and raspi_passkey:
-                    logger().info(f"Cross-entry: Raspi entering DUT's passkey ({dut_passkey}), DUT entering Raspi's passkey ({raspi_passkey})")
-                    
-                    # Raspi enters DUT's passkey
-                    logger().info(f"Raspi entering DUT's passkey: {dut_passkey}")
-                    self.ble_client.interfaces.bluetooth.set_pin(dut_passkey)
-                    
-                    # DUT enters Raspi's passkey
-                    logger().info(f"DUT entering Raspi's passkey: {raspi_passkey}")
+                if raspi_passkey:
+                    # Wait for DUT to be ready to accept passkey (smp sc passkey event)
+                    logger().info("Waiting for DUT 'smp sc passkey event' before entering passkey...")
+                    smp_event_ok = self._wait_for_smp_passkey_event(
+                        timeout=30,
+                        log_start_index=connect_log_snap
+                    )
+                    if not smp_event_ok:
+                        logger().error("❌ SMP SC passkey event not received — DUT not ready for passkey entry!")
+                        self._check_dut_serial_log_for_errors()
+                        assert False, "DUT did not emit 'smp sc passkey event' — cannot enter passkey safely."
+
+                    # DUT enters the passkey displayed by Raspi
+                    logger().info(f"DUT entering Raspi's displayed passkey: {raspi_passkey}")
                     pk_snap = self._get_log_snapshot()
                     self.wifi_dut.interfaces.wifi.smp_passkey(
                         bd_addr=self.ble_client_address,
                         passkey=raspi_passkey
                     )
-                    self._assert_dut_command_success("smp_passkey (cross-entry)", pk_snap, timeout=2)
-                elif dut_passkey:
-                    # Only DUT passkey available - Raspi enters it
-                    logger().warning("Only DUT passkey available, Raspi entering DUT's passkey")
-                    self.ble_client.interfaces.bluetooth.set_pin(dut_passkey)
-                elif raspi_passkey:
-                    # Only Raspi passkey available - DUT enters it
-                    logger().warning("Only Raspi passkey available, DUT entering Raspi's passkey")
-                    pk_snap = self._get_log_snapshot()
-                    self.wifi_dut.interfaces.wifi.smp_passkey(
-                        bd_addr=self.ble_client_address,
-                        passkey=raspi_passkey
-                    )
-                    self._assert_dut_command_success("smp_passkey (raspi_displays fallback)", pk_snap, timeout=2)
+                    self._assert_dut_command_success("smp_passkey (DUT enters Raspi displayed key)", pk_snap, timeout=2)
                 else:
-                    logger().error("No passkey found from either DUT or Raspi!")
-                    assert False, "Passkey not found from either device!"
+                    logger().error("No passkey received from Raspi!")
+                    assert False, "Raspi did not generate/display a passkey for DUT to enter!"
                 
                 
         elif pairing_method == "NumericComparison":
@@ -781,15 +840,6 @@ class BLESMPPairingTest:
             self._check_dut_serial_log_for_errors()
         logger().info(f"Connection after observation period: {'✅ STILL CONNECTED' if connection_after_observation else '❌ DISCONNECTED'}")
         
-        # Disconnect from the BLE client
-        logger().info(f"Disconnecting from BLE client at {self.ble_client_address}")
-        self.wifi_dut.interfaces.wifi.btc_disconnect(ble_address=self.ble_client_address)
-        logger().info("Disconnection completed")
-
-        # Clean up - remove device from Raspi and close bus
-        self.ble_client.interfaces.bluetooth.remove_device(bt_dut_address=self.ble_dut_address)
-        self.ble_client.interfaces.bluetooth.close()
-        
         # Assert connection survived the observation period
         assert connection_after_observation, "Test failed: Connection dropped during 60s observation period"
         logger().info("🎉 TEST PASSED: Connection, pairing, and stability verified!")
@@ -869,7 +919,7 @@ def test_raspi_connects_to_dut_keybdisp_disp_C664776(wifi_dut, ble_client):
     ble_test.run()
 
 # JustWorks, Raspi: 0x00 (DisplayOnly) DUT: 0x01 (DisplayYesNo)
-@pytest.mark.test_src_map_id('C664757')
+@pytest.mark.test_src_map_id('C664756')
 def test_raspi_connects_to_dut_disponly_dispyn_C664757(wifi_dut, ble_client):
     logger().info("\n\n **** set sleep to initialize dut ****\n\n")
     time.sleep(20)
@@ -957,6 +1007,7 @@ def test_raspi_connects_to_dut_disponly_keybonly_C664758(wifi_dut, ble_client):
         pin_code="-8"
     )
     ble_test.run()
+
 
 # Passkey, Raspi: 0x01 (DisplayYesNo) DUT: 0x02 (KeyboardOnly)
 @pytest.mark.test_src_map_id('C664763')
