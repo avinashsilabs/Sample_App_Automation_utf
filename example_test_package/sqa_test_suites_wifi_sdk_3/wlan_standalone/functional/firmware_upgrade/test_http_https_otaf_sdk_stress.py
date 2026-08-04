@@ -70,7 +70,7 @@ def wifi_dut_marker(ca_cert=None):
 class WifiJoin(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, wifi_client=None,
                  capture_filename=None, sl_collections=None, http_server=None, test_case_no=None,
-                 rps_path=None):
+                 rps_path=None, long_duration=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -84,6 +84,7 @@ class WifiJoin(ThreadBase):
         self.rps_path = rps_path
         self.fw_before_upgrade = None
         self.fw_after_upgrade = None
+        self.long_duration = long_duration
 
     def get_firmware_status(self):
         self.wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
@@ -139,20 +140,52 @@ class WifiJoin(ThreadBase):
             logger().info(f" start firmware upgrade: {start_time}")
 
             if self.test_case_no == 19793:
-                logger().info("performing fw upgrade on dut ....")
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip,
-                                                               host_name=host_ip)
-                time.sleep(5)
+                sw = Stopwatch()
+                logger().info(f"Time duration is {self.long_duration} secs")
+                while sw.elapsed_sec < self.long_duration:
+                    logger().info(f" \n\n ***** FW upgrade/downgrade started in loop *****\n\n")
 
-                self.get_firmware_status()
-                logger().info("performing fw downgrade on dut...")
-                logger().info("join WIFI network...")
-                self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
-                                                                         retry_count=3,
-                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                         power_save=False)
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, http_url=self.rps_path,
-                                                               host_name=host_ip)
+                    fw_before_upgrade = self.wifi_dut.interfaces.wifi.version()
+                    logger().info(f" \n ***** FW before upgrade: {fw_before_upgrade} *****\n")
+
+                    logger().info("\n\n ******* performing fw upgrade on dut ....*******\n\n")
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip,
+                                                                   host_name=host_ip)
+                    time.sleep(5)
+                    fw_after_upgrade = self.get_firmware_status()
+                    logger().info(f" \n\n ***** FW after UPGRADE: {fw_after_upgrade} *****\n\n")
+                    assert str(fw_before_upgrade) != str(fw_after_upgrade), \
+                        f"\n\n **** Firmware upgrade failed. Versions are same before and after " \
+                        f"upgrade: {fw_before_upgrade} ****\n\n"
+                    logger().info("\n\n\n **** Firmware upgraded successfully. ****\n\n\n ")
+
+                    logger().info("join WIFI network...")
+                    self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
+                                                                             retry_count=3,
+                                                                             associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                             power_save=False)
+                    time.sleep(2)
+
+                    fw_before_downgrade = self.wifi_dut.interfaces.wifi.version()
+                    logger().info(f" \n ***** FW before downgrade: {fw_before_downgrade} *****\n")
+                    logger().info("/n/n *******performing fw downgrade on dut...*******\n\n")
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, http_url=self.rps_path,
+                                                                   host_name=host_ip)
+                    time.sleep(2)
+                    fw_after_downgrade = self.get_firmware_status()
+                    logger().info(f" \n\n\n ***** FW after DOWNGRADE: {fw_after_downgrade} *****\n\n\n")
+                    assert str(fw_before_downgrade) != str(fw_after_downgrade), \
+                        f"\n\n **** Firmware downgrade failed. Versions are same before and after " \
+                        f"downgrade: {fw_before_downgrade} ****\n\n"
+                    logger().info("\n\n **** Firmware downgraded successfully. ****\n\n ")
+
+                finish_time = time.time()
+                logger().info(f"firmware upgraded : {finish_time}")
+                time_duration = (finish_time - start_time)
+                logger().info(f"Time taken to upgrade firmware is: {time_duration}")
+                logger().info("Stop Sniffer finally")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                return
 
             if self.test_case_no == 19794:
                 logger().info("performing fw upgrade on dut non rps....")
@@ -168,21 +201,52 @@ class WifiJoin(ThreadBase):
                                                                expected_status=SLStatus.SL_STATUS_SI91X_INVALID_LENGTH)
 
             if self.test_case_no == 19771:
-                logger().info("performing fw upgrade on dut ....")
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=host_ip, port=443,
-                                                               host_name=host_ip)
-                time.sleep(5)
+                sw = Stopwatch()
+                logger().info(f"Time duration is {self.long_duration} secs")
+                while sw.elapsed_sec < self.long_duration:
+                    logger().info(f" \n\n ***** FW upgrade/downgrade started in loop *****\n\n")
 
-                self.get_firmware_status()
-                logger().info("performing fw downgrade on dut...")
-                logger().info("join WIFI network...")
-                self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
-                                                                         retry_count=3,
-                                                                         associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                         power_save=False)
-                self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=host_ip, port=443,
-                                                               http_url=self.rps_path,
-                                                               host_name=host_ip)
+                    fw_before_upgrade = self.wifi_dut.interfaces.wifi.version()
+                    logger().info(f" \n ***** FW before upgrade: {fw_before_upgrade} *****\n")
+
+                    logger().info("\n\n ******* performing fw upgrade on dut ....*******\n\n")
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip,
+                                                                   host_name=host_ip)
+                    time.sleep(5)
+                    fw_after_upgrade = self.get_firmware_status()
+                    logger().info(f" \n\n ***** FW after UPGRADE: {fw_after_upgrade} *****\n\n")
+                    assert str(fw_before_upgrade) != str(fw_after_upgrade), \
+                        f"\n\n **** Firmware upgrade failed. Versions are same before and after " \
+                        f"upgrade: {fw_before_upgrade} ****\n\n"
+                    logger().info("\n\n\n **** Firmware upgraded successfully. ****\n\n\n ")
+
+                    logger().info("join WIFI network...")
+                    self.dut_addr = self.sl_collections.join_to_wifi_network(self.wifi_dut, self.wifi_access_point,
+                                                                             retry_count=3,
+                                                                             associated=self.wifi_dut.interfaces.wifi.associated,
+                                                                             power_save=False)
+                    time.sleep(2)
+
+                    fw_before_downgrade = self.wifi_dut.interfaces.wifi.version()
+                    logger().info(f" \n ***** FW before downgrade: {fw_before_downgrade} *****\n")
+                    logger().info("/n/n *******performing fw downgrade on dut...*******\n\n")
+                    self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=host_ip, http_url=self.rps_path,
+                                                                   host_name=host_ip)
+                    time.sleep(2)
+                    fw_after_downgrade = self.get_firmware_status()
+                    logger().info(f" \n\n\n ***** FW after DOWNGRADE: {fw_after_downgrade} *****\n\n\n")
+                    assert str(fw_before_downgrade) != str(fw_after_downgrade), \
+                        f"\n\n **** Firmware downgrade failed. Versions are same before and after " \
+                        f"downgrade: {fw_before_downgrade} ****\n\n"
+                    logger().info("\n\n **** Firmware downgraded successfully. ****\n\n ")
+
+                finish_time = time.time()
+                logger().info(f"firmware upgraded : {finish_time}")
+                time_duration = (finish_time - start_time)
+                logger().info(f"Time taken to upgrade firmware is: {time_duration}")
+                logger().info("Stop Sniffer finally")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                return
 
             if self.test_case_no == 19772:
                 logger().info("performing fw upgrade on dut non rps....")
@@ -196,20 +260,21 @@ class WifiJoin(ThreadBase):
                                                                host_name=host_ip, http_url='/text_file.txt',
                                                                expected_status=SLStatus.SL_STATUS_SI91X_CORRUPTED_RPS_HEADER)
 
-            finish_time = time.time()
-            logger().info(f"firmware upgraded : {finish_time}")
-            time_duration = (finish_time - start_time)
-            logger().info(f"Time taken to upgrade firmware is: {time_duration}")
-            logger().info("Stop Sniffer finally")
-            self.wifi_sniffer.interfaces.capture.stop_capture()
-            fw_after_upgrade = self.get_firmware_status()
-            time.sleep(2)
-            logger().info(f"\n\n **** firmware default version is : {fw_before_upgrade} *****\n\n ")
-            logger().info(f"\n\n **** firmware upgraded version is : {fw_after_upgrade} *****\n\n ")
-            if str(fw_before_upgrade) == str(fw_after_upgrade):
-                assert False, "\n\n **** Firmware versions are same. Downgrade/Upgrade failed.**** \n\n"
-            logger().info("\n\n **** Firmware upgraded/downgraded successfully. ****\n\n ")
-            # If versions are different, test passes
+            if self.test_case_no not in (19793, 19771):
+                finish_time = time.time()
+                logger().info(f"firmware upgraded : {finish_time}")
+                time_duration = (finish_time - start_time)
+                logger().info(f"Time taken to upgrade firmware is: {time_duration}")
+                logger().info("Stop Sniffer finally")
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                fw_after_upgrade = self.get_firmware_status()
+                time.sleep(2)
+                logger().info(f"\n\n **** firmware default version is : {fw_before_upgrade} *****\n\n ")
+                logger().info(f"\n\n **** firmware upgraded version is : {fw_after_upgrade} *****\n\n ")
+                if str(fw_before_upgrade) == str(fw_after_upgrade):
+                    assert False, "\n\n **** Firmware versions are same. Downgrade/Upgrade failed.**** \n\n"
+                logger().info("\n\n **** Firmware upgraded/downgraded successfully. ****\n\n ")
+                # If versions are different, test passes
 
         except Exception as e:
             logger().info(f"\n\n **** Got exception: {str(e)} ****\n\n")
@@ -227,17 +292,14 @@ def test_http_fw_upgrade_downgrade_overnight_c19793(http_server, wifi_sniffer, w
     """Verify continuous firmware upgrade and downgrade works seamlessly overnight and measure the up-gradation time"""
     try:
         rps_path = utf_constants.get("rps_filename")
-        long_duration = utf_constants.get("long_duration")
-        sw = Stopwatch()
-        logger().info(f"Time duration is {long_duration} secs")
         capture_filename = request.node.name
-        while sw.elapsed_sec < long_duration:
-            wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                wifi_client=wifi_client, capture_filename=capture_filename,
-                                sl_collections=sl_collections,
-                                http_server=http_server, test_case_no=19793, rps_path=rps_path)
-            wifi_obj.start()
-            wifi_obj.wait_for_exit()
+        long_duration = utf_constants.get("long_duration")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename,
+                            sl_collections=sl_collections,
+                            http_server=http_server, test_case_no=19793, rps_path=rps_path, long_duration=long_duration)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
 
     except Exception as Ex:
         try:
@@ -318,17 +380,14 @@ def test_https_fw_upgrade_downgrade_overnight_file_c19771(http_server, wifi_snif
     """Verify continuous firmware upgrade and downgrade works seamlessly overnight and measure the upgradation time"""
     try:
         rps_path = utf_constants.get("rps_filename")
-        long_duration = utf_constants.get("long_duration")
-        sw = Stopwatch()
-        logger().info(f"Time duration is {long_duration} secs")
         capture_filename = request.node.name
-        while sw.elapsed_sec < long_duration:
-            wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
-                                wifi_client=wifi_client, capture_filename=capture_filename,
-                                sl_collections=sl_collections, rps_path=rps_path,
-                                http_server=http_server, test_case_no=19771)
-            wifi_obj.start()
-            wifi_obj.wait_for_exit()
+        long_duration = utf_constants.get("long_duration")
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                            wifi_client=wifi_client, capture_filename=capture_filename,
+                            sl_collections=sl_collections,
+                            http_server=http_server, test_case_no=19771, rps_path=rps_path, long_duration=long_duration)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
 
     except Exception as Ex:
         try:
