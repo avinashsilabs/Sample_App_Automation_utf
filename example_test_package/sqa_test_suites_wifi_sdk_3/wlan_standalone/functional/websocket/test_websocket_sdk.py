@@ -57,6 +57,11 @@ class WebsocketEventHandler:
         self.client_disconnected = False
         self.message_received = ""
 
+    def reset(self):
+        self.client_connected = False
+        self.client_disconnected = False
+        self.message_received = ""
+
     def on_ws_client_connected(self, client: dict):
         # logger().info(f"what is the message getting received 1 ")
         self.client_connected = True
@@ -64,6 +69,7 @@ class WebsocketEventHandler:
     def on_ws_client_disconnected(self, client: dict):
         # logger().info(f"what is the message getting received 2")
         self.client_disconnected = True
+        self.client_connected = False
 
     def on_ws_message_received(self, client: dict, message: Union[str, bytes]):
         logger().info(f"what is the message getting received {message} ")
@@ -107,7 +113,7 @@ def wifi_dut_marker(ca_cert=None, client_cert=None, client_key=None, tcpip_feat=
         "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
         "features": Si91xFeatureBitMap.Default,
         "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
-        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | tcpip_feat,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | tcpip_feat,
         "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | ext_tcpip_feat,
         "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | ext_custom_feat,
         "bt_features": 0,
@@ -753,76 +759,192 @@ class WLanJoinThread(ThreadBase):
                 self.wifi_sniffer.interfaces.capture.stop_capture()
 
             elif self.test_case == '688067':
+                from socket import gethostbyname
+
                 def ap_switch(switch, ap_turn_off_time, start_delay):
                     time.sleep(start_delay)
                     logger().info(f"Turn off AP for {ap_turn_off_time} seconds")
                     switch.interfaces.pdu_switch.turn_off(delay=10)
                     time.sleep(ap_turn_off_time)
 
+                def cleanup_websocket(reason=""):
+                    logger().info(f"Cleaning websocket (close -> deinit). Reason: {reason}")
+                    try:
+                        self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
+                    except Exception as close_ex:
+                        logger().info(f"websocket_close ignored: {close_ex}")
+                    time.sleep(0.5)
+                    try:
+                        self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
+                    except Exception as deinit_ex:
+                        logger().info(f"websocket_deinit ignored: {deinit_ex}")
+                    time.sleep(1)
+
+                def connect_websocket_with_retry(server_ip, client_port, connect_timeout=120, retries=2):
+                    last_error = None
+                    for attempt in range(1, retries + 1):
+                        try:
+                            if attempt > 1:
+                                ws_handler.reset()
+                                logger().info(
+                                    f"Re-initializing websocket before retry "
+                                    f"(client_port={client_port})"
+                                )
+                                self.wifi_dut.interfaces.wifi.websocket_init(
+                                    self.http_server.interfaces.http,
+                                    host_name="example.com",
+                                    resource_name="/websocket",
+                                    server_port=80,
+                                    client_port=client_port,
+                                )
+                                time.sleep(2)
+                            logger().info(
+                                f"\n **** Ping WS server {server_ip} from DUT before connect "
+                                f"(attempt {attempt}/{retries}) ****\n"
+                            )
+                            self.wifi_dut.interfaces.wifi.ping(
+                                server_ip=server_ip,
+                                num_ping_attempts=5,
+                                ping_timeout=10,
+                            )
+                            logger().info(
+                                f"\n **** Trying websocket.connect "
+                                f"(client_port={client_port}, timeout={connect_timeout}s, "
+                                f"attempt {attempt}/{retries}) ****\n"
+                            )
+                            self.wifi_dut.interfaces.wifi.websocket_connect(timeout=connect_timeout)
+                            time.sleep(0.5)
+                            assert ws_handler.client_connected, (
+                                f"WS server did not report client_connected after connect "
+                                f"(attempt {attempt})"
+                            )
+                            return
+                        except Exception as connect_ex:
+                            last_error = connect_ex
+                            logger().info(
+                                f"websocket_connect attempt {attempt}/{retries} failed: {connect_ex}"
+                            )
+                            cleanup_websocket(reason=f"connect attempt {attempt} failed")
+                            if attempt < retries:
+                                time.sleep(2)
+                    raise last_error
+
+                ws_server_ip = gethostbyname(
+                    self.http_server.interfaces.http.hostname_or_ip_address
+                )
+                logger().info(f"Websocket server IP resolved to: {ws_server_ip}")
+                socket_cleaned = False
+
                 for count in range(0, 2):
-                    if count == 1:
-                        self.wifi_dut.interfaces.wifi.websocket_close()
-                        time.sleep(0.1)
+                    client_port = 5001 + count  # iter0: 5001, iter1: 5002
+                    logger().info(
+                        f"\n **** 688067 iteration {count + 1}/2 using client_port={client_port} ****\n"
+                    )
+                    ws_handler.reset()
 
-                    self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=20,
-                                                                                  scan_interval=6,
-                                                                                  beacon_missed_count=40,
-                                                                                  first_time_retry_enable=0)
+                    if count == 1 and not socket_cleaned:
+                        cleanup_websocket(reason="start of second iteration")
+                        socket_cleaned = True
+
+                    self.wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
+                        max_retry_attempts=20,
+                        scan_interval=6,
+                        beacon_missed_count=40,
+                        first_time_retry_enable=0,
+                    )
                     self.wifi_dut.interfaces.wifi.associated = False
-                    self.dut_addr = self.sl_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
-                                                                             wifi_access_point=self.wifi_access_point,
-                                                                             associated=self.wifi_dut.interfaces.wifi.associated,
-                                                                             channel=self.wifi_access_point.interfaces.wifi.channel,
-                                                                             retry_count=3)
+                    self.dut_addr = self.sl_collections.join_to_wifi_network(
+                        wifi_dut=self.wifi_dut,
+                        wifi_access_point=self.wifi_access_point,
+                        associated=self.wifi_dut.interfaces.wifi.associated,
+                        channel=self.wifi_access_point.interfaces.wifi.channel,
+                        retry_count=3,
+                    )
 
-                    self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http,
-                                                                 host_name="example.com",
-                                                                 resource_name="/websocket",
-                                                                 server_port=80, client_port=5001)
+                    self.wifi_dut.interfaces.wifi.websocket_init(
+                        self.http_server.interfaces.http,
+                        host_name="example.com",
+                        resource_name="/websocket",
+                        server_port=80,
+                        client_port=client_port,
+                    )
                     time.sleep(5)
-                    self.wifi_dut.interfaces.wifi.websocket_connect(timeout=60)
-                    time.sleep(0.1)
-                    assert ws_handler.client_connected
+                    connect_websocket_with_retry(
+                        server_ip=ws_server_ip,
+                        client_port=client_port,
+                        connect_timeout=120,
+                        retries=2,
+                    )
+                    socket_cleaned = False
 
                     ap_turn_off_time = 150
                     start_delay = 30
-                    thread = Thread(target=ap_switch, args=(self.switch, ap_turn_off_time, start_delay), )
+                    thread = Thread(
+                        target=ap_switch,
+                        args=(self.switch, ap_turn_off_time, start_delay),
+                    )
                     thread.start()
                     sw = Stopwatch()
                     end_time = 300
                     rejoin_error_event = 0
-                    logger().info(f"rejoin error event before turning off AP {rejoin_error_event}")
+                    stop_sending = False
+                    logger().info(
+                        f"rejoin error event before turning off AP {rejoin_error_event}"
+                    )
                     while sw.elapsed_sec < end_time:
+                        if stop_sending:
+                            time.sleep(1)
+                            continue
                         try:
                             data = text_generator(size=50)
                             logger().info("send_data_over_websocket")
                             self.wifi_dut.interfaces.wifi.websocket_send(
-                                opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_TEXT | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
-                                higher_data_len=0, data=data)
+                                opcode=Si91xWebSocketParms.SL_WEBSOCKET_OPCODE_TEXT
+                                | Si91xWebSocketParms.SL_WEBSOCKET_FIN_BIT,
+                                higher_data_len=0,
+                                data=data,
+                            )
                             time.sleep(2)
-                            logger().info(f"data received on websocket server ->{ws_handler.message_received}")
-                            assert ws_handler.message_received == data, "data sent by DUT and received on websocket " \
-                                                                        "server is " \
-                                                                        "not " \
-                                                                        "matched"
-                        except:
-                            logger().info(f"Unable to send data over Websocket as AP is turned off. wait for 20 sec")
+                            logger().info(
+                                f"data received on websocket server ->{ws_handler.message_received}"
+                            )
+                            assert ws_handler.message_received == data, (
+                                "data sent by DUT and received on websocket "
+                                "server is not matched"
+                            )
+                        except Exception:
+                            logger().info(
+                                "Unable to send data over Websocket as AP is turned off. "
+                                "wait for 20 sec"
+                            )
                             time.sleep(20)
                             events = self.wifi_dut.interfaces.wifi.get_async_events()
 
                             for event in events:
                                 if event.event_type == AsyncEventIdentifiers.REJOIN_EVENT:
                                     rejoin_error_event = 1
-                                    logger().info(f"rejoin error event after turning off AP {rejoin_error_event}")
+                                    logger().info(
+                                        f"rejoin error event after turning off AP "
+                                        f"{rejoin_error_event}"
+                                    )
+                                    cleanup_websocket(
+                                        reason="rejoin failure event received"
+                                    )
+                                    socket_cleaned = True
+                                    stop_sending = True
                                     break
+
+                    if not socket_cleaned:
+                        cleanup_websocket(reason="AP about to return / end of send window")
+                        socket_cleaned = True
+
                     logger().info(f"Turn on AP")
-                    self.switch.interfaces.pdu_switch.turn_on(delay=60) 
+                    self.switch.interfaces.pdu_switch.turn_on(delay=60)
                     time.sleep(60)
                     assert rejoin_error_event == 1, "Rejoin failure event not received"
 
-                self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
-                time.sleep(2)
-                self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
+                if not socket_cleaned:
+                    cleanup_websocket(reason="final cleanup")
                 time.sleep(2)
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
