@@ -32,6 +32,21 @@ from utf_wiseconnect_3.tests.sl_status import SLStatus
 def logger():
     return get_logger(__name__)
 
+
+def _cleanup_iperf_clients(*net_perf_clients):
+    """Best-effort cleanup for all iperf clients used by a test."""
+    for net_perf_client in net_perf_clients:
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except Exception as ex:
+            logger().warning(
+                "Iperf cleanup failed for %s: %s",
+                getattr(net_perf_client, "name", repr(net_perf_client)),
+                ex,
+            )
+
+
 """Test Author = Jyothi Nagireddy & Vasavi Kalla
 
         1. Start the sniffer before connection
@@ -817,6 +832,7 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Rx_data_C19465(wifi_sniffer, net_perf_clien
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        _cleanup_iperf_clients(net_perf_client)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -873,6 +889,7 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Rx_data_C19464(wifi_sniffer, net_perf_clien
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        _cleanup_iperf_clients(net_perf_client)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -927,6 +944,7 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_C19462(wifi_sniffer, net_perf_clien
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        _cleanup_iperf_clients(net_perf_client)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -987,6 +1005,7 @@ def test_wifi_sdk_DUTAP_Validate_UDP_Tx_data_C19463(wifi_sniffer, net_perf_clien
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        _cleanup_iperf_clients(net_perf_client)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -1622,6 +1641,7 @@ def test_wifi_sdk_Verify_Multicast_data_TX_and_RX_C19469(wifi_sniffer, net_perf_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        _cleanup_iperf_clients(net_perf_client)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -1735,6 +1755,7 @@ def test_wifi_sdk_Verify_Multicast_RX_C19484(wifi_sniffer, net_perf_client, wifi
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        _cleanup_iperf_clients(net_perf_client)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -1942,6 +1963,7 @@ def test_wifi_sdk_DUTAP_Bidirectional_TCP_traffic_data_C19467(wifi_sniffer, net_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        _cleanup_iperf_clients(net_perf_client)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2041,6 +2063,7 @@ def test_wifi_sdk_DUTAP_Bidirectional_UDP_traffic_data_C19468(wifi_sniffer, net_
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        _cleanup_iperf_clients(net_perf_client)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2661,6 +2684,7 @@ def test_wifi_sdk_DUTAP_Validate_TCP_Tx_data_for_multiple_iterations_C551123(wif
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
     finally:
+        _cleanup_iperf_clients(net_perf_client)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2840,6 +2864,7 @@ def test_verify_one_TCP_TX_and_UDP_TX_using_multithread_C689592(wifi_dut, wifi_c
     finally:
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        _cleanup_iperf_clients(*net_perf_clients)
         wifi_dut.interfaces.wifi.stop_ap()
 
 
@@ -2935,6 +2960,7 @@ def test_verify_one_TCP_TX_and_UDP_RX_using_multithread_C689593(wifi_dut, wifi_c
     finally:
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        _cleanup_iperf_clients(*net_perf_clients)
         wifi_dut.interfaces.wifi.stop_ap()
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -3056,6 +3082,7 @@ def test_verify_one_TCP_TX_and_TCP_RX_using_multithread_C689594(wifi_dut, wifi_c
     finally:
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        _cleanup_iperf_clients(*net_perf_clients)
         wifi_dut.interfaces.wifi.stop_ap()
 
 @pytest.mark.wifi_client("raspi_wifi")
@@ -3166,6 +3193,7 @@ def test_verify_one_TCP_RX_and_UDP_TX_using_multithread_C689595(wifi_dut, wifi_c
     finally:
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        _cleanup_iperf_clients(*net_perf_clients)
         time.sleep(2)
         wifi_dut.interfaces.wifi.stop_ap()
 
@@ -3278,6 +3306,7 @@ def test_verify_one_TCP_RX_and_UDP_RX_using_multithread_C689596(wifi_dut, wifi_c
     finally:
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        _cleanup_iperf_clients(*net_perf_clients)
         time.sleep(2)
         wifi_dut.interfaces.wifi.stop_ap()
 
@@ -3372,6 +3401,7 @@ def test_verify_one_UDP_TX_and_UDP_RX_using_multithread_C689600(wifi_dut, wifi_c
     finally:
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        _cleanup_iperf_clients(*net_perf_clients)
         time.sleep(2)
         wifi_dut.interfaces.wifi.stop_ap()
 
@@ -3484,6 +3514,7 @@ def test_verify_one_UDP_RX_and_UDP_TX_using_multithread_C689597(wifi_dut, wifi_c
     finally:
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        _cleanup_iperf_clients(*net_perf_clients)
         time.sleep(2)
         wifi_dut.interfaces.wifi.stop_ap()
 
@@ -3596,6 +3627,7 @@ def test_verify_one_UDP_RX_and_TCP_RX_using_multithread_C689599(wifi_dut, wifi_c
     finally:
         logger().info("Stop sniffer finally")
         wifi_sniffer.interfaces.capture.stop_capture()
+        _cleanup_iperf_clients(*net_perf_clients)
         time.sleep(2)
         wifi_dut.interfaces.wifi.stop_ap()
 

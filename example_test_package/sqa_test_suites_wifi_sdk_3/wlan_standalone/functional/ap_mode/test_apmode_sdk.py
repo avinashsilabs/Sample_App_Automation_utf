@@ -1063,8 +1063,14 @@ def test_wifi_sdk_dutap_tcp_tx_rx_c19447(wifi_sniffer, net_perf_client, wifi_dut
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 
 
@@ -1211,8 +1217,14 @@ def test_wifi_sdk_dut_apmode_11n_htcaps_support_c19446(wifi_sniffer, wifi_dut, c
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 
 @pytest.mark.config(
@@ -1486,8 +1498,14 @@ def test_wifi_sdk_dutap_fixed_data_rate_c19441(wifi_sniffer, wifi_dut,
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 
 
@@ -1548,8 +1566,14 @@ def test_wifi_sdk_dutap_korea_region_ap_mode_rx_c477826(wifi_dut, wifi_sniffer, 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 
 @pytest.mark.config(
@@ -1958,8 +1982,14 @@ def test_wifi_sdk_dutap_verify_channel_0_c37589(wifi_sniffer, wifi_dut,
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 
 
@@ -2770,9 +2800,20 @@ def test_wifi_sdk_dutap_region_china_data_transfer_2clients_c662092(wifi_sniffer
                                                  rasp_mac_address=wifi_clients[i].interfaces.wifi.get_mac_address())
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
         time.sleep(2)
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
+        try:
+            net_perf_server.interfaces.net_perf.close_files()
+            net_perf_server.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 
 @pytest.mark.config(

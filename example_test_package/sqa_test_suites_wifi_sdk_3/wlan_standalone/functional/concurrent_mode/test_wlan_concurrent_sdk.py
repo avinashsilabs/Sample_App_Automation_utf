@@ -477,8 +477,14 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19312(wifi_access_point, wifi_dut, wif
     except Exception as Ex:
             sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 @pytest.mark.config(
     "wifi_dut",
@@ -575,8 +581,14 @@ def test_wifi_sdk_concurrent_mode_sta_ap_c19321(wifi_access_point, wifi_dut, wif
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 
 @pytest.mark.config(
@@ -634,8 +646,14 @@ def test_wifi_sdk_device_as_ap_and_sta_c19313(sl_collections, wifi_access_point,
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 @pytest.mark.config(
     "wifi_dut",
@@ -975,8 +993,14 @@ def test_wifi_sdk_device_as_ap_and_sta_c19320(sl_collections, wifi_access_point,
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1210,8 +1234,14 @@ def test_wifi_sdk_device_as_ap_and_sta_c19318(sl_collections, wifi_access_point,
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 @pytest.mark.config(
     "wifi_dut",
@@ -1286,8 +1316,14 @@ def test_wifi_sdk_AP_STA_UDP_RX_C148577(
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 
 @pytest.mark.config(
@@ -1785,8 +1821,14 @@ def test_wifi_sdk_device_as_ap_and_sta_c477524(sl_collections, wifi_access_point
 
     except Exception as Ex:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
     finally:
         wifi_dut.interfaces.wifi.stop_ap()
+        try:
+            net_perf_client.interfaces.net_perf.close_files()
+            net_perf_client.interfaces.net_perf.iperf_process.stop(5)
+        except:
+            pass
 
 
 @pytest.mark.config(
