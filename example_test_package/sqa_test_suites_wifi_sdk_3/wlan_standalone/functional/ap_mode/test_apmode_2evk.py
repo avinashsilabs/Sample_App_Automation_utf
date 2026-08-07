@@ -800,10 +800,13 @@ def test_wifi_sdk_ping_from_nonps_to_ps_device_c19459(wifi_sniffer, wifi_dut, wi
         remote_wiseconnect3.interfaces.wifi.set_performance_profile('power_save_low_latency', 0, 0, 0, 0)
         remote_wiseconnect3.interfaces.wifi.enable_bt_power_save(psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
                                                       psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        time.sleep(13)
 
         rc, stdout, stderr = wifi_clients[0].interfaces.wifi.shell.execute(
             f"sudo ping -c 10 -i 2 {ps_device_ip}")
         assert rc == 0, "Failed to ping to APUT"
+        logger().info(f"\n{stdout.decode() if isinstance(stdout, bytes) else stdout}\n")
+
 
         wifi_sniffer.interfaces.capture.stop_capture()
 
