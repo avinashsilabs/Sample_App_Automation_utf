@@ -92,7 +92,7 @@ class Azure_iot_Thread():
     @retry(Exception, delay=5, tries=1)
     def azure_iot_init(self, timeout=120):
         if self.device_id == "x509_device":
-            self.device_id = "x.509_self_signed_sha1"
+            self.device_id = "x509-Aug-2026"
             mode = 1
             self.shared_key = None
         else:
@@ -260,7 +260,7 @@ class Azure_Thread():
     @retry(Exception, delay=5, tries=1)
     def azure_iot_init(self, timeout=120):
         if self.device_id == "x509_device":
-            self.device_id = "x.509_self_signed_sha1"
+            self.device_id = "x509-Aug-2026"
             mode = 1
             self.shared_key=None
         else:
@@ -1243,7 +1243,7 @@ def test_azure_mqtt_send_20_telemetry_messages_C19539(firmware_loader, wifi_acce
     ],
 )
 @pytest.mark.config(
-    "azure_iot", wifi={"device": "x509_device", "device_id": "x.509_self_signed_sha1"}
+    "azure_iot", wifi={"device": "x509_device", "device_id": "x509-Aug-2026"}
 )
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
@@ -1321,7 +1321,7 @@ def test_azure_mqtt_ssl_auth_C19514(firmware_loader, wifi_access_point, wifi_dut
     ],
 )
 @pytest.mark.config(
-    "azure_iot", wifi={"device": "x509_device", "device_id": "x.509_self_signed_sha1"}
+    "azure_iot", wifi={"device": "x509_device", "device_id": "x509-Aug-2026"}
 )
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
@@ -1403,7 +1403,7 @@ def test_azure_iot_x_509_self_signed_C19536(firmware_loader, wifi_access_point, 
 )
 @pytest.mark.skip(reason="send and receive message is not working")
 @pytest.mark.config(
-    "azure_iot", wifi={"device": "x509_device", "device_id": "x.509_self_signed_sha1"}
+    "azure_iot", wifi={"device": "x509_device", "device_id": "x509-Aug-2026"}
 )
 @pytest.mark.config(
     "wifi_access_point", wifi={"security": "WPA2", "password": "12345678"}
