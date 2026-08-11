@@ -23,6 +23,13 @@ from utf.utf_config import UtfConfig
 from utf.utils import print_dict
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
+from utf_wifi_zephyr.devices.si91x import (
+    WiFiPs,
+    WiFiPsWakeupMode,
+    WiFiPsParamType,
+    WiFiPsMode,
+    WiFiPsExitStrategy,
+)
 
 
 def logger():
@@ -153,10 +160,11 @@ class Power_Measurement_Thread(ThreadBase, Power_Device):
 class M4_Sleep_Thread(ThreadBase):
     """M4 sleep via Zephyr m4_power_manager(duration_ms=...)."""
 
-    def __init__(self, wifi_dut=None, m4_sleep_time=120000):
+    def __init__(self, wifi_dut=None, m4_sleep_time=120000, skip_leave=False):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.m4_sleep_time = m4_sleep_time
+        self.skip_leave = skip_leave
 
     def run(self):
         logger().info(f"Enabling M4 power save for {self.m4_sleep_time} ms")
@@ -166,6 +174,10 @@ class M4_Sleep_Thread(ThreadBase):
         wake_wait_sec = (self.m4_sleep_time / 1000.0) + 2
         logger().info(f"Waiting {wake_wait_sec}s for M4 wake-up before leave")
         time.sleep(wake_wait_sec)
+        if self.skip_leave:
+            # AP was already stopped (e.g. rx_listen_case); DUT is disconnected.
+            logger().info("Skipping wifi.leave(); AP already disabled")
+            return
         self.wifi_dut.interfaces.wifi.leave()
         logger().info("DUT is leaving the AP")
 
@@ -179,6 +191,7 @@ class WlanThread(ThreadBase):
         wifi_access_point=None,
         zephyr_wifi_collections=None,
         dtim=10,
+        listen_interval=None
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -187,12 +200,28 @@ class WlanThread(ThreadBase):
         self.dtim = dtim
         self.device_ip = None
         self.dut_addr = None
+        self.listen_interval = listen_interval
 
     def run(self):
-        logger().info(f"Configuring Access Point with dtim : {self.dtim}")
-        self.wifi_access_point.interfaces.wifi.start_ap(dtim=self.dtim)
-        time.sleep(20)
+        if self.listen_interval:
+            # AP is already up from start_state; do not reconfigure DTIM.
+            logger().info("Skipping the configuring DTIM in AP due listen interval")
+        else:
+            logger().info(f"Configuring Access Point with dtim : {self.dtim}")
+            self.wifi_access_point.interfaces.wifi.start_ap(dtim=self.dtim)
+            time.sleep(20)
+
         logger().info("Scanning and Connecting Zephyr DUT to Access Point")
+        if self.listen_interval:
+            logger().info("Enabling the listen interval")
+            configured_listen_interval = 10
+            self.wifi_dut.interfaces.wifi.wifi_ps(
+                param_type=WiFiPsParamType.ListenInterval,
+                listen_interval=configured_listen_interval)
+            self.wifi_dut.interfaces.wifi.wifi_ps(
+                param_type=WiFiPsParamType.WakeupMode,
+                wakeup_mode=WiFiPsWakeupMode.ListenInterval)
+
         self.dut_addr = self.zephyr_wifi_collections.join_to_wifi_network(
             wifi_dut=self.wifi_dut,
             wifi_access_point=self.wifi_access_point,
@@ -234,6 +263,8 @@ class StandBy_Associated(ThreadBase):
         beacon_drop_threshold=5000,
         filter_bcast_in_tim=1,
         filter_bcast_tim_till_next_cmd=1,
+        listen_interval=None,
+        rx_listen_case=None
     ):
         super().__init__()
         self.dtim = dtim
@@ -249,38 +280,51 @@ class StandBy_Associated(ThreadBase):
         self.beacon_drop_threshold = beacon_drop_threshold
         self.filter_bcast_in_tim = filter_bcast_in_tim
         self.filter_bcast_tim_till_next_cmd = filter_bcast_tim_till_next_cmd
+        self.listen_interval = listen_interval
+        self.rx_listen_case = rx_listen_case
 
     def run(self):
         wifi = self.wifi_dut.interfaces.wifi
 
-        wlan_obj = WlanThread(
-            wifi_dut=self.wifi_dut,
-            wifi_access_point=self.wifi_access_point,
-            zephyr_wifi_collections=self.zephyr_wifi_collections,
-            dtim=self.dtim,
-        )
+        if self.listen_interval:
+            wlan_obj = WlanThread(
+                wifi_dut=self.wifi_dut,
+                wifi_access_point=self.wifi_access_point,
+                zephyr_wifi_collections=self.zephyr_wifi_collections,
+                listen_interval=True,
+            )
+        else:
+            wlan_obj = WlanThread(
+                wifi_dut=self.wifi_dut,
+                wifi_access_point=self.wifi_access_point,
+                zephyr_wifi_collections=self.zephyr_wifi_collections,
+                dtim=self.dtim,
+            )
         wlan_obj.start()
         wlan_obj.wait_for_exit()
         time.sleep(2)
 
         if self.bcast_filter:
             logger().info("Setting wifi_filter_broadcast command")
-            wifi.wifi_filter_broadcast()
-            #     # beacon_drop_threshold=self.beacon_drop_threshold,
-            #     # filter_bcast_in_tim=self.filter_bcast_in_tim,
-            #     # filter_bcast_tim_till_next_cmd=self.filter_bcast_tim_till_next_cmd,
-            # )
+            wifi.wifi_filter_broadcast(
+                threshold_ms=self.beacon_drop_threshold,
+                in_tim=self.filter_bcast_in_tim,
+                till_next_cmd=self.filter_bcast_tim_till_next_cmd,
+            )
+            time.sleep(2)
+        if self.listen_interval:
+            logger().info("Enabling Wi-Fi power save (Zephyr performance profile)")
+            self.wifi_dut.interfaces.wifi.wifi_ps(enabled=1, listen_interval=10)
+            time.sleep(2)
+        else:
+            self.wifi_dut.interfaces.wifi.wifi_ps(enabled=1)
             time.sleep(2)
 
-        logger().info("Enabling Wi-Fi power save (Zephyr performance profile)")
-        # wifi.set_performance_profile(
-        #     mode="power_save",
-        #     dtim_aligned_type=self.dtim_aligned_type,
-        # )
-        self.wifi_dut.interfaces.wifi.wifi_ps(enabled=1)
-        time.sleep(2)
-
-        m4_obj = M4_Sleep_Thread(wifi_dut=self.wifi_dut, m4_sleep_time=self.m4_sleep_time)
+        m4_obj = M4_Sleep_Thread(
+            wifi_dut=self.wifi_dut,
+            m4_sleep_time=self.m4_sleep_time,
+            skip_leave=bool(self.rx_listen_case),
+        )
         pm_obj = Power_Measurement_Thread(
             power_meter=self.power_meter,
             capture_time=self.capture_time,
@@ -290,6 +334,9 @@ class StandBy_Associated(ThreadBase):
         m4_obj.start()
         time.sleep(2)
         pm_obj.start()
+        if self.rx_listen_case:
+            time.sleep(35)
+            self.wifi_access_point.interfaces.wifi.stop_ap()
         pm_obj.wait_for_exit()
         m4_obj.wait_for_exit()
         time.sleep(10)
@@ -339,11 +386,11 @@ def _common_zephyr_dut_config():
 pytestmark = [pytest.mark.firmware_app("test_352K_M4SS_320K")]
 
 
-@pytest.mark.transform_test_results(
-    TransformFileProperties(
-        file_name="perf_power_consumption_zephyr_dtim.csv", data_type="power_performance"
-    )
-)
+# @pytest.mark.transform_test_results(
+#     TransformFileProperties(
+#         file_name="perf_power_consumption_zephyr_dtim.csv", data_type="power_performance"
+#     )
+# )
 @pytest.mark.parametrize("dtim", [1])
 @pytest.mark.config("wifi_dut", wifi=_common_zephyr_dut_config())
 @pytest.mark.start_state("wifi_dut", wifi="init")
@@ -368,6 +415,7 @@ def test_wlan_standby_associated_dtim_1_zephyr_c1818511(
         wifi_access_point=wifi_access_point,
         zephyr_wifi_collections=zephyr_wifi_collections,
         power_meter=power_meter,
+        bcast_filter=True,
     )
     try:
         _run_and_collect_power(
@@ -407,6 +455,7 @@ def test_wlan_standby_associated_dtim_3_zephyr_c1818512(
         wifi_access_point=wifi_access_point,
         zephyr_wifi_collections=zephyr_wifi_collections,
         power_meter=power_meter,
+        bcast_filter=True,
     )
     try:
         _run_and_collect_power(
@@ -446,6 +495,7 @@ def test_wlan_standby_associated_dtim_6_zephyr_c1818513(
         wifi_access_point=wifi_access_point,
         zephyr_wifi_collections=zephyr_wifi_collections,
         power_meter=power_meter,
+        bcast_filter=True,
     )
     try:
         _run_and_collect_power(
@@ -485,6 +535,7 @@ def test_wlan_standby_associated_dtim_10_zephyr_c1818514(
         wifi_access_point=wifi_access_point,
         zephyr_wifi_collections=zephyr_wifi_collections,
         power_meter=power_meter,
+        bcast_filter=True,
     )
     try:
         _run_and_collect_power(
@@ -615,6 +666,75 @@ def test_wlan_standby_associated_dtim_10_without_bcast_filter_zephyr_c1818518(
     )
     try:
         _run_and_collect_power(stdby_obj, power_meter, request)
+    except Exception as ex:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=ex)
+        raise
+
+
+@pytest.mark.config("wifi_dut", wifi=_common_zephyr_dut_config())
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("wifi_access_point", wifi={"standard": "11n", "security": "WPA2", "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wlan_standby_associated_li_based_zephyr_c1818519(
+
+    power_meter,
+    wifi_access_point,
+    wifi_dut,
+    zephyr_wifi_collections,
+    request,
+    # performance_data,
+    # custom_performance_fixture,
+):
+    """Zephyr: standby associated current @ DTIM-1."""
+    stdby_obj = StandBy_Associated(
+        wifi_dut=wifi_dut,
+        wifi_access_point=wifi_access_point,
+        zephyr_wifi_collections=zephyr_wifi_collections,
+        power_meter=power_meter,
+        bcast_filter=True,
+        listen_interval=True
+    )
+    try:
+        _run_and_collect_power(
+            stdby_obj, power_meter, request,
+        )
+    except Exception as ex:
+        zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=ex)
+        raise
+
+
+@pytest.mark.parametrize("dtim", [10])
+@pytest.mark.config("wifi_dut", wifi=_common_zephyr_dut_config())
+@pytest.mark.start_state("wifi_dut", wifi="init")
+@pytest.mark.config("wifi_access_point", wifi={"standard": "11n", "security": "WPA2", "channel": 1})
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable"])
+def test_wlan_standby_associated_listen_rx_zephyr_c1818520(
+    # firmware_loader,
+    power_meter,
+    wifi_access_point,
+    wifi_dut,
+    zephyr_wifi_collections,
+    dtim,
+    request,
+    # performance_data,
+    # custom_performance_fixture,
+):
+    """Zephyr: standby associated current @ DTIM-10."""
+    stdby_obj = StandBy_Associated(
+        dtim=dtim,
+        wifi_dut=wifi_dut,
+        wifi_access_point=wifi_access_point,
+        zephyr_wifi_collections=zephyr_wifi_collections,
+        power_meter=power_meter,
+        bcast_filter=True,
+        rx_listen_case=True
+    )
+    try:
+        _run_and_collect_power(
+            stdby_obj, power_meter, request, #performance_data, custom_performance_fixture
+        )
     except Exception as ex:
         zephyr_wifi_collections.exception_handling(wifi_dut=wifi_dut, exception=ex)
         raise
