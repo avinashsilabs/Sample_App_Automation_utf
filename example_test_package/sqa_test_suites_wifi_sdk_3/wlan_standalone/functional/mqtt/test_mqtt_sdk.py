@@ -14388,3 +14388,98 @@ def test_wifi_sdk_mqtts_SNI_receive_data_two_topics_one_thread__C962481(
     except Exception as Ex:
          sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi=
+    {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.EnableMQTTFeature | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "set_send_feature_frame": True,
+    }
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["mqtt_disconnect", "wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.WLAN_Dev_sanity_917
+@pytest.mark.test_src_map_id('c1726583')
+def test_wifi_sdk_mqtt_funtionality_with_TCP_graceful_shutdown_c1726583(
+        wifi_sniffer, mqtt_server, mqtt_client, wifi_access_point, wifi_dut, request, sl_collections, sniffer_filter):
+    """QOS1 MQTT publish/subscribe with TCP graceful shutdown; verify DUT sends FIN-ACK.
+
+    Steps:
+        1. WLAN join and start sniffer
+        2. Connect DUT MQTT client (TCP) and publish/subscribe QoS1
+        3. Unsubscribe and disconnect MQTT (graceful TCP close with WaitForSocketClose)
+        4. Sniffer validation: DUT sends FIN-ACK (tcp_fin_ack) after graceful close
+    """
+
+    try:
+        topic = "mytesttopic_c1726583"
+        message = ''.join(random.choices(string.ascii_uppercase + string.digits, k=300))
+        capture_filename = request.node.name
+
+        wifi_obj = WifiJoin(wifi_dut=wifi_dut, capture_filename=capture_filename, wifi_access_point=wifi_access_point,
+                            wifi_sniffer=wifi_sniffer, mqtt_server=mqtt_server, mqtt_client=mqtt_client,
+                            sl_collections=sl_collections, sniffer_filter=sniffer_filter, topic=topic,
+                            message=message)
+        wifi_obj.start()
+        wifi_obj.wait_for_exit()
+        wifi_dut.interfaces["mqtt"] = wifi_dut.interfaces.wifi
+        wifi_dut.interfaces.mqtt.set_advanced_mqtt_client_configuration(client_id="Si91x_mqtt_client", qos=1)
+        logger().info(".....DUT connects to MQTT server.....")
+        wifi_dut.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        logger().info(".....MQTT Client connects to MQTT server.....")
+        mqtt_client.interfaces.mqtt.mqtt_client_connect_to_server(server=mqtt_server.interfaces.mqtt)
+        time.sleep(5)
+
+        wifi_obj.subscribe_and_publish(qos=Si91xMqttQos.QOS1)
+
+        msgs = []
+        sw = Stopwatch()
+        while sw.elapsed_sec < 10:
+            time.sleep(0.1)
+            msgs = mqtt_client.interfaces.mqtt.mqtt_client_get_received_messages()
+            if len(msgs) == 1:
+                break
+        assert len(msgs) == 1, "No message is received by mqtt-client"
+        assert msgs[0].topic == topic, "No message received by mqtt-client on subscribed topic"
+        assert msgs[0].qos == Si91xMqttQos.QOS1, "DUT sent message with wrong QOS. expected is QOS1"
+        assert msgs[0].payload.decode() == message, "No message is received by mqtt-client on subscribed topic or " \
+                                                    "message received is wrong"
+
+        logger().info("....Unsubscribing from the topic....")
+        wifi_dut.interfaces.mqtt.mqtt_client_unsubscribe(topic=topic)
+        time.sleep(1)
+
+        # Graceful TCP close while sniffer is still capturing so DUT FIN+ACK is recorded
+        dut_mac_address = wifi_obj.dut_addr['dut_mac_address']
+        logger().info(f"C1726583: DUT MAC for FIN validation: {dut_mac_address}")
+        logger().info("C1726583: graceful TCP socket close via mqtt_client_disconnect")
+        wifi_dut.interfaces.wifi.mqtt_client_disconnect()
+        time.sleep(5)
+
+        logger().info("Stop the sniffer")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        fin_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            ta_addr=dut_mac_address, filter_name="tcp_fin_ack")
+        logger().info(f"C1726583: validating DUT FIN-ACK with filter: {fin_filter}")
+        fin_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=fin_filter)['packet_count']
+        assert fin_pkt_count, (
+            "DUT did not send TCP FIN-ACK (0x0011) after MQTT graceful socket close "
+            f"(dut_mac={dut_mac_address})")
+        logger().info(f"C1726583: DUT FIN-ACK validated, packet_count={fin_pkt_count}")
+
+        wifi_obj.verify_ps_validation()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)

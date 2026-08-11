@@ -248,3 +248,4 @@ arp_reply_pkt, (wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}), and (a
 dhcp_decline, (wlan.sa == {{ sa_addr }}), and (dhcp.option.dhcp == 4),,,
 mqtt_fragment_check,"(mqtt.topic == ""{{ topic_name }}"")", and (mqtt && tcp.segment.count),,,
 no_adc_conflict, (arp.opcode == 2), and (arp.src.proto_ipv4 == {{dut_ip}}) and (eth.src != {{sa_addr}}),,,
+tcp_fin_ack,(wlan.ta == {{ ta_addr }}) and (tcp.flags == 0x0011),,,,

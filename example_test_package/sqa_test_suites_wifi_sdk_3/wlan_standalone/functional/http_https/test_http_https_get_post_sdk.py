@@ -1798,6 +1798,7 @@ def test_wifi_sdk_http_get_functionality_feature_not_enabled_dut_c19204(http_ser
 )
 @pytest.mark.http_server("raspi_lighttpd")
 @pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
 @pytest.mark.legacy_deployed
 @pytest.mark.test_src_map_id('C19215')
@@ -3702,3 +3703,90 @@ def test_wifi_sdk_http_get_with_weak_signal_70dbm_longer_url_bit_c476942(http_se
     except Exception as e:
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048, "priority": 8}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.SSL | Si91xTCPIPFeatureBitMap.HTTPClient,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    }
+)
+@pytest.mark.http_server("raspi_lighttpd")
+@pytest.mark.parametrize("index_path", {"index.html"})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'Open', "passphrase": '12345678'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "unassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C1726582')
+def test_wifi_sdk_http_get_functionality_with_tcp_graceful_socket_close_c1726582(
+        http_server, wifi_dut, http_client, wifi_access_point, index_path, utf_constants, wifi_sniffer,
+        sl_collections, sniffer_filter):
+    """
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Scan and Join the access point and enable the dhcp
+        3. Enable the wlan and bt power save mode in dut after the connection
+        4. Initiate http get for http content
+        5. Verify the http get response
+        6. Graceful TCP socket close (http_client_deinit with WaitForSocketClose)
+        7. Sniffer validation: DUT sends FIN-ACK (tcp_fin_ack) after graceful close
+    """
+    try:
+        test_name = '1726582'
+        wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+                              test_name=test_name, sl_collections=sl_collections)
+        wlan_obj.start()
+        wlan_obj.wait_for_exit()
+
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"C1726582: DUT MAC for FIN validation: {dut_mac_address}")
+
+        logger().info("\n\n***Fetching the data on http using get method***\n\n")
+        status_dut, content_dut = wifi_dut.interfaces.http.http_get(http_server.interfaces.http, index_path,
+                                                                    server_port=80)
+        status_client, content_client = http_client.interfaces.http.http_get(http_server.interfaces.http, index_path)
+
+        assert not status_dut, "failed to fetch the https data"
+        assert status_client, "failed to load the https data"
+
+        logger().info(status_dut)
+        logger().info(content_dut)
+        assert content_dut == content_client, "fetched data is not same as expected data"
+
+        # Graceful close while sniffer is still capturing so DUT FIN is recorded
+        logger().info("C1726582: graceful TCP socket close via http_client_deinit")
+        status = wifi_dut.interfaces.wifi.http_client_deinit()
+        if status == SLStatus.SL_STATUS_OK:
+            wlan_obj.http_client_initialized = False
+        time.sleep(5)
+
+        logger().info("Stopping sniffer capture")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        fin_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            ta_addr=dut_mac_address, filter_name="tcp_fin_ack")
+        logger().info(f"C1726582: validating DUT FIN-ACK with filter: {fin_filter}")
+        fin_pkt_count = wifi_sniffer.interfaces.capture.sniffer_validation(
+            packet_filter1=fin_filter)['packet_count']
+        assert fin_pkt_count, (
+            "DUT did not send TCP FIN-ACK (0x0011) after graceful HTTP socket close "
+            f"(dut_mac={dut_mac_address})")
+        logger().info(f"C1726582: DUT FIN-ACK validated, packet_count={fin_pkt_count}")
+
+    except Exception as e:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+    finally:
+        if wlan_obj.http_client_initialized:
+            wifi_dut.interfaces.wifi.http_client_deinit()
+        # Disconnect before the AP fixture disables its radio, otherwise end_state
+        # commands hit the DUT while it is rejoining and fail with 0x10025.
+        try:
+            wifi_dut.interfaces.wifi.leave()
+        except Exception as exc:
+            logger().info(f"C1726582: leave during cleanup finished with: {exc}")
