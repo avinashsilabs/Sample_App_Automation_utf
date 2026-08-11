@@ -344,7 +344,7 @@ def test_wifi_sta_udp_rx_c148320(wifi_sniffer, net_perf_client, wifi_access_poin
         wifi_obj.wait_for_exit()
         net_perf_client.interfaces.net_perf.init_client(host_ip=wifi_obj.host_ip,
                                                         device_ip=wifi_obj.dut_addr['device_ip'],
-                                                        protocol=protocol, bandwidth="1M")
+                                                        protocol=protocol, bandwidth="68M")
         logger().info(f"Host IP: {wifi_obj.host_ip}, Dut IP: {wifi_obj.dut_addr['device_ip']}, Protocol: {protocol}")
         logger().info(f"***** starting iperf ******")
         net_perf_client.interfaces.net_perf.start()
