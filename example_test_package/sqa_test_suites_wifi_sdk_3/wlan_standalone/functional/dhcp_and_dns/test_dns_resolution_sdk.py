@@ -720,7 +720,7 @@ def test_wifi_sdk_when_both_pri_sec_twice_diff_dns_server_ips_c19310(wifi_sniffe
         "ble_custom_ext_features": 0,
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN', "dhcp_dns1":'8.8.8.8'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN', "dhcp_dns_1":'8.8.8.8'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
@@ -767,7 +767,7 @@ def test_wifi_sdk_when_only_pri_dns_server_ip_assign_through_dhcp_c19300(wifi_sn
         "ble_custom_ext_features": 0,
     }
 )
-@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN', "dhcp_dns1":'8.8.8.8', "dhcp_dns2":'8.8.4.4'})
+@pytest.mark.config('wifi_access_point', wifi={"security": 'OPEN', "dhcp_dns_1":'8.8.8.8', "dhcp_dns_2":'8.8.4.4'})
 @pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
 @pytest.mark.start_state("wifi_dut", wifi='init')
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "unassociated"])
