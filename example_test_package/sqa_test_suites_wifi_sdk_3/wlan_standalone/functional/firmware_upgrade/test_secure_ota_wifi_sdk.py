@@ -598,7 +598,7 @@ def test_wifi_sdk_https_fw_upgrade_in_sta_alone_mode_and_measure_time_c510697(fi
 
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@wifi_dut_marker(ca_cert=["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
+@wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.legacy_deployed
 @pytest.mark.test_src_map_id('C510698')
 def test_wifi_sdk_https_fw_upgrade_using_aws_server_c510698(firmware_loader, aws_s3, wifi_sniffer, wifi_access_point,
@@ -671,7 +671,7 @@ def test_wifi_sdk_m4_fw_upgrade_in_sta_alone_mode_and_measure_time_c510701(firmw
 
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
-@wifi_dut_marker(ca_cert=["start_field.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
+@wifi_dut_marker(ca_cert=["combined_cert.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"])
 @pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.legacy_deployed
 @pytest.mark.test_src_map_id('C510702')
