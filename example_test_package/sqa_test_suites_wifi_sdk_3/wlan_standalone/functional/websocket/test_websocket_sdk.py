@@ -271,15 +271,36 @@ class WLanJoinThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.websocket_close(timeout=30)
                 self.wifi_dut.interfaces.wifi.websocket_deinit(timeout=30)
 
-                host_ip = self.http_server.interfaces.http.hostname_or_ip_address
-                logger().info(f"\r\n Starting Sniffer Validation \r\n")
-                assert int(self.wifi_sniffer.interfaces.capture.sniffer_validation(
-                    packet_filter1=f"websocket.opcode == 2 &&  ip.src == {self.dut_addr['device_ip']} && ip.dst == {host_ip}"
-                )['find_packet_num']) > 0, "OpCode 2(Binary) frame not captured in sniffer"
-
                 self.wifi_dut.interfaces.wifi.leave()
+
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
+                opcode_2 = 0
+                dut_ip, dut_mac_address = self.dut_addr['device_ip'], self.dut_addr['dut_mac_address']
+                host_ip = self.http_server.interfaces.http.hostname_or_ip_address
+                decryption_key = (
+                    f"{self.wifi_access_point.interfaces.wifi.passphrase}:"
+                    f"{self.wifi_access_point.interfaces.wifi.ssid}"
+                )
+                ap_bssid = self.wifi_access_point.interfaces.wifi.bssid
+                websocket_capture_list = self.sl_collections.ssl_packet_decryption(
+                    self.wifi_sniffer,
+                    decryption_key,
+                    dut_mac_address,
+                    ["websocket"],
+                    self.capture_filename,
+                    ap_bssid,
+                )['websocket']
+                for websocket in websocket_capture_list:
+                    logger().info(f"websocket info {websocket[0]}")
+                    if websocket[2] == dut_ip and websocket[3] == host_ip:
+                        websocket_layer = websocket[0]
+                        if re.search(r".*Opcode: Binary", websocket_layer):
+                            opcode_2 += 1
+                assert opcode_2 != 0, (
+                    "4-way handshake is not captured or DUT doesn't send opcode-2 "
+                    "frame->websocket binary"
+                )
 
             elif self.test_case == '688096':
                 self.wifi_dut.interfaces.wifi.websocket_init(self.http_server.interfaces.http, "example.com",
@@ -301,6 +322,7 @@ class WLanJoinThread(ThreadBase):
                 self.wifi_dut.interfaces.wifi.leave()
                 logger().info("Stopping sniffer capture")
                 self.wifi_sniffer.interfaces.capture.stop_capture()
+                time.sleep(5)
                 opcode_10 = 0
                 dut_ip, dut_mac_address = self.dut_addr['device_ip'], self.dut_addr['dut_mac_address']
                 decryption_key = f"{self.wifi_access_point.interfaces.wifi.passphrase}:{self.wifi_access_point.interfaces.wifi.ssid}"
@@ -1670,6 +1692,7 @@ def test_wifi_sdk_websocket_ssl_connect_disconnect_c37479(wifi_dut, wifi_access_
 @pytest.mark.test_src_map_id('C688069')
 def test_wifi_sdk_websocket_opcode2_c688069(wifi_dut, wifi_access_point, wifi_sniffer, http_server, utf_constants,
                                             request, sl_collections, sniffer_filter):
+    """Verify DUT websocket functionality by giving opcode 2(binary frame)"""
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
@@ -2069,6 +2092,7 @@ def test_wifi_sdk_websocket_functionality_hostname_resourcename_empty_string_c68
 @pytest.mark.test_src_map_id('C688096')
 def test_wifi_sdk_websocket_functionality_with_pong_frame_c688096(wifi_dut, wifi_access_point, wifi_sniffer, http_server, utf_constants,
                                             request, sl_collections, sniffer_filter):
+    """Verify DUT websocket functionality by giving opcode 10(PONG frame)"""
     """
     Test Steps:
         1. Configure the DUT in Wlan coex mode for 2.4Ghz
