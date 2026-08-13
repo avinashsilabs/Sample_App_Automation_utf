@@ -1,0 +1,512 @@
+import time
+import pytest
+from utf.utils.logger import get_logger
+from utf_wiseconnect_3.wifi.siwx3xx.tests.devices.siwx3xx import Siwx3xxCoexMode, Siwx3xxFeatureBitMap, \
+    Siwx3xxConfigFeatureBitMap, \
+    Siwx3xxRegion, Siwx3xxRegionCode, Siwx3xxModuleType, Siwx3xxCustomFeatureBitMap, Siwx3xxTCPIPFeatureBitMap, \
+    Siwx3xxExtTCPIPFeatureBitMap, Siwx3xxExtCustomFeatureBitMap, Siwx3xxOperatingMode, Siwx3xxPowerSaveModes, \
+    Siwx3xxPowerSaveProcedureTypes
+from utf.utils.iperf.iperf_utils import ping
+
+def logger():
+    return get_logger(__name__)
+
+"""
+setup requirement:
+        1. DUT(SiWG917) - 1
+        2. Si-MB4002A -1
+        3. Raspberry PI4 - 1
+        4. Access Point(Third Party AP's) - 2
+        5. NUC
+
+    Test Steps:
+        1. Configure the DUT in Wlan coex mode for 2.4Ghz
+        2. Initiate the Scan from DUT
+        3. Verify the scan results
+
+    Author: Shaik Abdul Azeez
+"""
+
+def wifi_dut_marker(region=None, region_code=None):
+    """
+    Common method to generate wifi_dut marker for pytest.mark.config decorator.
+    """
+    config = {
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Siwx3xxOperatingMode.WiFiClient,
+        "coex_mode": Siwx3xxCoexMode.WLANOnly,
+        "features": Siwx3xxFeatureBitMap.Default,
+        "custom_features": Siwx3xxCustomFeatureBitMap.Default,
+        "config_features": Siwx3xxConfigFeatureBitMap.WakeupIndicationUULPGPIO0 | Siwx3xxConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Siwx3xxTCPIPFeatureBitMap.TCPIPBypass,
+        "ext_tcpip_features": Siwx3xxExtTCPIPFeatureBitMap.Default,
+        "ext_custom_features": Siwx3xxExtCustomFeatureBitMap.Default,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+    }
+    if region:
+        config["region"] = region
+    if region_code:
+        config["region_code"] = region_code
+
+    return pytest.mark.config("wifi_dut", wifi=config)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, indexing (starts with 0) applies as per order defined in harness.
+        0: {
+             'ssid': 'same-security',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+             'channel': 1
+        },
+        1: {
+             'ssid': 'same-security',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+             'channel': 1}
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19065')
+def test_wifi_sdk_siwx3xx_2aps_same_security_c19065(wifi_dut, wifi_access_points, siwx3xx_collections):
+    try:
+
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        logger().info("enable the scan in dut on channel 0...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_points[0].interfaces.wifi.ssid)
+        time.sleep(20)
+        logger().info(scan_results)
+        scan_list = list(scan_results)
+        ssid_count = 0
+        logger().info(f"scan_list : {scan_list}")
+        logger().info("Validating the scan list...")
+        for item in scan_list:
+            ssid = str(item).split(" ")[9]
+            if (ssid == wifi_access_points[0].interfaces.wifi.ssid) or (ssid == wifi_access_points[1].interfaces.wifi.ssid):
+               ssid_count = ssid_count + 1
+        logger().info(f"ssid count:{ssid_count}")
+        assert ssid_count == 2, "Two aps are not scanned "
+        logger().info(f'2 Aps with same ssid: {wifi_access_points[0].interfaces.wifi.ssid} are scanned successfully')
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, indexing (starts with 0) applies as per order defined in harness.
+        0: {
+            'ssid': 'diff_security',
+            'security': 'WPA2',
+            'passphrase': '123123123',
+            'channel': 11,
+            'region': 'US'
+        },
+        1: {
+            'ssid': 'diff_security',
+            'security': 'Open',
+            'passphrase': '123123123',
+            'channel': 1,
+            'region': 'US'
+        }
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19066')
+def test_wifi_sdk_siwx3xx_2aps_diff_security_c19066(wifi_dut, wifi_access_points, siwx3xx_collections):
+    try:
+        logger().info("Setting DUT in wlan power save...")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode="standby_power_save_with_ram_retention")
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        logger().info("enable the scan in dut on channel 0...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=wifi_access_points[0].interfaces.wifi.ssid)
+        time.sleep(20)
+        logger().info("scan_results...")
+        scan_list = list(scan_results)
+        ssid_count = 0
+        logger().info(f"scan_list : {scan_list}")
+        logger().info("Validating the scan list...")
+        for item in scan_list:
+            security = str(item).split(" ")[3]
+            ssid = str(item).split(" ")[9]
+            if (ssid == wifi_access_points[0].interfaces.wifi.ssid) or (
+                    ssid == wifi_access_points[1].interfaces.wifi.ssid):
+                ssid_count = ssid_count + 1
+        logger().info(f"ssid count:{ssid_count}")
+        assert ssid_count == 2, "Two aps are not scanned "
+        logger().info(
+            f'2 aps with same ssid :{wifi_access_points[1].interfaces.wifi.ssid}and different password :WPA2 and '
+            f'WPA scanned successfully')
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, indexing (starts with 0) applies as per order defined in harness.
+        0: {
+             'ssid': 'EU_TEST',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+              'channel': 13,
+              'region': 'Europe'
+
+        },
+        1: {
+             'ssid': 'TESTTESTTEST2',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+             'channel': 1,
+             'region': 'US'
+        }
+    }
+)
+@wifi_dut_marker(region=4, region_code="worldwide")
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19075')
+def test_wifi_sdk_siwx3xx_scan_and_connect_in_world_domain_c19075(wifi_dut, utf_constants, wifi_access_points, wifi_sniffer, request, sniffer_filter, siwx3xx_collections):
+    try:
+        test_name = request.node.name
+        mode = "power_save_low_latency"
+        ping_count = utf_constants.get("ping_count")
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[1].interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        logger().info("Initiating scan...")
+        scan_results = wifi_dut.interfaces.wifi.scan(ssid=None, channel=0)
+        time.sleep(20)
+        logger().info(scan_results)
+        assert len(scan_results) >= 1, "scan results not found"
+        dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
+        ap_bssid = wifi_access_points[1].interfaces.wifi.bssid
+        logger().info(f"AP MAC: {ap_bssid}")
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_points[1])
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"Initiating ping to DUT ip {device_ip} before power save")
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful before power save")
+
+        logger().info(f"....Applying performance profile mode : {mode}")
+        wifi_dut.interfaces.wifi.set_performance_profile(mode)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Siwx3xxPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Siwx3xxPowerSaveProcedureTypes.FastPowerSave)
+
+        logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
+        time.sleep(20)
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address, da_addr=ap_bssid,
+                                                                                        filter_name="assoc_req_resp_eapol_4_way_handshake")
+        # validating ps poll with power managment bit set to 1
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                        filter_name="ps_poll")
+        logger().info(f"Validate Assoc req, resp & eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            f'Unable to find Association response packet  in sniffer'
+        logger().info(f"Validate PS poll packet)")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            f'Unable to find ps poll with power management bit set to 1 packet  in sniffer'
+
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.start_state("wifi_access_point", wifi="ap_enabled")
+@wifi_dut_marker(region=4, region_code="worldwide")
+@pytest.mark.config('wifi_access_point', wifi={"channel": 6, "standard": '11n', "security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C19078')
+def test_wifi_sdk_siwx3xx_scan_and_connect_in_world_domain_c19078(wifi_dut, utf_constants, wifi_access_point, request, wifi_sniffer, sniffer_filter, siwx3xx_collections):
+    try:
+        test_name = request.node.name
+        mode = "power_save_low_latency"
+        ping_count = utf_constants.get("ping_count")
+        logger().info("Enabling rejoin...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        logger().info(" ====== configuring the sniffer with access point channel ====== ")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        # Scan for the AP's
+        logger().info("DUT initiated unicast probe request to fetch ap mac")
+        time.sleep(10)
+        scan_result = wifi_dut.interfaces.wifi.scan(channel=6, ssid=wifi_access_point.interfaces.wifi.ssid)
+        time.sleep(20)
+        logger().info(f'Scan results are : {scan_result}')
+        assert len(scan_result) >= 1, "scan results not found"
+        # This API connects STA to the third party AP
+        wifi_dut.interfaces.wifi.join_ap(wifi_access_point)
+        ip_config = wifi_dut.interfaces.wifi.start_ip()
+        device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"Initiating ping to DUT ip {device_ip} before power save")
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful before power save")
+
+        wifi_dut.interfaces.wifi.set_performance_profile(mode=mode)
+        wifi_dut.interfaces.wifi.enable_bt_power_save(psp_mode=Siwx3xxPowerSaveModes.PowerSaveMode2,
+                                                      psp_type=Siwx3xxPowerSaveProcedureTypes.FastPowerSave)
+        logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
+        status = ping(device_ip, ping_count)
+        assert status is True, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
+        # Fetches the DUT mac address
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device mac address: {sa_addr}")
+        da_addr = wifi_access_point.interfaces.wifi.bssid
+        logger().info(f"AP MAC: {da_addr}")
+        time.sleep(20)
+        wifi_dut.interfaces.wifi.leave()
+        time.sleep(2)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                        da_addr=da_addr,
+                                                                                        filter_name="assoc_req_resp_eapol_4_way_handshake")
+        # validating ps poll with power managment bit set to 1
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=sa_addr,
+                                                                                        filter_name="ps_poll")
+
+        logger().info(f"Validate Assoc req, resp & eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            f'Unable to find Association response packet  in sniffer'
+
+        logger().info(f"Validate PS poll packet)")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            f'Unable to find ps poll with power management bit set to 1 packet  in sniffer'
+
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Siwx3xxOperatingMode.AccessPoint,
+        "coex_mode": Siwx3xxCoexMode.WLANOnly,
+        "features": Siwx3xxFeatureBitMap.Aggregation,
+        "tcpip_features": Siwx3xxTCPIPFeatureBitMap.Default | Siwx3xxTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP | Siwx3xxTCPIPFeatureBitMap.DHCPv4Server,
+        "ext_tcpip_features": Siwx3xxExtTCPIPFeatureBitMap.WaitForSocketClose | Siwx3xxExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Siwx3xxExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Siwx3xxExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Siwx3xxExtCustomFeatureBitMap.FeatureLowPower |
+                               Siwx3xxExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "region": 1,
+        "region_code": "japan",
+        "security": "WPA2", "ssid": "JAPAN_TEST", "passphrase": "Automation@123", "channel": 6
+    }
+)
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        0: {
+            'ssid': 'EU_TEST',
+            'security': 'WPA2',
+            'passphrase': '123123123',
+            'channel': 13,
+            'region': 'Europe'
+        },
+        1: {
+            'ssid': 'US_TEST',
+            'security': 'WPA2',
+            'passphrase': '123123123',
+            'channel': 1,
+            'region': 'US'
+        }
+    }
+)
+@pytest.mark.start_state("remote_wiseconnect3", sapi="init")
+@pytest.mark.config(
+    "remote_wiseconnect3",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}},
+        "oper_mode": Siwx3xxOperatingMode.WiFiClient,
+        "coex_mode": Siwx3xxCoexMode.WLANOnly,
+        "features": Siwx3xxFeatureBitMap.WPSSupportDisabled,
+        "custom_features": Siwx3xxCustomFeatureBitMap.Default,
+        "tcpip_features": Siwx3xxTCPIPFeatureBitMap.Default | Siwx3xxTCPIPFeatureBitMap.Ping,
+        "ext_tcpip_features": Siwx3xxExtTCPIPFeatureBitMap.WaitForSocketClose | Siwx3xxExtTCPIPFeatureBitMap.CONFIG_FEAT_EXTENTION_VALID,
+        "ext_custom_features": Siwx3xxExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Siwx3xxExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Siwx3xxExtCustomFeatureBitMap.FeatureLowPower |
+                               Siwx3xxExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "region": 1,
+        "region_code": "worldwide",
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.deployed_25q4
+@pytest.mark.test_src_map_id('C19076')
+def test_wifi_sdk_siwx3xx_scan_and_connect_in_world_domain_c19076(wifi_access_points, wifi_dut, utf_constants, remote_wiseconnect3, wifi_sniffer, request, sniffer_filter, siwx3xx_collections):
+    """ Set STAUT to World Mode Domain in 2.4 Ghz__(TC_3)Case3:
+        1. Place US regeion AP in channel 1 and place JP regeion AP in channel 6 and place EU regeion AP in channel 13 3.
+        issue all channels scan 4. Join to AP which is in 13 channel AP
+
+    NOTE:
+    This test case requires:
+        - 2 Access Points (APs)
+        - 2 DUTs (Devices Under Test)
+    Make sure both APs and DUTs are available and properly configured before running this test. """
+
+    try:
+        logger().info("Starting DUT as Japan AP on channel 6")
+        wifi_dut.interfaces.wifi.start_ap(ssid="JAPAN_TEST", security="wpa2", psk="Automation@123", channel=6,
+                                          dtim_beacon_count=1, beacon_interval=100)
+        time.sleep(5)
+        test_name = request.node.name
+        mode = "power_save_low_latency"
+        ping_count = utf_constants.get("ping_count")
+
+        logger().info("Enabling rejoin on STA...")
+        remote_wiseconnect3.interfaces.sapi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                            beacon_missed_count=40, first_time_retry_enable=0)
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_points[0].interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+
+        logger().info("STA scanning all channels...")
+        scan_results = remote_wiseconnect3.interfaces.sapi.scan(channel=0, ssid=None)
+        assert (len(scan_results) >= 1), "Scan failed"
+        logger().info(scan_results)
+        time.sleep(20)
+
+        logger().info("STA joining EU AP on channel 13...")
+        remote_wiseconnect3.interfaces.sapi.join(ssid=wifi_access_points[0].interfaces.wifi.ssid, channel=13, timeout=60,
+                                                 security="wpa2", passphrase=wifi_access_points[0].interfaces.wifi.passphrase)
+        time.sleep(20)
+        dut_mac_address = remote_wiseconnect3.interfaces.sapi.get_mac_address()
+        logger().info(f"Device mac address: {dut_mac_address}")
+
+        ap_bssid = wifi_access_points[0].interfaces.wifi.bssid
+        logger().info(f"AP MAC: {ap_bssid}")
+
+        # After joining the AP and before ping
+        ip_config = remote_wiseconnect3.interfaces.sapi.start_ip()
+        device_ip = remote_wiseconnect3.interfaces.sapi.get_device_ip(ip_config)
+        assert device_ip, "Failed to get DUT IP address after joining AP"
+
+        logger().info(f"....Applying performance profile mode : {mode}")
+        remote_wiseconnect3.interfaces.sapi.set_performance_profile(mode)
+        remote_wiseconnect3.interfaces.sapi.enable_bt_power_save(psp_mode=Siwx3xxPowerSaveModes.PowerSaveMode2,
+                                                                 psp_type=Siwx3xxPowerSaveProcedureTypes.FastPowerSave)
+
+        logger().info(f"Initiating ping to DUT ip {device_ip} after power save")
+        ping_success = False
+        for attempt in range(3):
+            status = ping(device_ip, ping_count)
+            if status:
+                ping_success = True
+                break
+            logger().warning(f"Ping attempt {attempt + 1} failed, retrying...")
+            time.sleep(5)
+        assert ping_success, "DUT is not responding to ping request from third party device"
+        logger().info(f"ping is successful")
+
+        time.sleep(20)
+        remote_wiseconnect3.interfaces.sapi.leave()
+        time.sleep(2)
+        logger().info("Stop Sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address, da_addr=ap_bssid,
+                                                                                        filter_name="assoc_req_resp_eapol_4_way_handshake")
+        packet_filter3 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=dut_mac_address,
+                                                                                        filter_name="ps_poll")
+        logger().info("Validate Assoc req, resp & eapol")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
+            'Unable to find Association response packet in sniffer'
+        logger().info("Validate PS poll packet")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter3)['packet_count'], \
+            'Unable to find ps poll with power management bit set to 1 packet in sniffer'
+
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config(
+    "wifi_access_points",
+    wifi={
+        # Here, indexing (starts with 0) applies as per order defined in harness.
+        0: {
+             'ssid': 'same-security',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+             'channel': 1
+        },
+        1: {
+             'ssid': 'same-security',
+             'security': 'WPA2',
+             'passphrase': '123123123',
+             'channel': 1}
+    }
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable", "disassociated"])
+@pytest.mark.legacy_deployed
+@pytest.mark.test_src_map_id('C113700')
+def test_wifi_sdk_siwx3xx_quick_scan_c113700(wifi_dut, wifi_access_points,request,wifi_sniffer, siwx3xx_collections):
+
+    try:
+        test_name = request.node.name
+        wifi_sniffer.interfaces.capture.configure_interface(channel=1)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=test_name)
+        time.sleep(5)
+
+        logger().info("Enable wifi set advanced client configuration...")
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(max_retry_attempts=0, scan_interval=6,
+                                                                 beacon_missed_count=40, first_time_retry_enable=0)
+        logger().info("\n Initiating scan from DUT...\n")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=1, ssid=None)
+        time.sleep(20)
+        logger().info(scan_results)
+        scan_list = list(scan_results)
+
+        logger().info("\n Initiating quick scan from DUT...\n")
+        logger().info(f"scan_list : {scan_list}")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=1, ssid='same-security', scan_bitmap_2_4=0, scan_type=0,
+                                                     bg_scan_periodicity=10)
+        time.sleep(20)
+        logger().info(scan_results)
+        scan_list = list(scan_results)
+        logger().info(f"scan_list : {scan_list}")
+
+        logger().info("Stopping sniffer finally")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)

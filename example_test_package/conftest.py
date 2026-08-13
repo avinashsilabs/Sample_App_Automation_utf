@@ -32,6 +32,7 @@ from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
 from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
 from utf_wiseconnect_3.tests.interfaces.sl_collections import SLCollections
+from utf_wiseconnect_3.wifi.siwx3xx.tests.interfaces.siwx3xx_collections import SIWX3xxCollections
 from utf_wifi_zephyr.interfaces.zephyr_wifi_collections import ZephyrWifiCollections
 from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
 import utf.utils.commander as commander
@@ -455,6 +456,11 @@ def rs_helper(request):
 @pytest.fixture()
 def sl_collections(request):
     yield SLCollections.create_instance()
+
+
+@pytest.fixture()
+def siwx3xx_collections(request):
+    yield SIWX3xxCollections.create_instance()
 
 
 @pytest.fixture()
