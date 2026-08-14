@@ -36,20 +36,12 @@ from utf.interfaces.bluetooth import BLEDeviceState
     Author: Harsha / Ravi Nemali
 """
 
-BACKGROUND_TX_TIME = 0x0780
-BACKGROUND_BUFFER_MODE = 1
-BACKGROUND_BUFFER_COUNT = 2
-PERIPHERAL_FAST_CI = 160   # 200 ms
-PERIPHERAL_SLOW_CI = 240   # 300 ms
-CENTRAL_1_CI = 36          # 45 ms
-CENTRAL_2_CI = 400         # 500 ms
-CONN_LATENCY = 0
-SUPERVISION_TIMEOUT = 800
 
 def logger():
     return get_logger(__name__)
 
 def _start_ble_sniffer_capture(ble_sniffer, capture_file):
+    logger().info("Connecting to BLE sniffer...")
     ble_sniffer.interfaces.sniffer.connect()
     time.sleep(5)  # Capture for 5 seconds
     logger().info("Starting BLE sniffer capture...")
@@ -93,6 +85,7 @@ def _parse_ble_device_state(raw):
         return int(match.group(0))
     except ValueError:
         return -1
+        
 def wait_for_dut_ble_connected(ble_dut, label, timeout_sec=90, poll_interval_sec=2.0):
     deadline = time.time() + timeout_sec
     last_state = None
@@ -308,6 +301,17 @@ def _start_central_smp_scan_with_recovery(central, scan_kwargs, *, c_idx, attemp
             )
             time.sleep(3)
     raise last_err
+
+
+BACKGROUND_TX_TIME = 0x0780
+BACKGROUND_BUFFER_MODE = 1
+BACKGROUND_BUFFER_COUNT = 2
+PERIPHERAL_FAST_CI = 160   # 200 ms
+PERIPHERAL_SLOW_CI = 240   # 300 ms
+CENTRAL_1_CI = 36          # 45 ms
+CENTRAL_2_CI = 400         # 500 ms
+CONN_LATENCY = 0
+SUPERVISION_TIMEOUT = 800
 
 
 def _peripheral_ci_for_index(idx):
@@ -619,6 +623,7 @@ def _connect_central_no_passkey_with_retry(
         )
         _cleanup_central_bluetooth_session(central, f"Central-{c_idx + 1} pre-scan cleanup")
         time.sleep(1)
+
         ble_dut.interfaces.bluetooth.ble_start_advertising(
             ble_adv_int_min=160,  # 100 ms
             ble_adv_int_max=320,  # 200 ms
@@ -660,6 +665,7 @@ def _connect_central_no_passkey_with_retry(
                 continue
             raise
         time.sleep(2)
+
         if central_address is None:
             try:
                 central_address = central.interfaces.bluetooth.get_address()
@@ -770,7 +776,6 @@ def _connect_central_no_passkey_with_retry(
         f"increase advertising interval further."
     )
 
-
 def _run_8p_2c_all_tx_background_test(
     ble_dut,
     ble_client,
@@ -783,6 +788,7 @@ def _run_8p_2c_all_tx_background_test(
     transfer_label,
     subscribe_peripheral,
     subscribe_central = False,
+    defer_central_subscription_until_all_connected=False,
 ):
     peripheral_clients = [ble_client, ble_clients[0], ble_clients[1], ble_clients[2],
                           ble_clients[3], ble_clients[4], ble_clients[5], ble_clients[6]]
@@ -947,6 +953,44 @@ def _run_8p_2c_all_tx_background_test(
     logger().info(f"PHASE 2: Connecting 2 central devices ({transfer_label})")
     logger().info("=" * 60)
 
+    pending_central_subscriptions = []
+
+    def _setup_central_subscription(central, c_idx):
+        try:
+            central_servs, central_chars = (
+                central.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
+            )
+            assert len(central_servs) > 0 and len(central_chars) > 0, (
+                f"Central-{c_idx + 1}: no services/chars resolved on BlueZ"
+            )
+            central_char_path, _central_char_props = (
+                central.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
+                    services=central_servs,
+                    service_uid=transfer_service_uuid,
+                    char_uid=transfer_char_uuid,
+                )
+            )
+            assert central_char_path, f"Central-{c_idx + 1}: indicate char path empty on BlueZ"
+            central.interfaces.bluetooth.gatt_adapter.read_charac_value(
+                char_path=central_char_path
+            )
+            central.interfaces.bluetooth.gatt_adapter.enable_notifications(
+                char_path=central_char_path
+            )
+            central.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
+                char_path=central_char_path,
+                char_uid=transfer_char_uuid,
+            )
+
+            logger().info(
+                f"Central-{c_idx + 1}: DUT background {transfer_label} subscription ready"
+            )
+        except Exception as ex:
+            logger().warning(
+                f"Central-{c_idx + 1}: failed to set up DUT->{c_idx + 1} "
+                f"{transfer_label} path: {ex}; continuing with DUT link only"
+            )
+
     for c_idx, central in enumerate(central_clients):
         logger().info(f"===== Starting DUT advertising for central-{c_idx + 1} =====")
         central_ci = _central_ci_for_index(c_idx)
@@ -983,40 +1027,10 @@ def _run_8p_2c_all_tx_background_test(
         logger().info(f"Central-{c_idx + 1} connected to DUT")
 
         if subscribe_central:
-            try:
-                central_servs, central_chars = (
-                    central.interfaces.bluetooth.gatt_adapter.resolve_all_services_characteristics()
-                )
-                assert len(central_servs) > 0 and len(central_chars) > 0, (
-                    f"no services/chars resolved on BlueZ "
-                )
-                central_char_path, _central_char_props = (
-                    central.interfaces.bluetooth.gatt_adapter.resolve_characteristic(
-                        services=central_servs,
-                        service_uid=transfer_service_uuid,
-                        char_uid=transfer_char_uuid,
-                    )
-                )
-                assert central_char_path, f"indicate char path empty on BlueZ"
-                central.interfaces.bluetooth.gatt_adapter.read_charac_value(
-                    char_path=central_char_path
-                )
-                central.interfaces.bluetooth.gatt_adapter.enable_notifications(
-                    char_path=central_char_path
-                )
-                central.interfaces.bluetooth.gatt_adapter.subscribe_to_notifications(
-                    char_path=central_char_path,
-                    char_uid=transfer_char_uuid,
-                )
-
-                logger().info(
-                    f"DUT background TX indication path ready"
-                )
-            except Exception as ex:
-                logger().warning(
-                    f"failed to set up DUT->Central indication path: {ex}; "
-                    f"continuing with DUT->Central direction only"
-                )
+            if defer_central_subscription_until_all_connected:
+                pending_central_subscriptions.append((central, c_idx))
+            else:
+                _setup_central_subscription(central, c_idx)
         time.sleep(5)
         _update_central_live_conn_params(
             central_device=central,
@@ -1027,6 +1041,14 @@ def _run_8p_2c_all_tx_background_test(
         )
         time.sleep(2)
         transfer_config_fn(bt_iface=bt_iface, conn_id=conn_id)
+
+    if subscribe_central and defer_central_subscription_until_all_connected:
+        logger().info(
+            f"Deferring central subscription setup until both centrals are connected "
+            f"for {transfer_label}"
+        )
+        for central, c_idx in pending_central_subscriptions:
+            _setup_central_subscription(central, c_idx)
 
     logger().info("=" * 60)
     logger().info(f"PHASE 3: All 10 connections up! DUT background {transfer_label} running for 5 min")
@@ -1058,6 +1080,7 @@ def _run_8p_2c_all_tx_background_test(
     central_clients[1].interfaces.bluetooth.disconnect(bt_dut_address)
     time.sleep(1)
     _cleanup_central_bluetooth_session(central_clients[1], "Central-2 final cleanup")
+
 
 def _connect_central_with_retry(
     ble_dut, central, c_idx, bt_dut_address, capability = "NoInputNoOutput", max_attempts=3):
@@ -1179,6 +1202,7 @@ def _connect_central_with_retry(
             f"===== Central-{c_idx + 1} connect attempt "
             f"{attempt}/{max_attempts} ====="
         )
+
         ble_dut.interfaces.bluetooth.ble_start_advertising(
             ble_adv_int_min=160,  # 100 ms
             ble_adv_int_max=320,  # 200 ms
@@ -1801,6 +1825,7 @@ def _run_8p_2c_mixed_tx_test(
     central_clients[1].interfaces.bluetooth.disconnect(bt_dut_address)
     time.sleep(1)
     _cleanup_central_bluetooth_session(central_clients[1], "Central-2 final cleanup")
+
 
 def _connect_single_peripheral(
     ble_dut, client, idx, bt_dut_address, svc, *, pair_mode=PAIR_MODE_DEFAULT, target_ci=None,
@@ -2639,7 +2664,296 @@ def test_8p_2c_connection_tx_indicate_20_bytes_just_works_C768088(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-@pytest.mark.ble_sniffer("frontline_sniffer")
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768089')
+def test_8p_2c_connection_tx_write_with_resp_20_bytes_C768089(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768089_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_DEFAULT,
+            payload_len=20,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wwr_transfer_for_conn,
+            transfer_label="write-with-resp (default SMP, 20 bytes)",
+            subscribe_peripheral=True,
+        ),
+    )
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768096')
+def test_8p_2c_tx_notify_20_bytes_passkey_entry_C768096(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768096_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=20,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_notify_transfer_for_conn,
+            transfer_label="notify (Passkey Entry, 20 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768098')
+def test_8p_2c_tx_indicate_20_bytes_passkey_entry_C768098(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768098_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=20,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_ind_transfer_for_conn,
+            transfer_label="indicate (Passkey Entry, 20 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+            defer_central_subscription_until_all_connected=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768099')
+def test_8p_2c_tx_write_with_resp_20_bytes_passkey_entry_C768099(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768099_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=20,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wwr_transfer_for_conn,
+            transfer_label="write-with-resp (Passkey Entry, 20 bytes)",
+            subscribe_peripheral=True,
+        ),
+    )
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768101')
+def test_8p_2c_connection_tx_notify_230_bytes_C768101(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768101_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_DEFAULT,
+            payload_len=230,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_notify_transfer_for_conn,
+            transfer_label="notify (default SMP, 230 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768103')
+def test_2c_8p_connection_tx_indicate_230_bytes_just_works_C768103(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768103_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_JUST_WORKS,
+            payload_len=230,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_ind_transfer_for_conn,
+            transfer_label="indicate (Just Works, 230 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
 @pytest.mark.test_src_map_id('C768104')
 def test_2c_8p_connection_tx_write_with_resp_230_bytes_just_works_C768104(
     ble_dut, ble_client, ble_clients, ble_sniffer
@@ -2686,16 +3000,341 @@ def test_2c_8p_connection_tx_write_with_resp_230_bytes_just_works_C768104(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
-@pytest.mark.ble_sniffer("frontline_sniffer")
-@pytest.mark.test_src_map_id('C768120')
-def test_2c_8p_bidirectional_tx_rx_notify_20_bytes_passkey_entry_C768120(
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768111')
+def test_8p_2c_tx_notify_230_bytes_passkey_entry_C768111(
     ble_dut, ble_client, ble_clients, ble_sniffer
 ):
     _run_with_ble_sniffer_capture(
         ble_sniffer,
-        "test_C768120_sniffer_capture",
-        lambda: _run_8p_2c_bidirectional_notify_test(
-            ble_dut, ble_client, ble_clients, payload_len=20, label="C768120"
+        "test_C768111_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=230,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_notify_transfer_for_conn,
+            transfer_label="notify (Passkey Entry, 230 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768113')
+def test_8p_2c_tx_indicate_230_bytes_passkey_entry_C768113(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768113_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=230,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_ind_transfer_for_conn,
+            transfer_label="indicate (Passkey Entry, 230 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+            defer_central_subscription_until_all_connected=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768114')
+def test_8p_2c_tx_write_with_resp_230_bytes_passkey_entry_C768114(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768114_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=230,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wwr_transfer_for_conn,
+            transfer_label="write-with-resp (Passkey Entry, 230 bytes)",
+            subscribe_peripheral=True,
+        ),
+    )
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768082')
+def test_2c_tx_notify_8p_rx_notify_20_bytes_nonsecure_C768082(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768082_sniffer_capture",
+        lambda: _run_8p_2c_split_notify_rx_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NONSECURE,
+            payload_len=20,
+            label="C768082",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768087')
+def test_2c_tx_notify_8p_rx_notify_20_bytes_just_works_C768087(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768087_sniffer_capture",
+        lambda: _run_8p_2c_split_notify_rx_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_JUST_WORKS,
+            payload_len=20,
+            label="C768087",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768097')
+def test_2c_tx_notify_8p_rx_notify_20_bytes_passkey_entry_C768097(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768097_sniffer_capture",
+        lambda: _run_8p_2c_split_notify_rx_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=20,
+            label="C768097",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768102')
+def test_2c_tx_notify_230_bytes_8p_rx_notify_just_works_C768102(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768102_sniffer_capture",
+        lambda: _run_8p_2c_split_notify_rx_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_JUST_WORKS,
+            payload_len=230,
+            label="C768102",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768112')
+def test_2c_tx_notify_8p_rx_notify_230_bytes_passkey_entry_C768112(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768112_sniffer_capture",
+        lambda: _run_8p_2c_split_notify_rx_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=230,
+            label="C768112",
         ),
     )
 
@@ -2728,18 +3367,1578 @@ def test_2c_8p_bidirectional_tx_rx_notify_20_bytes_passkey_entry_C768120(
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768119')
+def test_2c_tx_notify_8p_tx_indicate_230_bytes_passkey_entry_C768119(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768119_sniffer_capture",
+        lambda: _run_8p_2c_mixed_tx_test(
+            ble_dut, ble_client, ble_clients,
+            payload_len=230,
+            label="C768119",
+            peripheral_svc="HealthThermometerService",
+            peripheral_transfer_config_fn=_configure_background_ind_transfer_for_conn,
+            peripheral_subscribe=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768120')
+def test_2c_8p_bidirectional_tx_rx_notify_20_bytes_passkey_entry_C768120(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768120_sniffer_capture",
+        lambda: _run_8p_2c_bidirectional_notify_test(
+            ble_dut, ble_client, ble_clients, payload_len=20, label="C768120"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768121')
+def test_2c_8p_bidirectional_tx_rx_notify_230_bytes_passkey_entry_C768121(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768121_sniffer_capture",
+        lambda: _run_8p_2c_bidirectional_notify_test(
+            ble_dut, ble_client, ble_clients, payload_len=230, label="C768121"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768122')
+def test_2c_8p_bidirectional_tx_rx_notify_20_bytes_2m_phy_passkey_entry_C768122(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768122_sniffer_capture",
+        lambda: _run_8p_2c_bidirectional_notify_test(
+            ble_dut, ble_client, ble_clients, payload_len=20, label="C768122"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768123')
+def test_2c_8p_bidirectional_tx_rx_notify_230_bytes_2m_phy_passkey_entry_C768123(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768123_sniffer_capture",
+        lambda: _run_8p_2c_bidirectional_notify_test(
+            ble_dut, ble_client, ble_clients, payload_len=230, label="C768123"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768124')
+def test_2c_8p_bidirectional_tx_rx_notify_20_bytes_coded_phy_500kbps_passkey_entry_C768124(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768124_sniffer_capture",
+        lambda: _run_8p_2c_bidirectional_notify_test(
+            ble_dut, ble_client, ble_clients, payload_len=20, label="C768124"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768125')
+def test_2c_8p_bidirectional_tx_rx_notify_230_bytes_coded_phy_500kbps_passkey_entry_C768125(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768125_sniffer_capture",
+        lambda: _run_8p_2c_bidirectional_notify_test(
+            ble_dut, ble_client, ble_clients, payload_len=230, label="C768125"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768126')
+def test_2c_8p_bidirectional_tx_rx_notify_20_bytes_coded_phy_125kbps_passkey_entry_C768126(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768126_sniffer_capture",
+        lambda: _run_8p_2c_bidirectional_notify_test(
+            ble_dut, ble_client, ble_clients, payload_len=20, label="C768126"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768127')
+def test_2c_8p_bidirectional_tx_rx_notify_230_bytes_coded_phy_125kbps_passkey_entry_C768127(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768127_sniffer_capture",
+        lambda: _run_8p_2c_bidirectional_notify_test(
+            ble_dut, ble_client, ble_clients, payload_len=230, label="C768127"
+        ),
+    )
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768068')
+def test_adv_211ms_scan_33ms_C768068(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768068_sniffer_capture",
+        lambda: _run_adv_scan_visibility_test(
+            ble_dut, ble_client, ble_clients,
+            scan_interval=53, scan_window=53, label="C768068"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768069')
+def test_adv_211ms_scan_si33_sw14_C768069(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768069_sniffer_capture",
+        lambda: _run_adv_scan_visibility_test(
+            ble_dut, ble_client, ble_clients,
+            scan_interval=53, scan_window=23, label="C768069"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768070')
+def test_adv_211ms_scan_si33_sw11_C768070(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768070_sniffer_capture",
+        lambda: _run_adv_scan_visibility_test(
+            ble_dut, ble_client, ble_clients,
+            scan_interval=53, scan_window=18, label="C768070"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768071')
+def test_adv_211ms_scan_si6600_sw3300_C768071(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768071_sniffer_capture",
+        lambda: _run_adv_scan_visibility_test(
+            ble_dut, ble_client, ble_clients,
+            scan_interval=10560, scan_window=5280, label="C768071"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768072')
+def test_8p_1c_adv_with_connections_C768072(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768072_sniffer_capture",
+        lambda: _run_topology_visibility_test(
+            ble_dut, ble_client, ble_clients,
+            connected_peripherals=8,
+            connected_centrals=1,
+            scan_adv_only=False,
+            scan_dut_on_central=True,
+            label="C768072",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768073')
+def test_7p_2c_scan_with_connections_C768073(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768073_sniffer_capture",
+        lambda: _run_topology_visibility_test(
+            ble_dut, ble_client, ble_clients,
+            connected_peripherals=7,
+            connected_centrals=2,
+            scan_adv_only=True,
+            scan_dut_on_central=False,
+            label="C768073",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768074')
+def test_7p_1c_adv_scan_with_connections_C768074(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768074_sniffer_capture",
+        lambda: _run_topology_visibility_test(
+            ble_dut, ble_client, ble_clients,
+            connected_peripherals=7,
+            connected_centrals=1,
+            scan_adv_only=True,
+            scan_dut_on_central=True,
+            label="C768074",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768075')
+def test_2c_8p_diff_conn_intervals_C768075(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768075_sniffer_capture",
+        lambda: _run_diff_conn_intervals_test(
+            ble_dut, ble_client, ble_clients, central_ci=9, label="C768075"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768076')
+def test_8p_2c_diff_conn_intervals_C768076(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768076_sniffer_capture",
+        lambda: _run_diff_conn_intervals_test(
+            ble_dut, ble_client, ble_clients, central_ci=36, label="C768076"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768077')
+def test_8p_2c_conn_disconn_reconn_diff_ci_C768077(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768077_sniffer_capture",
+        lambda: _run_reconnect_diff_ci_test(
+            ble_dut,
+            ble_client,
+            ble_clients,
+            label="C768077",
+            iterations=5,
+            peripheral_ci_map={
+                0: 80,   # P1: 100 ms
+                1: 160,  # P2: 200 ms
+                2: 160,  # P3: 200 ms
+                3: 160,  # P4: 200 ms
+                4: 160,  # P5: 200 ms
+                5: 240,  # P6: 300 ms
+                6: 240,  # P7: 300 ms
+                7: 240,  # P8: 300 ms
+            },
+            central_ci_map={
+                0: 96,   # C1: 120 ms
+                1: 96,   # C2: 120 ms
+            },
+            conn_latency=0,
+            supervision_timeout=400,  # 4000 ms
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768078')
+def test_8p_2c_just_works_pairing_C768078(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768078_sniffer_capture",
+        lambda: _run_pairing_only_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_JUST_WORKS, label="C768078"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768080')
+def test_8p_2c_passkey_entry_pairing_C768080(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768080_sniffer_capture",
+        lambda: _run_pairing_only_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY, label="C768080"
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768116')
+def test_8p_rx_notify_2c_disconn_reconn_passkey_entry_C768116(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768116_sniffer_capture",
+        lambda: _run_peripheral_rx_central_reconnect_test(
+            ble_dut, ble_client, ble_clients, label="C768116", iterations=5
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768117')
+def test_2c_tx_notify_230_8p_disconn_reconn_passkey_entry_C768117(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768117_sniffer_capture",
+        lambda: _run_central_notify_peripheral_reconnect_test(
+            ble_dut, ble_client, ble_clients, label="C768117", iterations=5
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768129')
+def test_2c_8p_indicate_enable_disable_230_bytes_passkey_entry_C768129(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768129_sniffer_capture",
+        lambda: _run_indicate_enable_disable_test(
+            ble_dut, ble_client, ble_clients, label="C768129", iterations=10
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768079')
+def test_2c_8p_numeric_comparison_pairing_C768079(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768079_sniffer_capture",
+        lambda: _run_pairing_only_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            label="C768079",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768091')
+def test_8p_2c_tx_notify_20_bytes_numeric_comparison_C768091(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768091_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=20,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_notify_transfer_for_conn,
+            transfer_label="notify (Numeric Comparison, 20 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768092')
+def test_2c_tx_notify_8p_rx_notify_20_bytes_numeric_comparison_C768092(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768092_sniffer_capture",
+        lambda: _run_8p_2c_split_notify_rx_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=20,
+            label="C768092",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768093')
+def test_8p_2c_tx_indicate_20_bytes_numeric_comparison_C768093(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768093_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=20,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_ind_transfer_for_conn,
+            transfer_label="indicate (Numeric Comparison, 20 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768106')
+def test_2c_8p_tx_notify_230_bytes_numeric_comparison_C768106(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768106_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=230,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_notify_transfer_for_conn,
+            transfer_label="notify (Numeric Comparison, 230 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768107')
+def test_2c_tx_notify_8p_rx_notify_230_bytes_numeric_comparison_C768107(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768107_sniffer_capture",
+        lambda: _run_8p_2c_split_notify_rx_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=230,
+            label="C768107",
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768108')
+def test_2c_8p_tx_indicate_230_bytes_numeric_comparison_C768108(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768108_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=230,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_ind_transfer_for_conn,
+            transfer_label="indicate (Numeric Comparison, 230 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768128')
+def test_2c_8p_notify_enable_disable_230_bytes_numeric_comparison_C768128(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768128_sniffer_capture",
+        lambda: _run_tx_enable_disable_test(
+            ble_dut,
+            ble_client,
+            ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=230,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_notify_transfer_for_conn,
+            label="C768128",
+            iterations=10,
+        ),
+    )
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768081')
+def test_8p_2c_connection_tx_notify_20_bytes_nonsecure_C768081(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768081_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NONSECURE,
+            payload_len=20,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_notify_transfer_for_conn,
+            transfer_label="notify (non-secure, 20 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768083')
+def test_8p_2c_connection_tx_indicate_20_bytes_nonsecure_C768083(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768083_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NONSECURE,
+            payload_len=20,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_ind_transfer_for_conn,
+            transfer_label="indicate (non-secure, 20 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768086')
+def test_8p_2c_connection_tx_notify_20_bytes_C768086(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768086_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_DEFAULT,
+            payload_len=20,
+            svc="HealthThermometerService",
+            transfer_config_fn=_configure_background_notify_transfer_for_conn,
+            transfer_label="notify (default SMP, 20 bytes)",
+            subscribe_peripheral=True,
+            subscribe_central=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
 @pytest.mark.test_src_map_id('C768084')
-def test_8p_2c_connection_tx_write_with_resp_20_bytes_nonsecure_C768084(ble_dut, ble_client, ble_clients):
-    _run_8p_2c_all_tx_background_test(
-        ble_dut, ble_client, ble_clients,
-        pair_mode=PAIR_MODE_NONSECURE,
-        payload_len=20,
-        svc="GenericDataService",
-        transfer_config_fn=_configure_background_wwr_transfer_for_conn,
-        transfer_label="write-with-resp (non-secure, 20 bytes)",
-        subscribe_peripheral=True,
+def test_8p_2c_connection_tx_write_with_resp_20_bytes_nonsecure_C768084(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768084_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NONSECURE,
+            payload_len=20,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wwr_transfer_for_conn,
+            transfer_label="write-with-resp (non-secure, 20 bytes)",
+            subscribe_peripheral=True,
+        ),
     )
-
 
 @pytest.mark.config(
     "wifi_dut",
@@ -2769,16 +4968,211 @@ def test_8p_2c_connection_tx_write_with_resp_20_bytes_nonsecure_C768084(ble_dut,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768109')
+def test_2c_8p_tx_write_with_resp_230_bytes_numeric_comparison_C768109(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768109_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=230,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wwr_transfer_for_conn,
+            transfer_label="write-with-resp (Numeric Comparison, 230 bytes)",
+            subscribe_peripheral=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768094')
+def test_8p_2c_tx_write_with_resp_20_bytes_numeric_comparison_C768094(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768094_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=20,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wwr_transfer_for_conn,
+            transfer_label="write-with-resp (Numeric Comparison, 20 bytes)",
+            subscribe_peripheral=True,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
 @pytest.mark.test_src_map_id('C768090')
-def test_8p_2c_connection_tx_write_no_resp_20_bytes_C768090(ble_dut, ble_client, ble_clients):
-    _run_8p_2c_all_tx_background_test(
-        ble_dut, ble_client, ble_clients,
-        pair_mode=PAIR_MODE_DEFAULT,
-        payload_len=20,
-        svc="GenericDataService",
-        transfer_config_fn=_configure_background_wnr_transfer_for_conn,
-        transfer_label="write-no-resp (default SMP, 20 bytes)",
-        subscribe_peripheral=False,
+def test_8p_2c_connection_tx_write_no_resp_20_bytes_C768090(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768090_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_DEFAULT,
+            payload_len=20,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wnr_transfer_for_conn,
+            transfer_label="write-no-resp (default SMP, 20 bytes)",
+            subscribe_peripheral=False,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768100')
+def test_8p_2c_tx_write_no_resp_20_bytes_passkey_entry_C768100(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768100_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=20,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wnr_transfer_for_conn,
+            transfer_label="write-no-resp (Passkey Entry, 20 bytes)",
+            subscribe_peripheral=False,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768105')
+def test_2c_8p_connection_tx_write_no_resp_230_bytes_just_works_C768105(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768105_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_JUST_WORKS,
+            payload_len=230,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wnr_transfer_for_conn,
+            transfer_label="write-no-resp (Just Works, 230 bytes)",
+            subscribe_peripheral=False,
+        ),
     )
 
 
@@ -2810,14 +5204,209 @@ def test_8p_2c_connection_tx_write_no_resp_20_bytes_C768090(ble_dut, ble_client,
     },
 )
 @pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768115')
+def test_8p_2c_tx_write_no_resp_230_bytes_passkey_entry_C768115(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768115_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_PASSKEY,
+            payload_len=230,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wnr_transfer_for_conn,
+            transfer_label="write-no-resp (Passkey Entry, 230 bytes)",
+            subscribe_peripheral=False,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768118')
+def test_2c_tx_notify_8p_tx_write_no_resp_230_bytes_passkey_entry_C768118(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768118_sniffer_capture",
+        lambda: _run_8p_2c_mixed_tx_test(
+            ble_dut, ble_client, ble_clients,
+            payload_len=230,
+            label="C768118",
+            peripheral_svc="GenericDataService",
+            peripheral_transfer_config_fn=_configure_background_wnr_transfer_for_conn,
+            peripheral_subscribe=False,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
 @pytest.mark.test_src_map_id('C768085')
-def test_2c_8p_connection_tx_write_no_resp_20_bytes_nonsecure_C768085(ble_dut, ble_client, ble_clients):
-    _run_8p_2c_all_tx_background_test(
-        ble_dut, ble_client, ble_clients,
-        pair_mode=PAIR_MODE_NONSECURE,
-        payload_len=20,
-        svc="GenericDataService",
-        transfer_config_fn=_configure_background_wnr_transfer_for_conn,
-        transfer_label="write-no-resp (non-secure, 20 bytes)",
-        subscribe_peripheral=False,
+def test_2c_8p_connection_tx_write_no_resp_20_bytes_nonsecure_C768085(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768085_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NONSECURE,
+            payload_len=20,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wnr_transfer_for_conn,
+            transfer_label="write-no-resp (non-secure, 20 bytes)",
+            subscribe_peripheral=False,
+        ),
+    )
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768110')
+def test_2c_8p_tx_write_no_resp_230_bytes_numeric_comparison_C768110(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768110_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=230,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wnr_transfer_for_conn,
+            transfer_label="write-no-resp (Numeric Comparison, 230 bytes)",
+            subscribe_peripheral=False,
+        ),
+    )
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 1, "stack_len": 2048}, "ble": {"count": 1, "stack_len": 2048}},
+        "oper_mode": 0,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.ULPGPIOHandshake |
+                    Si91xFeatureBitMap.FEAT_DEV_TO_HOST_ULP_GPIO_1 |
+                    Si91xFeatureBitMap.WPSSupportDisabled,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client |
+                          Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.ConfigFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.FeatureLowPower |
+                               Si91xExtCustomFeatureBitMap.EXT_FEAT_XTAL_CLK_ENABLE |
+                               Si91xExtCustomFeatureBitMap.SL_SI91X_EXT_FEAT_FRONT_END_SWITCH_PINS_ULP_GPIO_4_5_0 |
+                               Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+        "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                           Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "bt_features": Si91xBTFeatureBitMap.Default,
+        "ble_features": Si91xBLEFeatureBitMap.Default | (8 << 12) | (2 << 27) | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                   Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+    },
+)
+@pytest.mark.end_state("wifi_dut", wifi=["wifi_powersave_disable", "bt_powersave_disable"])
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id('C768095')
+def test_8p_2c_tx_write_no_resp_20_bytes_numeric_comparison_C768095(
+    ble_dut, ble_client, ble_clients, ble_sniffer
+):
+    _run_with_ble_sniffer_capture(
+        ble_sniffer,
+        "test_C768095_sniffer_capture",
+        lambda: _run_8p_2c_all_tx_background_test(
+            ble_dut, ble_client, ble_clients,
+            pair_mode=PAIR_MODE_NUMERIC,
+            payload_len=20,
+            svc="GenericDataService",
+            transfer_config_fn=_configure_background_wnr_transfer_for_conn,
+            transfer_label="write-no-resp (Numeric Comparison, 20 bytes)",
+            subscribe_peripheral=False,
+        ),
     )
