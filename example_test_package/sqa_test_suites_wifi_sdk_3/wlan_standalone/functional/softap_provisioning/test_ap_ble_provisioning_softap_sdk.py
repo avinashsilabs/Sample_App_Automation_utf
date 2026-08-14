@@ -9,6 +9,7 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xExtTCPIPFe
     Si91xConfigFeatureBitMap, Si91xBLECustomFeatureBitMap, Si91xBLEFeatureBitMap, Si91xOperatingMode
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.wifi import SecurityMode
+from utf_wiseconnect_3.tests.interfaces import AsyncIdentifiers, Protocol
 
 """
     setup requirement:
@@ -116,6 +117,7 @@ class ProvisioningFunctionality(ThreadBase):
         self.qos = qos
         self.sniffer_filter = sniffer_filter
         self.no_of_clients = 1
+        self.last_extended_scan_response = None
 
         logger().info("******************** initializing ble in dut ********************")
         self.bt_dut_address = self.ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=self.set_smp)
@@ -186,6 +188,20 @@ class ProvisioningFunctionality(ThreadBase):
     def scan_on_ap_interface(self, scan_type=None):
         scan_result_ssid_security = []
         logger().info("******* scanning on AP interface ********")
+        # C1045823: capture raw async payload so count/length can be parsed from
+        # "<N> scan results, length: <L>" without a second scan before deinit.
+        if self.test_case == 1045823 and scan_type == 2:
+            raw = _issue_extended_scan_on_ap_interface(self.wifi_dut)
+            self.last_extended_scan_response = raw
+            for line in (raw.splitlines() if isinstance(raw, (bytes, bytearray)) else []):
+                tokens = line.split(b",")
+                if len(tokens) == 6:
+                    ssid = tokens[0].strip().decode(errors="ignore")
+                    security = tokens[1].strip().decode(errors="ignore")
+                    scan_result_ssid_security.append((ssid, security))
+            logger().info(f".... scan result for ssid and security is : {scan_result_ssid_security} ....")
+            return scan_result_ssid_security
+
         scan_results = self.wifi_dut.interfaces.wifi.scan(ssid=None, interface='ap', channel=0, scan_type=scan_type)
 
         for scan in scan_results:
@@ -194,6 +210,30 @@ class ProvisioningFunctionality(ThreadBase):
             scan_result_ssid_security.append((ssid[0], security[0]))
 
         logger().info(f".... scan result for ssid and security is : {scan_result_ssid_security} ....")
+        return scan_result_ssid_security
+
+    def set_prov_config(self):
+        """Re-configure DUT in AP+BLE SoftAP provisioning mode after AP deinit."""
+        self.wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.AccessPoint,
+            coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+            features=Si91xFeatureBitMap.Aggregation | Si91xFeatureBitMap.SL_SI91X_FEAT_DISABLE_11AX_SUPPORT,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default | Si91xTCPIPFeatureBitMap.DHCPv4Server |
+                           Si91xTCPIPFeatureBitMap.TCP_IP_FEAT_ICMP,
+            custom_features=Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+            ext_custom_features=Si91xExtCustomFeatureBitMap.Default |
+                                Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode |
+                                Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid,
+            ext_tcpip_features=Si91xExtTCPIPFeatureBitMap.Default,
+            config_features=Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP |
+                            Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            bt_features=Si91xBTFeatureBitMap.Default,
+            ble_features=Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
+            ble_custom_ext_features=Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_CONN_EVENTS |
+                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_NUM_REC_BYTES |
+                                    Si91xBLECustomFeatureBitMap.BLE_NUM_REC_BYTES |
+                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST |
+                                    Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST)
 
     def connect_clients_to_dut_as_ap(self):
         ping_count = self.utf_constants.get("ping_count")
@@ -256,7 +296,7 @@ class ProvisioningFunctionality(ThreadBase):
             self.connect_clients_to_dut_as_ap()
             self.ble_stop_advertising()
 
-        self.scan_on_ap_interface(scan_type=scan_type)
+        scan_results = self.scan_on_ap_interface(scan_type=scan_type)
         self.wiseconnect_web.interfaces.wiseconnect_ui.connect(
             ip_address="192.168.100.76", web_ui_port=80,
             ssid=self.wifi_access_point.interfaces.wifi.ssid,
@@ -274,6 +314,15 @@ class ProvisioningFunctionality(ThreadBase):
         assert self.result, "Unable to fetch 3rd party AP details from DUT"
         self.wifi_dut.interfaces.wifi.http_server_stop()
         self.wifi_dut.interfaces.wifi.http_server_deinit()
+        # For AP init/deinit loop (C986801): SoftAP DHCP breaks NEW RasPi SSH.
+        # Clear assoc flags on the already-cached STA wifi iface so a later join()
+        # does not call leave()/pkill over a dead SSH session.
+        if self.test_case == 986801:
+            for i in range(self.no_of_clients):
+                wifi_iface = self.wifi_clients[i].interfaces.wifi
+                wifi_iface.client_associated = False
+                wifi_iface.client_supplicant_started = False
+        return scan_results
 
     def ap_mode_start(self):
         """
@@ -1237,6 +1286,133 @@ def test_wifi_sdk_ap_provisioning_extended_scan_c887660(
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
 
+
+# sizeof(sl_wifi_extended_scan_result_t) = 46 (includes seen_count uint16_t);
+# SI91X-20827 / SW_SQA_TC-12973
+EXTENDED_SCAN_RESULT_SIZE = 46
+# Async scan header: "F00FD<$ 10000000 36 scan results, length: 1656"
+_EXTENDED_SCAN_COUNT_LENGTH_RE = re.compile(
+    rb"(\d+)\s+scan results,\s*length:\s*(\d+)", re.IGNORECASE)
+
+
+def _parse_extended_scan_count_and_length(scan_response):
+    """Parse '<N> scan results, length: <L>' from extended-scan async payload."""
+    if scan_response is None:
+        return None
+    data = scan_response if isinstance(scan_response, (bytes, bytearray)) else str(scan_response).encode()
+    match = _EXTENDED_SCAN_COUNT_LENGTH_RE.search(data)
+    if not match:
+        return None
+    return {"scan_count": int(match.group(1)), "scan_length": int(match.group(2))}
+
+
+def _issue_extended_scan_on_ap_interface(wifi_dut, timeout=60, async_timeout=60):
+    """Issue extended scan (scan_type=2) on AP interface and return raw CLI response."""
+    wifi = wifi_dut.interfaces.wifi
+    command = "wifi.scan -i ap -c 0 -p 2"
+    logger().info(f"Issuing extended scan for count/length parse: {command}")
+    if wifi.test_agent_thread_enabled:
+        status, data = wifi.issue_command_in_thread(
+            command,
+            timeout=timeout,
+            async_timeout=async_timeout,
+            retries=0,
+            protocol=Protocol.WIFI,
+            async_identifiers=[AsyncIdentifiers.SCAN_RESULTS],
+            sleep_time=1,
+        )
+    else:
+        status, data = wifi.issue_command(command, timeout, 0)
+    wifi.verify_status(status, SLStatus.SL_STATUS_OK)
+    logger().info(f"Extended scan raw response: {data}")
+    return data
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C1045823')
+def test_wifi_sdk_ap_provisioning_scan_count_length_C1045823(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter):
+
+    """Verify SoftAP extended scan returns scan count and length (SI91X-20827).
+
+    Expected async scan header (event 10000000):
+        <N> scan results, length: <L>
+    Example:
+        F00FD<$ 10000000 36 scan results, length: 1656
+    Assert: N * sizeof(sl_wifi_extended_scan_result_t) == L  (46 bytes/entry, incl. seen_count).
+    """
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter,
+            test_case=1045823)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        time.sleep(10)
+        ble_obj.check_beacon()
+        # SoftAP + HTTP provisioning; extended scan during this path captures raw header
+        ble_obj.http_server_provisioning(scan_type=2)
+
+        # Parse count/length from provisioning scan:
+        # "F00FD<$ 10000000 <N> scan results, length: <L>"
+        meta = _parse_extended_scan_count_and_length(
+            getattr(ble_obj, "last_extended_scan_response", None))
+        assert meta is not None, (
+            "Extended scan header missing count/length; "
+            "expected format like 'F00FD<$ 10000000 36 scan results, length: 1656'")
+        scan_count = meta["scan_count"]
+        scan_length = meta["scan_length"]
+        logger().info(
+            f"Extended scan header: {scan_count} scan results, length: {scan_length} "
+            f"(entry_size={EXTENDED_SCAN_RESULT_SIZE})")
+        assert scan_count > 0, f"scan_count must be non-zero, got {scan_count}"
+        assert scan_length > 0, f"scan_length must be non-zero, got {scan_length}"
+        assert scan_count * EXTENDED_SCAN_RESULT_SIZE == scan_length, (
+            f"Expected scan_count * {EXTENDED_SCAN_RESULT_SIZE} == scan_length; "
+            f"got {scan_count} * {EXTENDED_SCAN_RESULT_SIZE} = "
+            f"{scan_count * EXTENDED_SCAN_RESULT_SIZE}, scan_length={scan_length}")
+
+        # Full wifi.deinit hangs while SoftAP is still up after HTTP provision + scan.
+        # Stop SoftAP first (same approach as C986801), then deinit.
+        logger().info("***** Stop SoftAP interface before wifi.deinit *****")
+        wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+        time.sleep(5)
+        ble_obj.sl_net_deinit()
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
 
 
 @pytest.mark.config(
@@ -2478,6 +2654,110 @@ def test_wifi_sdk_ap_provisioning_wpa2_security_Auto_JOIN_to_other_AP_C913406(
         logger().info(f"DUT IP after connecting to other AP ({other_ap_ssid}): {device_ip}")
         logger().info(f"....Successfully connected and obtained IP on other third-party AP ({other_ap_ssid})....")
 
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA2', "passphrase": '123456789', "channel": 11})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C986801')
+def test_wifi_sdk_ap_provisioning_apinit_deinit_loop_C986801(
+        sl_collections, wifi_dut, wifi_client, ap_channel, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, wifi_clients, sniffer_filter, ble_client, ble_dut):
+    """Verify SoftAP+BLE AP init/deinit loop with extended scan (C986801 / SI91X-19677).
+
+    Preconditions:
+        - High-congestion Wi-Fi environment
+        - Memory config SL_SI91X_EXT_FEAT_416K_M4SS_256K (Feature256kBMemoryMode)
+
+    Steps:
+        1. Configure DUT in AP+BLE mode
+        2. Start AP mode and verify beaconing
+        3. Get local device address
+        4. Start BLE advertising
+        5. Connect remote client to SoftAP
+        6. Stop BLE advertising
+        7-8. Init and start HTTP server
+        9-10. Open SoftAP webpage and scan for available networks (extended scan)
+        11. De-init AP mode
+        12. Re-configure AP mode
+        13-21. Repeat SoftAP+BLE+HTTP+scan flow
+        22. Verify extended scan works continuously across the loop
+    """
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+        loop_count = 2
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, sl_collections=sl_collections, set_smp=0, ble_client=ble_client, ble_dut=ble_dut,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter,
+            test_case=986801)
+
+        for iteration in range(1, loop_count + 1):
+            logger().info(
+                f"******************** Starting AP init/deinit iteration {iteration} of {loop_count} ********************")
+
+            if iteration > 1:
+                # SoftAP interface was stopped; Wi-Fi/BLE stack is still up.
+                # Restart SoftAP + BLE advertising only (no full wifi.deinit/re-init).
+                logger().info("***** Restarting SoftAP after previous AP interface stop *****")
+
+            # AP mode start + beaconing
+            ble_obj.ap_mode_start()
+
+            # BLE advertising start
+            ble_obj.start()
+            ble_obj.wait_for_exit()
+
+            # Get local device address
+            dut_mac_address = wifi_dut.interfaces.wifi.get_mac_address()
+            logger().info(f"DUT local device address: {dut_mac_address}")
+            ble_obj.firmware_version()
+            time.sleep(10)
+            ble_obj.check_beacon()
+
+            # Client connect + BLE stop + HTTP init/start + webpage + extended scan
+            scan_results = ble_obj.http_server_provisioning(scan_type=2)
+            assert scan_results, (
+                f"Extended scan returned no results on iteration {iteration} of AP init/deinit loop")
+            logger().info(
+                f"Extended scan verified on iteration {iteration}: {len(scan_results)} network(s)")
+
+            # De-init AP mode via SoftAP interface stop (TestRail: de-init AP mode).
+            # Do not touch RasPi/wifi_clients here — SoftAP DHCP breaks new SSH (Errno 110).
+            logger().info("***** De-init AP mode (stop SoftAP interface) *****")
+            wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+            time.sleep(5)
+
+            logger().info(
+                f"******************** Completed AP init/deinit iteration {iteration} of {loop_count} ********************")
+
+        logger().info("***** Extended scan verified continuously across AP init/deinit loop *****")
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
 
