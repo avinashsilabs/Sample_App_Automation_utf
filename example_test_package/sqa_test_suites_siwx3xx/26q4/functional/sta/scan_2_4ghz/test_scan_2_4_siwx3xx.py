@@ -3,11 +3,12 @@ import re
 import pytest
 from utf.utils.logger import get_logger
 from utf.utils.thread_base import ThreadBase
+from utf.utils.time_measurer import TimeMeasurer
 from utf_wiseconnect_3.wifi.siwx3xx.tests.devices.siwx3xx import Siwx3xxCoexMode, Siwx3xxFeatureBitMap, \
     Siwx3xxConfigFeatureBitMap, \
     Siwx3xxRegion, Siwx3xxRegionCode, Siwx3xxModuleType, Siwx3xxCustomFeatureBitMap, Siwx3xxTCPIPFeatureBitMap, \
     Siwx3xxExtTCPIPFeatureBitMap, Siwx3xxExtCustomFeatureBitMap, Siwx3xxOperatingMode, Siwx3xxPowerSaveModes, \
-    Siwx3xxPowerSaveProcedureTypes
+    Siwx3xxPowerSaveProcedureTypes, Siwx3xxWifiBand, Siwx3xxInterface
 from utf_wiseconnect_3.wifi.siwx3xx.tests.sl_status import SLStatus
 
 # from example_test_package.sqa_test_suites_wifi_sdk_3.wlan_standalone.functional.mbssid.test_wlan_mbssid_sdk \
@@ -96,7 +97,7 @@ class WifiJoinThread(ThreadBase):
             logger().info(f"\n\n **** Got exception in test case thread: {str(e)} ****\n\n")
             raise e
 
-def wifi_dut_marker(region=None, region_code=None):
+def wifi_dut_marker(region=None, region_code=None, band=None):
     """
     Common method to generate wifi_dut marker for pytest.mark.config decorator.
     """
@@ -118,9 +119,10 @@ def wifi_dut_marker(region=None, region_code=None):
         config["region"] = region
     if region_code:
         config["region_code"] = region_code
+    if band is not None:
+        config["band"] = band
 
     return pytest.mark.config("wifi_dut", wifi=config)
-
 @wifi_dut_marker()
 # This test case verifies All Channels Scan in 2.4 Ghz by giving channel number as Zero
 @pytest.mark.start_state("wifi_dut", wifi=['init'])
@@ -1527,4 +1529,185 @@ def test_wifi_sdk_siwx3xx_scan_congested_channel_c925907(wifi_sniffer, wifi_dut,
         logger().info("Scan in congested channel verified successfully")
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@pytest.mark.skip()
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.config('wifi_access_point', wifi={"standard": '11n', "security": 'WPA2'})
+@pytest.mark.test_src_map_id('C1655622')
+def test_wifi_sdk_siwx3xx_scan_ap_non_1mbps_beacon_rate_c1655622(wifi_sniffer, wifi_dut, wifi_access_point, request,
+                                                                  sniffer_filter, siwx3xx_collections):
+    """S31: Scan AP with non-1 Mbps beacon rate (C1655622)."""
+    try:
+        test_name = request.node.name
+        ap_channel = wifi_access_point.interfaces.wifi.channel
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device MAC address: {sa_addr}")
+        logger().info(f"AP channel: {ap_channel}, standard configured for non-1 Mbps beacon rate")
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=ap_channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{ap_channel}")
+        time.sleep(2)
+
+        logger().info("Initiating scan from DUT...")
+        scan_results = wifi_dut.interfaces.wifi.scan(channel=ap_channel, ssid=None)
+        time.sleep(20)
+        logger().info(scan_results)
+        assert len(scan_results) >= 1, "DUT failed to scan AP configured with non-1 Mbps beacon rate"
+
+        matched_results = [result for result in scan_results if result.rf_channel == ap_channel]
+        assert matched_results, f"No scan results found on AP channel {ap_channel} with non-1 Mbps beacon rate"
+        logger().info(f"Found {len(matched_results)} scan result(s) on channel {ap_channel}")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=sa_addr, filter_name="probe_request")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+            "Unable to find probe requests while scanning AP with non-1 Mbps beacon rate"
+        logger().info("DUT successfully scanned AP with non-1 Mbps beacon rate")
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C1655631')
+def test_wifi_sdk_siwx3xx_active_channel_scan_dwell_time_50msec_c1655631(wifi_sniffer, wifi_dut, wifi_access_point,
+                                                                         request, sniffer_filter,
+                                                                         siwx3xx_collections):
+    """S36: Active channel scan with 50 ms dwell (C1655631)."""
+    try:
+        test_name = request.node.name
+        dwell_time_active = 50
+        scan_time_threshold = (11 * dwell_time_active + 100) / 1000
+        sa_addr = wifi_dut.interfaces.wifi.get_mac_address()
+        logger().info(f"Device MAC address: {sa_addr}")
+
+        wifi_dut.interfaces.wifi.set_advanced_scan_configuration(adv_active_channel_time=dwell_time_active)
+        output = wifi_dut.interfaces.wifi.get_advanced_scan_configuration()
+        logger().info(f"Advanced scan configuration: {output}")
+
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_dwell_50ms")
+        time.sleep(2)
+
+        logger().info("Initiating all-channel active scan with 50 ms dwell...")
+        scan_results, scan_time = wifi_dut.interfaces.wifi.scan(
+            channel=0, ssid=None, scan_bitmap_2_4=0, measure_scan_time=1)
+        time.sleep(2)
+        logger().info(scan_results)
+        assert len(scan_results) >= 1, "DUT is unable to scan even one AP with 50 ms dwell"
+
+        logger().info(f"scan time--------------> {scan_time}")
+        scan_time_value = float(str(scan_time).split(':')[-1])
+        assert scan_time_value <= scan_time_threshold, (
+            f"Observed active scan time {scan_time_value}s is more than expected threshold "
+            f"{scan_time_threshold}s for 50 ms dwell")
+        logger().info(f"Time taken for active scan is '{scan_time_value}' seconds, within threshold "
+                      f"'{scan_time_threshold}' seconds")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=sa_addr, filter_name="probe_request")
+        assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter)['packet_count'], \
+            "Unable to find probe requests for 50 ms dwell scan"
+        logger().info("Active scan with 50 ms dwell verified successfully")
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
+
+
+@wifi_dut_marker(band=Siwx3xxWifiBand.SL_SI91X_WIFI_BAND_5GHZ)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C1655641')
+def test_wifi_sdk_siwx3xx_active_scan_wifi_band_channel_5ghz_c1655641(wifi_dut, wifi_access_point, wifi_sniffer,
+                                                                      request, siwx3xx_collections):
+    """S42: Active scan when wifi_band_channel / DUT band is set to 5 GHz (C1655641)."""
+    try:
+        test_name = request.node.name
+        channel = 1
+        logger().info(f"Start sniffer capture on channel {channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{channel}")
+        time.sleep(2)
+
+        logger().info("DUT band configured to 5 GHz; initiating active scan...")
+        wifi_dut.interfaces.wifi.scan(
+            ssid=None,
+            channel=channel,
+            expected_status=SLStatus.SL_STATUS_FAIL)
+        logger().info("Scan correctly failed when wifi_band_channel/band was set to 5 GHz on 2.4 GHz scan context")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C1655642')
+def test_wifi_sdk_siwx3xx_active_scan_for_10_minutes_without_delay_c1655642(
+        wifi_dut, wifi_access_point, wifi_sniffer, request, siwx3xx_collections):
+    """S43: Active scan for 10 minutes without delay (C1655642)."""
+    try:
+        test_name = request.node.name
+        ap_channel = wifi_access_point.interfaces.wifi.channel
+        logger().info(f"Start sniffer capture on channel {ap_channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=ap_channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{ap_channel}")
+        time.sleep(2)
+
+        scan_iterations = 0
+        with TimeMeasurer() as t:
+            t_end = time.time() + 60 * 10
+            while time.time() < t_end:
+                logger().info("Initiating continuous active scan without delay...")
+                scan_results = wifi_dut.interfaces.wifi.scan(channel=0, ssid=None, scan_bitmap_2_4=0)
+                scan_iterations += 1
+                logger().info(f"Iteration {scan_iterations}: scanned {len(scan_results)} APs")
+                logger().info(scan_results)
+                assert len(scan_results) >= 1, (
+                    f"DUT failed to scan APs during continuous 10-minute scan at iteration {scan_iterations}")
+        logger().info(f"Completed continuous active scan for ~10 minutes, iterations={scan_iterations}, "
+                      f"duration={t.duration} seconds")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.test_src_map_id('C1655637')
+def test_wifi_sdk_siwx3xx_scan_bss_count_one_c1655637(wifi_dut, wifi_access_point, wifi_sniffer, request,
+                                                      siwx3xx_collections):
+    """S38: Scan response with BSS count set to 1 (C1655637)."""
+    try:
+        test_name = request.node.name
+        ap_channel = wifi_access_point.interfaces.wifi.channel
+        logger().info(f"Start sniffer capture on channel {ap_channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=ap_channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}_ch_{ap_channel}")
+        time.sleep(2)
+
+        logger().info("Initiating extended scan with BSS/scan count set to 1...")
+        # scan_type=2 -> SL_WIFI_SCAN_TYPE_EXTENDED; scan_count_extended limits returned BSS count
+        scan_results = wifi_dut.interfaces.wifi.scan(
+            channel=0, ssid=None, scan_bitmap_2_4=0, scan_type=2, scan_count_extended=1)
+        time.sleep(2)
+        logger().info(scan_results)
+        logger().info(f"Number of scan results: {len(scan_results)}")
+        assert len(scan_results) == 1, (
+            "DUT displays more than one AP info when BSS/scan count is set to 1 which is not expected")
+        logger().info("DUT displays only one AP info when BSS count is set to 1 which is expected")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+    except Exception as e:
+        siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
+
+
 
