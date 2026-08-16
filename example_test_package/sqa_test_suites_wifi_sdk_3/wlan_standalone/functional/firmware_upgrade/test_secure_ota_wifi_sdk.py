@@ -829,6 +829,7 @@ def test_wifi_sdk_m4_fw_upgrade_negative_with_no_file_c510713(firmware_loader, w
 
 
 @wifi_dut_marker()
+@pytest.mark.end_state("wifi_dut", wifi=["load_default_fw"])
 @pytest.mark.firmware_app("firmware_security_encrypted_1")
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.http_server("raspi_lighttpd_tls")
