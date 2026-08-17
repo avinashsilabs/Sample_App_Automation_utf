@@ -1278,13 +1278,13 @@ def test_wifi_sdk_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_du
 
         wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
         logger().info("\n\n ****** Access point is going to turn off and waiting for Rejoin Error from DUT ******")
-        switch.interfaces.pdu_switch.turn_off(delay=10)
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file="rejoin_event_")
-
+        switch.interfaces.pdu_switch.turn_off()
+        
         """validate rejoin retry failure"""
         wlan_obj.rejoin_async_event()
-
+        time.sleep(7)
         logger().info("Stop sniffer capture")
         wifi_sniffer.interfaces.capture.stop_capture()
         time.sleep(2)
