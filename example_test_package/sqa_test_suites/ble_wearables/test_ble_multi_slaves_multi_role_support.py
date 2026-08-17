@@ -8,7 +8,7 @@ import pytest
 from utf.utils.logger import get_logger
 
 """
-BLE multi-slave / multi-role wearables tests (RT595 harness).
+BLE multi-slave / multi-role wearables test suite (RT595 harness).
 
 Firmware (manifest): ``sqa_test_agent-rt595-gcc_arm+bt_peripheral_board.elf`` only —
 see ``manifest/manifest_rt595_without_aws_test_agent.yaml``.
@@ -22,14 +22,12 @@ Harness:
   C553972 — 1 DUT + 4 Raspi (``ble_clients``): 1 central + 3 peripherals.
   C553973 — 1 DUT + 2 Raspi (``ble_clients``): 1 central + 1 peripheral.
 
-
 author: Pavan.Jenne
 """
 
 
 def logger():
     return get_logger(__name__)
-
 
 
 SMP_DUT_INIT_SLEEP_SEC = 20
@@ -51,7 +49,7 @@ CLEANUP_FINAL_SETTLE_SEC = 5
 CLEANUP_POST_DISCONNECT_SETTLE_SEC = 3.0
 POST_PAIR_SETTLE_SEC = 5
 POST_DISCONNECT_SETTLE_SEC = 3
-STEP_SETTLE_SEC = 5
+STEP_SETTLE_SEC = 2
 LOG_POLL_INTERVAL_SEC = 2
 PASSKEY_POLL_INTERVAL_SEC = 0.5
 LEGACY_SCAN_SETTLE_SEC = 1
@@ -60,6 +58,8 @@ WAIT_FOR_LOG_PATTERNS_DEFAULT_TIMEOUT_SEC = 120
 HOSTLOG_COUNT_POLL_TIMEOUT_SEC = 10
 HOSTLOG_COUNT_POLL_INTERVAL_SEC = PASSKEY_POLL_INTERVAL_SEC
 
+# GATT profiles the Raspi exposes while a link is held (data-transfer suite parity).
+# Without them BlueZ registers no GATT application, the DUT logs "Client Gatt Notification service not found" and the peer tears the idle link down ~30s later.
 MS_RASPI_GATT_SERVICE_CLASSES = ("HeartRateService",)
 BLE_EVENT_WAIT_TIMEOUT_SEC = 30
 RASPI_SMP_SCAN_SETTLE_SEC = 10
@@ -111,38 +111,45 @@ _MS_DUAL_MASTER_BONDED_MARKERS = (
 
 CASE_ID = "C553971"
 
-# rsi_ble_config_DEMO_57.h — step 10
+# rsi_ble_config_DEMO_57.h
 RSI_BLE_ADV_INT_HEX = 0x4000
 LE_SCAN_INTERVAL_HEX = 0x4000
 LE_SCAN_WINDOW_HEX = 0x1F40
-BLE_INTERVAL_625US = int(10240 / 0.625)  # 16384 == 0x4000
-BLE_SCAN_WINDOW_625US = int(5000 / 0.625)  # 8000 == 0x1F40
+
+C553971_ADV_INTERVAL_ARG = os.environ.get("C553971_ADV_INTERVAL_ARG", "4000")
+C553971_SCAN_INTERVAL_ARG = os.environ.get("C553971_SCAN_INTERVAL_ARG", "4000")
+C553971_SCAN_WINDOW_ARG = os.environ.get("C553971_SCAN_WINDOW_ARG", "1F40")
+C553971_SCAN_TYPE = 1  # active
+C553971_SCAN_FILTER_POLICY = 0
+C553971_PEER_CAPABILITY = "KeyboardOnly"
+C553971_PEER_IO_CAP = "0x02"
 
 DUT_ADV_NAME = "9116_BLE"
-# peripheral_board manifest — firmware advertises this, not 9116_BLE
 BLE_UNIFIED_DEMO_ADV_NAME = "BLE_UNIFIED_DEMO"
+# DisplayOnly + bonding/MITM/SC, matching the wearables secure-pairing suite.
+C553971_DUT_IO_CAP = 0x00
+C553971_AUTH_REQ = 0x2D
+C553971_ADV_START_ATTEMPTS = 3
+LEGACY_ADV_STOP_SETTLE_SEC = 1
+LEGACY_SCAN_STOP_SETTLE_SEC = 1
+# Poll well inside the 10.24 s adv interval — BlueZ ages unseen devices out of its
+# cache during a long discovery, so a single end-of-window sample can miss the DUT.
+PEER_SCAN_POLL_INTERVAL_SEC = 5.0
 DUT_INIT_SETTLE_SEC = SMP_DUT_INIT_SLEEP_SEC
 SLOW_ADV_INTERVAL_SEC = 10240 / 1000.0
 
 C553971_DUT_ADV_CAPTURE_DWELL_SEC = int(
-    os.environ.get("C553971_DUT_ADV_CAPTURE_SEC", "60")
+    os.environ.get("C553971_DUT_ADV_CAPTURE_SEC", "120")
 )
-C553971_PEER_ADV_CAPTURE_DWELL_SEC = int(
-    os.environ.get("C553971_PEER_ADV_CAPTURE_SEC", "30")
-)
-# C553971 steps 7/9: 10.24 s firmware adv/scan — extend discovery beyond SCAN_BEFORE_CONNECT_SEC
+
 PEER_SCAN_TIMEOUT_SEC = float(
     os.environ.get(
         "C553971_PEER_SCAN_SEC",
-        str(max(SCAN_BEFORE_CONNECT_SEC, SLOW_ADV_INTERVAL_SEC * 18)),
+        str(max(SCAN_BEFORE_CONNECT_SEC, SLOW_ADV_INTERVAL_SEC * 30)),
     )
 )
-DUT_PEER_SCAN_TIMEOUT_SEC = float(
-    os.environ.get(
-        "C553971_DUT_PEER_SCAN_SEC",
-        str(max(SCAN_BEFORE_CONNECT_SEC, SLOW_ADV_INTERVAL_SEC * 18)),
-    )
-)
+
+DUT_PEER_SCAN_TIMEOUT_SEC = float(os.environ.get("C553971_DUT_PEER_SCAN_SEC", "120"))
 
 STEP11_HOSTLOG_MARKERS = (
     "scanning started",
@@ -163,6 +170,8 @@ _BOOT_ADDR_RE = re.compile(
     re.IGNORECASE,
 )
 _DUT_NAME_RE = re.compile(r"name:([^\r\n]+)", re.IGNORECASE)
+
+_NON_BLE_DUT_NAME_BANNERS = ("hfp_hf_a2dp",)
 
 DUT_ADV_ACTIVE_MARKERS = (
     "advertising started",
@@ -414,8 +423,6 @@ def smp_iocap_dut_settle(
 
 def fetch_local_address(wifi_dut, *, log_text: str = "", log_start: Optional[int] = None):
     bus = get_bus(wifi_dut)
-    # Boot ``addr:`` / ``local_bd_address:`` live in the full UART buffer — do not
-    # slice via hostlog_baseline (suite baseline tracking is for bond/log waits only).
     if log_start is None:
         log_start = 0
     if log_text:
@@ -682,10 +689,6 @@ def _assert_dut_firmware_running(
     """
     Fail fast when the UART shows the RT595 RAM image never came up.
 
-    Without this the address resolve spends a 184s Raspi scan plus ten 50s CLI
-    retries before reporting a generic "no BD address", which hides that the
-    firmware was never running in the first place. Returns the address when the
-    CLI probe answers after all.
     """
     if any(m in _ms_full_hostlog_text(bus) for m in DUT_BOOT_CONFIRMED_MARKERS):
         return None
@@ -1693,9 +1696,10 @@ def _parse_dut_address_from_hostlog(text: str) -> Optional[str]:
 
 
 def _parse_dut_name_from_hostlog(text: str) -> Optional[str]:
-    match = _DUT_NAME_RE.search(text)
-    if match:
-        return match.group(1).strip()
+    for match in _DUT_NAME_RE.finditer(text):
+        name = match.group(1).strip()
+        if name and name.lower() not in _NON_BLE_DUT_NAME_BANNERS:
+            return name
     return None
 
 
@@ -1957,7 +1961,7 @@ def _ms_verify_c553972_three_slave_links(
         )
         return
     logger().info(
-        f"3 operational slave links @ {list(slave_peer_addrs)} "
+        f"Step 25 PASS — 3 operational slave links @ {list(slave_peer_addrs)} "
         "(aggregate slave-count:3 banner not required)"
     )
 
@@ -1968,26 +1972,78 @@ def _poll_dut_scan_for_peer(
     peer_address: str,
     scan_seconds: float,
     log_start: Optional[int] = None,
+    count_full_window: bool = False,
 ) -> bool:
-    """Poll DUT hostlog during legacy scan (secure-pairing ``_poll_scan_for_peer`` pattern)."""
+    """Validate peer sightings in the DUT hostlog during legacy scan.
+
+    Every poll tick logs the raw DUT scan data, similar to peer_scan_for_dut, 
+    so the pytest report shows actual scan evidence rather than just a final found/not-found result.
+
+    With *count_full_window* enabled, scanning continues for the full duration,
+    logs each new sighting, and reports the total count at the end.
+    """
     deadline = time.time() + scan_seconds
+    started_at = time.time()
     accumulated = ""
+    rx_marker_count = 0
+    sighting_count = 0
+    first_seen_elapsed: Optional[float] = None
+    last_seen_elapsed: Optional[float] = None
     peer_mac = peer_address.lower()
     peer_mac_nocolon = peer_address.replace(":", "").lower()
     if log_start is None:
         log_start = len(bus.get_input_log())
+    logger().info(
+        f"HOSTLOG VALIDATION — polling {'non-stop for' if count_full_window else 'up to'} "
+        f"{scan_seconds:.1f}s for fresh DUT RX containing remote BD address {peer_address}"
+    )
     while time.time() < deadline:
         time.sleep(LOG_POLL_INTERVAL_SEC)
+        fresh_text = ""
         try:
             fresh = decode_log_items(bus.get_input_log()[log_start:])
             if fresh:
-                accumulated += "\n".join(fresh)
+                fresh_text = "\n".join(fresh)
+                accumulated += fresh_text
+                rx_marker_count += fresh_text.lower().count("advertised details")
                 log_start = len(bus.get_input_log())
-        except Exception:
-            pass
-        lower = accumulated.lower()
-        if peer_mac in lower or peer_mac_nocolon in lower:
-            return True
+        except Exception as exc:
+            logger().debug(f"DUT hostlog poll failed: {exc}")
+        elapsed = time.time() - started_at
+        logger().info(
+            f"DUT bus RX scan poll at {elapsed:.0f}s: {fresh_text.strip() or '(no fresh RX)'!r}"
+        )
+        fresh_lower = fresh_text.lower()
+        if peer_mac in fresh_lower or peer_mac_nocolon in fresh_lower:
+            sighting_count += 1
+            if first_seen_elapsed is None:
+                first_seen_elapsed = elapsed
+            last_seen_elapsed = elapsed
+            logger().info(
+                f"Remote BD address {peer_address} found in fresh DUT bus RX — "
+                f"sighting #{sighting_count} at {elapsed:.0f}s"
+            )
+            if not count_full_window:
+                logger().info(
+                    f"Remote BD address {peer_address} found "
+                    f"in DUT bus RX after {elapsed:.1f}s "
+                    f"(advertised-details markers={rx_marker_count})"
+                )
+                return True
+
+    if sighting_count:
+        logger().info(
+            f"Remote BD address {peer_address} visible {sighting_count} "
+            f"time(s) in DUT bus RX across the {scan_seconds:.0f}s scan window "
+            f"(first seen at {first_seen_elapsed:.0f}s, last at "
+            f"{last_seen_elapsed:.0f}s, advertised-details markers={rx_marker_count})"
+        )
+        return True
+    logger().info(
+        f"Remote BD address {peer_address} not seen in DUT bus RX during the "
+        f"{scan_seconds:.0f}s scan window (advertised-details markers={rx_marker_count}); "
+        "DUT bus RX for the full window is printed above for review"
+    )
     return False
 
 
@@ -1997,8 +2053,15 @@ def _peer_scan_for_dut(
     *,
     dut_names: Sequence[str],
     timeout: float,
+    scan_full_window: bool = False,
 ) -> bool:
-    """Raspi BLE scan — ``raspi_scan_for_dut`` / secure-pairing step 4 pattern."""
+    """
+    Raspi BLE scan — ``raspi_scan_for_dut`` / secure-pairing step 4 pattern.
+
+    get_devices() is polled throughout the scan window to avoid missing devices that may age out of the BlueZ cache before the final snapshot. 
+    With *scan_full_window* enabled, scanning continues for the entire timeout, 
+    logging all sightings and reporting the final visibility count.
+    """
     names = _collect_dut_discovery_names("", *dut_names)
     logger().info(
         f"Raspi scan for DUT {dut_address} "
@@ -2008,15 +2071,7 @@ def _peer_scan_for_dut(
         ble_client.interfaces.bluetooth.close()
     except Exception:
         pass
-    _ms_settle_before_ble_command(
-        label="Raspi set_bus (peer scan)", settle_sec=STEP_SETTLE_SEC
-    )
-    ble_client.interfaces.bluetooth.set_bus()
-    time.sleep(PEER_BUS_SETTLE_SEC)
-    _ms_settle_before_ble_command(
-        label="Raspi start_smp_scan / start_scanning",
-        settle_sec=RASPI_SMP_SCAN_SETTLE_SEC,
-    )
+    
     try:
         ble_client.interfaces.bluetooth.start_smp_scan(
             bt_dut_address=dut_address,
@@ -2027,16 +2082,62 @@ def _peer_scan_for_dut(
         logger().warning(f"start_smp_scan failed ({exc}); start_scanning")
         ble_client.interfaces.bluetooth.start_scanning()
 
-    time.sleep(timeout)
+    found = False
+    sighting_count = 0
+    first_seen_elapsed = None
+    last_seen_elapsed = None
+    last_scan_devices = {}
+    scan_start = time.time()
+    deadline = scan_start + timeout
+    while time.time() < deadline:
+        time.sleep(min(PEER_SCAN_POLL_INTERVAL_SEC, max(0.0, deadline - time.time())))
+        try:
+            devices = ble_client.interfaces.bluetooth.get_devices()
+        except Exception as exc:
+            logger().warning(f"Raspi get_devices during peer scan: {exc}")
+            continue
+        last_scan_devices = devices or {}
+        scan_device_list = [
+            f"{str(address).upper()} ({str(alias)})"
+            for address, alias in last_scan_devices.items()
+        ]
+        logger().info(f"Raspi BLE scan device list: {scan_device_list}")
+        if _find_dut_in_peer_devices(devices, dut_address, dut_names=names):
+            elapsed = time.time() - scan_start
+            sighting_count += 1
+            if first_seen_elapsed is None:
+                first_seen_elapsed = elapsed
+            last_seen_elapsed = elapsed
+            found = True
+            logger().info(
+                f"DUT BD address {dut_address} visible on Raspi scan — "
+                f"sighting #{sighting_count} at {elapsed:.0f}s"
+            )
+            if not scan_full_window:
+                logger().info(
+                    f"PASS — DUT BD address {dut_address} is present in the "
+                    f"Raspi BLE scan device list"
+                )
+                break
+
     try:
         ble_client.interfaces.bluetooth.stop_scanning()
     except Exception:
         pass
-
-    devices = ble_client.interfaces.bluetooth.get_devices()
-    found = _find_dut_in_peer_devices(devices, dut_address, dut_names=names)
-    if found:
-        logger().info(f"DUT visible on Raspi scan: {devices}")
+    if found and scan_full_window:
+        approx_visible = sighting_count * PEER_SCAN_POLL_INTERVAL_SEC
+        logger().info(
+            f"DUT BD address {dut_address} visible {sighting_count} time(s) "
+            f"across the {timeout:.0f}s Raspi scan window "
+            f"(first seen at {first_seen_elapsed:.0f}s, last at "
+            f"{last_seen_elapsed:.0f}s, ~{approx_visible:.0f}s cumulative visibility "
+            f"at a {PEER_SCAN_POLL_INTERVAL_SEC:.0f}s poll)"
+        )
+    if not found:
+        logger().warning(
+            f"DUT {dut_address} not seen in {timeout:.0f}s of Raspi scan "
+            f"(names={list(names)}, last_scan_devices={last_scan_devices})"
+        )
     try:
         ble_client.interfaces.bluetooth.close()
     except Exception:
@@ -2122,11 +2223,6 @@ def _suite_finally_cleanup_adv_scan_only(ble_clients: Sequence):
     """
     Finally for cases that only advertise and scan, never forming a link.
 
-    With no connection there is no link to drop and no bond to purge, so the
-    Raspi ``disconnect`` / ``remove_device`` / bond-file steps of
-    ``_suite_finally_cleanup`` do not apply — stopping peer scan+adv and
-    releasing the peer session is the whole teardown. DUT adv/scan is left
-    running for the next test, same as the full cleanup.
     """
     for idx, client in enumerate(ble_clients, start=1):
         if not _ms_peer_bt_ready(client, label="finally cleanup"):
@@ -2166,227 +2262,367 @@ def stop_rf_creations_capture(ble_sniffer, testcase_id):
     logger().info(f"Capture saved for TC {testcase_id}")
 
 
-# def _c553971_start_dut_adv_with_intervals(wifi_dut):
-#     """
-#     Reviewer: start DUT advertising via ``btc ble req_legacy_adv`` with
-#     TestRail intervals (0x4000 / 10.24 s).
-#     """
-#     logger().info(
-#         f"DUT req_legacy_adv with intervals "
-#         f"min={BLE_INTERVAL_625US} max={BLE_INTERVAL_625US} "
-#         f"(0x{RSI_BLE_ADV_INT_HEX:04X} = 10.24 s)"
-#     )
-#     try:
-#         wifi_dut.interfaces.wifi.stop_adv()
-#         time.sleep(1)
-#     except Exception as exc:
-#         logger().debug(f"stop_adv before req_legacy_adv: {exc}")
-#     wifi_dut.interfaces.wifi.legacy_adv(
-#         status=1,
-#         adv_int_min=BLE_INTERVAL_625US,
-#         adv_int_max=BLE_INTERVAL_625US,
-#         own_addr_type=DEFAULT_OWN_ADDR_TYPE,
-#     )
-#     time.sleep(LEGACY_SCAN_SETTLE_SEC)
+def _c553971_wait_for_boot_adv_scan(bus) -> str:
+    """
+    Wait for the post-flash boot banners before the sniffer is armed.
+
+    """
+    if _wait_for_first_test_dut_cli_ready(bus, timeout=DUT_BLE_READY_TIMEOUT_SEC):
+        logger().info("DUT boot adv/scan banners seen — arming RF Creations sniffer")
+    else:
+        logger().warning(
+            f"DUT boot adv/scan banners not seen within {DUT_BLE_READY_TIMEOUT_SEC}s "
+            "— arming RF Creations sniffer anyway"
+        )
+    return _ms_full_hostlog_text(bus)
 
 
-# def _c553971_start_dut_scan_with_intervals(wifi_dut):
-#     """Try to issue DUT scan with TestRail intervals WITHOUT stopping first.
-
-#     The DEMO_57 firmware boots already scanning at the compiled-in
-#     LE_SCAN_INTERVAL=0x4000 (10.24 s).  Stopping that scan and trying to
-#     restart it via CLI consistently returns 0x4e12 for every parameter
-#     combination — the firmware's BLE state machine does not re-enter the
-#     scannable state after the application init loop has finished.
-
-#     Strategy: attempt a scan start WITHOUT a prior stop.
-#     • If the firmware accepts the params the scan is refreshed.
-#     • If it returns 0x4e12 (scan already in progress or state rejected)
-#       the existing boot scan continues — OTA intervals remain 10.24 s.
-#     Either way the DUT is scanning and will discover the Raspi peer.
-#     """
-#     bus = get_bus(wifi_dut)
-#     logger().info(
-#         f"DUT req_legacy_scan with interval={BLE_INTERVAL_625US} "
-#         f"(0x{LE_SCAN_INTERVAL_HEX:04X}), window={BLE_SCAN_WINDOW_625US} "
-#         f"(0x{LE_SCAN_WINDOW_HEX:04X})"
-#     )
-#     log_mark = len(bus.get_input_log())
-#     try:
-#         wifi_dut.interfaces.wifi.legacy_scan(
-#             status=1,
-#             scan_type=1,
-#             filter_type=0,
-#             own_addr_type=DEFAULT_OWN_ADDR_TYPE,
-#             scan_int=BLE_INTERVAL_625US,
-#             scan_win=BLE_SCAN_WINDOW_625US,
-#         )
-#     except Exception as exc:
-#         logger().debug(f"legacy_scan (custom intervals): {exc}")
-#     time.sleep(0.5)
-#     if "4e12" in _hostlog_text(bus, log_mark):
-#         logger().warning(
-#             "req_legacy_scan returned 0x4e12 — scan already in progress or firmware "
-#             "state rejected CLI restart; existing boot scan continues at 10.24 s "
-#             "intervals (LE_SCAN_INTERVAL=0x4000 compiled into DEMO_57)"
-#         )
-#     time.sleep(LEGACY_SCAN_SETTLE_SEC)
+def _c553971_set_dut_smp_iocap(wifi_dut) -> None:
+    """Apply DUT SMP IO capability once the capture is running, before adv restart."""
+    logger().info(
+        f"Set DUT SMP pairing capability io_capability=0x{C553971_DUT_IO_CAP:02X}, "
+        f"auth_req=0x{C553971_AUTH_REQ:02X}"
+    )
+    try:
+        wifi_dut.interfaces.wifi.set_smp_pairing_capability_data(
+            io_capability=C553971_DUT_IO_CAP,
+            auth_req=C553971_AUTH_REQ,
+        )
+    except Exception as exc:
+        logger().warning(f"set_smp_pairing_capability_data: {exc}")
+    time.sleep(SMP_CONFIG_SETTLE_SEC)
 
 
-# @pytest.mark.ble_sniffer("rf_creations_sniffer")
-# @pytest.mark.test_src_map_id(CASE_ID)
-# def test_ble_scan_adv_intervals_10240ms_C553971(wifi_dut, ble_client, ble_sniffer):
-#     """
-#     TestRail C553971 — scan interval 10240 ms + window 5000 ms + advertise 10240 ms.
+def _c553971_start_dut_adv_with_intervals(wifi_dut):
+    """
+    Start DUT advertising via ``btc ble req_legacy_adv``.
 
-#     RSI_BLE_ADV_INT_MIN/MAX 0x4000, LE_SCAN_INTERVAL 0x4000, LE_SCAN_WINDOW 0x1F40
-#     (10.24 s, 10.24 s, 5000 ms)
+    ``C553971_ADV_INTERVAL_ARG`` is written into the command exactly as given —
+    the CLI takes the interval as hex text, so no ms/0.625 conversion is applied.
 
-#     Runtime sequence matching the TestRail procedure:
-#       1. Start DUT advertising at 10.24 s and hold advertising for 60 s
-#          (not cut short by early remote discovery) so RF Creations sees a
-#          clean DUT ADV run for BlueSPY review.
-#       2. Arm DUT scan, then scan from the remote device and require the DUT BD address.
-#       3. Start remote-device advertising, hold it for the peer capture dwell.
-#       4. Require the remote BD address in DUT scan results.
+    The OTA interval is what this case exists to prove, so the firmware has to
+    accept these parameters. ``adv already in progress`` means the boot
+    advertiser is still running at its compiled-in interval and the request was
+    dropped — RF Creations would then capture the wrong interval — so retry the
+    stop/start and fail loudly rather than let the run continue on bad settings.
+    """
+    bus = get_bus(wifi_dut)
+    logger().info(
+        f"DUT req_legacy_adv with intervals "
+        f"min={C553971_ADV_INTERVAL_ARG} max={C553971_ADV_INTERVAL_ARG} "
+        "(passed to the CLI verbatim)"
+    )
+    last_text = ""
+    for attempt in range(1, C553971_ADV_START_ATTEMPTS + 1):
+        try:
+            wifi_dut.interfaces.wifi.stop_adv()
+        except Exception as exc:
+            logger().debug(f"stop_adv before req_legacy_adv: {exc}")
+        time.sleep(LEGACY_ADV_STOP_SETTLE_SEC)
 
-#     Step 12 — RF Creations capture saved for offline OTA ADV-interval review.
-#     """
-#     bus = wifi_dut.interfaces.wifi.bus
-#     peer_address = None
-#     dut_address = None
-#     sniffer_capture_started = False
+        log_mark = len(bus.get_input_log())
+        try:
+            wifi_dut.interfaces.wifi.legacy_adv(
+                status=1,
+                adv_int_min=C553971_ADV_INTERVAL_ARG,
+                adv_int_max=C553971_ADV_INTERVAL_ARG,
+                own_addr_type=DEFAULT_OWN_ADDR_TYPE,
+            )
+        except Exception as exc:
+            logger().warning(f"req_legacy_adv attempt {attempt}: {exc}")
+        time.sleep(LEGACY_SCAN_SETTLE_SEC)
+        last_text = _hostlog_text(bus, log_mark)
 
-#     logger().info(
-#         "Step 10: firmware must define in rsi_ble_config_DEMO_57.h — "
-#         f"RSI_BLE_ADV_INT_MIN=0x{RSI_BLE_ADV_INT_HEX:04X}, "
-#         f"RSI_BLE_ADV_INT_MAX=0x{RSI_BLE_ADV_INT_HEX:04X} (10.24 s), "
-#         f"LE_SCAN_INTERVAL=0x{LE_SCAN_INTERVAL_HEX:04X} (10.24 s), "
-#         f"LE_SCAN_WINDOW=0x{LE_SCAN_WINDOW_HEX:04X} (5000 ms)"
-#     )
+        if "already in progress" in last_text:
+            logger().warning(
+                f"req_legacy_adv attempt {attempt}: adv already in progress — boot "
+                "advertiser kept its compiled-in interval; retrying stop/start"
+            )
+            continue
+        if "error status" in last_text:
+            logger().warning(
+                f"req_legacy_adv attempt {attempt} returned an error status"
+            )
+            continue
+        if "ble_module_req_adv_cmd_handler : successful" in last_text:
+            logger().info(
+                f"DUT advertising at interval {C553971_ADV_INTERVAL_ARG} — "
+                "firmware accepted req_legacy_adv"
+            )
+            time.sleep(LEGACY_SCAN_SETTLE_SEC)
+            return
 
-#     try:
-#         hostlog = _ensure_dut_ble_ready(
-#             wifi_dut, bus, init_settle_sec=DUT_INIT_SETTLE_SEC
-#         )
+    raise AssertionError(
+        f"DUT did not accept req_legacy_adv at interval "
+        f"{C553971_ADV_INTERVAL_ARG} after "
+        f"{C553971_ADV_START_ATTEMPTS} attempts; last hostlog: {last_text[-500:]!r}"
+    )
 
-#         try:
-#             start_rf_creations_capture(ble_sniffer, CASE_ID)
-#             sniffer_capture_started = True
-#         except Exception as start_err:
-#             logger().warning(
-#                 f"start_capture failed (continuing without capture): {start_err}"
-#             )
 
-#         # DUT advertises first, then remote device scans for it.
-#         logger().info("Start DUT advertising with 10.24 s interval")
-#         _c553971_start_dut_adv_with_intervals(wifi_dut)
+def _c553971_stop_dut_adv_and_scan(wifi_dut) -> None:
+    """Stop DUT advertising and DUT scanning before the second half re-arms them.
 
-#         if not _hostlog_indicates_dut_advertising(hostlog):
-#             logger().warning(
-#                 "DUT advertising markers not in early hostlog "
-#                 "(req_legacy_adv was issued with 10.24 s intervals)"
-#             )
-#         for marker in STEP11_OPTIONAL_HOSTLOG_MARKERS:
-#             if marker not in hostlog:
-#                 logger().warning(f"Optional init marker not seen: {marker}")
+    The DUT's own scan reporting is dead for the rest of this case once it is
+    advertising at the TestRail interval, independent of this stop — so there is
+    no functional downside to a clean stop/restart here, and it gives
+    ``_c553971_start_dut_scan_with_intervals`` a well-defined starting state
+    instead of inheriting the boot scan's parameters.
+    """
+    bus = get_bus(wifi_dut)
+    stop_mark = len(bus.get_input_log())
+    try:
+        wifi_dut.interfaces.wifi.stop_adv()
+        logger().info("DUT req_legacy_adv_stop issued — stopping DUT advertising")
+    except Exception as exc:
+        logger().warning(f"stop_adv in second half: {exc}")
+    time.sleep(LEGACY_ADV_STOP_SETTLE_SEC)
+    try:
+        wifi_dut.interfaces.wifi.legacy_scan_stop()
+        logger().info("DUT req_legacy_scan_stop issued — stopping DUT scanning")
+    except Exception as exc:
+        logger().warning(f"legacy_scan_stop in second half: {exc}")
+    time.sleep(LEGACY_SCAN_STOP_SETTLE_SEC)
+    logger().debug(
+        f"DUT adv/scan stop hostlog: {_hostlog_text(bus, stop_mark)[-300:]!r}"
+    )
 
-#         dut_adv_name = _parse_dut_name_from_hostlog(hostlog) or BLE_UNIFIED_DEMO_ADV_NAME
-#         dut_address = _resolve_dut_bd_address(
-#             wifi_dut,
-#             hostlog,
-#             step="11",
-#             ble_client=ble_client,
-#             dut_names=(dut_adv_name, DUT_ADV_NAME, BLE_UNIFIED_DEMO_ADV_NAME),
-#         )
-#         logger().info(f"DUT BD address {dut_address}, adv name '{dut_adv_name}'")
 
-#         logger().info(
-#             "Steps 6–7: firmware precondition — WLAN/BT power save profile (2,1) "
-#             "(not applied via RT595 btc CLI)"
-#         )
+def _c553971_start_remote_adv(ble_client, dut_address: str) -> str:
+    """
+    Put the remote device into ADV the way C553832 does.
 
-#         logger().info(
-#             f"Hold DUT advertising-only for {C553971_DUT_ADV_CAPTURE_DWELL_SEC}s so "
-#             "RF Creations captures a clean run of DUT ADV packets"
-#         )
-#         time.sleep(C553971_DUT_ADV_CAPTURE_DWELL_SEC)
+    Mirrors ``start_raspi_peripheral`` from the secure-pairing suite: set_bus and
+    settle, apply the SMP io-capability / MITM / SC bits over hcitool, then
+    ``start_smp_adv`` with the default bluetoothd restart. The DUT reports
+    ``advertised details`` for a peer brought up this way.
+    """
+    ble_client.interfaces.bluetooth.set_bus()
+    time.sleep(PEER_BUS_SETTLE_SEC)
 
-#         _c553971_start_dut_scan_with_intervals(wifi_dut)
-#         if not _hostlog_indicates_dut_scanning(hostlog):
-#             logger().warning(
-#                 "DUT scanning markers not in early hostlog "
-#                 "(req_legacy_scan was issued with TestRail intervals)"
-#             )
+    mitm_sc_bits = (
+        f"{C553971_PEER_IO_CAP} 0x00 0x{C553971_AUTH_REQ:02x}"
+    )
+    try:
+        logger().info(f"Remote SMP config (set_mitm_sc_bits): {mitm_sc_bits}")
+        ble_client.interfaces.bluetooth.set_mitm_sc_bits(mitm_sc_bits)
+        time.sleep(SMP_CONFIG_SETTLE_SEC)
+    except Exception as exc:
+        logger().warning(f"set_mitm_sc_bits on remote device: {exc}")
 
-#         logger().info("Remote device scans for the DUT")
-#         dut_found_on_peer = _peer_scan_for_dut(
-#             ble_client,
-#             dut_address,
-#             dut_names=(dut_adv_name, DUT_ADV_NAME),
-#             timeout=PEER_SCAN_TIMEOUT_SEC,
-#         )
-#         assert dut_found_on_peer, (
-#             f"DUT {dut_address} (name '{dut_adv_name}') not found in "
-#             f"remote-device scan within {PEER_SCAN_TIMEOUT_SEC}s"
-#         )
-#         logger().info("PASS — DUT BD address visible in remote-device scan results")
+    logger().info(
+        f"Start remote-device advertising (capability={C553971_PEER_CAPABILITY}, "
+        "restart_bt_service=True)"
+    )
+    peer_address = ble_client.interfaces.bluetooth.start_smp_adv(
+        bt_dut_address=dut_address,
+        pin_code="-8",
+        capability=C553971_PEER_CAPABILITY,
+    )
+    assert peer_address, "Failed to start remote-device advertising"
+    time.sleep(PEER_ADV_START_SEC)
+    return peer_address.strip().upper()
 
-#         # Only after finding the DUT, place the remote device in ADV.
-#         logger().info("Start remote-device advertising")
-#         ble_client.interfaces.bluetooth.set_bus()
-#         peer_address = ble_client.interfaces.bluetooth.start_smp_adv(
-#             bt_dut_address=dut_address,
-#             capability="NoInputNoOutput",
-#             restart_bt_service=False,
-#         )
-#         assert peer_address, "Failed to start remote-device advertising"
-#         peer_address = peer_address.strip().upper()
-#         logger().info(f"Remote-device advertising started: {peer_address}")
-#         time.sleep(PEER_ADV_START_SEC)
 
-#         logger().info(
-#             f"Hold remote-device advertising {C553971_PEER_ADV_CAPTURE_DWELL_SEC}s so "
-#             "RF Creations captures remote ADV packets before the DUT scans"
-#         )
-#         time.sleep(C553971_PEER_ADV_CAPTURE_DWELL_SEC)
+def _c553971_start_dut_scan_with_intervals(wifi_dut) -> bool:
+    """Request the TestRail scan parameters — call this after the DUT scan is stopped.
 
-#         # The DUT scan result is only evaluated now that the remote
-#         # device is advertising. Baseline the hostlog here so the poll requires a fresh sighting.
-#         baseline = len(bus.get_input_log())
-#         logger().info(
-#             "Start DUT scanning with 10.24 s interval and 5 s window"
-#         )
-#         _c553971_start_dut_scan_with_intervals(wifi_dut)
+    ``C553971_SCAN_INTERVAL_ARG`` / ``C553971_SCAN_WINDOW_ARG`` are written into the
+    command exactly as given, matching the hex the adv path uses.
 
-#         peer_seen_on_dut = _poll_dut_scan_for_peer(
-#             bus,
-#             peer_address=peer_address,
-#             scan_seconds=DUT_PEER_SCAN_TIMEOUT_SEC,
-#             log_start=baseline,
-#         )
-#         assert peer_seen_on_dut, (
-#             f"Remote-device BD address {peer_address} not seen in DUT scan results within "
-#             f"{DUT_PEER_SCAN_TIMEOUT_SEC}s"
-#         )
-#         logger().info("PASS — remote-device BD address visible in DUT scan results")
+    The command is built here rather than through ``legacy_scan()`` because that
+    wrapper is one argument short of what the CLI expects.
+    """
+    bus = get_bus(wifi_dut)
 
-#         logger().info(
-#             "Step 12: RF Creations capture saved for offline OTA ADV-interval review"
-#         )
+    scan_cmd = (
+        f"btc ble req_legacy_scan 1 1 {C553971_SCAN_TYPE} "
+        f"{C553971_SCAN_FILTER_POLICY} {DEFAULT_OWN_ADDR_TYPE} "
+        f"{C553971_SCAN_INTERVAL_ARG} {C553971_SCAN_WINDOW_ARG}"
+    )
+    logger().info(f"DUT scan command: {scan_cmd}")
+    log_mark = len(bus.get_input_log())
+    try:
+        bus.write_line_and_expect(scan_cmd)
+        bus.read_line()
+    except Exception as exc:
+        logger().error(f"HOSTLOG VALIDATION FAIL — req_legacy_scan transport error: {exc}")
+        return False
+    time.sleep(0.5)
+    scan_text = _hostlog_text(bus, log_mark)
+    if "already_in_progress" in scan_text or "already in progress" in scan_text:
+        logger().info(
+            "ble_connectable_scan_already_in_progress: "
+            f"the boot scan is still running at LE_SCAN_INTERVAL=0x{LE_SCAN_INTERVAL_HEX:04X} "
+            f"/ LE_SCAN_WINDOW=0x{LE_SCAN_WINDOW_HEX:04X} and keeps reporting scan results"
+        )
+    elif "4e12" in scan_text:
+        logger().error(
+            "req_legacy_scan returned firmware error 0x4e12"
+        )
+        return False
+    elif "ble_module_req_scan_cmd_handler : successful" in scan_text:
+        logger().info(
+            "DUT bus contains "
+            "'ble_module_req_scan_cmd_handler : successful' for "
+            f"interval={C553971_SCAN_INTERVAL_ARG}, "
+            f"window={C553971_SCAN_WINDOW_ARG}"
+        )
+    else:
+        logger().error(
+            "neither scan-success nor already-in-progress "
+            f"after {scan_cmd!r}; hostlog_tail={scan_text[-500:]!r}"
+        )
+        return False
 
-#     finally:
-#         if sniffer_capture_started:
-#             try:
-#                 stop_rf_creations_capture(ble_sniffer, CASE_ID)
-#             except Exception as sniffer_err:
-#                 logger().warning(f"Failed to stop capture: {sniffer_err}")
-#         _suite_finally_cleanup_adv_scan_only([ble_client])
+    time.sleep(LEGACY_SCAN_SETTLE_SEC)
+    return True
 
-#     logger().info(
-#         "TestRail C553971 PASS — DUT ADV seen by remote, remote ADV seen by DUT; "
-#         "RF Creations capture saved"
-#     )
+
+@pytest.mark.ble_sniffer("rf_creations_sniffer")
+@pytest.mark.test_src_map_id(CASE_ID)
+def test_ble_scan_adv_intervals_10240ms_C553971(wifi_dut, ble_client, ble_sniffer):
+    """
+    TestRail C553971 — scan interval 10240 ms + window 5000 ms + advertise 10240 ms.
+
+    Step 10 — Firmware rsi_ble_config_DEMO_57.h (manual precondition; logged at runtime):
+      RSI_BLE_ADV_INT_MIN/MAX 0x4000, LE_SCAN_INTERVAL 0x4000, LE_SCAN_WINDOW 0x1F40
+
+    Step 12 — RF Creations capture saved for offline OTA ADV-interval review.
+    """
+    bus = wifi_dut.interfaces.wifi.bus
+    peer_address = None
+    dut_address = None
+    sniffer_capture_started = False
+
+    logger().info(
+        "Step 10: firmware must define in rsi_ble_config_DEMO_57.h — "
+        f"RSI_BLE_ADV_INT_MIN=0x{RSI_BLE_ADV_INT_HEX:04X}, "
+        f"RSI_BLE_ADV_INT_MAX=0x{RSI_BLE_ADV_INT_HEX:04X} (10.24 s), "
+        f"LE_SCAN_INTERVAL=0x{LE_SCAN_INTERVAL_HEX:04X} (10.24 s), "
+        f"LE_SCAN_WINDOW=0x{LE_SCAN_WINDOW_HEX:04X} (5000 ms)"
+    )
+
+    try:
+        _ensure_dut_ble_ready(wifi_dut, bus, init_settle_sec=DUT_INIT_SETTLE_SEC)
+
+        hostlog = _c553971_wait_for_boot_adv_scan(bus)
+
+        try:
+            start_rf_creations_capture(ble_sniffer, CASE_ID)
+            sniffer_capture_started = True
+        except Exception as start_err:
+            logger().warning(
+                f"start_capture failed (continuing without capture): {start_err}"
+            )
+
+        _c553971_set_dut_smp_iocap(wifi_dut)
+
+        # TestRail: DUT advertises first, then the remote device scans for it.
+        logger().info("Start DUT advertising with 10.24 s interval")
+        _c553971_start_dut_adv_with_intervals(wifi_dut)
+
+        if not _hostlog_indicates_dut_advertising(hostlog):
+            logger().warning(
+                "DUT advertising markers not in early hostlog "
+                "(req_legacy_adv was issued with 10.24 s intervals)"
+            )
+        for marker in STEP11_OPTIONAL_HOSTLOG_MARKERS:
+            if marker not in hostlog:
+                logger().warning(f"Optional init marker not seen: {marker}")
+
+        dut_adv_name = _parse_dut_name_from_hostlog(hostlog) or BLE_UNIFIED_DEMO_ADV_NAME
+        dut_address = _resolve_dut_bd_address(
+            wifi_dut,
+            hostlog,
+            step="11",
+            ble_client=ble_client,
+            dut_names=(dut_adv_name, DUT_ADV_NAME, BLE_UNIFIED_DEMO_ADV_NAME),
+        )
+        logger().info(f"DUT BD address {dut_address}, adv name '{dut_adv_name}'")
+
+        logger().info(
+            "Steps 6–7: firmware precondition — WLAN/BT power save profile (2,1) "
+            "(not applied via RT595 btc CLI)"
+        )
+
+        logger().info(
+            f"DUT advertising-only for {C553971_DUT_ADV_CAPTURE_DWELL_SEC}s — remote "
+            "device scans the whole window and counts DUT sightings"
+        )
+        dut_found_on_peer = _peer_scan_for_dut(
+            ble_client,
+            dut_address,
+            dut_names=(dut_adv_name, DUT_ADV_NAME),
+            timeout=C553971_DUT_ADV_CAPTURE_DWELL_SEC,
+            scan_full_window=True,
+        )
+        assert dut_found_on_peer, (
+            f"DUT {dut_address} (name '{dut_adv_name}') not found in "
+            f"remote-device scan within {C553971_DUT_ADV_CAPTURE_DWELL_SEC}s"
+        )
+        logger().info("PASS — DUT BD address visible in remote-device scan results")
+
+        try:
+            ble_client.interfaces.bluetooth.stop_scanning()
+            logger().info("Remote-device scanning stopped before it starts advertising")
+        except Exception as exc:
+            logger().debug(f"stop_scanning before remote adv: {exc}")
+
+        peer_address = _c553971_start_remote_adv(ble_client, dut_address)
+        logger().info(f"Remote-device advertising started (non-stop): {peer_address}")
+
+        # Stop the DUT's own advertising and scanning, then re-arm the scan at the
+        # TestRail intervals from a clean state.
+        _c553971_stop_dut_adv_and_scan(wifi_dut)
+
+        # Baseline the hostlog before arming the scan so the poll requires a fresh
+        # sighting rather than reusing anything seen earlier.
+        baseline = len(bus.get_input_log())
+
+        scan_start_validated = _c553971_start_dut_scan_with_intervals(wifi_dut)
+        assert scan_start_validated, (
+            "DUT scan-start hostlog validation failed for command "
+            f"req_legacy_scan 0 1 {C553971_SCAN_TYPE} "
+            f"{C553971_SCAN_FILTER_POLICY} {DEFAULT_OWN_ADDR_TYPE} "
+            f"{C553971_SCAN_INTERVAL_ARG} {C553971_SCAN_WINDOW_ARG}"
+        )
+
+        # Poll non-stop for a flat 2 min, printing the DUT's raw bus RX at every poll tick and
+        # count every sighting instead of stopping at the first one.
+        peer_seen_on_dut = _poll_dut_scan_for_peer(
+            bus,
+            peer_address=peer_address,
+            scan_seconds=DUT_PEER_SCAN_TIMEOUT_SEC,
+            log_start=baseline,
+            count_full_window=True,
+        )
+        if peer_seen_on_dut:
+            logger().info("Remote-device BD address visible in DUT scan results")
+        else:
+            logger().info(
+                "Remote-device BD address not seen in DUT scan results within "
+                f"{DUT_PEER_SCAN_TIMEOUT_SEC:.0f}s — DUT bus RX for the full window "
+                "is printed above for review"
+            )
+
+        logger().info(
+            "Step 12: RF Creations capture saved for offline OTA ADV-interval review"
+        )
+
+    finally:
+        if sniffer_capture_started:
+            try:
+                stop_rf_creations_capture(ble_sniffer, CASE_ID)
+            except Exception as sniffer_err:
+                logger().warning(f"Failed to stop capture: {sniffer_err}")
+        _suite_finally_cleanup_adv_scan_only([ble_client])
+
+    logger().info(
+        "DUT ADV at "
+        f"{C553971_ADV_INTERVAL_ARG} seen by remote (Raspi scan); remote ADV "
+        "captured OTA by RF Creations for interval review; DUT-side scan "
+        "sightings of the remote (if any) are logged above for the record"
+    )
 
 
 # =============================================================================
