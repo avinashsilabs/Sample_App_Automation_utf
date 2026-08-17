@@ -167,15 +167,19 @@ class ThreadHttpOtaf(ThreadBase):
 
         logger().info("Performing firmware upgrade....")
 
+        # With a finite rejoin retry count configured (see join_to_ap), the firmware aborts the pending OTAF
+        # either with CONNECTION_LOST or with REJOIN_FAILURE once the rejoin attempts are exhausted.
+        expected_status = [SLStatus.SL_STATUS_WIFI_CONNECTION_LOST, SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE]
+
         if self.test_case == '19788':
             self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=self.host_ip,
-                                                           expected_status=SLStatus.SL_STATUS_WIFI_CONNECTION_LOST,
+                                                           expected_status=expected_status,
                                                            host_name=self.host_ip, timeout=150)
 
         else:
             self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                            host_name=self.host_ip,
-                                                           expected_status=SLStatus.SL_STATUS_WIFI_CONNECTION_LOST,
+                                                           expected_status=expected_status,
                                                            timeout=150)
 
     def firmware_upgrade_after_rejoin(self):
@@ -254,6 +258,8 @@ def test_wifi_sdk_https_fw_upgrade_after_rejoin_failure_and_measure_time_c19766(
         ap_obj.start()
         ap_obj.wait_for_exit()
         fwup_obj.wait_for_exit()
+        # DUT is already off-air after rejoin failure; skip teardown leave() to avoid 0x10021
+        wifi_dut.interfaces.wifi.associated = False
 
         wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
         wifi_dut.interfaces.wifi.is_external_stack_enabled = True
@@ -316,6 +322,8 @@ def test_wifi_sdk_http_fw_upgrade_after_rejoin_failure_and_measure_time_c19788(h
         ap_obj.start()
         ap_obj.wait_for_exit()
         fwup_obj.wait_for_exit()
+        # DUT is already off-air after rejoin failure; skip teardown leave() to avoid 0x10021
+        wifi_dut.interfaces.wifi.associated = False
 
         wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
         wifi_dut.interfaces.wifi.is_external_stack_enabled = True
@@ -379,6 +387,8 @@ def test_wifi_sdk_https_otaf_after_rejoin_failure_and_measure_time_c584245(http_
         ap_obj.start()
         ap_obj.wait_for_exit()
         fwup_obj.wait_for_exit()
+        # DUT is already off-air after rejoin failure; skip teardown leave() to avoid 0x10021
+        wifi_dut.interfaces.wifi.associated = False
 
         wifi_dut.interfaces.wifi.sl_net_deinit(mode="client")
         wifi_dut.interfaces.wifi.is_external_stack_enabled = True
