@@ -42,8 +42,8 @@ devices:
                 # by specifying the vid and pid of the device.
                 # In the below example, the vid and pid represent the USB connection to the WSTK
                 port: 'auto'
-                vid: 0x0403
-                pid: 0x6001
+                vid: 0x1366 #0x0403
+                pid: 0x0105  #0x6001
 
             # 'firmware_uart' is a special interface that indicates which UART is used
             # when loading firmware on the device
@@ -54,8 +54,8 @@ devices:
                 # See notes above for autodetection rules.  The vid and pid below represent the
                 # 'UART' USB connector on the 9116 board.
                 port: 'auto'
-                vid: 0x0403
-                pid: 0x6001
+                vid: 0x1366 #0x0403
+                pid: 0x0105 #0x6001
 
             wifi:
                 # the wifi interface type for the 9116 must be either

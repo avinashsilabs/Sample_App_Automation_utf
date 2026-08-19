@@ -32,9 +32,9 @@ from utf.utils.fixtures import harness
 from utf.harness.harness import Harness
 from utf_wiseconnect.utils.rs_helper_commands import RSHelperCommands
 from utf_wiseconnect_3.tests.interfaces.sl_collections import SLCollections
-from utf_wiseconnect_3.wifi.siwx3xx.tests.interfaces.siwx3xx_collections import SIWX3xxCollections
+#from utf_wiseconnect_3.wifi.siwx3xx.tests.interfaces.siwx3xx_collections import SIWX3xxCollections
 from utf_wifi_zephyr.interfaces.zephyr_wifi_collections import ZephyrWifiCollections
-from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
+# from utf_wiseconnect.utils.rs_helper_commands_ble import RSHelperCommandsBle
 import utf.utils.commander as commander
 from utf_wiseconnect.devices.rs911x import RS911X
 
@@ -44,7 +44,7 @@ from utf.utf_session import get_active_session
 from utf.utf_queue_session import UtfQueueSession
 from data_transform.generate_perf_data import generate_perf_data_files
 from data_transform.send_perf_data_to_datalake import send_perf_data
-from xray_integration.xray_mgmt import XrayMgmtSource
+#from xray_integration.xray_mgmt import XrayMgmtSource
 try:
     from executor.launch_utf_tests import get_milestone_branch_from_git_branch
 except ImportError:

@@ -3,7 +3,7 @@ firmware:
     load_binary:
       file_name: &firmware_file_anchor 'SiWG917-B.2.12.2.1.0.9.rps'
     write_firmware:
-      file_name: 'test_agent_soc_rcf2_daf57c7579_generic192k.rps.rps'
+      file_name: 'test_agent_si91x18.rps'
 
 firmware_version_file: *firmware_file_anchor
 # List of devices to be reset when needed
