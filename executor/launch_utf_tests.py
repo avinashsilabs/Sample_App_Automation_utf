@@ -1,7 +1,11 @@
 import subprocess
 import re
 import urllib.parse
+import urllib.request
 import zipfile
+import socket
+import sys
+import time
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -28,6 +32,91 @@ except ImportError:
 
 DOCKERFILE_PATH = "executor/Dockerfile"
 WORKSPACE_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+WINDOWS_MEDIA_SERVER_PORT = 5000
+WINDOWS_MEDIA_SERVER_SCRIPT = os.path.join(
+    WORKSPACE_ROOT,
+    "example_test_package",
+    "sqa_test_suites",
+    "ble_wearables",
+    "windows_player.py",
+)
+
+
+def _get_local_ip_for_target(target: str) -> str:
+    """Return the Windows host address used to route traffic to the test target."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.connect((target, 9))
+        return sock.getsockname()[0]
+
+
+def _wait_for_media_server(media_server_url: str, timeout_sec: int = 10) -> bool:
+    """Wait until the Windows Media Player HTTP service accepts requests."""
+    deadline = time.monotonic() + timeout_sec
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(
+                f"{media_server_url}/status", timeout=1
+            ) as response:
+                if response.status == 200:
+                    return True
+        except Exception:
+            time.sleep(0.25)
+    return False
+
+
+def _start_windows_media_server(target: str):
+    """
+    Start the Windows Media Player service for a Docker test run.
+
+    The service is started on the Windows launch host, while the Docker test
+    reaches it through the Windows address routed to ``target``.
+    """
+    if os.name != "nt":
+        return None
+
+    media_server_url = os.environ.get("WINDOWS_MEDIA_SERVER_URL")
+    if not media_server_url:
+        media_server_url = (
+            f"http://{_get_local_ip_for_target(target)}:{WINDOWS_MEDIA_SERVER_PORT}"
+        )
+        os.environ["WINDOWS_MEDIA_SERVER_URL"] = media_server_url
+
+    media_server_url = media_server_url.rstrip("/")
+    if _wait_for_media_server(media_server_url, timeout_sec=1):
+        print(f"Using existing Windows Media Player service: {media_server_url}")
+        return None
+
+    if not os.path.isfile(WINDOWS_MEDIA_SERVER_SCRIPT):
+        raise FileNotFoundError(
+            f"Windows Media Player service script not found: "
+            f"{WINDOWS_MEDIA_SERVER_SCRIPT}"
+        )
+
+    print(f"Starting Windows Media Player service: {media_server_url}")
+    media_server_process = subprocess.Popen(
+        [sys.executable, WINDOWS_MEDIA_SERVER_SCRIPT],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+    )
+    if not _wait_for_media_server(media_server_url):
+        media_server_process.terminate()
+        raise RuntimeError(
+            "Windows Media Player service did not start. Verify pywin32 is "
+            "installed and the configured audio file exists."
+        )
+    return media_server_process
+
+
+def _stop_windows_media_server(media_server_process):
+    """Stop the media service started by this launcher."""
+    if media_server_process is None:
+        return
+    try:
+        media_server_process.terminate()
+        media_server_process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        media_server_process.kill()
 
 
 def get_milestone_branch_from_git_branch():
@@ -58,7 +147,12 @@ class AppUtfLauncher(UtfLauncher):
             UtfLauncherCmdOption.container_name: "wifitest_1",
             UtfLauncherCmdOption.docker_image_tag: "wifitest:latest",
             UtfLauncherCmdOption.docker_file_path: DOCKERFILE_PATH,
-            UtfLauncherCmdOption.docker_flags: f"-e MILESTONE={milestone_branch}, -e FRAMEWORK_VERSION={framework_version}",
+            UtfLauncherCmdOption.docker_flags: (
+                f"-e MILESTONE={milestone_branch}, "
+                f"-e FRAMEWORK_VERSION={framework_version}, "
+                f"-e WINDOWS_MEDIA_SERVER_URL="
+                f"{os.environ.get('WINDOWS_MEDIA_SERVER_URL', '')}"
+            ),
             UtfLauncherCmdOption.docker_base_image: "utfsilabs/rpi_ubuntu_android:2025_10_24",
             UtfLauncherCmdOption.username: "pi",
             UtfLauncherCmdOption.password: "raspberry",
@@ -248,8 +342,14 @@ def main(**kwargs):
         print(
             f"UTF_QUEUE_SERVER_URL is now set to {os.environ.get('UTF_QUEUE_SERVER_URL')}"
         )
-    launcher = AppUtfLauncher(**kwargs)
-    launcher.execute()
+    media_server_process = _start_windows_media_server(
+        kwargs.get(UtfLauncherCmdOption.target)
+    )
+    try:
+        launcher = AppUtfLauncher(**kwargs)
+        launcher.execute()
+    finally:
+        _stop_windows_media_server(media_server_process)
 
 
 if __name__ == "__main__":
