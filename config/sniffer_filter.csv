@@ -1,4 +1,5 @@
 ﻿Column1,Column2,Column3,Column4,Column5,Column6
+Column1,Column2,Column3,Column4,Column5,Column6
 Column1,Column2,Column3,Column4,,
 Column1,Column2,Column3,Column4,,
 Column1,Column2,Column3,Column4,,
@@ -249,3 +250,8 @@ dhcp_decline, (wlan.sa == {{ sa_addr }}), and (dhcp.option.dhcp == 4),,,
 mqtt_fragment_check,"(mqtt.topic == ""{{ topic_name }}"")", and (mqtt && tcp.segment.count),,,
 no_adc_conflict, (arp.opcode == 2), and (arp.src.proto_ipv4 == {{dut_ip}}) and (eth.src != {{sa_addr}}),,,
 tcp_fin_ack,(wlan.ta == {{ ta_addr }}) and (tcp.flags == 0x0011),,,,
+assoc_req_resp_aput_exact,((wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}) and (wlan.fc.type_subtype == 0x0000)),or ((wlan.sa == {{ da_addr }}) and (wlan.da == {{ sa_addr }}) and (wlan.fc.type_subtype == 0x0001)),,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,

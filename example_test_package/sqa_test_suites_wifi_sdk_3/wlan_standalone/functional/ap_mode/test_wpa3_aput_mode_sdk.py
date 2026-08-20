@@ -1477,6 +1477,7 @@ def test_wifi_sdk_keep_alive_disable_c463730(wifi_sniffer, wifi_dut, remote_wise
         wifi_sniffer.interfaces.capture.stop_capture()
 
 
+
 @pytest.mark.start_state("wifi_dut", wifi="init")
 @pytest.mark.start_state("remote_wiseconnect3", sapi="init")
 @pytest.mark.config(
@@ -1558,9 +1559,10 @@ def test_wifi_sdk_calculate_assoc_time_c463731(wifi_sniffer, wifi_dut, remote_wi
                                                  timeout=60)
         remote_wiseconnect3.interfaces.sapi.start_ip(static_gateway=static_gateway)
         remote_wiseconnect3.interfaces.sapi.ping(server_ip=static_ip)
-        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(sa_addr=aput_mac,
-                                                                                        ta_addr=sta_mac,
-                                                                                        filter_name='assoc_req_resp')
+        wifi_sniffer.interfaces.capture.stop_capture()
+        packet_filter1 = sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+            sa_addr=sta_mac, da_addr=aput_mac, filter_name='assoc_req_resp_aput_exact'
+        )
         wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                            packet_filter2='    Arrival Time:')
 
