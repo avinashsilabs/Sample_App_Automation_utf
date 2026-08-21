@@ -93,6 +93,28 @@ class APController(ThreadBase):
                         if event.event_type == AsyncEventIdentifiers.REJOIN_EVENT
                     ]
                     if len(rejoin_error_events):
+                        for event in rejoin_error_events:
+                            event_data = event.event_data
+                            logger().info(
+                                f"Rejoin failure event received from DUT: "
+                                f"event_type={event.event_type}, event_data={event_data}"
+                            )
+                            try:
+                                parts = str(event_data).strip().split()
+                                if parts:
+                                    error_code = int(parts[-1].strip())
+                                    try:
+                                        error_name = SLStatus(error_code).name
+                                    except ValueError:
+                                        error_name = hex(error_code)
+                                    logger().info(
+                                        f"Rejoin failure error code received: {error_name} "
+                                        f"(decimal={error_code}, hex={hex(error_code)})"
+                                    )
+                            except (ValueError, IndexError, TypeError) as parse_error:
+                                logger().warning(
+                                    f"Could not parse rejoin event error code: {parse_error}"
+                                )
                         break
                     time.sleep(0.1)
                 else:
@@ -172,15 +194,24 @@ class ThreadHttpOtaf(ThreadBase):
         expected_status = [SLStatus.SL_STATUS_WIFI_CONNECTION_LOST, SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE]
 
         if self.test_case == '19788':
-            self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=self.host_ip,
+            otaf_status = self.wifi_dut.interfaces.wifi.firmware_upgrade(ip_address=self.host_ip,
                                                            expected_status=expected_status,
                                                            host_name=self.host_ip, timeout=150)
 
         else:
-            self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
+            otaf_status = self.wifi_dut.interfaces.wifi.firmware_upgrade(flags=1, ip_address=self.host_ip, port=443,
                                                            host_name=self.host_ip,
                                                            expected_status=expected_status,
                                                            timeout=150)
+
+        try:
+            otaf_status_name = SLStatus(otaf_status).name
+        except ValueError:
+            otaf_status_name = hex(int(otaf_status))
+        logger().info(
+            f"OTAF aborted after AP power-off with error code: {otaf_status_name} "
+            f"(decimal={int(otaf_status)}, hex={hex(int(otaf_status))})"
+        )
 
     def firmware_upgrade_after_rejoin(self):
         logger().info("dut fw version before upgrade...")
