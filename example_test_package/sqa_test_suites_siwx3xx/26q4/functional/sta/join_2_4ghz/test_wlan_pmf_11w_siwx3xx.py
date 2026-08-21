@@ -3,6 +3,7 @@ import pytest as pytest
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.utils.thread_base import ThreadBase
 from utf.utils.logger import get_logger
+from utf.utf_config import UtfConfig
 from utf_wiseconnect_3.wifi.siwx3xx.tests.devices.siwx3xx import (
     Siwx3xxOperatingMode,
     Siwx3xxCoexMode,
@@ -26,13 +27,12 @@ def logger():
     return get_logger(__name__)
 
 
-"""Author : Vinod"""
+"""Author : Vinod.G"""
 
 """This function runs below test steps for DUT-Siwx3xx to verify 802.11w functionality 
-        1. Configuration of DUT in 2G/5G : BGN
+        1. Configuration of DUT in 2G : gnbax
         2. Association of Third party AP's(ASUS RT AX3000)
         3. Get the valid IP address
-        4. Enable Background scan
         4. Create a new TCP/IP socket
         5. Bind the socket with DUT ip address
         6. Connect the client with server socket as specified port number.
@@ -40,7 +40,7 @@ def logger():
            Data/Control frame via sniffer.
 
     setup requirement:
-        1. DUT(Soc917)
+        1. DUT(Soc-Siwx3xx)
         2. Raspberry PI4
         3. Access Point(Third Party AP's-ASUS with PMF capability)
         4. Sniffer(NUC device)
@@ -76,7 +76,7 @@ def wifi_dut_marker(region=None, region_code=None):
 class WLanThread(ThreadBase):
     def __init__(self, wifi_dut=None, wifi_access_point=None, wifi_sniffer=None, test_case_no=None,
                  test_name=None, siwx3xx_collections=None, data_transfer=False, net_perf_client=None,
-                 wifi_client=None, protocol=None):
+                 wifi_client=None, protocol=None, power_save=None):
         super().__init__()
         self.wifi_dut = wifi_dut
         self.wifi_access_point = wifi_access_point
@@ -92,6 +92,8 @@ class WLanThread(ThreadBase):
         self.wifi_client = wifi_client
         self.protocol = protocol
         self.host_ip = None
+        self.power_save = power_save
+        self.ap_mac_address = None
 
     def run(self):
         try:
@@ -100,6 +102,7 @@ class WLanThread(ThreadBase):
                                                                           beacon_missed_count=40,
                                                                           first_time_retry_enable=0)
 
+            self.ap_mac_address = self.wifi_access_point.interfaces.wifi.bssid
             logger().info("\n *** Start sniffer configuration *** \n")
             self.wifi_sniffer.interfaces.capture.configure_interface(
                 channel=self.wifi_access_point.interfaces.wifi.channel)
@@ -112,7 +115,8 @@ class WLanThread(ThreadBase):
                 self.dut_addr = self.siwx3xx_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                               wifi_access_point=self.wifi_access_point,
                                                                               associated=False,
-                                                                              ping_after_power_save=False)
+                                                                              ping_after_power_save=True,
+                                                                              power_save=self.power_save)
                 logger().info("DUT successfully connected with AP")
                 time.sleep(2)
 
@@ -122,7 +126,8 @@ class WLanThread(ThreadBase):
                 self.dut_addr = self.siwx3xx_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                               wifi_access_point=self.wifi_access_point,
                                                                               associated=False,
-                                                                              ping_after_power_save=False)
+                                                                              ping_after_power_save=True,
+                                                                              power_save=self.power_save)
                 logger().info("DUT successfully connected with AP")
                 time.sleep(2)
 
@@ -133,7 +138,8 @@ class WLanThread(ThreadBase):
                 self.dut_addr = self.siwx3xx_collections.join_to_wifi_network(wifi_dut=self.wifi_dut,
                                                                               wifi_access_point=self.wifi_access_point,
                                                                               associated=False,
-                                                                              ping_after_power_save=False)
+                                                                              ping_after_power_save=True,
+                                                                              power_save=self.power_save)
                 logger().info("DUT successfully connected with AP")
                 time.sleep(2)
 
@@ -203,10 +209,13 @@ def test_wifi_sdk_siwx3xx_pmf_cap_c19658(wifi_sniffer, wifi_access_point, wifi_d
     '''Check whether the device is advertising MFP Capable under RSN Information in the association request'''
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19658, siwx3xx_collections=siwx3xx_collections,
-                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol)
+                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+                          power_save=power_save)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -220,6 +229,9 @@ def test_wifi_sdk_siwx3xx_pmf_cap_c19658(wifi_sniffer, wifi_access_point, wifi_d
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count'], 'Unable to find packets for Association req, with mgmt frame with protection capable'
+        siwx3xx_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                    wlan_obj.dut_addr['dut_mac_address'], wlan_obj.ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
 
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -240,10 +252,13 @@ def test_wifi_sdk_siwx3xx_pmf_req_c19659(wifi_sniffer, wifi_access_point, wifi_d
     '''Check whether the device is advertising MFP Required under RSN Information in the association request'''
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
     wifi_access_point.interfaces.wifi.start_ap()
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19659, siwx3xx_collections=siwx3xx_collections,
-                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol)
+                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+                          power_save=power_save)
 
     try:
         wlan_obj.start()
@@ -259,9 +274,13 @@ def test_wifi_sdk_siwx3xx_pmf_req_c19659(wifi_sniffer, wifi_access_point, wifi_d
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count'], 'Unable to find packets ' \
                              'filter for Association req, with mgmt frame with protection capable'
+        siwx3xx_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                    wlan_obj.dut_addr['dut_mac_address'], wlan_obj.ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
 
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
+
 
 
 @wifi_dut_marker()
@@ -281,10 +300,13 @@ def test_wifi_sdk_siwx3xx_pmf_req_ap_pmf_cap_dut_c19661(wifi_sniffer, wifi_acces
     Check whether the device is connecting to PMF Required AP when the device is configured with PMF Capable"""
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
     wifi_access_point.interfaces.wifi.start_ap()
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19658, siwx3xx_collections=siwx3xx_collections,
-                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol)
+                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+                          power_save=power_save)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -298,6 +320,9 @@ def test_wifi_sdk_siwx3xx_pmf_req_ap_pmf_cap_dut_c19661(wifi_sniffer, wifi_acces
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count'], \
             'Unable to find packets filter for Association req, with mgmt frame with protection capable'
+        siwx3xx_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                    wlan_obj.dut_addr['dut_mac_address'], wlan_obj.ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
 
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -318,14 +343,17 @@ def test_wifi_sdk_siwx3xx_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wi
     test_name = request.node.name
 
     """ Verify the Connection between AP(PMF required) and DUT(PMF capable+required)
-    Check whether the device is connecting to PMF Capable AP when the device is configured with PMF Required and 
+    Check whether the device is connecting to PMF Capable AP when the device is configured with PMF Required and
        Capable"""
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Required'
     wifi_access_point.interfaces.wifi.start_ap()
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19670, siwx3xx_collections=siwx3xx_collections,
-                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol)
+                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+                          power_save=power_save)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -340,6 +368,9 @@ def test_wifi_sdk_siwx3xx_pmf_req_ap_pmf_req_and_cap_dut_c19670(wifi_sniffer, wi
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count'], \
             'Unable to find packet filter for Association req, with mgmt frame with protection capable+required'
+        siwx3xx_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                    wlan_obj.dut_addr['dut_mac_address'], wlan_obj.ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
 
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -359,14 +390,17 @@ def test_wifi_sdk_siwx3xx_pmf_cap_ap_pmf_req_and_cap_dut_c19663(wifi_sniffer, wi
                                                                 protocol):
     test_name = request.node.name
 
-    '''Check whether the device is connecting to PMF Capable AP when the device is configured with PMF Required 
+    '''Check whether the device is connecting to PMF Capable AP when the device is configured with PMF Required
        and Capable'''
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19670, siwx3xx_collections=siwx3xx_collections,
-                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol)
+                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+                          power_save=power_save)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -381,6 +415,9 @@ def test_wifi_sdk_siwx3xx_pmf_cap_ap_pmf_req_and_cap_dut_c19663(wifi_sniffer, wi
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count'], 'Unable to find packet filter for Association req, with mgmt frame with protection ' \
                              'capable+required'
+        siwx3xx_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                    wlan_obj.dut_addr['dut_mac_address'], wlan_obj.ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
 
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -401,14 +438,17 @@ def test_wifi_sdk_siwx3xx_unicast_frame_protection_bit_c19665(wifi_sniffer, wifi
     test_name = request.node.name
 
     '''Verify that after association only unicast mgmt packet transmission with protection bit enable '''
-    '''Check whether the device is sending the Unicast Management frames(Action Frames) with Protection bit set after 
+    '''Check whether the device is sending the Unicast Management frames(Action Frames) with Protection bit set after
         association'''
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19670, siwx3xx_collections=siwx3xx_collections,
-                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol)
+                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+                          power_save=power_save)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -437,6 +477,9 @@ def test_wifi_sdk_siwx3xx_unicast_frame_protection_bit_c19665(wifi_sniffer, wifi
                 f"Assoc req with RSN cap = {result1}, Action frame with Protection bit = {result2}")
             logger().info("Sniffer validation Passed")
             assert True
+        siwx3xx_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                    wlan_obj.dut_addr['dut_mac_address'], wlan_obj.ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
 
@@ -459,10 +502,13 @@ def test_wifi_sdk_siwx3xx_action_frame_with_protection_bit_encrypted_c19667(wifi
     ''' Check whether the device is sending the Unicast Management frames(Action Frames) with Payload Encrypted'''
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19670, siwx3xx_collections=siwx3xx_collections,
-                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol)
+                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+                          power_save=power_save)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -491,6 +537,9 @@ def test_wifi_sdk_siwx3xx_action_frame_with_protection_bit_encrypted_c19667(wifi
                 f"Assoc req with RSN cap = {result1}, Protection bit in Action frame = {result2}")
             logger().info("Sniffer validation Passed")
             assert True
+        siwx3xx_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                    wlan_obj.dut_addr['dut_mac_address'], wlan_obj.ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
 
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -513,10 +562,13 @@ def test_wifi_sdk_siwx3xx_disconnection_with_pmf_c19672(wifi_sniffer, wifi_acces
     '''Check the Disconnection Functionality when the PMF is enabled'''
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19670, siwx3xx_collections=siwx3xx_collections,
-                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol)
+                          net_perf_client=net_perf_client, wifi_client=wifi_client, protocol=protocol,
+                          power_save=power_save)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -546,6 +598,9 @@ def test_wifi_sdk_siwx3xx_disconnection_with_pmf_c19672(wifi_sniffer, wifi_acces
                 f"Assoc req with RSN cap = {result1}, Protection bit in Deauth frame = {result2}")
             logger().info("Sniffer validation Passed")
             assert True
+        siwx3xx_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                    wlan_obj.dut_addr['dut_mac_address'], wlan_obj.ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
 
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -566,11 +621,13 @@ def test_wifi_sdk_siwx3xx_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_acc
     test_name = request.node.name
     wifi_access_point.interfaces.wifi.config['protected_management_frame'] = 'Capable'
     wifi_access_point.interfaces.wifi.start_ap()
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"\n **** Fetching user define power_save flag value = {power_save} from Harness file ****")
 
     wlan_obj = WLanThread(wifi_dut=wifi_dut, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
                           test_name=test_name, test_case_no=19671, siwx3xx_collections=siwx3xx_collections,
                           data_transfer=False, net_perf_client=net_perf_client, wifi_client=wifi_client,
-                          protocol=protocol)
+                          protocol=protocol, power_save=power_save)
     try:
         wlan_obj.start()
         wlan_obj.wait_for_exit()
@@ -584,6 +641,9 @@ def test_wifi_sdk_siwx3xx_mgmt_pmf_enable_receive_data_c19671(wifi_dut, wifi_acc
         wifi_sniffer.interfaces.capture.stop_capture()
         assert wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
             'packet_count']
+        siwx3xx_collections.join_sniffer_validation(wifi_access_point, wifi_sniffer,
+                                                    wlan_obj.dut_addr['dut_mac_address'], wlan_obj.ap_mac_address,
+                                                    sniffer_filter, power_save=power_save)
 
     except Exception as e:
         siwx3xx_collections.exception_handling(wifi_dut=wifi_dut, exception=e)
@@ -613,7 +673,10 @@ def test_wifi_sdk_siwx3xx_mgmt_pmf_req_connection_fail_c19664(wifi_access_point,
     time.sleep(2)
 
     wifi_dut.interfaces.wifi.scan(ssid=None)
-    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, expected_status=SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE)
+    wifi_dut.interfaces.wifi.join_ap(wifi_access_point, expected_status=SLStatus.SL_STATUS_OK, enable_profile=True)
+
+    wifi_dut.interfaces.wifi.sl_net_up(mode="client",  expected_status=SLStatus.SL_STATUS_SI91X_REJOIN_FAILURE, timeout=180)
+
     logger().info(f"Dut Tried to connect to ap between AP(PMF required) and DUT(PMF disable), observed error code "
                   f"0x10019 which is expected")
 
