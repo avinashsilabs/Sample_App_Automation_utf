@@ -251,7 +251,7 @@ mqtt_fragment_check,"(mqtt.topic == ""{{ topic_name }}"")", and (mqtt && tcp.seg
 no_adc_conflict, (arp.opcode == 2), and (arp.src.proto_ipv4 == {{dut_ip}}) and (eth.src != {{sa_addr}}),,,
 tcp_fin_ack,(wlan.ta == {{ ta_addr }}) and (tcp.flags == 0x0011),,,,
 assoc_req_resp_aput_exact,((wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}) and (wlan.fc.type_subtype == 0x0000)),or ((wlan.sa == {{ da_addr }}) and (wlan.da == {{ sa_addr }}) and (wlan.fc.type_subtype == 0x0001)),,,
-,,,,,
+power_mgmt_bit_null_qos,(wlan.sa == {{ sa_addr }}) and (wlan.da == {{ da_addr }}),and (wlan.fc.pwrmgt == 1) and (wlan.fc.type_subtype == 0x0024 or wlan.fc.type_subtype == 0x002c),,,
 ,,,,,
 ,,,,,
 ,,,,,
