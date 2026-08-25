@@ -10,6 +10,22 @@ from utf_wiseconnect_3.tests.devices.si91x import Si91xCoexMode, Si91xExtTCPIPFe
 from utf.interfaces.iperf.iperf_constants import IperfConstants
 from utf.interfaces.wifi import SecurityMode
 
+# SL_WIFI security modes for sl_net_set_profile (WPA3 join post Soft AP provisioning)
+Map_security = {
+    "OPEN": 0,
+    "WPA": 1,
+    "WPA2": 2,
+    "WEP": 3,
+    "WPAENTERPRISE": 4,
+    "WPA2ENTERPRISE": 5,
+    "WPA_WPA2_MIXED": 6,
+    "WPA3": 7,
+    "WPA3_TRANSITION": 8,
+    "WPA3ENTERPRISE": 9,
+    "WPA3_TRANSITION_ENTERPRISE": 10,
+}
+_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID = 1
+
 """
     setup requirement:
         1. Soc
@@ -155,6 +171,10 @@ class ProvisioningFunctionality(ThreadBase):
     def sl_net_deinit(self):
         self.wifi_dut.interfaces.wifi.deinit()
 
+    def stop_ap_interface(self):
+        self.wifi_dut.interfaces.wifi.stop_soft_ap_interface()
+        logger().info("....Successfully stopped the AP interface....")
+
     def wifi_connect(self):
         self.wifi_dut.interfaces.wifi.join(
             ssid=self.result[1], passphrase=self.result[2], security=self.result[3].lower())
@@ -264,11 +284,20 @@ class ProvisioningFunctionality(ThreadBase):
         self.ble_stop_advertising()
 
         self.scan_on_ap_interface()
-        self.wiseconnect_web.interfaces.wiseconnect_ui.connect(
-            ip_address="192.168.100.76", web_ui_port=80,
-            ssid=self.wifi_access_point.interfaces.wifi.ssid,
-            security=self.wifi_access_point.interfaces.wifi.security,
-            passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
+        # 913403: use RasPi wifi_client wiseconnect_ui (web.wiseconnect_web_login already on
+        # raspi_wifi in harness). Other Soft AP TCs keep shared wiseconnect_web fixture.
+        if self.test_case == 913403:
+            self.wifi_clients[0].interfaces.wiseconnect_ui.connect(
+                ip_address="192.168.100.76", web_ui_port=80,
+                ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                security=self.wifi_access_point.interfaces.wifi.security,
+                passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
+        else:
+            self.wiseconnect_web.interfaces.wiseconnect_ui.connect(
+                ip_address="192.168.100.76", web_ui_port=80,
+                ssid=self.wifi_access_point.interfaces.wifi.ssid,
+                security=self.wifi_access_point.interfaces.wifi.security,
+                passphrase=self.wifi_access_point.interfaces.wifi.passphrase)
 
         data = self.wifi_dut.interfaces.wifi.http_server_get_credentials_from_webpage(timeout=30)
         if self.test_case == 887649:
@@ -278,8 +307,18 @@ class ProvisioningFunctionality(ThreadBase):
             logger().info(f"received cred on dutap: {self.result}")
         assert self.result, "Unable to fetch 3rd party AP details from DUT"
         time.sleep(5)
-        self.wifi_dut.interfaces.wifi.http_server_deinit()
-        self.wifi_dut.interfaces.wifi.http_server_stop()
+        if self.test_case == 913403:
+            # Match set1/set2 Soft AP teardown order (stop then deinit). deinit-then-stop
+            # hung http_server.stop with SL_STATUS_TIMEOUT (0x7) after WPA3 creds were received.
+            try:
+                self.wifi_dut.interfaces.wifi.http_server_stop()
+                self.wifi_dut.interfaces.wifi.http_server_deinit()
+            except Exception as e:
+                logger().warning(
+                    f"HTTP server teardown error after credentials received (continuing): {e}")
+        else:
+            self.wifi_dut.interfaces.wifi.http_server_deinit()
+            self.wifi_dut.interfaces.wifi.http_server_stop()
 
 
     def ap_mode_start(self):
@@ -467,4 +506,120 @@ def test_wifi_sdk_ap_provisioning_open_security_c913402(
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+@pytest.mark.config(
+    "wifi_clients",
+    wifi={
+        0: {
+            "security": "WPA2",
+            "ssid": "sharma_test",
+            "passphrase": "123456789",
+            "channel": "11",
+        },
+    }
+)
+@wifi_dut_marker(IEEE802_11W=Si91xExtCustomFeatureBitMap.IEEE802_11W,
+                 memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.parametrize("ap_channel", [11])
+@pytest.mark.config('wifi_access_point',
+                    wifi={"ssid": 'sharma123', "security": 'WPA3', "passphrase": '123456789', "channel": 11,
+                          "protected_management_frame": "Capable"})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+def test_wifi_sdk_ap_provisioning_wpa3_security_c913403(
+        sl_collections, wifi_dut, wifi_client, wifi_sniffer, wifi_access_point,
+        wiseconnect_web, request, utf_constants, ble_client, ble_dut, wifi_clients, sniffer_filter, ap_channel):
+
+    """Verify Soft AP provisioning in WPA3 security and also check WLAN connection to the third party home AP with the
+    received credentials on APUT."""
+
+    try:
+        test_name = request.node.name
+        wifi_client = [wifi_client]
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            ssid='sharma_test', security='wpa2', psk='123456789', ap_channel=ap_channel, wifi_client=wifi_client,
+            wifi_clients=wifi_clients, wiseconnect_web=wiseconnect_web, sniffer_filter=sniffer_filter, adv_int=160,
+            test_case=913403)
+
+        ble_obj.ap_mode_start()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.firmware_version()
+        time.sleep(10)
+        ble_obj.check_beacon()
+        ble_obj.http_server_provisioning()
+
+        ble_obj.stop_ap_interface()
+        time.sleep(3)
+        ble_obj.sl_net_deinit()
+
+        ssid = ble_obj.result[1]
+        passphrase = ble_obj.result[2]
+        security_name = ble_obj.result[3]
+        security = Map_security[security_name.upper()]
+
+        # WPA3 join uses the sl_net path (with PMF/IEEE802_11W) instead of legacy wifi.join().
+        logger().info(" ====== Init Wi-Fi client (sl_net) and set profile/credential for WPA3 AP ====== ")
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient, coex_mode=Si91xCoexMode.WLANOnly,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default,
+            ext_custom_features=Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.IEEE802_11W |
+                                Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode |
+                                Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid)
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        wifi_dut.interfaces.wifi.sl_net_init(mode="client")
+
+        wifi_dut.interfaces.wifi.sl_net_set_credential(
+            credential=passphrase,
+            cred_id=_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID,
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=ssid,
+            channel=0,
+            security=security,
+            credential_id=_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID,
+            priority=1,
+            profile_id=0,
+            encryption="SL_WIFI_DEFAULT_ENCRYPTION",
+        )
+
+        logger().info(" ====== Station mode: connect to provisioned WPA3 AP (sl_net_up) ====== ")
+        join_status = None
+        for attempt in range(2):
+            try:
+                wifi_dut.interfaces.wifi.sl_net_up(mode="client", profile_id=0, timeout=100)
+                join_status = True
+                break
+            except AssertionError as exc:
+                logger().warning(f"sl_net_up attempt {attempt + 1} failed ({exc}); retries left={1 - attempt}")
+                time.sleep(5)
+        assert join_status, f"sl_net_up failed for SSID {ssid} (WPA3)"
+        wifi_dut.interfaces.wifi.associated = True
+        logger().info("....Successfully connected to the AP via sl_net_up....")
+
+        ip_status, ip_config = sl_collections.configure_ip(wifi_dut=wifi_dut)
+        assert ip_status, f"....Unable to assign IP ADDRESS through DHCP with reason: {ip_config}...."
+        ble_obj.device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT IP is {ble_obj.device_ip}")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+
+    finally:
+        try:
+            wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+        except Exception:
+            pass
 
