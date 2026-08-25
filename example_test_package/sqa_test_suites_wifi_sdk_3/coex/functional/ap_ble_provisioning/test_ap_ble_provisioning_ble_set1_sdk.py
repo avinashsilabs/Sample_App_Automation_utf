@@ -13,6 +13,23 @@ from utf_wiseconnect_3.tests.interfaces.sl_wifi_test_agent_cli import AsyncEvent
 from utf.interfaces.bluetooth.bluez.gatt_application.health_thermometer_service import \
     CustomNotifyCharacteristic, HealthThermometerService
 
+# SL_WIFI security modes for sl_net_set_profile (auto-join post-provisioning)
+Map_security = {
+    "OPEN": 0,
+    "WPA": 1,
+    "WPA2": 2,
+    "WEP": 3,
+    "WPAENTERPRISE": 4,
+    "WPA2ENTERPRISE": 5,
+    "WPA_WPA2_MIXED": 6,
+    "WPA3": 7,
+    "WPA3_TRANSITION": 8,
+    "WPA3ENTERPRISE": 9,
+    "WPA3_TRANSITION_ENTERPRISE": 10,
+}
+_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID = 1
+_SL_NET_AUTO_JOIN_PROFILE_ID = 0xFF
+
 """
     setup requirement:
         1. Soc
@@ -747,7 +764,6 @@ def test_wifi_sdk_ble_provision_path_adv_30ms_c887612(
             logger().error(f"Cleanup failed: {cleanup_ex}")
 
 
-@pytest.mark.skip(reason="WPA3 connection is not working - need to verify manually")
 @wifi_dut_marker(IEEE802_11W=Si91xExtCustomFeatureBitMap.IEEE802_11W,
                  memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
 @pytest.mark.config('wifi_access_point', wifi={"security": 'WPA3', "protected_management_frame": "Capable"})
@@ -771,6 +787,9 @@ def test_wifi_sdk_ble_provision_path_adv_45ms_c887613(
             wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
             utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
             min_conn_interval=200, max_conn_interval=200, adv_int=45, sniffer_filter=sniffer_filter)
+
+        # Provisioning SoftAP is decoupled from the WPA3 home AP: home creds still arrive over BLE.
+        ble_obj.security = "wpa2"
 
         ble_obj.ap_mode_start()
         ble_obj.start_http_server()
@@ -804,6 +823,13 @@ def test_wifi_sdk_ble_provision_path_adv_45ms_c887613(
         ble_obj.sl_net_deinit()
         ap_started = False
 
+        ssid = ble_obj.credentials[0]
+        passphrase = ble_obj.credentials[1]
+        security_name = ble_obj.credentials[2]
+        security = Map_security[security_name.upper()]
+
+        # WPA3 join uses the sl_net path (with PMF/IEEE802_11W) instead of legacy wifi.join().
+        logger().info(" ====== Init Wi-Fi client (sl_net) and set profile/credential for WPA3 AP ====== ")
         wifi_dut.interfaces.wifi.set_wifi_config(
             oper_mode=Si91xOperatingMode.WiFiClient, coex_mode=Si91xCoexMode.WLANOnly,
             features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
@@ -811,9 +837,43 @@ def test_wifi_sdk_ble_provision_path_adv_45ms_c887613(
             ext_custom_features=Si91xExtCustomFeatureBitMap.Default | Si91xExtCustomFeatureBitMap.IEEE802_11W |
                                 Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode |
                                 Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid)
-        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
-        wifi_dut.interfaces.wifi.scan()
-        ble_obj.wifi_connect()
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        wifi_dut.interfaces.wifi.sl_net_init(mode="client")
+
+        wifi_dut.interfaces.wifi.sl_net_set_credential(
+            credential=passphrase,
+            cred_id=_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID,
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=ssid,
+            channel=0,
+            security=security,
+            credential_id=_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID,
+            priority=1,
+            profile_id=0,
+            encryption="SL_WIFI_DEFAULT_ENCRYPTION",
+        )
+
+        logger().info(" ====== Station mode: connect to provisioned WPA3 AP (sl_net_up) ====== ")
+        join_status = None
+        for attempt in range(2):
+            try:
+                wifi_dut.interfaces.wifi.sl_net_up(mode="client", profile_id=0, timeout=100)
+                join_status = True
+                break
+            except AssertionError as exc:
+                logger().warning(f"sl_net_up attempt {attempt + 1} failed ({exc}); retries left={1 - attempt}")
+                time.sleep(5)
+        assert join_status, f"sl_net_up failed for SSID {ssid} (WPA3)"
+        wifi_dut.interfaces.wifi.associated = True
+        logger().info("....Successfully connected to the AP via sl_net_up....")
+
+        ip_status, ip_config = sl_collections.configure_ip(wifi_dut=wifi_dut)
+        assert ip_status, f"....Unable to assign IP ADDRESS through DHCP with reason: {ip_config}...."
+        ble_obj.device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT IP is {ble_obj.device_ip}")
+        status = sl_collections.ping(device_ip=ble_obj.device_ip, ping_count=10)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST......"
 
         wifi_sniffer.interfaces.capture.stop_capture()
         logger().info("Stop the Sniffer")
@@ -829,6 +889,10 @@ def test_wifi_sdk_ble_provision_path_adv_45ms_c887613(
                 ble_obj.sl_net_deinit()
         except Exception as cleanup_ex:
             logger().error(f"Cleanup failed: {cleanup_ex}")
+        try:
+            wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+        except Exception:
+            pass
 
 
 @wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
@@ -1517,6 +1581,22 @@ def test_wifi_sdk_ble_provision_path_multiple_iter_loop_c887620(
                                            | Si91xExtCustomFeatureBitMap.BTFeatureBitmapValid)
 
                 wifi_dut.interfaces.wifi.sl_net_init(mode="ap")
+
+                
+                time.sleep(8)
+
+              
+                try:
+                    refreshed_addr = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)
+                    if refreshed_addr:
+                        logger().info(
+                            f"[c887620] DUT BLE address refreshed: {ble_obj.bt_dut_address} -> {refreshed_addr}")
+                        ble_obj.bt_dut_address = refreshed_addr
+                    else:
+                        logger().warning("[c887620] ble_gatt_start returned empty address; keeping previous")
+                except Exception as addr_ex:
+                    logger().warning(f"[c887620] BLE address refresh failed, keeping previous: {addr_ex}")
+                time.sleep(2)
             ble_client.interfaces.bluetooth.close()
 
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -2078,3 +2158,281 @@ def test_verify_alternate_provisioning_ble_wps_c922365(
             _c922365_reinit_as_ap_ble(wifi_dut, "c922365 finally")
         except Exception:
             pass
+
+
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C913407')
+def test_wifi_sdk_ble_provision_path_sta_disconnect_reconnect_c913407(
+        wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
+        sniffer_filter):
+    """	Verify the behavior when the SiWx917 is acting as station mode, disconnect from third party access point and reconnection to other available third-party AP post-provisioning (BLE provisioning path).
+
+    Flow:
+      1. BLE provisioning (credentials for the third-party AP received over BLE GATT)
+      2. Switch DUT to station mode and connect to the provisioned third-party AP
+      3. Disconnect from that third-party AP
+      4. Scan and reconnect to the same third-party AP
+         (Shield box: no additional SSIDs available in the scan list, so the same
+          provisioned AP is used after disconnection)
+      5. Validate connection (IP assignment + ping) after reconnection
+    """
+
+    ble_obj = None
+    ap_started = False
+    try:
+        test_name = request.node.name
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200)
+
+        # ---------------------- BLE provisioning ----------------------
+        ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
+
+        # The BLE link occasionally drops right after connect on this setup, so the
+        # provisioning thread is retried here. close() de-registers the BlueZ agent at
+        # /tmp/utf_agent, without which the next scan fails with a duplicate handler error.
+        ble_provisioning_attempts = 3
+        for attempt in range(1, ble_provisioning_attempts + 1):
+            ble_obj.start()
+            try:
+                ble_obj.wait_for_exit()
+                break
+            except Exception as ble_ex:
+                if attempt == ble_provisioning_attempts:
+                    raise
+                logger().warning(f".... BLE provisioning attempt {attempt}/{ble_provisioning_attempts} failed "
+                                 f"({ble_ex}), retrying ....")
+                ble_client.interfaces.bluetooth.close()
+                time.sleep(5)
+
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {wifi_access_point.interfaces.wifi.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=wifi_access_point.interfaces.wifi.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
+        ble_obj.credentials_send_over_ble()
+        ble_obj.sl_net_deinit()
+        ap_started = False
+
+        # ---------------------- Station mode: connect to the provisioned third-party AP ----------------------
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.init(mode="client", config_required=False)
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+        logger().info(" ====== Connected to third-party AP post BLE provisioning ====== ")
+
+        # ---------------------- Disconnect from the third-party AP ----------------------
+        logger().info(" ====== Station mode: disconnect from third-party AP ====== ")
+        ble_obj.wifi_disconnect()
+        time.sleep(5)
+
+        # ---------------------- Reconnect to the same third-party AP ----------------------
+        # Since execution is in a shield box (no additional SSIDs available in the scan list),
+        # reconnect to the same provisioned third-party AP after disconnection.
+        logger().info(" ====== Station mode: reconnect to the same third-party AP ====== ")
+        logger().info(
+            "....Shield-box setup: no additional SSIDs available; reconnecting to the same AP....")
+        wifi_dut.interfaces.wifi.scan()
+        ble_obj.wifi_connect()
+        logger().info(" ====== Reconnected to the same third-party AP successfully ====== ")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
+
+
+@wifi_dut_marker(memory_config=Si91xExtCustomFeatureBitMap.Feature256kBMemoryMode)
+@pytest.mark.config('wifi_access_point', wifi={"security": 'WPA2'})
+@pytest.mark.end_state("wifi_dut", wifi=["unassociated"])
+@pytest.mark.test_src_map_id('C913408')
+def test_wifi_sdk_ble_provision_path_sta_auto_join_same_ap_c913408(
+        wifi_dut, ble_client, sl_collections, ble_dut, wifi_access_point, wifi_sniffer, request, utf_constants,
+        sniffer_filter):
+    """Verify the behavior when the SiWx917 is acting as station mode, disconnect from third party
+    access point and reconnect to same third-party AP using auto join post-provisioning (C913408).
+
+    Flow:
+      1. BLE SoftAP provisioning (credentials for the third-party AP received over BLE GATT)
+      2. Deinit SoftAP/AP+BLE path; init DUT in Wi-Fi client mode (sl_net)
+      3. Set profile + credential for the provisioned third-party AP
+      4. Station mode: connect to the provisioned third-party AP (sl_net_up profile_id=0); validate IP + ping
+      5. Disconnect from the third-party AP (DUT leave)
+      6. Reconnect to the SAME AP using STA AUTO JOIN (sl_net_up profile_id=0xFF); validate IP + ping
+    """
+
+    ble_obj = None
+    ap_started = False
+    try:
+        test_name = request.node.name
+        home_ap = wifi_access_point.interfaces.wifi
+
+        logger().info(f"Start sniffer capture on channel {home_ap.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=home_ap.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj = ProvisioningFunctionality(
+            wifi_dut=wifi_dut, ble_client=ble_client, sl_collections=sl_collections, ble_dut=ble_dut, set_smp=0,
+            utf_constants=utf_constants, wifi_access_point=wifi_access_point, wifi_sniffer=wifi_sniffer,
+            sniffer_filter=sniffer_filter, min_conn_interval=200, max_conn_interval=200)
+
+        # ---------------------- BLE SoftAP provisioning ----------------------
+        ble_obj.ap_mode_start()
+        ble_obj.start_http_server()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_beacon()
+
+        logger().info(".... stop the sniffer ....")
+        wifi_sniffer.interfaces.capture.stop_capture()
+
+        ble_obj.firmware_version()
+        ble_obj.start()
+        ble_obj.wait_for_exit()
+        ble_obj.stop_http_server()
+        ble_obj.stop_ap_interface()
+        ap_started = False
+
+        logger().info(f"Start sniffer capture on channel {home_ap.channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=home_ap.channel)
+        wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{test_name}")
+
+        ble_obj.beacon_stop = 1
+        ble_obj.ap_mode_start()
+        ap_started = True
+        time.sleep(10)
+        ble_obj.check_no_beacon()
+        ble_obj.scan_on_ap_interface()
+
+        ble_obj.credentials_send_over_ble()
+        ble_obj.sl_net_deinit()
+        ap_started = False
+
+        ssid = ble_obj.credentials[0]
+        passphrase = ble_obj.credentials[1]
+        security_name = ble_obj.credentials[2]
+        security = Map_security[security_name.upper()]
+
+        # ---------------------- Station mode: init client (sl_net) + save profile/credential ----------------------
+        logger().info(" ====== Init Wi-Fi client (sl_net) and set profile/credential for provisioned AP ====== ")
+        wifi_dut.interfaces.wifi.set_wifi_config(
+            oper_mode=Si91xOperatingMode.WiFiClient,
+            coex_mode=Si91xCoexMode.WLANOnly,
+            features=Si91xFeatureBitMap.WPSSupportDisabled | Si91xFeatureBitMap.OpenMode,
+            tcpip_features=Si91xTCPIPFeatureBitMap.Default)
+        wifi_dut.interfaces.wifi.is_sl_net_enabled = True
+        wifi_dut.interfaces.wifi.sl_net_init(mode="client")
+
+        wifi_dut.interfaces.wifi.sl_net_set_credential(
+            credential=passphrase,
+            cred_id=_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID,
+        )
+        wifi_dut.interfaces.wifi.sl_net_set_profile(
+            ssid=ssid,
+            channel=home_ap.channel,
+            security=security,
+            credential_id=_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID,
+            priority=1,
+            profile_id=0,
+            encryption="SL_WIFI_DEFAULT_ENCRYPTION",
+        )
+        # Rejoin params so the firmware attempts auto join after a disconnect.
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
+            max_retry_attempts=1,
+            scan_interval=4,
+            beacon_missed_count=40,
+            first_time_retry_enable=0,
+        )
+
+        # ---------------------- Step 1: connect to the provisioned third-party AP ----------------------
+        logger().info(" ====== Station mode: connect to provisioned AP (sl_net_up profile_id=0) ====== ")
+        wifi_dut.interfaces.wifi.sl_net_up(mode="client", profile_id=0)
+        wifi_dut.interfaces.wifi.associated = True
+
+        ip_status, ip_config = sl_collections.configure_ip(wifi_dut=wifi_dut)
+        assert ip_status, f"....Unable to assign IP ADDRESS through DHCP with reason: {ip_config}...."
+        ble_obj.device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT IP after initial connect: {ble_obj.device_ip}")
+        status = sl_collections.ping(device_ip=ble_obj.device_ip, ping_count=10)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST after initial connect......"
+        logger().info(" ====== Connected to provisioned third-party AP post BLE provisioning ====== ")
+
+        # ---------------------- Step 2: disconnect from the third-party AP ----------------------
+        logger().info(" ====== Station mode: disconnect from third-party AP (DUT leave) ====== ")
+        wifi_dut.interfaces.wifi.leave()
+        wifi_dut.interfaces.wifi.associated = False
+        time.sleep(5)
+
+        # ---------------------- Step 3: reconnect to the SAME AP using STA AUTO JOIN ----------------------
+        logger().info(" ====== Reconnect to same AP using STA AUTO JOIN (sl_net_up profile_id=0xFF) ====== ")
+        wifi_dut.interfaces.wifi.sl_net_up(mode="client", profile_id=_SL_NET_AUTO_JOIN_PROFILE_ID)
+        wifi_dut.interfaces.wifi.associated = True
+
+        ip_status, ip_config = sl_collections.configure_ip(wifi_dut=wifi_dut, ip_status=False, retry_count=3)
+        assert ip_status, f"....Unable to assign IP ADDRESS after auto join reconnect: {ip_config}...."
+        ble_obj.device_ip = wifi_dut.interfaces.wifi.get_device_ip(ip_config)
+        logger().info(f"DUT IP after auto join reconnect: {ble_obj.device_ip}")
+        status = sl_collections.ping(device_ip=ble_obj.device_ip, ping_count=10)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST after auto join reconnect......"
+        logger().info(" ====== Auto join reconnect to same third-party AP successful; ping OK ====== ")
+
+        wifi_sniffer.interfaces.capture.stop_capture()
+        logger().info("Stop the Sniffer")
+
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+
+    finally:
+        ble_client.interfaces.bluetooth.close()
+        try:
+            if ap_started:
+                logger().warning("AP mode active during exception, stopping it...")
+                ble_obj.sl_net_deinit()
+        except Exception as cleanup_ex:
+            logger().error(f"Cleanup failed: {cleanup_ex}")
+        try:
+            wifi_dut.interfaces.wifi.is_sl_net_enabled = False
+        except Exception:
+            pass
+
