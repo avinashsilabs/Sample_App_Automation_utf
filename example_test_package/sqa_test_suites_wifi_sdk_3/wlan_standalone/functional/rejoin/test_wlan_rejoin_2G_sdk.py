@@ -39,7 +39,7 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
     SocketOptions,
-    Si91xJoinFeatureBitMap
+    Si91xJoinFeatureBitMap,
 )
 from utf.utf_config import UtfConfig
 from utf.interfaces.wifi import (
@@ -541,7 +541,7 @@ class WLanThread(ThreadBase):
             assert False
 
     def socket_data_transfer_recovery_in_rejoin(self, option_name=None, option_val=None, bsdSetSocketOpt=True,
-                                                data_transfer=False, rejoin_time=60):
+                                                data_transfer=False, rejoin_time=60, ap_off_wait=600):
 
         """ This method is responsible to validate socket data transfer recovery after rejoin event """
         if data_transfer:
@@ -580,8 +580,25 @@ class WLanThread(ThreadBase):
 
                     sw = Stopwatch()
                     check_flag = False
+                    post_rejoin_resume_pending = False
                     while sw.elapsed_sec < end_time:
-                        send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.socket_id,
+                        if post_rejoin_resume_pending:
+                            # First send after AP recovery is occasionally early; retry a few times.
+                            send_bytes = None
+                            for attempt in range(1, 4):
+                                try:
+                                    send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(
+                                        socket_fd=self.socket_id, data=self.data, timeout=120)
+                                    post_rejoin_resume_pending = False
+                                    break
+                                except Exception as send_error:
+                                    logger().warning(
+                                        f"Post-rejoin first send attempt {attempt}/3 failed: {send_error}")
+                                    if attempt == 3:
+                                        raise
+                                    time.sleep(2)
+                        else:
+                            send_bytes = self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.socket_id,
                                                                                  data=self.data,
                                                                                  timeout=120)
                         logger().info(f'SEND-Bytes = {send_bytes}')
@@ -599,7 +616,7 @@ class WLanThread(ThreadBase):
                             """validate rejoin retry failure"""
                             logger().info("Checking for rejoin fail event from dut, this may take some time....")
                             sw = Stopwatch()
-                            end_time_event = 600
+                            end_time_event = ap_off_wait
                             while sw.elapsed_sec <= end_time_event:
                                 event_data_output = ""
                                 events = self.wifi_dut.interfaces.wifi.get_async_events()
@@ -613,6 +630,13 @@ class WLanThread(ThreadBase):
                             self.switch.interfaces.pdu_switch.turn_on(delay=rejoin_time)
                             check_flag = True
                             logger().info('******* Trying to reconnect DUT and resume data transfer **********')
+                            # Wait for Wi-Fi/IP, then resume send on the same socket.
+                            logger().info(f"DUT IP address: {self.dut_addr['device_ip']}")
+                            status = ping(self.dut_addr['device_ip'], 20)
+                            assert status, "Failed to ping to DUT after rejoin"
+                            # Give TCP path a moment to settle before first resumed send.
+                            time.sleep(3)
+                            post_rejoin_resume_pending = True
                     self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.socket_id)
                 except Exception as e:
                     logger().error(f"An error occurred: {str(e)}")
@@ -1281,7 +1305,7 @@ def test_wifi_sdk_rejoin_disable_c19733(wifi_sniffer, wifi_access_point, wifi_du
 
         wifi_sniffer.interfaces.capture.start_capture(capture_file="rejoin_event_")
         switch.interfaces.pdu_switch.turn_off()
-        
+
         """validate rejoin retry failure"""
         wlan_obj.rejoin_async_event()
         time.sleep(7)
@@ -1587,15 +1611,15 @@ def test_wifi_sdk_rejoin_scan_interval_1sec_c19737(wifi_sniffer, wifi_access_poi
         result = wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1,
                                                                     packet_filter2=packet_filter2)[
             'packet_count']
-        
+
         # Get the AP channel
         ap_channel = wifi_access_point.interfaces.wifi.channel
         logger().info(f'AP Channel: {ap_channel}')
-        
+
         # Get time deltas only for consecutive probe requests on the AP channel
         probe_packets_time_delta_list = wlan_obj.delta_between_probe_packet()
         logger().info(f'Probe packet time delta list for Channel {ap_channel}: {probe_packets_time_delta_list}')
-        
+
         # Remove first entry if exists (it may be zero or initial delta)
         if probe_packets_time_delta_list:
             probe_packets_time_delta_list.pop(0)
@@ -2799,7 +2823,8 @@ def test_wifi_sdk_wlan_stats_c19177(wifi_sniffer, wifi_access_point, wifi_dut, s
         time.sleep(2)
         wifi_sniffer.interfaces.capture.start_capture(capture_file="test_rejoin_wlan_stats")
         logger().info("\n\n ****** Access point is going to turn off  ******")
-        wlan_obj.socket_data_transfer_recovery_in_rejoin(data_transfer=True, bsdSetSocketOpt=False)
+        wlan_obj.socket_data_transfer_recovery_in_rejoin(data_transfer=True, bsdSetSocketOpt=False,
+                                                         ap_off_wait=10)
         logger().info("Stop sniffer capture")
 
         wifi_dut.interfaces.wifi.get_wifi_operational_stats(timeout=15)
