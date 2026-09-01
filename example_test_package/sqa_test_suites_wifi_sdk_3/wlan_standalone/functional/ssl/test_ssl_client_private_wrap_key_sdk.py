@@ -22,6 +22,15 @@ from utf_wiseconnect_3.tests.devices.si91x import (
     Si91xCryptoKeyType,
     Si91xPowerSaveModes,
     Si91xPowerSaveProcedureTypes,
+    Si91xAesType,
+    Si91xAesOperation,
+    Si91xAesKeySize,
+    Si91xKeyType,
+    Si91xWrapIVMode,
+    Si91xSHA,
+    Si91xHMAC,
+    Si91xECDH,
+    Si91xECDHOperation,
 )
 import string
 import random
@@ -31,7 +40,8 @@ from random import randint
 import time
 from datetime import datetime
 from utf.utils.thread_base import ThreadBase
-from threading import Thread
+from threading import Thread, Lock
+from contextlib import nullcontext
 from utf.utils import get_tls_certificate_dir
 from utf.utils.logger import get_logger
 from utf_wiseconnect_3.tests.sl_status import SLStatus
@@ -169,6 +179,623 @@ class SocketDataTransfer:
     def ssl_socket_rx(self, ssl_server, sock_id, pkt_count, buffer_length):
         logger().info(f"SSL Receiving data over socket id {sock_id}")
         ssl_server.interfaces.ssl.data_receive(sock_id + 1, pkt_count, buffer_length, pkt_rcv_timeout=120)
+
+
+class ssl_wrap_key_connection:
+    """
+    Helper class for CBC wrap-key rejoin and parallel SSL+crypto test flows (C719563/C719584/C719586).
+    """
+
+    CBC_WRAP_IV = "1234567890123456"
+    _MAC_ADDRESS_RE = re.compile(r'(?:[\da-fA-F]{2}:){5}[\da-fA-F]{2}')
+
+    @staticmethod
+    def logger():
+        return get_logger(__name__)
+
+    def __init__(self, wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+                 ssl_server=None, sniffer_filter=None, switch=None, request=None, rejoin_params=None):
+        self.wifi_sniffer = wifi_sniffer
+        self.wifi_dut = wifi_dut
+        self.wifi_access_point = wifi_access_point
+        self.capture_filename = capture_filename or (request.node.name if request is not None else None)
+        self.sl_collections = sl_collections
+        self.ssl_server = ssl_server
+        self.sniffer_filter = sniffer_filter
+        self.switch = switch
+        self.request = request
+        self.rejoin_params = rejoin_params
+        self.capture_started = False
+        self.saved_thread_enabled = None
+
+    def join_get_ip(self, sniff_capture=True, power_save=None, retry_count=3, associated=False,
+                    use_rejoin=False):
+        """Join Wi-Fi and return DUT IP + MAC."""
+        if sniff_capture:
+            self.start_sniffer_capture()
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = True
+        if use_rejoin:
+            if not self.rejoin_params:
+                self.rejoin_params = [0, 6, 40, 0]
+            result = self.sl_collections.join_to_wifi_network_with_rejoin(
+                self.wifi_dut, self.wifi_access_point, self.rejoin_params)
+        else:
+            result = self.sl_collections.join_to_wifi_network(
+                self.wifi_dut, self.wifi_access_point, power_save=power_save,
+                retry_count=retry_count, associated=associated)
+        return result['device_ip'], result['dut_mac_address']
+
+    @staticmethod
+    def wifi_dut_marker(oper_mode=0, coex_mode=0, ca_cert=None, client_cert=None, client_key=None,
+                        tcpip_feat=0, ext_custom_feat=0, ext_tcpip_feat=0, custom_feat=0):
+        """wifi_dut pytest.mark.config for wrap-key rejoin / MT crypto cases."""
+        config = {
+            "thread_config": {"wifi": {"count": 1, "stack_len": 3072}},
+            "oper_mode": Si91xOperatingMode.WiFiClient | oper_mode,
+            "coex_mode": Si91xCoexMode.WLANOnly | coex_mode,
+            "features": Si91xFeatureBitMap.Default,
+            "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                               | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+            "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
+                              | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid | tcpip_feat,
+            "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
+                                  | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose | ext_tcpip_feat,
+            "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid | custom_feat,
+            "ext_custom_features": Si91xExtCustomFeatureBitMap.Default | ext_custom_feat,
+            "bt_features": 0,
+            "ble_features": 0,
+            "ble_custom_ext_features": 0,
+        }
+        if ca_cert:
+            config["ca_cert"] = ca_cert
+        if client_cert:
+            config["client_cert"] = client_cert
+        if client_key:
+            config["client_key"] = client_key
+        return pytest.mark.config("wifi_dut", wifi=config)
+
+    @staticmethod
+    def parse_cli_labeled_value(raw, label):
+        """Extract '<label>:<value>' from sync CLI response (ignore status timing lines)."""
+        text = raw.decode('utf-8', errors='ignore') if isinstance(raw, (bytes, bytearray)) else str(raw)
+        label_l = label.lower()
+        for line in text.splitlines():
+            line = line.strip()
+            if line.lower().startswith(label_l + ':'):
+                return line.split(':', 1)[1].strip()
+        raise AssertionError(f"Label '{label}:' not found in CLI response: {text!r}")
+
+    @staticmethod
+    def extract_mac_address(raw):
+        """Extract MAC from sync get_mac_address CLI echo."""
+        text = raw.decode('utf-8', errors='ignore') if isinstance(raw, (bytes, bytearray)) else str(raw)
+        match = ssl_wrap_key_connection._MAC_ADDRESS_RE.search(text)
+        assert match, f"Could not parse MAC address from: {text!r}"
+        return match.group(0)
+
+    @staticmethod
+    def create_bsd_tcp_socket_sync(wifi_dut):
+        """Create AF_INET/SOCK_STREAM/IPPROTO_TCP socket and parse numeric id (sync bus)."""
+        wifi = wifi_dut.interfaces.wifi
+        wifi.logger.info("\n *** Create IPPROTO_TCP BSD Socket (sync parse) *** \n")
+        status, data = wifi.issue_command(
+            'bsd_socket.create AF_INET SOCK_STREAM IPPROTO_TCP', timeout=10)
+        wifi.verify_status(status, SLStatus.SL_STATUS_OK, data)
+        text = data.decode('utf-8', errors='ignore')
+        sock_id = None
+        for line in text.splitlines():
+            line = line.strip()
+            if line.isdigit():
+                sock_id = int(line)
+                break
+        assert sock_id is not None, f"Could not parse BSD socket id from response: {text!r}"
+        wifi.sockets_info["sync_sockets"].append(str(sock_id))
+        wifi.logger.info(f"Socket id = {sock_id}")
+        return sock_id
+
+    @staticmethod
+    def set_ssl_max_retransmission_timeout(wifi_dut, socket_fd, max_retry=128):
+        """setsockopt SO_MAX_RETRANSMISSION_TIMEOUT_VALUE for bulk SSL TX."""
+        logger().info(f"max retry exponent set {max_retry}")
+        wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+            socket_fd,
+            option_name='SO_MAX_RETRANSMISSION_TIMEOUT_VALUE',
+            option_val=str(max_retry))
+
+    def disable_test_agent_threads_for_sync_bus(self):
+        """Force sync CLI while SSL and crypto threads run in parallel."""
+        self.saved_thread_enabled = self.wifi_dut.interfaces.wifi.test_agent_thread_enabled
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        return self.saved_thread_enabled
+
+    def restore_test_agent_threads(self):
+        if self.saved_thread_enabled is None:
+            return
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = self.saved_thread_enabled
+
+    def load_cbc_wrapped_private_key(self, client_key):
+        """Load private key with CBC wrap mode and IV (same as C1163604)."""
+        self.wifi_dut.interfaces.wifi.clear_certificate(
+            cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP,
+            cert_identifier=Si91xCertIdentifier.SL_NET_TLS_CLIENT_CREDENTIAL_START)
+        self.sl_collections.load_tls_client_private_key(
+            self.wifi_dut, cert_file=client_key,
+            cert_type=Si91xCertificateType.SL_NET_TLS_PRIVATE_KEY_CBC_WRAP,
+            wrap_iv_mode=Si91xCryptoWrapMode.SL_SI91X_WRAP_IV_CBC_MODE,
+            iv=self.CBC_WRAP_IV)
+
+    def load_cbc_wrapped_private_key_sync(self, client_key):
+        """Sync CBC wrap load — avoids threaded wrap async hang."""
+        thread_enabled = self.wifi_dut.interfaces.wifi.test_agent_thread_enabled
+        self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = False
+        try:
+            self.load_cbc_wrapped_private_key(client_key)
+        finally:
+            self.wifi_dut.interfaces.wifi.test_agent_thread_enabled = thread_enabled
+
+    def start_sniffer_capture(self, channel=None, capture_filename=None):
+        channel = channel if channel is not None else self.wifi_access_point.interfaces.wifi.channel
+        capture_filename = capture_filename or self.capture_filename
+        self.wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+        self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{capture_filename}.pcap")
+        self.capture_started = True
+
+    def stop_sniffer_capture_safe(self):
+        if self.wifi_sniffer is None:
+            return
+        try:
+            self.wifi_sniffer.interfaces.capture.stop_capture()
+        except Exception:
+            pass
+
+    def wait_for_rejoin_fail_event(self, timeout_sec=180, since_time=None):
+        """Wait for DUT REJOIN_EVENT after AP power off."""
+        logger().info(f"Checking for rejoin fail event from DUT (timeout={timeout_sec}s)....")
+        sw = Stopwatch()
+        while sw.elapsed_sec < timeout_sec:
+            events = (
+                self.wifi_dut.interfaces.wifi.get_async_events(since_time=since_time)
+                if since_time is not None
+                else self.wifi_dut.interfaces.wifi.get_async_events()
+            )
+            for event in events:
+                if event.event_type == AsyncEventIdentifiers.REJOIN_EVENT:
+                    logger().info(
+                        f"***** Rejoin Error Received from DUT "
+                        f"(event_type=REJOIN_EVENT, event_data={event.event_data}) *****")
+                    return True
+            time.sleep(0.1)
+        return False
+
+    def ssl_connect_and_transfer(self, device_ip):
+        """TLS connect + small + bulk data transfer (same flow as C1163604)."""
+        pkt_count = 10000
+        buffer_length = 1300
+        port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+
+        self.ssl_server.interfaces.ssl.start_server(
+            server_cert='server_test1.crt',
+            server_key='server_test1.key',
+            tls_client_enable=True,
+            client_cert='ca_test1.crt',
+        )
+        server_ip = self.ssl_server.interfaces.ssl.server_ip
+        time.sleep(3)
+
+        sock = self.wifi_dut.interfaces.wifi.socket()
+        assert sock == 0, "Socket id received is wrong. expected is 0"
+        logger().info(f"Successfully opened tcp client socket and socket id received is {sock}")
+        self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+        self.set_ssl_max_retransmission_timeout(self.wifi_dut, sock)
+
+        local_port = randint(5001, 60000)
+        self.wifi_dut.interfaces.wifi.bind(
+            socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
+        time.sleep(3)
+
+        try:
+            self.wifi_dut.interfaces.wifi.bsdSocketConnect(
+                socket_fd=sock, server_ip=server_ip, server_port=port1)
+        except Exception:
+            logger().info("Failed to connect to server socket")
+            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+            self.ssl_server.interfaces.ssl.stop_server()
+            time.sleep(1)
+            raise
+
+        data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+        logger().info(f"Sending data {data} over socket_no->{sock}")
+        try:
+            self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=sock, data=data)
+        except Exception:
+            self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+            self.ssl_server.interfaces.ssl.stop_server()
+            raise
+
+        time.sleep(1)
+        server_socket_no = 1
+        data_receive = self.ssl_server.interfaces.ssl.data_recv_content(
+            server_socket_no, buffer_size=len(data))
+        logger().info(f"Data received on remote socket opened is {data_receive}")
+        assert data == data_receive.decode(), "Data sent by DUT and received on server is not matching"
+        logger().info("Data sent by DUT and received on server is matching\n\n")
+
+        if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
+            self.ssl_server.interfaces.ssl.data_receive(
+                server_socket_no, pkt_count, buffer_length, pkt_rcv_timeout=120)
+        result = self.wifi_dut.interfaces.wifi.send_data_pkts(
+            sock, buffer_length, pkt_count, server_ip=server_ip)
+        logger().info(f"Number of bytes sent by dut {result}")
+        bytes_received = self.ssl_server.interfaces.ssl.data_receive_stats(server_socket_no)
+        logger().info(
+            f"bytes sent by DUT on the ssl socket opened-> {result}, received by remote peer-> {bytes_received}")
+        bytes_sent = int(result)
+        bytes_rx = int(bytes_received)
+        assert bytes_sent > 0, f"DUT reported no SSL TX bytes (sent={bytes_sent})"
+        assert bytes_rx > 0, f"Server reported no SSL RX bytes (received={bytes_rx})"
+        assert bytes_sent == bytes_rx, (
+            f"SSL bulk transfer mismatch: DUT sent {bytes_sent} bytes, "
+            f"server received {bytes_rx} bytes (pkt_count={pkt_count}, buffer_length={buffer_length})")
+
+        self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=sock)
+        logger().info("Successfully closed opened socket in the DUT")
+        self.ssl_server.interfaces.ssl.stop_server()
+
+    def join_sniffer_validation(self, dut_mac_address, ap_mac_address, power_save):
+        self.sl_collections.join_sniffer_validation(
+            self.wifi_access_point, self.wifi_sniffer, dut_mac_address, ap_mac_address,
+            self.sniffer_filter, power_save=bool(power_save))
+
+    def prepare_ssl_tx_connection(self, device_ip, openssl_cipher='AES256-SHA256',
+                                  server_cert='server_test1.crt',
+                                  server_key='server_test1.key',
+                                  client_cert='ca_test1.crt',
+                                  connect_timeout=60):
+        """
+        Start OpenSSL server + DUT TLS connect before parallel crypto threads.
+        Avoids sync-bus collision when SSL handshake and SHA/AES share one UART.
+        Returns connected socket id.
+        """
+        port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+        logger().info(
+            f"**** Preparing SSL server/DUT connect before parallel threads "
+            f"(cipher={openssl_cipher}) ****")
+        # Harness may leave DUT in Wi‑Fi/BT power save; exit both before TLS.
+        self.wifi_dut.interfaces.wifi.set_performance_profile(mode="high_performance")
+        try:
+            self.wifi_dut.interfaces.wifi.enable_bt_power_save(
+                psp_mode=Si91xPowerSaveModes.PowerSaveDisabled,
+                psp_type=Si91xPowerSaveProcedureTypes.FastPowerSave)
+        except Exception as bt_ps_err:
+            logger().info(f"BT power-save disable skipped/failed: {bt_ps_err}")
+
+        # Prepare DUT socket BEFORE start_server. ssl_linux accept() has a fixed
+        # 20s socket timeout that starts when the server thread listens; create/
+        # bind sleep used to burn most of that window (C719585: server timed out
+        # with "didn't receive connection request within 20 seconds").
+        sock = self.create_bsd_tcp_socket_sync(self.wifi_dut)
+        assert sock == 0, f"Socket id received is wrong: {sock}, expected 0"
+        self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+            sock, option_name="TCP_ULP", option_val="tls_1_2")
+        self.set_ssl_max_retransmission_timeout(self.wifi_dut, sock)
+        local_port = randint(5001, 60000)
+        self.wifi_dut.interfaces.wifi.bind(
+            socket_fd=sock, device_ip=device_ip, server_port=local_port, timeout=15)
+
+        self.ssl_server.interfaces.ssl.start_server(
+            server_cert=server_cert,
+            server_key=server_key,
+            tls_client_enable=True,
+            client_cert=client_cert,
+            cipher_list=openssl_cipher,
+        )
+        server_ip = self.ssl_server.interfaces.ssl.server_ip
+        time.sleep(1)
+        self.wifi_dut.interfaces.wifi.bsdSocketConnect(
+            socket_fd=sock, server_ip=server_ip, server_port=port1,
+            timeout=connect_timeout)
+        logger().info(f"SSL socket connected before parallel threads (sock={sock})")
+        return sock
+
+
+class SslCbcWrapCipherTxThread(ThreadBase):
+    """Thread-1: SSL connect + continuous TX with selected cipher for duration_sec."""
+
+    def __init__(self, wifi_dut, ssl_server, device_ip, duration_sec=1800,
+                 cipher_bit=Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256,
+                 openssl_cipher='AES256-SHA256',
+                 cipher_name='AES_256_CBC_SHA256',
+                 server_cert='server_test1.crt',
+                 server_key='server_test1.key',
+                 client_cert='ca_test1.crt',
+                 sock=None,
+                 bus_lock=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.ssl_server = ssl_server
+        self.device_ip = device_ip
+        self.duration_sec = duration_sec
+        self.cipher_bit = cipher_bit
+        self.openssl_cipher = openssl_cipher
+        self.cipher_name = cipher_name
+        self.server_cert = server_cert
+        self.server_key = server_key
+        self.client_cert = client_cert
+        self.sock = sock
+        self.bus_lock = bus_lock if bus_lock is not None else nullcontext()
+
+    def run(self):
+        try:
+            logger().info(
+                f"**** SSL TX thread started (cipher={self.cipher_name}, "
+                f"duration={self.duration_sec}s) ****")
+
+            if self.sock is None:
+                port1 = self.ssl_server.interfaces.ssl.config['device_port1']
+                self.ssl_server.interfaces.ssl.start_server(
+                    server_cert=self.server_cert,
+                    server_key=self.server_key,
+                    tls_client_enable=True,
+                    client_cert=self.client_cert,
+                    cipher_list=self.openssl_cipher,
+                )
+                server_ip = self.ssl_server.interfaces.ssl.server_ip
+                time.sleep(2)
+
+                with self.bus_lock:
+                    self.sock = ssl_wrap_key_connection.create_bsd_tcp_socket_sync(self.wifi_dut)
+                    assert self.sock == 0, f"Socket id received is wrong: {self.sock}, expected 0"
+                    self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(
+                        self.sock, option_name="TCP_ULP", option_val="tls_1_2")
+                    ssl_wrap_key_connection.set_ssl_max_retransmission_timeout(self.wifi_dut, self.sock)
+                    local_port = randint(5001, 60000)
+                    self.wifi_dut.interfaces.wifi.bind(
+                        socket_fd=self.sock, device_ip=self.device_ip, server_port=local_port, timeout=15)
+                    time.sleep(2)
+                    self.wifi_dut.interfaces.wifi.bsdSocketConnect(
+                        socket_fd=self.sock, server_ip=server_ip, server_port=port1)
+                logger().info(f"SSL socket connected with {self.cipher_name}")
+            else:
+                logger().info(f"SSL socket already connected (sock={self.sock}), starting TX only")
+
+            sw = Stopwatch()
+            tx_count = 0
+            while sw.elapsed_sec < self.duration_sec and not self.stop_requested:
+                data = ''.join(random.choices(string.ascii_uppercase + string.digits, k=100))
+                try:
+                    with self.bus_lock:
+                        self.wifi_dut.interfaces.wifi.bsdSocketSend(socket_fd=self.sock, data=data)
+                except Exception as send_err:
+                    logger().info(
+                        f"\n\n **** SSL TX bsdSocketSend FAILED ****\n"
+                        f"pkt_index={tx_count + 1}, elapsed={sw.elapsed_sec:.0f}s / {self.duration_sec}s\n"
+                        f"socket_fd={self.sock}, data_len={len(data)}\n"
+                        f"error={send_err}\n")
+                    time.sleep(5)
+                    raise
+
+                data_receive = self.ssl_server.interfaces.ssl.data_recv_content(
+                    1, buffer_size=len(data))
+                assert data == data_receive.decode(), \
+                    "SSL TX thread: data sent by DUT and received on server is not matching"
+                tx_count += 1
+                if tx_count % 50 == 0:
+                    logger().info(
+                        f"SSL TX thread: {tx_count} pkts sent, "
+                        f"elapsed={sw.elapsed_sec:.0f}s / {self.duration_sec}s")
+                time.sleep(0.5)
+
+            logger().info(f"**** SSL TX thread completed: total pkts={tx_count} ****")
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in SSL TX thread: {str(e)} ****\n\n")
+            raise
+        finally:
+            try:
+                if self.sock is not None:
+                    with self.bus_lock:
+                        self.wifi_dut.interfaces.wifi.bsdSockClose(socket_fd=self.sock)
+            except Exception:
+                pass
+            try:
+                self.ssl_server.interfaces.ssl.stop_server()
+            except Exception:
+                pass
+
+
+class AesEncryptDecryptThread(ThreadBase):
+    """Thread-2: AES-256 ECB encrypt/decrypt loop for duration_sec (C215180 pattern)."""
+
+    def __init__(self, wifi_dut, duration_sec=1800, bus_lock=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.duration_sec = duration_sec
+        self.bus_lock = bus_lock if bus_lock is not None else nullcontext()
+
+    def run(self):
+        try:
+            logger().info(f"**** AES encrypt/decrypt thread started (duration={self.duration_sec}s) ****")
+            data = "12345678901234567890123456789012"
+            key = "12345678901234567890123456789012"
+            sw = Stopwatch()
+            loop_count = 0
+            while sw.elapsed_sec < self.duration_sec and not self.stop_requested:
+                with self.bus_lock:
+                    self.wifi_dut.interfaces.wifi.aes_encrypt(
+                        aes_mode=Si91xAesType.SL_SI91X_AES_ECB,
+                        enc_mode=Si91xAesOperation.SL_SI91X_AES_ENCRYPT,
+                        msg=data,
+                        key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_256,
+                        wrap_iv_mode=Si91xWrapIVMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                        key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                        key=key)
+                    decrypted_data = self.wifi_dut.interfaces.wifi.aes_decrypt(
+                        aes_mode=Si91xAesType.SL_SI91X_AES_ECB,
+                        enc_mode=Si91xAesOperation.SL_SI91X_AES_DECRYPT,
+                        key_size=Si91xAesKeySize.SL_SI91X_AES_KEY_SIZE_256,
+                        wrap_iv_mode=Si91xWrapIVMode.SL_SI91X_WRAP_IV_ECB_MODE,
+                        key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                        key=key,
+                        msg_len=len(data))
+                final_decrypted_data = ssl_wrap_key_connection.parse_cli_labeled_value(
+                    decrypted_data, 'decrypted data')
+                assert data == final_decrypted_data, \
+                    f"AES thread: encrypt/decrypt mismatch at loop {loop_count}: " \
+                    f"expected={data!r}, got={final_decrypted_data!r}"
+                loop_count += 1
+                if loop_count % 20 == 0:
+                    logger().info(
+                        f"AES thread: {loop_count} loops ok, "
+                        f"elapsed={sw.elapsed_sec:.0f}s / {self.duration_sec}s")
+                time.sleep(0.1)
+            logger().info(f"**** AES encrypt/decrypt thread completed: loops={loop_count} ****")
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in AES thread: {str(e)} ****\n\n")
+            raise
+
+
+class ShaComputeThread(ThreadBase):
+    """Thread-2: SHA-256 digest loop for duration_sec (C215174 pattern)."""
+
+    SHA_MSG = (
+        "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+    )
+    EXPECTED_SHA256 = "cf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1"
+
+    def __init__(self, wifi_dut, duration_sec=1800, bus_lock=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.duration_sec = duration_sec
+        self.bus_lock = bus_lock if bus_lock is not None else nullcontext()
+
+    def run(self):
+        try:
+            logger().info(f"**** SHA-256 thread started (duration={self.duration_sec}s) ****")
+            sw = Stopwatch()
+            loop_count = 0
+            while sw.elapsed_sec < self.duration_sec and not self.stop_requested:
+                with self.bus_lock:
+                    digest = self.wifi_dut.interfaces.wifi.compute_sha_digest(
+                        sha_type=Si91xSHA.SL_SI91X_SHA_256,
+                        msg=self.SHA_MSG)
+                final_digest_data = ssl_wrap_key_connection.parse_cli_labeled_value(digest, 'digest')
+                assert final_digest_data == self.EXPECTED_SHA256, \
+                    f"SHA thread: digest mismatch at loop {loop_count}: {final_digest_data}"
+                loop_count += 1
+                if loop_count % 20 == 0:
+                    logger().info(
+                        f"SHA thread: {loop_count} loops ok, "
+                        f"elapsed={sw.elapsed_sec:.0f}s / {self.duration_sec}s")
+                time.sleep(0.1)
+            logger().info(f"**** SHA-256 thread completed: loops={loop_count} ****")
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in SHA thread: {str(e)} ****\n\n")
+            raise
+
+
+class HmacComputeThread(ThreadBase):
+    """Thread-2: HMAC-SHA256 digest loop for duration_sec (C217758 pattern)."""
+
+    HMAC_MSG = "abcdefghbcdefghicdefghijdefghijkefghijklfghsdfghhrdgjb"
+    HMAC_KEY = (
+        "1234567890123456789012345678901234567890123456789012345678901234"
+        "5678901234567890123456789012345678901234567890123456789012345678901"
+    )
+    EXPECTED_HMAC_SHA256 = "5d244c9f20c2dab77ffd79ce608fe164ba379282aee87a4dc4f076f6e3e1f1d9"
+
+    def __init__(self, wifi_dut, duration_sec=1800, bus_lock=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.duration_sec = duration_sec
+        self.bus_lock = bus_lock if bus_lock is not None else nullcontext()
+
+    def run(self):
+        try:
+            logger().info(f"**** HMAC-SHA256 thread started (duration={self.duration_sec}s) ****")
+            sw = Stopwatch()
+            loop_count = 0
+            while sw.elapsed_sec < self.duration_sec and not self.stop_requested:
+                # mem.alloc + mem.write(key) + crypto.hmac must be atomic vs SSL TX
+                with self.bus_lock:
+                    digest = self.wifi_dut.interfaces.wifi.compute_hmac_digest(
+                        hmac_mode=Si91xHMAC.SL_SI91X_HMAC_SHA_256,
+                        key_type=Si91xKeyType.SL_SI91X_TRANSPARENT_KEY,
+                        msg=self.HMAC_MSG,
+                        key=self.HMAC_KEY)
+                final_digest_data = ssl_wrap_key_connection.parse_cli_labeled_value(digest, 'digest')
+                assert final_digest_data == self.EXPECTED_HMAC_SHA256, \
+                    f"HMAC thread: digest mismatch at loop {loop_count}: {final_digest_data}"
+                loop_count += 1
+                if loop_count % 20 == 0:
+                    logger().info(
+                        f"HMAC thread: {loop_count} loops ok, "
+                        f"elapsed={sw.elapsed_sec:.0f}s / {self.duration_sec}s")
+                time.sleep(0.1)
+            logger().info(f"**** HMAC-SHA256 thread completed: loops={loop_count} ****")
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in HMAC thread: {str(e)} ****\n\n")
+            raise
+
+
+class EcdhComputeThread(ThreadBase):
+    """Thread-2: ECDH-256 point addition loop for duration_sec (C217761 pattern)."""
+
+    P1_ADD_SUB_X = "c997da8939ab7cb7a08f1a22b31975610815270f7ed2ed82e6368dbcbe4424de"
+    P1_ADD_SUB_Y = "56a24230240b35b676c5ce530fe82d705966e6d1aaa501fc80536ef37fae93c0"
+    P1_ADD_SUB_Z = "0100000000000000000000000000000000000000000000000000000000000000"
+    P2_ADD_SUB_X = "6b98e0352ef98cbb7595c861c80d54392e211653b2b3f6624ed4a18d0fb0a855"
+    P2_ADD_SUB_Y = "1643b2c8d8e956b67a9e8b59528a1af690ddc3c42ad83548706c2d9c20c32154"
+    P2_ADD_SUB_Z = "0100000000000000000000000000000000000000000000000000000000000000"
+    EXPECTED_OUTPUT_X = "output_x:a3bafe8b04bdd02db6a07e210e6d21261056c871b769eda1a0f86a2e7059b944"
+    EXPECTED_OUTPUT_Y = "output_y:9ef0f543fde215e170e720cff5f1bb39d2c72415df21307cf5034d6b1f332063"
+    EXPECTED_OUTPUT_Z = "output_z:5efff9530bb2effb2afa51c0ea0b2128daf310bccb1ef71f9862eb2eaf947b88"
+
+    def __init__(self, wifi_dut, duration_sec=1800, bus_lock=None):
+        super().__init__()
+        self.wifi_dut = wifi_dut
+        self.duration_sec = duration_sec
+        self.bus_lock = bus_lock if bus_lock is not None else nullcontext()
+
+    def run(self):
+        try:
+            logger().info(f"**** ECDH-256 add thread started (duration={self.duration_sec}s) ****")
+            sw = Stopwatch()
+            loop_count = 0
+            while sw.elapsed_sec < self.duration_sec and not self.stop_requested:
+                # ECDH uses mem.write for points — must be atomic vs SSL TX on sync bus
+                with self.bus_lock:
+                    ecdh_output = self.wifi_dut.interfaces.wifi.ecdh_point_operation(
+                        Si91xECDH.SL_SI91X_ECDH_256,
+                        Si91xECDHOperation.SL_SI91X_ECDH_ADD,
+                        self.P1_ADD_SUB_X, self.P1_ADD_SUB_Y, self.P1_ADD_SUB_Z,
+                        self.P2_ADD_SUB_X, self.P2_ADD_SUB_Y, self.P2_ADD_SUB_Z)
+                # Sync CLI echoes the command first; pick labeled output lines only
+                lines = [
+                    line.strip()
+                    for line in ecdh_output.decode('utf-8').splitlines()
+                    if line.strip()
+                ]
+                output_x_value = next((ln for ln in lines if ln.startswith('output_x:')), None)
+                output_y_value = next((ln for ln in lines if ln.startswith('output_y:')), None)
+                output_z_value = next((ln for ln in lines if ln.startswith('output_z:')), None)
+                assert output_x_value is not None, f"ECDH thread: output_x not found in {lines!r}"
+                assert output_y_value is not None, f"ECDH thread: output_y not found in {lines!r}"
+                assert output_z_value is not None, f"ECDH thread: output_z not found in {lines!r}"
+                assert output_x_value == self.EXPECTED_OUTPUT_X, \
+                    f"ECDH thread: output_x mismatch at loop {loop_count}: {output_x_value}"
+                assert output_y_value == self.EXPECTED_OUTPUT_Y, \
+                    f"ECDH thread: output_y mismatch at loop {loop_count}: {output_y_value}"
+                assert output_z_value == self.EXPECTED_OUTPUT_Z, \
+                    f"ECDH thread: output_z mismatch at loop {loop_count}: {output_z_value}"
+                loop_count += 1
+                if loop_count % 20 == 0:
+                    logger().info(
+                        f"ECDH thread: {loop_count} loops ok, "
+                        f"elapsed={sw.elapsed_sec:.0f}s / {self.duration_sec}s")
+                time.sleep(0.1)
+            logger().info(f"**** ECDH-256 add thread completed: loops={loop_count} ****")
+        except Exception as e:
+            logger().info(f"\n\n **** Got exception in ECDH thread: {str(e)} ****\n\n")
+            raise
 
 
 class aws_publish_message_Thread(ThreadBase):
@@ -780,6 +1407,7 @@ class WLanJoinThread(ThreadBase):
                     logger().info(f"Enabling SSL option for the socket-id->{sock} using rsi_setsockopt API")
                     # Enable ssl option for socket opened
                     self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="TCP_ULP", option_val="tls_1_2")
+                    self.wifi_dut.interfaces.wifi.bsdSsetCustomSyncSockopt(socket_fd=sock, cert_index=count)
                     # self.wifi_dut.interfaces.wifi.bsdSetSocketOpt(sock, option_name="SOL_TCP", option_val="SO_MAX_RETRANSMISSION_TIMEOUT_VALUE")
                     if count == 0:
                         local_port = randint(5001, 6000)
@@ -879,7 +1507,8 @@ class WLanJoinThread(ThreadBase):
                 logger().info("Data sent by DUT and received on server is matching\n\n")
 
                 if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
-                    self.ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
+                    self.ssl_server.interfaces.ssl.data_receive(
+                        server_socket_no, pkt_count, buffer_length, pkt_rcv_timeout=120)
                 result = self.wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count, server_ip)
                 logger().info(f"Number of bytes sent by dut {result}")
                 bytes_sent = result
@@ -976,7 +1605,8 @@ class WLanJoinThread(ThreadBase):
                 time.sleep(1)
                 server_socket_no = 1
                 if self.ssl_server.interfaces.ssl.config['type'] == "ssl.server.ssl_linux":
-                    self.ssl_server.interfaces.ssl.data_receive(server_socket_no, pkt_count, buffer_length)
+                    self.ssl_server.interfaces.ssl.data_receive(
+                        server_socket_no, pkt_count, buffer_length, pkt_rcv_timeout=120)
                 result = self.wifi_dut.interfaces.wifi.send_data_pkts(sock, buffer_length, pkt_count)
                 logger().info(f"Number of bytes sent by dut {result}")
                 bytes_sent = result
@@ -2572,3 +3202,544 @@ def test_wifi_sdk_ssl_private_key_wrap_ecb_rx_while_rejoining_c719565(switch, wi
 
     except Exception as error:
         sl_collections.exception_handling(wifi_dut, error)
+
+
+@ssl_wrap_key_connection.wifi_dut_marker(
+    ca_cert=["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+    client_cert=["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    coex_mode=Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+    tcpip_feat=Si91xTCPIPFeatureBitMap.SSL,
+    ext_custom_feat=Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+    custom_feat=Si91xCustomFeatureBitMap.AsyncStatusMessagesToHost,
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state("wifi_dut", wifi=["close_sockets", "wifi_powersave_disable", "disassociated"])
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C719563')
+def test_wifi_sdk_ssl_private_wrap_key_cbc_after_rejoin_fail_c719563(
+        switch, wifi_dut, wifi_access_point, wifi_sniffer, ssl_server, sl_collections, sniffer_filter, client_key,
+        request):
+    """
+    Verify SSL socket connection when private key is wrapped using SL_SI91X_WRAP_IV_CBC_MODE
+    mode after rejoin fail.
+
+    Flow:
+      1. Load CBC wrap private key (same as C1163604)
+      2. WiFi join
+      3. TLS connect + data over TLS
+      4. Power off AP, wait up to 180s for REJOIN_EVENT (rejoin fail)
+      5. Power on AP
+      6. WiFi join again
+      7. TLS connect + data over TLS again
+    """
+    capture_filename = request.node.name
+    channel = wifi_access_point.interfaces.wifi.channel
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    logger().info(f"power_save flag from harness = {power_save}")
+    logger().info(f"AP MAC ADDRESS = {ap_mac_address}")
+
+    ssl_obj = ssl_wrap_key_connection(
+        wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+        ssl_server=ssl_server, sniffer_filter=sniffer_filter, switch=switch, request=request)
+
+    try:
+        ssl_obj.load_cbc_wrapped_private_key_sync(client_key)
+
+        wifi_dut.interfaces.wifi.wifi_set_advanced_client_config(
+            max_retry_attempts=1, scan_interval=4, beacon_missed_count=40, first_time_retry_enable=0)
+
+        ssl_obj.start_sniffer_capture(channel)
+
+        logger().info("**** WiFi join (before rejoin fail) ****")
+        dut_ip, dut_mac_address = ssl_obj.join_get_ip(sniff_capture=False, power_save=power_save)
+        logger().info(f"Device IP={dut_ip}, MAC={dut_mac_address}")
+
+        logger().info("**** TLS connect + data (before rejoin fail) ****")
+        ssl_obj.ssl_connect_and_transfer(dut_ip)
+
+        logger().info("***** Turn off Access point *****")
+        since_time = time.perf_counter_ns()
+        switch.interfaces.pdu_switch.turn_off(delay=15)
+        assert ssl_obj.wait_for_rejoin_fail_event(timeout_sec=180, since_time=since_time), \
+            "Rejoin Error not found from DUT within 180s after AP power off"
+
+        logger().info("***** Turn on Access point *****")
+        switch.interfaces.pdu_switch.turn_on(delay=100)
+
+        logger().info("**** WiFi join (after rejoin fail) ****")
+        result = sl_collections.join_to_wifi_network(
+            wifi_dut, wifi_access_point, power_save=power_save, retry_count=3, associated=False)
+        dut_ip = result['device_ip']
+        logger().info(f"DUT joined AP successfully after rejoin failure, IP={dut_ip}")
+
+        logger().info("**** TLS connect + data (after rejoin fail) ****")
+        ssl_obj.ssl_connect_and_transfer(dut_ip)
+
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+            ssl_obj.capture_started = False
+        ssl_obj.join_sniffer_validation(dut_mac_address, ap_mac_address, power_save)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+        logger().info('******* Turn on Access point Finally **********')
+        switch.interfaces.pdu_switch.turn_on(delay=30)
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
+                          | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "ca_cert": ["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["close_sockets", "wifi_powersave_disable", "disassociated",
+          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"],
+)
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C719584')
+def test_wifi_sdk_ssl_cbc_wrap_aes256_cbc_sha256_tx_with_aes_crypto_30min_c719584(
+        wifi_dut, wifi_access_point, wifi_sniffer, ssl_server, sl_collections, sniffer_filter,
+        client_key, request):
+    """
+    Verify SSL socket connection and TX which uses BIT_TLS_RSA_WITH_AES_256_CBC_SHA256
+    cipher when private key is wrapped using SL_SI91X_WRAP_IV_CBC_MODE mode in one thread,
+    and run AES encryption and decryption in another thread for 30 min.
+
+    Thread-1: CBC wrap SSL + AES_256_CBC_SHA256 cipher + continuous TX (30 min)
+    Thread-2: AES encrypt/decrypt loop (30 min) — same pattern as C215180 in
+              new_security_accelarator/test_wifi_sdk_aes.py
+    """
+    capture_filename = request.node.name
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    duration_sec = 1800  # 30 minutes
+    logger().info(f"power_save flag from harness = {power_save}")
+    logger().info(f"AP MAC ADDRESS = {ap_mac_address}")
+    logger().info(f"Parallel SSL TX + AES crypto duration = {duration_sec}s")
+
+    ssl_obj = ssl_wrap_key_connection(
+        wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+        ssl_server=ssl_server, sniffer_filter=sniffer_filter, request=request)
+    try:
+        ssl_obj.load_cbc_wrapped_private_key(client_key)
+
+        dut_ip, dut_mac_raw = ssl_obj.join_get_ip(power_save=power_save)
+        dut_mac_address = ssl_obj.extract_mac_address(dut_mac_raw)
+        logger().info(f"Device IP={dut_ip}, MAC={dut_mac_address}")
+
+        wifi_dut.interfaces.wifi.set_ssl_cipher(
+            cipher_list=Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256)
+        ssl_obj.disable_test_agent_threads_for_sync_bus()
+        # TLS connect before AES thread — avoids sync-bus collision during handshake
+        sock = ssl_obj.prepare_ssl_tx_connection(
+            dut_ip, openssl_cipher='AES256-SHA256')
+        bus_lock = Lock()
+        ssl_thread = SslCbcWrapCipherTxThread(
+            wifi_dut=wifi_dut, ssl_server=ssl_server, device_ip=dut_ip, duration_sec=duration_sec,
+            cipher_bit=Cipher.BIT_TLS_RSA_WITH_AES_256_CBC_SHA256,
+            openssl_cipher='AES256-SHA256',
+            cipher_name='AES_256_CBC_SHA256',
+            sock=sock,
+            bus_lock=bus_lock)
+        aes_thread = AesEncryptDecryptThread(
+            wifi_dut=wifi_dut, duration_sec=duration_sec, bus_lock=bus_lock)
+
+        logger().info("**** Starting SSL TX thread and AES crypto thread in parallel ****")
+        ssl_thread.start()
+        aes_thread.start()
+        try:
+            ssl_thread.wait_for_exit()
+            aes_thread.wait_for_exit()
+        except Exception:
+            try:
+                ssl_thread.stop()
+            except Exception:
+                pass
+            try:
+                aes_thread.stop()
+            except Exception:
+                pass
+            ssl_thread.wait_for_exit(raise_exceptions=False)
+            aes_thread.wait_for_exit(raise_exceptions=False)
+            raise
+        logger().info("**** Both threads completed successfully ****")
+
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+            ssl_obj.capture_started = False
+        ssl_obj.join_sniffer_validation(dut_mac_address, ap_mac_address, power_save)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+        ssl_obj.restore_test_agent_threads()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
+                          | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "ca_cert": ["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["close_sockets", "wifi_powersave_disable", "disassociated",
+          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"],
+)
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C719586')
+def test_wifi_sdk_ssl_cbc_wrap_ecdhe_rsa_aes256_cbc_sha384_tx_with_sha_30min_c719586(
+        wifi_dut, wifi_access_point, wifi_sniffer, ssl_server, sl_collections, sniffer_filter,
+        client_key, request):
+    """
+    Verify SSL socket connection and TX which uses BIT_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384
+    cipher when private key is wrapped using SL_SI91X_WRAP_IV_CBC_MODE mode in one thread,
+    and run crypto SHA example in another thread for 30 min.
+
+    Thread-1: CBC wrap SSL + ECDHE_RSA_AES_256_CBC_SHA384 + continuous TX (30 min)
+    Thread-2: SHA-256 loop (30 min) — same pattern as C215174 in
+              new_security_accelarator/test_wifi_sdk_sha.py
+    """
+    capture_filename = request.node.name
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    duration_sec = 1800  # 30 minutes
+    logger().info(f"power_save flag from harness = {power_save}")
+    logger().info(f"AP MAC ADDRESS = {ap_mac_address}")
+    logger().info(f"Parallel SSL TX + SHA duration = {duration_sec}s")
+
+    ssl_obj = ssl_wrap_key_connection(
+        wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+        ssl_server=ssl_server, sniffer_filter=sniffer_filter, request=request)
+    try:
+        ssl_obj.load_cbc_wrapped_private_key(client_key)
+
+        dut_ip, dut_mac_raw = ssl_obj.join_get_ip(power_save=power_save)
+        dut_mac_address = ssl_obj.extract_mac_address(dut_mac_raw)
+        logger().info(f"Device IP={dut_ip}, MAC={dut_mac_address}")
+
+        wifi_dut.interfaces.wifi.set_ssl_cipher(
+            cipher_list=Cipher.BIT_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384)
+        ssl_obj.disable_test_agent_threads_for_sync_bus()
+        # ECDHE handshake is long (~10s); connect before SHA or crypto.sha steals connect status
+        sock = ssl_obj.prepare_ssl_tx_connection(
+            dut_ip, openssl_cipher='ECDHE-RSA-AES256-SHA384')
+        bus_lock = Lock()
+        ssl_thread = SslCbcWrapCipherTxThread(
+            wifi_dut=wifi_dut, ssl_server=ssl_server, device_ip=dut_ip, duration_sec=duration_sec,
+            cipher_bit=Cipher.BIT_TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,
+            openssl_cipher='ECDHE-RSA-AES256-SHA384',
+            cipher_name='ECDHE_RSA_AES_256_CBC_SHA384',
+            sock=sock,
+            bus_lock=bus_lock)
+        sha_thread = ShaComputeThread(
+            wifi_dut=wifi_dut, duration_sec=duration_sec, bus_lock=bus_lock)
+
+        logger().info("**** Starting SSL TX thread and SHA thread in parallel ****")
+        ssl_thread.start()
+        sha_thread.start()
+        try:
+            ssl_thread.wait_for_exit()
+            sha_thread.wait_for_exit()
+        except Exception:
+            try:
+                ssl_thread.stop()
+            except Exception:
+                pass
+            try:
+                sha_thread.stop()
+            except Exception:
+                pass
+            ssl_thread.wait_for_exit(raise_exceptions=False)
+            sha_thread.wait_for_exit(raise_exceptions=False)
+            raise
+        logger().info("**** Both threads completed successfully ****")
+
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+            ssl_obj.capture_started = False
+        ssl_obj.join_sniffer_validation(dut_mac_address, ap_mac_address, power_save)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+        ssl_obj.restore_test_agent_threads()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
+                          | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "ca_cert": ["ca_test1.crt", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client_test1.crt", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["close_sockets", "wifi_powersave_disable", "disassociated",
+          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"],
+)
+@pytest.mark.parametrize("client_key", ['client_test1.key'])
+@pytest.mark.test_src_map_id('C719585')
+def test_wifi_sdk_ssl_cbc_wrap_aes128_cbc_sha256_tx_with_hmac_30min_c719585(
+        wifi_dut, wifi_access_point, wifi_sniffer, ssl_server, sl_collections, sniffer_filter,
+        client_key, request):
+    """
+    Verify SSL socket connection and TX which uses BIT_TLS_RSA_WITH_AES_128_CBC_SHA256
+    cipher when private key is wrapped using SL_SI91X_WRAP_IV_CBC_MODE mode in one thread,
+    and run HMAC in another thread for 30 min.
+
+    Thread-1: CBC wrap SSL + AES_128_CBC_SHA256 cipher + continuous TX (30 min)
+    Thread-2: HMAC-SHA256 loop (30 min) — same pattern as C217758 in
+              new_security_accelarator/test_wifi_sdk_hmac.py
+    """
+    capture_filename = request.node.name
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    duration_sec = 1800  # 30 minutes
+    logger().info(f"power_save flag from harness = {power_save}")
+    logger().info(f"AP MAC ADDRESS = {ap_mac_address}")
+    logger().info(f"Parallel SSL TX + HMAC duration = {duration_sec}s")
+
+    ssl_obj = ssl_wrap_key_connection(
+        wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+        ssl_server=ssl_server, sniffer_filter=sniffer_filter, request=request)
+    try:
+        ssl_obj.load_cbc_wrapped_private_key_sync(client_key)
+
+        dut_ip, dut_mac_raw = ssl_obj.join_get_ip(power_save=power_save)
+        dut_mac_address = ssl_obj.extract_mac_address(dut_mac_raw)
+        logger().info(f"Device IP={dut_ip}, MAC={dut_mac_address}")
+
+        wifi_dut.interfaces.wifi.set_ssl_cipher(
+            cipher_list=Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA256)
+        ssl_obj.disable_test_agent_threads_for_sync_bus()
+        sock = ssl_obj.prepare_ssl_tx_connection(
+            dut_ip, openssl_cipher='AES128-SHA256',
+            server_cert='server_test1.crt', server_key='server_test1.key',
+            client_cert='ca_test1.crt')
+        bus_lock = Lock()
+        ssl_thread = SslCbcWrapCipherTxThread(
+            wifi_dut=wifi_dut, ssl_server=ssl_server, device_ip=dut_ip, duration_sec=duration_sec,
+            cipher_bit=Cipher.BIT_TLS_RSA_WITH_AES_128_CBC_SHA256,
+            openssl_cipher='AES128-SHA256',
+            cipher_name='AES_128_CBC_SHA256',
+            sock=sock,
+            bus_lock=bus_lock)
+        hmac_thread = HmacComputeThread(
+            wifi_dut=wifi_dut, duration_sec=duration_sec, bus_lock=bus_lock)
+
+        logger().info("**** Starting SSL TX thread and HMAC thread in parallel ****")
+        ssl_thread.start()
+        hmac_thread.start()
+        try:
+            ssl_thread.wait_for_exit()
+            hmac_thread.wait_for_exit()
+        except Exception:
+            try:
+                ssl_thread.stop()
+            except Exception:
+                pass
+            try:
+                hmac_thread.stop()
+            except Exception:
+                pass
+            ssl_thread.wait_for_exit(raise_exceptions=False)
+            hmac_thread.wait_for_exit(raise_exceptions=False)
+            raise
+        logger().info("**** Both threads completed successfully ****")
+
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+            ssl_obj.capture_started = False
+        ssl_obj.join_sniffer_validation(dut_mac_address, ap_mac_address, power_save)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+        ssl_obj.restore_test_agent_threads()
+
+
+@pytest.mark.config(
+    "wifi_dut",
+    wifi={
+        "thread_config": {"wifi": {"count": 2, "stack_len": 3584}},
+        "oper_mode": Si91xOperatingMode.WiFiClient,
+        "coex_mode": Si91xCoexMode.WLAN | Si91xCoexMode.BLE,
+        "features": Si91xFeatureBitMap.Default,
+        "config_features": Si91xConfigFeatureBitMap.WakeupIndicationUULPGPIO0
+                           | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
+        "tcpip_features": Si91xTCPIPFeatureBitMap.DHCPv4Client
+                          | Si91xTCPIPFeatureBitMap.ExtTCPIPFeatureBitmapValid
+                          | Si91xTCPIPFeatureBitMap.SSL,
+        "ext_tcpip_features": Si91xExtTCPIPFeatureBitMap.Default
+                              | Si91xExtTCPIPFeatureBitMap.WaitForSocketClose,
+        "custom_features": Si91xCustomFeatureBitMap.ExtCustomFeatureBitmapValid,
+        "ext_custom_features": Si91xExtCustomFeatureBitMap.Default
+                               | Si91xExtCustomFeatureBitMap.Feature320kBMemoryMode,
+        "bt_features": 0,
+        "ble_features": 0,
+        "ble_custom_ext_features": 0,
+        "ca_cert": ["ca_ecdsa_test1.pem", "SL_NET_SIGNING_CERTIFICATE", "SL_NET_TLS_SERVER_CREDENTIAL_START"],
+        "client_cert": ["client_ecdsa_cert_test1.pem", "SL_NET_CERTIFICATE", "SL_NET_TLS_CLIENT_CREDENTIAL_START"],
+    },
+)
+@pytest.mark.start_state("wifi_dut", wifi=['init'])
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=["close_sockets", "wifi_powersave_disable", "disassociated",
+          "set_default_ssl_cipher", "set_default_extended_ssl_cipher"],
+)
+@pytest.mark.parametrize("client_key", ['client_ecdsa_key_test1.pem'])
+@pytest.mark.test_src_map_id('C719587')
+def test_wifi_sdk_ssl_cbc_wrap_ecdhe_ecdsa_aes128_ccm8_tx_with_ecdh_crypto_30min_c719587(
+        wifi_dut, wifi_access_point, wifi_sniffer, ssl_server, sl_collections, sniffer_filter,
+        client_key, request):
+    """
+    Verify SSL socket connection and TX which uses
+    BIT_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 cipher when private key is wrapped using
+    SL_SI91X_WRAP_IV_CBC_MODE mode in one thread, and run crypto ECDH example in
+    another thread for 30 min.
+
+    Thread-1: CBC wrap SSL + ECDHE_ECDSA_AES_128_CCM_8 cipher + continuous TX (30 min)
+    Thread-2: ECDH-256 add loop (30 min) — same pattern as C217761 in
+              new_security_accelarator/test_wifi_sdk_ecdh.py
+    """
+    capture_filename = request.node.name
+    ap_mac_address = wifi_access_point.interfaces.wifi.bssid
+    power_save = UtfConfig.instance().defaults["wifi"].get("power_save", None)
+    duration_sec = 1800  # 30 minutes
+    logger().info(f"power_save flag from harness = {power_save}")
+    logger().info(f"AP MAC ADDRESS = {ap_mac_address}")
+    logger().info(f"Parallel SSL TX + ECDH crypto duration = {duration_sec}s")
+
+    ssl_obj = ssl_wrap_key_connection(
+        wifi_sniffer, wifi_dut, wifi_access_point, capture_filename, sl_collections,
+        ssl_server=ssl_server, sniffer_filter=sniffer_filter, request=request)
+    try:
+        ssl_obj.load_cbc_wrapped_private_key_sync(client_key)
+
+        dut_ip, dut_mac_raw = ssl_obj.join_get_ip(power_save=power_save)
+        dut_mac_address = ssl_obj.extract_mac_address(dut_mac_raw)
+        logger().info(f"Device IP={dut_ip}, MAC={dut_mac_address}")
+
+        wifi_dut.interfaces.wifi.set_ssl_cipher(
+            cipher_list=Cipher.BIT_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8)
+        ssl_obj.disable_test_agent_threads_for_sync_bus()
+        sock = ssl_obj.prepare_ssl_tx_connection(
+            dut_ip, openssl_cipher='ECDHE-ECDSA-AES128-CCM8',
+            server_cert='server_ecdsa_cert_test1.pem',
+            server_key='server_ecdsa_key_test1.pem',
+            client_cert='ca_ecdsa_test1.pem')
+        bus_lock = Lock()
+        ssl_thread = SslCbcWrapCipherTxThread(
+            wifi_dut=wifi_dut, ssl_server=ssl_server, device_ip=dut_ip, duration_sec=duration_sec,
+            cipher_bit=Cipher.BIT_TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+            openssl_cipher='ECDHE-ECDSA-AES128-CCM8',
+            cipher_name='ECDHE_ECDSA_AES_128_CCM_8',
+            server_cert='server_ecdsa_cert_test1.pem',
+            server_key='server_ecdsa_key_test1.pem',
+            client_cert='ca_ecdsa_test1.pem',
+            sock=sock,
+            bus_lock=bus_lock)
+        ecdh_thread = EcdhComputeThread(
+            wifi_dut=wifi_dut, duration_sec=duration_sec, bus_lock=bus_lock)
+
+        logger().info("**** Starting SSL TX thread and ECDH crypto thread in parallel ****")
+        ssl_thread.start()
+        ecdh_thread.start()
+        try:
+            ssl_thread.wait_for_exit()
+            ecdh_thread.wait_for_exit()
+        except Exception:
+            try:
+                ssl_thread.stop()
+            except Exception:
+                pass
+            try:
+                ecdh_thread.stop()
+            except Exception:
+                pass
+            ssl_thread.wait_for_exit(raise_exceptions=False)
+            ecdh_thread.wait_for_exit(raise_exceptions=False)
+            raise
+        logger().info("**** Both threads completed successfully ****")
+
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+            ssl_obj.capture_started = False
+        ssl_obj.join_sniffer_validation(dut_mac_address, ap_mac_address, power_save)
+
+    except Exception as error:
+        sl_collections.exception_handling(wifi_dut, error)
+    finally:
+        if ssl_obj.capture_started:
+            ssl_obj.stop_sniffer_capture_safe()
+        ssl_obj.restore_test_agent_threads()
