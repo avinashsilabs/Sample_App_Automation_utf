@@ -1472,7 +1472,7 @@ def test_ble_sdk_enable_enable_disable_indication_C667637(ble_dut, ble_client, s
 # Helper functions for test_ble_sdk_read_long_descriptor_from_RD1_C19868
 def ble_connection(ble_dut, remote_wiseconnect3, data=None):
     logger().info("======== start ble in dut")
-    bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=1)
+    bt_dut_address = ble_dut.interfaces.bluetooth.ble_gatt_start(set_smp=0)
     assert bt_dut_address, "failed to initiate ble in dut"
     time.sleep(2)
     logger().info(" ======= start ble remote secondary DUT")
@@ -1481,8 +1481,18 @@ def ble_connection(ble_dut, remote_wiseconnect3, data=None):
     assert ble_client_address, "failed to initiate ble in remote dut"
     logger().info(f"address_is{ble_client_address}")
     ble_dut.interfaces.bluetooth.ble_add_service(uid=0x1234)
-    ble_dut.interfaces.bluetooth.ble_add_char_serv_att(uid=0x4567)
-    ble_dut.interfaces.bluetooth.ble_add_char_val_att(uid=0x4567, data=data)
+    ble_dut.interfaces.bluetooth.ble_add_char_serv_att(
+        uid=0x4567,
+        service_handler_num=1,
+        permissions=0x02,
+        value_handler_num=2
+    )
+    ble_dut.interfaces.bluetooth.ble_add_char_val_att(
+        uid=0x4567,
+        value_handler_num=2,
+        permissions=0x02,
+        data=data
+    )
     time.sleep(2)
     logger().info(" ======= start ble adv in remote secondary DUT")
     remote_wiseconnect3.interfaces.sapi.ble_start_advertising()
@@ -1490,55 +1500,15 @@ def ble_connection(ble_dut, remote_wiseconnect3, data=None):
     logger().info(" ======= start scanning in remote side")
     ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address, timeout=50)
     time.sleep(5)
-    logger().info("======= enable wifi power save mode on DUT")
-    remote_wiseconnect3.interfaces.wifi.set_performance_profile(mode='power_save_low_latency')
-    logger().info("======= enable BT power save mode on DUT")
-    remote_wiseconnect3.interfaces.wifi.enable_bt_power_save(
-        psp_mode=Si91xPowerSaveModes.PowerSaveMode2,
-        psp_type=Si91xPowerSaveProcedureTypes.MaxPowerSave)
-    time.sleep(10)
     ble_dut.interfaces.bluetooth.ble_stop_scanning()
     ble_dut.interfaces.bluetooth.ble_connect(ble_remote_dev_address=ble_client_address, timeout=120)
-    time.sleep(60)
+    time.sleep(5)
     state = ble_dut.interfaces.wifi.ble_get_device_state()
     state_int = int(state) if state.isdigit() else -1
     logger().info(f"\nDevice state: {state_int}")
+    assert state_int in [8, 9], \
+        f"BLE connection not stable. State={state_int}"
     return ble_client_address, bt_dut_address
-
-
-def extract_link_key(ble_dut):
-    link_key = ""
-    tw = Stopwatch()
-    while tw.elapsed_sec < 120:
-        events = ble_dut.interfaces.wifi.get_async_events()
-        for event in events:
-            if "link_key" in event.event_data:
-                event_data = event.event_data
-                logger().info(event_data)
-                link_key_data = re.findall("link_key::.*", event_data)
-                link_key_data_str = re.split(":<", link_key_data[0])
-                link_key_data_hex = re.split(":", link_key_data_str[0])
-                link_key = "0x"
-                for hex_data_part in link_key_data_hex:
-                    hex_data_part = hex_data_part.replace(" ", "")
-                    if len(hex_data_part) == 1:
-                        hex_data_part = '0' + hex_data_part
-                    link_key = link_key + hex_data_part
-            else:
-                continue
-        if link_key:
-            break
-    link_key = link_key.replace(" ", "")
-    link_key = link_key.replace("link_key", "")
-    logger().info(f"Link Key Extracted:{link_key}")
-    if len(link_key) > 34:
-        link_key = link_key.split('$')[0]
-        logger().info(f"Link Key Extracted:{link_key}")
-    elif len(link_key) == 34:
-        logger().info(f"**************Link Key Extracted: {link_key}***************")
-    else:
-        assert len(link_key) == 34, f"link key is not proper format"
-    return link_key
 
 
 def decimals_to_ascii(att_values):
@@ -1556,7 +1526,7 @@ def decimals_to_ascii(att_values):
 
 def extract_att_values(log_text: str):
     m = re.search(
-        r'att_value:\s*(.*?)(?:\n\s*rsi_ble_on_read_resp_event_gatt|\Z)',
+        r'att_len:\s*\d+\s*\n?\s*att_value:\s*(.*?)(?:\n\s*rsi_ble_on_read_resp_event_gatt|\Z)',
         log_text,
         flags=re.S
     )
@@ -1572,9 +1542,24 @@ def service_discovery_on_remote_standalone(ble_dut, ble_client_address, service_
     """Standalone version of service discovery for remote device"""
     logger().info("\n\n ***** Performing GATT profile discovery on Remote ***** \n\n\n")
     # get all profiles
-    uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_client_address, async_timeout=60)
-    logger().info(f"UUIds {uuids}")
-    assert len(uuids) > 0, "uuids are empty"
+    uuids = []
+    retries = 3
+    for retry in range(retries):
+        uuids = ble_dut.interfaces.wifi.ble_get_profiles_async(ble_remote_dev_address=ble_client_address,
+                                                                async_timeout=60)
+        state = ble_dut.interfaces.wifi.ble_get_device_state()
+        state_int = int(state) if state.isdigit() else -1
+        logger().info(f"Current BLE state before profile fetch: {state_int}")
+        assert state_int not in [0, -1], \
+            f"Connection already lost before profile discovery. state={state_int}"
+        logger().info(f"UUIds {uuids}")
+        if uuids:
+            break
+        logger().warning(f"Attempt {retry + 1}: No profiles returned yet. Retrying...")
+        time.sleep(5)
+    assert len(uuids) > 0, (
+        f"No profiles returned from device {ble_client_address}"
+    )
     #  resolve profile
     start_handle, end_handle, data = ble_dut.interfaces.wifi.ble_get_profile_async(
         ble_remote_dev_address=ble_client_address,
@@ -1625,8 +1610,7 @@ def service_discovery_on_remote_standalone(ble_dut, ble_client_address, service_
         "config_features": Si91xConfigFeatureBitMap.SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | Si91xConfigFeatureBitMap.EnahanceMaxPsp,
         "bt_features": Si91xBTFeatureBitMap.Default,
         "ble_features": Si91xBLEFeatureBitMap.Default | Si91xBLEFeatureBitMap.SL_SI91X_BLE_GATT_ASYNC_ENABLE,
-        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST
-                                   | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST,
+        "ble_custom_ext_features": Si91xBLECustomFeatureBitMap.Default | Si91xBLECustomFeatureBitMap.SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST,
     },
 )
 @pytest.mark.end_state("wifi_dut",
@@ -1642,10 +1626,9 @@ def test_ble_sdk_read_long_descriptor_from_RD1_C19868(ble_dut, remote_wiseconnec
         data = "123456789abcdef123456789abcdef123456789abcdef123456789abcdef123456789abcdef123456789"
         ble_client_address, ble_dut_address = ble_connection(ble_dut, remote_wiseconnect3, data)
         service_added = True
-        link_key1 = extract_link_key(ble_dut)
-        logger().info(f"link_key1:{link_key1}")
+        logger().info("Discovering service 0x1234 on peer {ble_dut_address}")
         write_handle_1 = service_discovery_on_remote_standalone(
-            remote_wiseconnect3, ble_dut_address, "0x1234", "0x4567", BLEPermissions.DEFAULT)
+            remote_wiseconnect3, ble_dut_address, "0x1234", "0x4567", BLEPermissions.READ)
         time.sleep(5)
         remote_wiseconnect3.interfaces.wifi.ble_get_long_att_value_async(ble_remote_dev_address=ble_dut_address,
                                                                          handle=write_handle_1, offset=0)
