@@ -1953,7 +1953,8 @@ def test_ble_sdk_dut_master_unstable_connection_c667573(ble_dut, ble_client, sl_
             for i in range(5):
                 logger().info(f"Configuring Remote LE device in Undirected connectable advertising mode")
                 ble_client_address = ble_client.interfaces.bluetooth.start_smp_adv(
-                    bt_dut_address=ble_dut_address)
+                    bt_dut_address=ble_dut_address,
+                    restart_bt_service=(i == 0))
                 assert ble_client_address, "failed to initiate ble in remote device"
                 logger().info("Start scanning....")
                 ble_dut.interfaces.bluetooth.ble_start_scanning(ble_client_address=ble_client_address, timeout=120)
