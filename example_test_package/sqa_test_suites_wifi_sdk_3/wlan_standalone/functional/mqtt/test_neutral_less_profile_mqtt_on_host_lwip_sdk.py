@@ -41,6 +41,17 @@ This file contains Pytest test cases for validating Neutral less profile with MQ
 when running on host LWIP. The tests cover MQTT-over-TLS connections,
 subscribe/publish , data rates check during connection and data transfer, rejoin and other cases.
 
+Test Cases Overview:
+- C27490617: Join AP with Neutral less profile, get IP over host LWIP and verify management/data rates (no MQTT)
+- C88924273: Negative case: sl_net_set_application_profile must fail when Neutral less profile is not configured
+- C42831285: MQTTS QOS1 subscribe/publish with BT power save; verify data rates and power-save
+- C47001081: MQTTS QOS1 subscribe/publish with BT power save; verify data rates, power-save and unexpected rates after reconnect
+- C72173716: sl_net_up fails with wrong passphrase, then join with correct credentials, MQTTS QOS1 publish and verify unexpected management rates
+- C77689920: MQTTS QOS1 with application profile applied twice; verify management rates, data rates and power-save
+- C19630281: MQTTS QOS2 subscribe/publish, AP power-cycle rejoin, reconnect MQTT and verify rates/power-save
+- C33315031: MQTTS QOS2 subscribe/publish, change AP channel, AP power-cycle rejoin, reconnect MQTT and verify rates/power-save
+- C14037978: MQTTS QOS2 subscribe/publish, leave AP, reconnect with default profile and verify default-profile rates/power-save
+
 """
 
 Map_security = {
@@ -92,11 +103,11 @@ MQTT_BROKER_TLS_CA = "ca-cert.pem"
 
 
 def _reconfigure_mosquitto_tls(
-    mqtt_server,
-    cert=MQTT_BROKER_TLS_CERT,
-    key=MQTT_BROKER_TLS_KEY,
-    ca=MQTT_BROKER_TLS_CA,
-    port=8883,
+        mqtt_server,
+        cert=MQTT_BROKER_TLS_CERT,
+        key=MQTT_BROKER_TLS_KEY,
+        ca=MQTT_BROKER_TLS_CA,
+        port=8883,
 ):
     """Restart Mosquitto on the Pi with wolfSSL PEMs from tls_certificates.
 
@@ -115,7 +126,7 @@ def _reconfigure_mosquitto_tls(
     new_key = f"{cert_dir}/{key}"
     new_ca = f"{cert_dir}/{ca}"
     if mqtt.certfile.replace("\\", "/") == new_cert and mqtt.keyfile.replace(
-        "\\", "/"
+            "\\", "/"
     ) == new_key and mqtt.cafile.replace("\\", "/") == new_ca:
         return
 
@@ -210,6 +221,7 @@ class MQTTConnectionThread(ThreadBase):
             server_key="server-key.pem",
             enable_bt_powersave=True,
             application_profile_calls=1,
+            skip_scan=False,
     ):
         super().__init__()
         self.wifi_dut = wifi_dut
@@ -236,17 +248,50 @@ class MQTTConnectionThread(ThreadBase):
         self.server_key = server_key
         self.enable_bt_powersave = enable_bt_powersave
         self.application_profile_calls = application_profile_calls
+        self.skip_scan = skip_scan
         self._mqtt_is_clean_session = 1
         self._mqtt_enable_will = 0
         self._mqtt_retain_will = 0
         self._mqtt_will_topic = None
         self._mqtt_will_message = None
         self._cert_alloc_addresses = []
+        self.dut_local_port = 5001
+
+    def _release_previous_mqtt_session(self, retries=3, delay=3):
+        """Close a leftover MQTT session before opening a new one.
+
+        After a rejoin, lwip_mqtt.disconnect returns 0xFFFFFFFF and leaves the
+        socket and TLS context allocated, so the next lwip_mqtt.connect fails
+        with SL_STATUS_FAIL before the handshake. Retry the disconnect with the
+        link back up and, if the DUT still refuses, bind the next connect to a
+        fresh local port instead of the one the stale socket still owns.
+        """
+        if not getattr(
+            self.wifi_dut.interfaces.wifi, "lwip_mqtt_state_connected", False
+        ):
+            return
+        for attempt in range(1, retries + 1):
+            try:
+                self.wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
+                return
+            except Exception as ex:
+                logger().warning(
+                    f"lwip_mqtt disconnect attempt {attempt}/{retries} failed: {ex}"
+                )
+                if attempt < retries:
+                    time.sleep(delay)
+        self.dut_local_port += 1
+        logger().info(
+            "Previous MQTT socket was never released, connecting from DUT local "
+            f"port {self.dut_local_port}"
+        )
 
     def free_certificate_allocations(self):
         if not self._cert_alloc_addresses:
             return
-        if self.enable_tls:
+        if self.enable_tls and getattr(
+            self.wifi_dut.interfaces.wifi, "lwip_mqtt_state_connected", False
+        ):
             try:
                 self.wifi_dut.interfaces.mqtt.lwip_mqtt_disconnect()
             except Exception as ex:
@@ -301,55 +346,61 @@ class MQTTConnectionThread(ThreadBase):
             first_time_retry_enable=1,
         )
         previous_channel = self.wifi_access_point.interfaces.wifi.channel
-        channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-        true_result_list = []
-        false_result_list = []
-        Probe_captured_channel_list = []
-        Probe_not_captured_channel_list = []
-        sa_addr = self.wifi_dut.interfaces.wifi.get_mac_address()
-        logger().info(f"Device mac address: {sa_addr}")
-        logger().info(f"Saving previous sniffer/AP channel: {previous_channel}")
-        for channel in channels_list_2g:
-            if channel == 14:
-                logger().info(f"channel : {channel} not supported by NUC,skipping the channel")
-                continue
-            logger().info(f"configuring the Sniffer with the channel : {channel}")
-            self.wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
-            self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.request.node.name}_ch_{channel}")
-            time.sleep(1)
-
-            logger().info("enable the scan in dut on channel 0...")
-            scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
-            time.sleep(2)
-            assert (len(scan_results) >= 1), "Scan Failed"
-            logger().info(scan_results)
-
-            self.wifi_sniffer.interfaces.capture.stop_capture()
-            packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
-                sa_addr=sa_addr,
-                filter_name="probe_request",
-            )
-            packet_filter1 = (
-                f"({packet_filter1}) and (wlan_radio.channel == {channel})"
-            )
+        if self.skip_scan:
             logger().info(
-                f"Validate Probe req(Broadcast) only on NUC channel {channel}"
+                "skip_scan is set, skipping the worldwide channel scan / probe request validation"
             )
-            logger().info(f"Sniffer Filter = {packet_filter1}")
-            output = self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)['packet_count']
-            if bool(output) is False:
-                false_result_list.append(bool(output))
-                Probe_not_captured_channel_list.append(channel)
-            else:
-                true_result_list.append(bool(output))
-                Probe_captured_channel_list.append(channel)
-            logger().info(f"True list = {true_result_list}")
-            logger().info(f"false list = {false_result_list}")
-        # assert Probe_not_captured_channel_list == [], logger().info(
+        else:
+            channels_list_2g = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+            true_result_list = []
+            false_result_list = []
+            Probe_captured_channel_list = []
+            Probe_not_captured_channel_list = []
+            sa_addr = self.wifi_dut.interfaces.wifi.get_mac_address()
+            logger().info(f"Device mac address: {sa_addr}")
+            logger().info(f"Saving previous sniffer/AP channel: {previous_channel}")
+            for channel in channels_list_2g:
+                if channel == 14:
+                    logger().info(f"channel : {channel} not supported by NUC,skipping the channel")
+                    continue
+                logger().info(f"configuring the Sniffer with the channel : {channel}")
+                self.wifi_sniffer.interfaces.capture.configure_interface(channel=channel)
+                self.wifi_sniffer.interfaces.capture.start_capture(capture_file=f"{self.request.node.name}_ch_{channel}")
+                time.sleep(1)
+
+                logger().info("enable the scan in dut on channel 0...")
+                scan_results = self.wifi_dut.interfaces.wifi.scan(channel=0, ssid=None)
+                time.sleep(2)
+                assert (len(scan_results) >= 1), "Scan Failed"
+                logger().info(scan_results)
+
+                self.wifi_sniffer.interfaces.capture.stop_capture()
+                packet_filter1 = self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                    sa_addr=sa_addr,
+                    filter_name="probe_request",
+                )
+                packet_filter1 = (
+                    f"({packet_filter1}) and (wlan_radio.channel == {channel})"
+                )
+                logger().info(
+                    f"Validate Probe req(Broadcast) only on NUC channel {channel}"
+                )
+                logger().info(f"Sniffer Filter = {packet_filter1}")
+                output = self.wifi_sniffer.interfaces.capture.sniffer_validation(packet_filter1=packet_filter1)[
+                    'packet_count']
+                if bool(output) is False:
+                    false_result_list.append(bool(output))
+                    Probe_not_captured_channel_list.append(channel)
+                else:
+                    true_result_list.append(bool(output))
+                    Probe_captured_channel_list.append(channel)
+                logger().info(f"True list = {true_result_list}")
+                logger().info(f"false list = {false_result_list}")
+            # assert Probe_not_captured_channel_list == [], logger().info(
             # f"**** unable to find the Probe requests  in all these channels:{Probe_not_captured_channel_list}")
-        logger().info(f"found Probe req(Broadcast) in all the channel:{Probe_captured_channel_list}'")
-        logger().info("DUT scan success in all channels")
-        logger().info("Dut is able to scan successfully in worldwide region")
+            logger().info(f"found Probe req(Broadcast) in all the channel:{Probe_captured_channel_list}'")
+            logger().info("DUT scan success in all channels")
+            logger().info("Dut is able to scan successfully in worldwide region")
         logger().info(
             f"Reverting sniffer channel back to previous channel {previous_channel} before sl_net_up"
         )
@@ -453,6 +504,7 @@ class MQTTConnectionThread(ThreadBase):
 
     def mqtt_connect(self, expected_status=SLStatus.SL_STATUS_OK, configure_tls_certs=True):
         self.wifi_dut.interfaces["mqtt"] = self.wifi_dut.interfaces.wifi
+        # self._release_previous_mqtt_session()
         if self.enable_tls:
             # Harness may still list mosquitto-utf certs; align broker to wolfSSL PEMs.
             _reconfigure_mosquitto_tls(self.mqtt_server)
@@ -483,7 +535,7 @@ class MQTTConnectionThread(ThreadBase):
             server=self.mqtt_server.interfaces.mqtt,
             mqtt_server=broker,
             enable_ssl=1 if self.enable_tls else 0,
-            dut_port=5001,
+            dut_port=self.dut_local_port,
             broker_port=8883 if self.enable_tls else 1883,
             connection_timeout_ms=20000 if self.enable_tls else None,
             keep_alive_interval_ms=self.keepalive_time,
@@ -511,10 +563,10 @@ class MQTTConnectionThread(ThreadBase):
             f"Message: {msgs[0].payload.decode()}, QOS: {msgs[0].qos} "
         )
         assert (
-            msgs[0].topic == self.topic
+                msgs[0].topic == self.topic
         ), "No message received by mqtt-client on subscribed topic"
         assert (
-            msgs[0].qos == self.qos
+                msgs[0].qos == self.qos
         ), "DUT sent message with wrong QOS. expected is QOS1"
         assert msgs[0].payload.decode() == self.message, (
             "No message is received by mqtt-client on subscribed topic or "
@@ -715,6 +767,82 @@ class MQTTConnectionThread(ThreadBase):
             assert not unexpected_result["packet_count"], (
                 "DUT Data/QoS Data frames were captured outside 6 Mbps through MCS4"
             )
+        finally:
+            capture.capture_file = original_capture_name
+
+    def verify_management_data_rates_with_default_profile(self):
+        dut_mac = self.wifi_dut.interfaces.wifi.get_mac_address()
+        expected_filter = (
+            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                dut_addr=dut_mac,
+                filter_name="Default_profile_management_rates",
+            )
+        )
+        unexpected_filter = (
+            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                dut_addr=dut_mac,
+                filter_name="Default_profile_management_rates_not_expected",
+            )
+        )
+        expected_filter = self._normalize_mgmt_rate_filter(expected_filter)
+        unexpected_filter = self._normalize_mgmt_rate_filter(unexpected_filter)
+        logger().info(f"Expected 1 Mbps management filter = {expected_filter}")
+        logger().info(f"Unexpected 6 Mbps management filter = {unexpected_filter}")
+        capture = self.wifi_sniffer.interfaces.capture
+        sl_net_up_capture_name = capture.capture_file
+        logger().info(
+            "Management rate check source files: "
+            f"capture_file={capture.capture_file}, "
+            f"remote_capture_file={capture.remote_capture_file}, "
+            f"downloaded_sl_net_up={capture.main_local_capture_file}"
+        )
+        assert "sl_net_up" in str(sl_net_up_capture_name), (
+            f"6 Mbps check must use sl_net_up capture, got {sl_net_up_capture_name}"
+        )
+        # sniffer_validation writes ./reports/filter_<capture_file>_*.pcap.
+        # Keep that helper copy off the sl_net_up name so only one sl_net_up pcap exists.
+        capture.capture_file = f"{self.request.node.name}_mgmt_rate_check"
+        try:
+            assert capture.sniffer_validation(packet_filter1=expected_filter)[
+                "packet_count"
+            ], (
+                "DUT probe/auth/assoc/deauth frames were captured at 1 Mbps"
+            )
+            unexpected_result = capture.sniffer_validation(
+                packet_filter1=unexpected_filter, negative_test=True
+            )
+            assert not unexpected_result["packet_count"], (
+                "DUT probe/auth/assoc/deauth frames were captured at 6 Mbps"
+            )
+        finally:
+            capture.capture_file = sl_net_up_capture_name
+
+    def verify_data_rates_with_default_profile(self):
+        dut_mac = self.wifi_dut.interfaces.wifi.get_mac_address()
+        expected_filter = (
+            self.sniffer_filter.interfaces.ws_sniffer_filter.get_sniffer_filter(
+                dut_addr=dut_mac,
+                filter_name="Default_profile_data_rates",
+            )
+        )
+        expected_filter = self._normalize_mgmt_rate_filter(expected_filter)
+        logger().info(f"Expected DUT TX data rate filter = {expected_filter}")
+        capture = self.wifi_sniffer.interfaces.capture
+        original_capture_name = capture.capture_file
+        logger().info(
+            "Data rate check source files: "
+            f"capture_file={capture.capture_file}, "
+            f"remote_capture_file={capture.remote_capture_file}, "
+            f"downloaded_capture={capture.main_local_capture_file}"
+        )
+        capture.capture_file = f"{self.request.node.name}_data_rate_check"
+        try:
+            assert capture.sniffer_validation(packet_filter1=expected_filter)[
+                "packet_count"
+            ], (
+                "DUT Data/QoS Data frames were captured between 1 Mbps and MCS7"
+            )
+
         finally:
             capture.capture_file = original_capture_name
 
@@ -928,6 +1056,7 @@ class MQTTConnectionThread(ThreadBase):
 
         return result_ssl, result_tcp
 
+
 class ParallelThread(ThreadBase):
     def __init__(
             self,
@@ -1020,7 +1149,6 @@ class MQTTClientThread(ThreadBase):
                 raise AssertionError("No MQTT message received on DUT")
 
 
-
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
 @pytest.mark.end_state(
@@ -1041,13 +1169,13 @@ class MQTTClientThread(ThreadBase):
 )
 @pytest.mark.firmware_app("test_lwip_stack")
 def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C27490617(firmware_loader,
-        wifi_dut,
-        wifi_access_point,
-        wifi_sniffer,
-        sniffer_filter,
-        sl_collections,
-        request,
-):
+                                                              wifi_dut,
+                                                              wifi_access_point,
+                                                              wifi_sniffer,
+                                                              sniffer_filter,
+                                                              sl_collections,
+                                                              request,
+                                                              ):
     profile = {
         "ssid": "ssid_profile1",
         "channel": 1,
@@ -1107,7 +1235,7 @@ def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C88924273(firmware_loader,
                                                               sniffer_filter,
                                                               sl_collections,
                                                               request,
-                                                              ): 
+                                                              ):
     try:
         wifi_dut.interfaces.wifi.sl_net_set_application_profile(
             interface="client", profile=1
@@ -1122,6 +1250,7 @@ def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C88924273(firmware_loader,
         assert False, (
             "sl_net_set_application_profile succeeded; test expects API failure"
         )
+
 
 @wifi_dut_marker()
 @pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
@@ -1145,15 +1274,15 @@ def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C88924273(firmware_loader,
 )
 @pytest.mark.firmware_app("test_lwip_stack")
 def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C42831285(firmware_loader,
-        wifi_dut,
-        wifi_access_point,
-        wifi_sniffer,
-        mqtt_server,
-        mqtt_client,
-        sniffer_filter,
-        sl_collections,
-        request,
-):
+                                                              wifi_dut,
+                                                              wifi_access_point,
+                                                              wifi_sniffer,
+                                                              mqtt_server,
+                                                              mqtt_client,
+                                                              sniffer_filter,
+                                                              sl_collections,
+                                                              request,
+                                                              ):
     topic = "Topic_C42831285"
     client_id = "Si91x_mqtt_client"
     qos = Si91xMqttQos.QOS1
@@ -1222,15 +1351,15 @@ def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C42831285(firmware_loader,
 )
 @pytest.mark.firmware_app("test_lwip_stack")
 def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C47001081(firmware_loader,
-        wifi_dut,
-        wifi_access_point,
-        wifi_sniffer,
-        mqtt_server,
-        mqtt_client,
-        sniffer_filter,
-        sl_collections,
-        request,
-):
+                                                              wifi_dut,
+                                                              wifi_access_point,
+                                                              wifi_sniffer,
+                                                              mqtt_server,
+                                                              mqtt_client,
+                                                              sniffer_filter,
+                                                              sl_collections,
+                                                              request,
+                                                              ):
     topic = "Topic_C47001081"
     client_id = "Si91x_mqtt_client"
     qos = Si91xMqttQos.QOS1
@@ -1477,15 +1606,15 @@ def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C72173716(firmware_loader,
 )
 @pytest.mark.firmware_app("test_lwip_stack")
 def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C77689920(firmware_loader,
-        wifi_dut,
-        wifi_access_point,
-        wifi_sniffer,
-        mqtt_server,
-        mqtt_client,
-        sniffer_filter,
-        sl_collections,
-        request,
-):
+                                                              wifi_dut,
+                                                              wifi_access_point,
+                                                              wifi_sniffer,
+                                                              mqtt_server,
+                                                              mqtt_client,
+                                                              sniffer_filter,
+                                                              sl_collections,
+                                                              request,
+                                                              ):
     topic = "Topic_C42831285"
     client_id = "Si91x_mqtt_client"
     qos = Si91xMqttQos.QOS1
@@ -1533,9 +1662,175 @@ def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C77689920(firmware_loader,
     finally:
         _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
 
-'''
+
 @wifi_dut_marker()
-@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+# The rejoin leaves lwip_mqtt.disconnect failing, so lwip_mqtt_commands.c never
+# reaches NetworkDisconnect and the socket plus TLS context of every session stay
+# allocated. Reset the DUT per iteration to reclaim that heap, otherwise the
+# handshake runs out of memory around the fifth session of a --count run.
+@pytest.mark.start_state("wifi_dut", wifi=["reset", "sl_net_init_client"])
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "lwip_mqtt_disconnect",
+        "unassociated",
+        "disable_external_stack"
+    ],
+)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "WPA2",
+        "passphrase": "1234567890",
+        "channel": 1,
+    },
+)
+@pytest.mark.firmware_app("test_lwip_stack")
+def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C19630281(firmware_loader,
+                                                              wifi_dut,
+                                                              wifi_access_point,
+                                                              wifi_sniffer,
+                                                              mqtt_server,
+                                                              mqtt_client,
+                                                              sniffer_filter,
+                                                              sl_collections,
+                                                              request,
+                                                              switch,
+                                                              ):
+    topic = "Topic_C19630281"
+    client_id = "Si91x_mqtt_client"
+    qos = Si91xMqttQos.QOS2
+    message = "".join(random.choices(string.ascii_uppercase + string.digits, k=100))
+    profile = {
+        "ssid": "ssid_profile1",
+        "channel": 1,
+        "security": "WPA2",
+        "passphrase": "1234567890",
+        "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
+    }
+    mqtt_thread = None
+    try:
+        mqtt_thread = MQTTConnectionThread(
+            wifi_dut=wifi_dut,
+            wifi_access_point=wifi_access_point,
+            wifi_sniffer=wifi_sniffer,
+            topic=topic,
+            request=request,
+            mqtt_server=mqtt_server,
+            mqtt_client=mqtt_client,
+            message=message,
+            sl_collections=sl_collections,
+            client_id=client_id,
+            qos=qos,
+            profile=profile,
+            sniffer_filter=sniffer_filter,
+            enable_tls=True,
+            enable_bt_powersave=True,
+            skip_scan=True,
+        )
+        mqtt_thread.start()
+        mqtt_thread.wait_for_exit()
+        mqtt_thread.mqtt_connect()
+        mqtt_thread.subscribe_and_publish_for_multiple_times(qos=qos, iterations=5)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        mqtt_thread.verify_management_data_rates()
+        mqtt_thread.verify_data_rates()
+        wifi_sniffer.interfaces.capture.configure_interface(
+            channel=wifi_access_point.interfaces.wifi.channel
+        )
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file=f"{request.node.name}_reconnect_sl_net_up.pcap"
+        )
+        logger().info("\n Turning off the Access Point \n")
+        logger().info(
+            "PDU is disabled. MANUALLY POWER OFF the AP now, then wait."
+        )
+        switch.interfaces.pdu_switch.turn_off(delay=20)
+        # time.sleep(20)
+        mqtt_thread.rejoin_async_event()
+        logger().info("\n Successfully Powered off the AP \n")
+        logger().info(
+            "PDU is disabled. MANUALLY POWER ON the AP now, then wait."
+        )
+        switch.interfaces.pdu_switch.turn_on(delay=100)
+        # time.sleep(20)
+        logger().info("\n AP Powered ON \n")
+
+        logger().info("\n Reconnecting DUT to AP after AP power cycle \n")
+        wifi_dut.interfaces.wifi.sl_net_set_application_profile(
+            interface="client", profile=1
+        )
+        mqtt_thread.enable_power_save()
+        wifi_dut.interfaces.wifi.join(
+            ssid=profile["ssid"],
+            passphrase=profile["passphrase"],
+            security=profile["security"].lower(),
+            channel=profile["channel"],
+            enable_lwip=1,
+        )
+        wifi_dut.interfaces.wifi.start_ip_lwip()
+        attempt = 3
+        flag = False
+        last_error = None
+        while attempt > 0:
+            try:
+                wifi_dut.interfaces.wifi.sl_net_up(mode="client")
+                flag = True
+                break
+            except Exception as e:
+                last_error = e
+                attempt -= 1
+                logger().info(
+                    f"sl_net_up failed with exception {e}, {attempt} attempts left"
+                )
+                wifi_dut.interfaces.wifi.set_performance_profile()
+                wifi_dut.interfaces.wifi.sl_net_set_application_profile(
+                    interface="client", profile=1
+                )
+                mqtt_thread.enable_power_save()
+        assert flag, f"sl_net_up failed after 3 attempts: {last_error}"
+        device_ip = wifi_dut.interfaces.wifi.display_device_ip_lwip()
+        mqtt_thread.dut_addr["device_ip"] = wifi_dut.interfaces.wifi.get_device_ip(
+            device_ip=device_ip
+        )
+        status = ping(mqtt_thread.dut_addr["device_ip"], 10)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST AFTER AP POWER CYCLE"
+
+        logger().info("\n Re-establishing MQTT connection after AP power cycle \n")
+        # lwip_mqtt.disconnect always fails after the rejoin (MQTTDisconnect cannot
+        # reach the broker) and lwip_mqtt_commands.c returns before freeing the
+        # certificate buffers, so every lwip_mqtt.set_advanced_configuration leaks
+        # ~17.5 KB of DUT heap and the TLS handshake eventually cannot allocate.
+        # Reconnect without re-uploading the certificates: the firmware globals
+        # still point at the ones from the first session, so configure_tls_certificates
+        # succeeds without another allocation.
+        try:
+            mqtt_thread.mqtt_connect(configure_tls_certs=False)
+        except Exception as connect_ex:
+            logger().warning(
+                f"MQTT reconnect with the retained certificates failed: {connect_ex}. "
+                "Retrying with a fresh certificate upload"
+            )
+            mqtt_thread.mqtt_connect()
+        mqtt_thread.subscribe_and_publish_for_multiple_times(qos=qos, iterations=5)
+
+        wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+        wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
+        wifi_sniffer.interfaces.capture.stop_capture()
+        mqtt_thread.verify_management_data_rates()
+        mqtt_thread.verify_ps_validation()
+        mqtt_thread.verify_data_rates()
+    except Exception as Ex:
+        sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+    finally:
+        _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread, switch=switch)
+        # _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=["reset", "sl_net_init_client"])
 @pytest.mark.mqtt_server("raspi_mosquitto_tls")
 @pytest.mark.end_state(
     "wifi_dut",
@@ -1556,16 +1851,16 @@ def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C77689920(firmware_loader,
 )
 @pytest.mark.firmware_app("test_lwip_stack")
 def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C33315031(firmware_loader,
-        wifi_dut,
-        wifi_access_point,
-        wifi_sniffer,
-        mqtt_server,
-        mqtt_client,
-        sniffer_filter,
-        sl_collections,
-        request,
-        switch,
-):
+                                                              wifi_dut,
+                                                              wifi_access_point,
+                                                              wifi_sniffer,
+                                                              mqtt_server,
+                                                              mqtt_client,
+                                                              sniffer_filter,
+                                                              sl_collections,
+                                                              request,
+                                                              switch,
+                                                              ):
     topic = "Topic_C33315031"
     client_id = "Si91x_mqtt_client"
     qos = Si91xMqttQos.QOS2
@@ -1595,82 +1890,102 @@ def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C33315031(firmware_loader,
             sniffer_filter=sniffer_filter,
             enable_tls=True,
             enable_bt_powersave=True,
+            skip_scan=True,
         )
         mqtt_thread.start()
         mqtt_thread.wait_for_exit()
         mqtt_thread.mqtt_connect()
-        mqtt_client.interfaces.mqtt.mqtt_client_subscribe(topic=topic, qos=qos)
-        wifi_dut.interfaces.mqtt.lwip_mqtt_subscribe(topic=topic, qos=qos)
-        ap_power_off = False
-        for _ in range(8):
-            if ap_power_off:
-                logger().info("\n Turning off the Access Point \n")
-                # switch.interfaces.pdu_switch.turn_off(delay=20)
-                time.sleep(60)
-                mqtt_thread.rejoin_async_event()
-                logger().info("\n Successfully Powered off the AP \n")
-                # switch.interfaces.pdu_switch.turn_on(delay=100)
-                time.sleep(100)
-                ap_power_off = False
-                logger().info("\n AP Powered ON \n")
-                wifi_dut.interfaces.wifi.sl_net_set_application_profile(interface="client", profile=1)
-                wifi_dut.interfaces.wifi.join(
-                    ssid=profile["ssid"],
-                    passphrase=profile["passphrase"],
-                    security=profile["security"].lower(),
-                    channel=profile["channel"],
-                    enable_lwip=1,
+        mqtt_thread.subscribe_and_publish_for_multiple_times(qos=qos, iterations=5)
+        wifi_sniffer.interfaces.capture.stop_capture()
+        mqtt_thread.verify_management_data_rates()
+        mqtt_thread.verify_data_rates()
+        previous_channel = wifi_access_point.interfaces.wifi.channel
+        new_channel = 6 if previous_channel != 6 else 11
+        logger().info(
+            f"Changing AP channel from {previous_channel} to {new_channel} before power cycle"
+        )
+        wifi_access_point.interfaces.wifi.channel = new_channel
+        wifi_access_point.interfaces.wifi.start_ap(channel=new_channel)
+        profile["channel"] = new_channel
+        mqtt_thread.profile["channel"] = new_channel
+        logger().info(f"Restarting sniffer on AP channel {new_channel}")
+        wifi_sniffer.interfaces.capture.configure_interface(channel=new_channel)
+        wifi_sniffer.interfaces.capture.start_capture(
+            capture_file=f"{request.node.name}_reconnect_sl_net_up.pcap"
+        )
+        logger().info("\n Turning off the Access Point \n")
+        logger().info(
+            "PDU is disabled. MANUALLY POWER OFF the AP now, then wait."
+        )
+        switch.interfaces.pdu_switch.turn_off(delay=20)
+        # time.sleep(20)
+        mqtt_thread.rejoin_async_event()
+        logger().info("\n Successfully Powered off the AP \n")
+        logger().info(
+            "PDU is disabled. MANUALLY POWER ON the AP now, then wait."
+        )
+        switch.interfaces.pdu_switch.turn_on(delay=100)
+        # time.sleep(20)
+        logger().info("\n AP Powered ON \n")
+
+        logger().info("\n Reconnecting DUT to AP after AP power cycle \n")
+        wifi_dut.interfaces.wifi.sl_net_set_application_profile(
+            interface="client", profile=1
+        )
+        mqtt_thread.enable_power_save()
+        wifi_dut.interfaces.wifi.join(
+            ssid=profile["ssid"],
+            passphrase=profile["passphrase"],
+            security=profile["security"].lower(),
+            channel=profile["channel"],
+            enable_lwip=1,
+        )
+        wifi_dut.interfaces.wifi.start_ip_lwip()
+        attempt = 3
+        flag = False
+        last_error = None
+        while attempt > 0:
+            try:
+                wifi_dut.interfaces.wifi.sl_net_up(mode="client")
+                flag = True
+                break
+            except Exception as e:
+                last_error = e
+                attempt -= 1
+                logger().info(
+                    f"sl_net_up failed with exception {e}, {attempt} attempts left"
                 )
-                wifi_dut.interfaces.wifi.start_ip_lwip()
-                attempt = 3
-                flag = False
-                while attempt > 0:
-                    try:
-                        wifi_dut.interfaces.wifi.sl_net_up(mode="client")
-                        flag = True
-                    except Exception as e:
-                        attempt -= 1
-                        logger().info(
-                            f"sl_net_up failed with exception {e}, retrying...{attempt} attempts left"
-                        )
-                        wifi_dut.interfaces.wifi.sl_net_set_application_profile(interface="client", profile=1)
-                    if flag:
-                        break
-                device_ip = wifi_dut.interfaces.wifi.display_device_ip_lwip()
-                mqtt_thread.dut_addr["device_ip"] = (
-                    wifi_dut.interfaces.wifi.get_device_ip(device_ip=device_ip)
+                wifi_dut.interfaces.wifi.set_performance_profile()
+                wifi_dut.interfaces.wifi.sl_net_set_application_profile(
+                    interface="client", profile=1
                 )
-                status = sl_collections.ping(mqtt_thread.dut_addr["device_ip"], 30, 5)
-                assert status, "\n PING TO DUT FAILED \n"
-            else:
-                logger().info(f"DUT publishes message over mqtt topic --> {topic}")
-                wifi_dut.interfaces.mqtt.lwip_mqtt_publish(
-                    topic=topic, message=message, qos=qos, timeout=20
-                )
-                yield_data = wifi_dut.interfaces.mqtt.lwip_mqtt_yield(
-                    yield_timeout_ms=2000
-                )
-                pattern = re.compile(
-                    r"Topic:\s*(?P<Topic>[^,]+),\s*Message:\s*(?P<Message>[^\r\n]+)",
-                    re.DOTALL,
-                )
-                match = pattern.search(yield_data)
-                if match:
-                    yield_topic = match.group("Topic")
-                    yield_message = match.group("Message")
-                    logger().info(
-                        f"Received MQTT message on DUT - Topic: {yield_topic}, Message: {yield_message}"
-                    )
-                    assert (
-                            yield_topic == topic
-                    ), "Mismatch in MQTT topic received on DUT"
-                    assert (
-                            yield_message == message
-                    ), "Mismatch in MQTT message received on DUT"
-                else:
-                    raise AssertionError("No MQTT message received on DUT")
-                if _ == 4:
-                    ap_power_off = True
+                mqtt_thread.enable_power_save()
+        assert flag, f"sl_net_up failed after 3 attempts: {last_error}"
+        device_ip = wifi_dut.interfaces.wifi.display_device_ip_lwip()
+        mqtt_thread.dut_addr["device_ip"] = wifi_dut.interfaces.wifi.get_device_ip(
+            device_ip=device_ip
+        )
+        status = ping(mqtt_thread.dut_addr["device_ip"], 10)
+        assert status, "DUT NOT RESPONDING FOR PING REQUEST AFTER AP POWER CYCLE"
+
+        logger().info("\n Re-establishing MQTT connection after AP power cycle \n")
+        # lwip_mqtt.disconnect always fails after the rejoin (MQTTDisconnect cannot
+        # reach the broker) and lwip_mqtt_commands.c returns before freeing the
+        # certificate buffers, so every lwip_mqtt.set_advanced_configuration leaks
+        # ~17.5 KB of DUT heap and the TLS handshake eventually cannot allocate.
+        # Reconnect without re-uploading the certificates: the firmware globals
+        # still point at the ones from the first session, so configure_tls_certificates
+        # succeeds without another allocation.
+        try:
+            mqtt_thread.mqtt_connect(configure_tls_certs=False)
+        except Exception as connect_ex:
+            logger().warning(
+                f"MQTT reconnect with the retained certificates failed: {connect_ex}. "
+                "Retrying with a fresh certificate upload"
+            )
+            mqtt_thread.mqtt_connect()
+        mqtt_thread.subscribe_and_publish_for_multiple_times(qos=qos, iterations=5)
+
         wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
         wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
         wifi_sniffer.interfaces.capture.stop_capture()
@@ -1681,4 +1996,142 @@ def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C33315031(firmware_loader,
         sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
     finally:
         _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread, switch=switch)
-'''
+        # _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
+
+
+@wifi_dut_marker()
+@pytest.mark.start_state("wifi_dut", wifi=["sl_net_init_client"])
+@pytest.mark.mqtt_server("raspi_mosquitto_tls")
+@pytest.mark.end_state(
+    "wifi_dut",
+    wifi=[
+        "lwip_mqtt_disconnect",
+        "unassociated",
+        "disable_external_stack"
+    ],
+)
+@pytest.mark.config(
+    "wifi_access_point",
+    wifi={
+        "ssid": "ssid_profile1",
+        "security": "WPA2",
+        "passphrase": "1234567890",
+        "channel": 1,
+    },
+)
+@pytest.mark.firmware_app("test_lwip_stack")
+def test_neutral_less_profile_mqtt_on_host_lwip_sdk_C14037978(firmware_loader,
+                                                              wifi_dut,
+                                                              wifi_access_point,
+                                                              wifi_sniffer,
+                                                              mqtt_server,
+                                                              mqtt_client,
+                                                              sniffer_filter,
+                                                              sl_collections,
+                                                              request,
+                                                              ):
+    topic = "Topic_C14037978"
+    client_id = "Si91x_mqtt_client"
+    qos = Si91xMqttQos.QOS2
+    message = "".join(random.choices(string.ascii_uppercase + string.digits, k=100))
+    profile = {
+        "ssid": "ssid_profile1",
+        "channel": 1,
+        "security": "WPA2",
+        "passphrase": "1234567890",
+        "encryption_type": "SL_WIFI_DEFAULT_ENCRYPTION",
+    }
+    for iteration in range(2):
+        mqtt_thread = None
+        try:
+            mqtt_thread = MQTTConnectionThread(
+                wifi_dut=wifi_dut,
+                wifi_access_point=wifi_access_point,
+                wifi_sniffer=wifi_sniffer,
+                topic=topic,
+                request=request,
+                mqtt_server=mqtt_server,
+                mqtt_client=mqtt_client,
+                message=message,
+                sl_collections=sl_collections,
+                client_id=client_id,
+                qos=qos,
+                profile=profile,
+                sniffer_filter=sniffer_filter,
+                enable_tls=True,
+                enable_bt_powersave=True,
+            )
+            mqtt_thread.start()
+            mqtt_thread.wait_for_exit()
+            mqtt_thread.mqtt_connect()
+            mqtt_thread.subscribe_and_publish_for_multiple_times(qos=qos, iterations=5)
+            wifi_sniffer.interfaces.capture.stop_capture()
+            mqtt_thread.verify_management_data_rates()
+            mqtt_thread.verify_data_rates()
+
+            logger().info("\n Disconnecting DUT from AP before default profile reconnect \n")
+            try:
+                wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+            except Exception as ex:
+                logger().info(f"MQTT unsubscribe skipped: {ex}")
+            try:
+                wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
+            except Exception as ex:
+                logger().info(f"MQTT disconnect skipped: {ex}")
+            wifi_dut.interfaces.wifi.leave()
+            time.sleep(2)
+
+            logger().info("\n Reconnecting DUT to AP with default profile \n")
+            wifi_sniffer.interfaces.capture.configure_interface(
+                channel=wifi_access_point.interfaces.wifi.channel
+            )
+            wifi_sniffer.interfaces.capture.start_capture(
+                capture_file=f"{request.node.name}_default_sl_net_up.pcap"
+            )
+            mqtt_thread.enable_power_save()
+            wifi_dut.interfaces.wifi.join(
+                ssid=profile["ssid"],
+                passphrase=profile["passphrase"],
+                security=profile["security"].lower(),
+                channel=profile["channel"],
+                enable_lwip=1,
+            )
+            wifi_dut.interfaces.wifi.start_ip_lwip()
+            attempt = 3
+            flag = False
+            last_error = None
+            while attempt > 0:
+                try:
+                    wifi_dut.interfaces.wifi.sl_net_up(mode="client")
+                    flag = True
+                    break
+                except Exception as e:
+                    last_error = e
+                    attempt -= 1
+                    logger().info(
+                        f"sl_net_up failed with exception {e}, {attempt} attempts left"
+                    )
+            assert flag, f"sl_net_up failed after 3 attempts: {last_error}"
+            device_ip = wifi_dut.interfaces.wifi.display_device_ip_lwip()
+            mqtt_thread.dut_addr["device_ip"] = wifi_dut.interfaces.wifi.get_device_ip(
+                device_ip=device_ip
+            )
+            status = ping(mqtt_thread.dut_addr["device_ip"], 10)
+            assert status, "DUT NOT RESPONDING FOR PING REQUEST AFTER AP POWER CYCLE"
+
+            logger().info("\n Re-establishing MQTT connection with default profile settings\n")
+            mqtt_thread.mqtt_connect()
+            mqtt_thread.subscribe_and_publish_for_multiple_times(qos=qos, iterations=5)
+            wifi_dut.interfaces.mqtt.lwip_mqtt_unsubscribe(topic=topic)
+            wifi_dut.interfaces.wifi.lwip_mqtt_disconnect()
+            wifi_dut.interfaces.wifi.leave()
+            wifi_sniffer.interfaces.capture.stop_capture()
+            mqtt_thread.verify_management_data_rates_with_default_profile()
+            mqtt_thread.verify_ps_validation()
+            mqtt_thread.verify_data_rates_with_default_profile()
+            time.sleep(2)
+        except Exception as Ex:
+            sl_collections.exception_handling(wifi_dut=wifi_dut, exception=Ex)
+        finally:
+            # _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread, switch=switch)
+            _mqtt_host_lwip_cleanup(wifi_dut, mqtt_thread=mqtt_thread)
