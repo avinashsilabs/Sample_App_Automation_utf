@@ -1,0 +1,11 @@
+# BRD4338A wireless (NWP/TA) firmware upgrade only.
+# Does not flash an M4 sample-app / application image (no write_firmware).
+firmware:
+  efx32:
+    load_binary:
+      file_name: &firmware_file_anchor 'SiWG917-B.2.17.5.0.0.34.rps'
+
+firmware_version_file: *firmware_file_anchor
+# List of devices to be reset when needed
+# reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
+reset: [efx32]

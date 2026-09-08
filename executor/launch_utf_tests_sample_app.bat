@@ -1,0 +1,7 @@
+call .\launch_utf_tests.bat --target=10.207.18.222   --harness=harness_example_si917_sample_app.yaml --pytest_command="pytest --tb=native  --count=1  example_test_package/sqa_test_suites_wifi_sdk_3/wlan_standalone/functional/examples/test_wifi_examples_sdk_commit.py --manifest /app/manifest/917_sample_app/brd4338a/toolchain_gcc/manifest_917_soc.yaml"
+
+call .\launch_utf_tests.bat --target=10.207.18.222   --harness=harness_example_si917_sample_app.yaml --pytest_command="pytest --tb=native  --count=1  example_test_package/sqa_test_suites_wifi_sdk_3/wlan_standalone/functional/examples/test_wifi_examples_sdk_commit.py --manifest /app/manifest/917_sample_app/brd4338a/toolchain_gcc_lto/manifest_917_soc.yaml"
+
+call .\launch_utf_tests.bat --target=10.207.18.222   --harness=harness_example_si917_sample_app.yaml --pytest_command="pytest --tb=native  --count=1  example_test_package/sqa_test_suites_wifi_sdk_3/wlan_standalone/functional/examples/test_wifi_examples_sdk_commit.py --manifest /app/manifest/917_sample_app/brd4338a/toolchain_llvm/manifest_917_soc.yaml"
+
+call .\launch_utf_tests.bat --target=10.207.18.222   --harness=harness_example_si917_sample_app.yaml --pytest_command="pytest --tb=native  --count=1  example_test_package/sqa_test_suites_wifi_sdk_3/wlan_standalone/functional/examples/test_wifi_examples_sdk_commit.py --manifest /app/manifest/917_sample_app/brd4338a/toolchain_llvm_lto/manifest_917_soc.yaml"

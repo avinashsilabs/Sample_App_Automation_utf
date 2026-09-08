@@ -1,0 +1,77 @@
+# BRD4338A sample-app images for toolchain_gcc_lto.
+# Filenames are resolved relative to this directory.
+#firmware:
+#  efx32:
+##    load_binary:
+##      file_name: &firmware_file_anchor 'SiWG917-B.2.15.5.3.0.1.rps'
+#
+##    write_firmware:
+##      file_name: 'wifi_station_ping_soc_2.rps'
+#
+##firmware_version_file: *firmware_file_anchor
+## List of devices to be reset when needed
+## reset of efx32 runs reset sequence for rs911x so no need to reset rs911x
+reset: [efx32]
+
+firmware_applications:
+    # List of markers for test cases
+    test_icmp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'wifi_station_ping_soc.rps'
+  #        filename: 'zephyr_fast_psp_pm_disabled_4_0_3.rps'
+
+    test_eap:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'wifi_enterprise_client_soc.rps'
+
+    test_mqtt:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'wifi_embedded_mqtt_client_soc.rps'
+
+    test_mqtt_over_tcp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'wifi_mqtt_over_tcp_soc.rps'
+
+    test_lwip_mqtt_over_tcp:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'wifi_lwip_mqtt_over_tcp_soc.rps'
+
+    test_crypto_aes:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'crypto_aes.rps'
+
+    test_crypto_ecdh:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'crypto_ecdh.rps'
+
+    test_crypto_ecdsa:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'crypto_ecdsa.rps'
+
+    test_crypto_gcm_cmac:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'crypto_gcm_cmac.rps'
+
+    test_crypto_hmac:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'crypto_hmac.rps'
+
+    test_crypto_sha:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'crypto_sha.rps'
+
+    test_crypto_sha3:
+      - device_type: 'efx32'
+        device_subtype: 'efr32'
+        filename: 'crypto_sha3.rps'
