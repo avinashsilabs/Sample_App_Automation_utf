@@ -1,0 +1,90 @@
+{
+  "studio": {
+    "url": "http://127.0.0.1:5050",
+    "sdk_root": "C:/Avinash/gecko-sdk_809",
+    "examples_root": "C:/Avinash/wiseconnect_809/examples/snippets/wlan_ble",
+    "board": "brd2605b",
+    "toolchain": "gcc",
+    "adapter_serial": "440381543"
+  },
+  "wifi": {
+    "ssid": "avinash_n",
+    "password": "12345678",
+    "security": 2
+  },
+  "pi": {
+    "host": "192.168.50.2",
+    "port": 22,
+    "username": "pi",
+    "password": "raspberry",
+    "remote_workdir": "/var/tmp/wcbs_coex_ble"
+  },
+  "ble": {
+    "backend": "pi",
+    "device_name": "BLE_CONFIGURATOR",
+    "address": "",
+    "write_uuid": "00001aa1-0000-1000-8000-00805f9b34fb",
+    "read_uuid": "00001bb1-0000-1000-8000-00805f9b34fb",
+    "notify_uuid": "00001cc1-0000-1000-8000-00805f9b34fb",
+    "scan_timeout_s": 30,
+    "connect_timeout_s": 75,
+    "post_flash_settle_s": 20,
+    "ssid_scan_retries": 5,
+    "connect_retries": 8,
+    "retry_delay_s": 5,
+    "drop_pinned_address_after": 0,
+    "post_join_delay_s": 5,
+    "require_self_identity": true,
+    "self_identity_timeout_s": 45,
+    "clear_bluez_cache": true,
+    "recover_adapter_on_connect_failure": true,
+    "restart_bluetooth_before_connect": true,
+    "pre_connect_delay_s": 3
+  },
+  "aws": {
+    "endpoint": "a2m21kovu9tcsh-ats.iot.us-east-2.amazonaws.com",
+    "dut_port": 443,
+    "host_port": 8883,
+    "dut_subscribe_topic": "dut_aws",
+    "dut_publish_topic": "dut_si91x",
+    "host_to_dut_payload": [
+      "{\"red\":\"on\",\"green\":\"off\",\"blue\":\"off\"}",
+      "{\"red\":\"off\",\"green\":\"on\",\"blue\":\"off\"}",
+      "{\"red\":\"off\",\"green\":\"off\",\"blue\":\"on\"}"
+    ],
+    "dut_publish_payload": "",
+    "p12_path": "C:/Users/avsrigir/Automation/milestone_97/utf_wifi/wiseconnect-build-studio/coex/wifi_station_ble_provisioning_aws_devkit_test_scripts/aws_device_cert.p12",
+    "p12_password": "123456789",
+    "p12_filename": "aws_device_cert.p12",
+    "certificates_dir": "C:/Avinash/wiseconnect_809/resources/certificates",
+    "client_certificate": "aws_client_certificate.pem.crt.h",
+    "client_private_key": "aws_client_private_key.pem.key.h",
+    "rounds": 5,
+    "round_gap_s": 3,
+    "verify_dut_publish": true,
+    "require_power_save": false
+  },
+  "button": {
+    "host": "192.168.50.8",
+    "port": 4902,
+    "index": 0,
+    "hold_s": 1.5,
+    "mode": "auto",
+    "press_each_round": true
+  },
+  "timeouts": {
+    "wlan_s": 60,
+    "ip_s": 60,
+    "certs_s": 90,
+    "aws_s": 180,
+    "publish_s": 120,
+    "sleep_s": 90,
+    "dut_publish_s": 120,
+    "host_publish_s": 60
+  },
+  "router": {
+    "host": "192.168.50.1",
+    "username": "admin",
+    "password": "admin@12345"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "wlan_connected": false,
+  "ble_connected": false,
+  "ble_notification_received": false,
+  "udp_started": false,
+  "udp_result": "",
+  "failure": "Command failed with exit code 1"
+}

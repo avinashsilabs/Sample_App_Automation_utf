@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "app_id": "wifi_throughput_ble_dual_role",
+  "build_job_id": "4159ef1f",
+  "state": {
+    "wlan_connected": true,
+    "ble_pi_connected": true,
+    "ble_pi_notification_received": true,
+    "udp_started": true,
+    "udp_result": true,
+    "ble_avinash_connected": true,
+    "failure": null
+  },
+  "ble_topology": {
+    "case_1": {
+      "central": "raspberry_pi",
+      "peripheral": "SI_COEX_MAX_DEMO",
+      "notification": true
+    },
+    "case_2": {
+      "central": "DUT",
+      "peripheral": "avinash",
+      "connection": true
+    }
+  }
+}

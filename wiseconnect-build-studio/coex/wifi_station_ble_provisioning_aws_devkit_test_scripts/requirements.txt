@@ -1,0 +1,6 @@
+paho-mqtt>=2.0
+paramiko>=3.0
+# Reads the client certificate so the log shows which identity was used.
+cryptography>=41.0
+# Only needed when ble.backend is "host"; the Pi backend installs bleak itself.
+bleak>=0.21

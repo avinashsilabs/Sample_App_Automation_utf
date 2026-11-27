@@ -1,0 +1,82 @@
+{
+  "app_id": "out_of_box_demo",
+  "build_job_id": "2b30cbd7",
+  "provision": {
+    "ok": true,
+    "aps": [
+      {
+        "security": 2,
+        "ssid": "avinash_n"
+      }
+    ],
+    "ip": null,
+    "mac": null,
+    "ssid_found": true,
+    "ssid": "avinash_n",
+    "security": 2,
+    "credentials_sent": true,
+    "exit_code": 0,
+    "backend": "pi",
+    "pi_host": "192.168.50.6"
+  },
+  "dut_publish": {
+    "topic": "Si917_APP_STATUS",
+    "payload": "Button is pressed"
+  },
+  "mqtt_exchanges": [
+    {
+      "round": 1,
+      "host_to_dut": true,
+      "dut_publish": {
+        "topic": "Si917_APP_STATUS",
+        "payload": "Button is pressed"
+      }
+    },
+    {
+      "round": 2,
+      "host_to_dut": true,
+      "dut_publish": {
+        "topic": "Si917_APP_STATUS",
+        "payload": "Button is pressed"
+      }
+    },
+    {
+      "round": 3,
+      "host_to_dut": true,
+      "dut_publish": {
+        "topic": "Si917_APP_STATUS",
+        "payload": "Button is pressed"
+      }
+    },
+    {
+      "round": 4,
+      "host_to_dut": true,
+      "dut_publish": {
+        "topic": "Si917_APP_STATUS",
+        "payload": "Button is pressed"
+      }
+    },
+    {
+      "round": 5,
+      "host_to_dut": true,
+      "dut_publish": {
+        "topic": "Si917_APP_STATUS",
+        "payload": "Button is pressed"
+      }
+    }
+  ],
+  "serial": {
+    "version": "v2.0",
+    "wifi_connected": true,
+    "ip_address": "192.168.50.2",
+    "ping_started": true,
+    "ping_responses": 5,
+    "mqtt_connected": true,
+    "mqtt_subscribed": true,
+    "mqtt_message_received": true,
+    "mqtt_publish_ok": true,
+    "nwp_sleep": true,
+    "failure": null
+  },
+  "ok": true
+}

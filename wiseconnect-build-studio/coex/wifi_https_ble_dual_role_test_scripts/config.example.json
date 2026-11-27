@@ -1,0 +1,51 @@
+{
+  "studio": {
+    "url": "http://127.0.0.1:5050",
+    "sdk_root": "C:/path/to/simplicity_sdk",
+    "examples_root": "C:/path/to/wiseconnect/examples/snippets/wlan_ble",
+    "board": "brd4338a",
+    "toolchain": "gcc",
+    "adapter_serial": ""
+  },
+  "wifi": {
+    "ssid": "YOUR_SSID",
+    "password": "YOUR_WIFI_PASSWORD",
+    "security": 2
+  },
+  "nuc": {
+    "host": "192.168.50.36",
+    "port": 22,
+    "username": "silabs",
+    "password": "YOUR_NUC_PASSWORD",
+    "backend": "auto",
+    "remote_workdir": "/var/tmp/wcbs_https_ble",
+    "http_port": 80,
+    "https_port": 443
+  },
+  "pi": {
+    "host": "10.207.18.79",
+    "port": 22,
+    "username": "pi",
+    "password": "raspberry",
+    "remote_workdir": "/var/tmp/wcbs_coex_ble"
+  },
+  "ble": {
+    "device_name": "SI_COEX_MAX_DEMO",
+    "scan_timeout_s": 30,
+    "connect_timeout_s": 75,
+    "hold_s": 8,
+    "connect_retries": 5,
+    "retry_delay_s": 4,
+    "pre_connect_delay_s": 3,
+    "post_adv_settle_s": 5
+  },
+  "timeouts": {
+    "wlan_s": 90,
+    "ip_s": 60,
+    "tls_s": 30,
+    "socket_s": 60,
+    "download_s": 90,
+    "ble_s": 60,
+    "post_flash_settle_s": 8
+  }
+}

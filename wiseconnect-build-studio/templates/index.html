@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WiseConnect Build Studio</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <button id="btn-config" class="btn btn-ghost btn-config" title="Edit application headers">⚙ Config</button>
+      <span class="logo">WC</span>
+      <div>
+        <h1>WiseConnect Build Studio</h1>
+        <p class="subtitle">BLE snippet builder — SLC · CMake · Commander · UTF</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="tool-status" class="badge badge-warn">Starting…</span>
+      <button id="btn-refresh-adapters" class="btn btn-ghost">Refresh Hardware</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel">
+      <section>
+        <h2>SDK Source</h2>
+        <div class="tabs">
+          <button class="tab active" data-tab="sdk-local">Local</button>
+          <button class="tab" data-tab="sdk-url">Download URL</button>
+        </div>
+        <div id="sdk-local" class="tab-panel active">
+          <label>SDK root (folder with simplicity_sdk.slcs)</label>
+          <input id="sdk-local-path" type="text" placeholder="e.g. C:\Users\you\new_Sdk">
+          <button id="btn-validate-sdk" class="btn btn-secondary btn-block">Validate &amp; Trust SDK</button>
+          <div id="sdk-local-status" class="hint">Enter the SDK path for this PC, then validate. Trust runs automatically.</div>
+        </div>
+        <div id="sdk-url" class="tab-panel">
+          <label>Gecko SDK zip URL</label>
+          <input id="gecko-url" type="url" placeholder="https://.../gecko-sdk.zip">
+          <label>WiSeConnect zip URL</label>
+          <input id="wiseconnect-url" type="url" placeholder="https://.../wiseconnect.zip">
+          <label>Cache name</label>
+          <input id="sdk-cache-name" type="text" value="downloaded_sdk">
+          <button id="btn-download-sdk" class="btn btn-secondary btn-block">Download &amp; Prepare SDK</button>
+          <div id="sdk-download-status" class="hint"></div>
+        </div>
+        <label class="mt">Cached SDKs</label>
+        <select id="sdk-select" class="select"></select>
+      </section>
+
+      <section>
+        <h2>Application</h2>
+        <label>BLE example</label>
+        <select id="app-select" class="select"></select>
+        <label class="mt">Examples root (auto from SDK if empty)</label>
+        <input id="ble-root" type="text" placeholder="Derived from SDK path on load">
+        <div id="app-test-hint" class="hint"></div>
+        <div id="workflow-hint" class="hint workflow-hint"></div>
+      </section>
+
+      <section>
+        <h2>Build Configuration</h2>
+        <div class="row">
+          <div class="col">
+            <label>Target</label>
+            <select id="target-select" class="select">
+              <option value="soc">SoC (SiWx917)</option>
+              <option value="ncp">NCP (EFR32 Host)</option>
+            </select>
+          </div>
+          <div class="col">
+            <label>Toolchain</label>
+            <select id="toolchain-select" class="select">
+              <option value="gcc">GCC</option>
+              <option value="gcc_lto">GCC + LTO</option>
+              <option value="llvm_lto">LLVM + LTO</option>
+            </select>
+          </div>
+        </div>
+        <label class="mt">Board</label>
+        <select id="board-select" class="select">
+          <option value="brd4338a">BRD4338A (SiWx917 SoC)</option>
+          <option value="brd4343a">BRD4343A (SiWx917 SoC)</option>
+          <option value="brd4346a">BRD4346A (SiWx917 SoC)</option>
+          <option value="brd2605b">BRD2605B (SiWx917 SoC)</option>
+        </select>
+      </section>
+
+      <section>
+        <h2>Connected Hardware</h2>
+        <label>Debug adapter</label>
+        <select id="adapter-select" class="select">
+          <option value="">Default adapter</option>
+        </select>
+        <label class="mt">DUT serial port (auto-detect if empty)</label>
+        <select id="serial-port" class="select">
+          <option value="">Auto-detect VCOM</option>
+        </select>
+        <div class="row mt">
+          <button id="btn-device-info" class="btn btn-secondary col">Device Info</button>
+          <button id="btn-device-recover" class="btn btn-secondary col">Recover Device</button>
+        </div>
+        <pre id="device-info" class="device-info muted">Click Device Info to read connected target</pre>
+        <ul id="adapter-list" class="adapter-list"></ul>
+      </section>
+
+      <section>
+        <h2>UTF / Raspberry Pi</h2>
+        <label>utf_wifi workspace root</label>
+        <input id="utf-workspace-root" type="text" placeholder="C:\...\utf_wifi">
+        <label class="mt">Raspberry Pi IP</label>
+        <input id="utf-target" type="text" placeholder="10.208.71.114">
+        <label class="mt">Harness YAML</label>
+        <input id="utf-harness" type="text" placeholder="harness_example_si917.yaml">
+        <label class="mt">DUT BLE address <span class="muted">(optional)</span></label>
+        <div class="row ble-debug-row">
+          <input id="ble-dut-address" type="text" class="col" placeholder="AA:BB:CC:DD:EE:FF — or parse from serial">
+          <button type="button" id="btn-ble-parse-address" class="btn btn-ghost col-narrow">From serial</button>
+        </div>
+        <p class="hint workflow-hint">If serial parse times out, enter the MAC from the DUT log here. Used by Build, Flash, Test and Start Connection.</p>
+        <label class="checkbox-row mt">
+          <input id="use-passkey" type="checkbox">
+          <span>Use passkey bonding (SMP)</span>
+        </label>
+        <label class="checkbox-row">
+          <input id="scan-before-connect" type="checkbox">
+          <span>Scan before connect</span>
+        </label>
+        <div id="utf-hint" class="hint"></div>
+      </section>
+
+      <section id="coex-wifi-settings">
+        <h2>WLAN + BLE Test Network</h2>
+        <label>Wi-Fi SSID</label>
+        <input id="coex-wifi-ssid" type="text" autocomplete="off" placeholder="2.4 GHz test access point">
+        <label class="mt">Wi-Fi password</label>
+        <input id="coex-wifi-password" type="password" autocomplete="new-password" placeholder="Access point password">
+        <label class="mt">Security</label>
+        <select id="coex-wifi-security" class="select">
+          <option value="2">WPA2</option>
+          <option value="1">WPA</option>
+          <option value="7">WPA3</option>
+          <option value="0">Open</option>
+          <option value="3">WEP</option>
+        </select>
+        <p class="hint workflow-hint">Optional override for WLAN+BLE provisioning. Leave blank to use config.local.json. The password is not stored in browser storage.</p>
+      </section>
+
+      <section class="actions">
+        <h2 class="actions-heading">Test</h2>
+        <p class="hint workflow-hint">One click runs the app workflow (usually UTF on Pi first, then flash, then BLE connect).</p>
+        <button id="btn-build-flash-test" class="btn btn-primary btn-block btn-lg">Build, Flash, Test</button>
+        <button id="btn-prebuild-configurations" class="btn btn-secondary btn-block mt">Prebuild Configurations</button>
+        <p class="hint workflow-hint">Temporary demo: marks app.c in the five completed BLE applications.</p>
+        <button id="btn-stop-pi-ble" class="btn btn-secondary btn-block mt">Stop Pi BLE Server</button>
+        <p class="hint workflow-hint">Stops the RasPi HTTP pytest (`POST /ble/orchestration/abort`) so a stale `/health` cannot block the next run. Also runs automatically before each Build, Flash, Test and on pipeline errors.</p>
+
+        <details class="debug-panel mt">
+          <summary>Debug &amp; manual steps</summary>
+
+          <p class="hint workflow-hint">Run individual steps when isolating failures.</p>
+          <button id="btn-build-flash" class="btn btn-secondary btn-block">Build &amp; Flash</button>
+          <button id="btn-launch-utf" class="btn btn-secondary btn-block">Launch UTF</button>
+          <button id="btn-start-connection" class="btn btn-accent btn-block">Start Connection</button>
+          <details class="advanced-actions mt">
+            <summary>Advanced build options</summary>
+            <button id="btn-build" class="btn btn-secondary btn-block mt">Build Only</button>
+            <button id="btn-flash" class="btn btn-accent btn-block" disabled>Flash Only</button>
+          </details>
+
+          <h3 class="debug-subheading">BLE debug (Pi HTTP)</h3>
+          <p class="hint workflow-hint">Enable uses POST /ble/notifications/enable with <code>{}</code> auto-pick for multiconnection.</p>
+          <button type="button" id="btn-ble-scan" class="btn btn-secondary btn-block">Scan</button>
+          <button type="button" id="btn-ble-connect" class="btn btn-secondary btn-block">Connect (direct, no SMP)</button>
+          <button type="button" id="btn-ble-passkey-connect" class="btn btn-accent btn-block">Passkey connect (SMP)</button>
+          <button type="button" id="btn-ble-connect-scan" class="btn btn-ghost btn-block">Connect (scan first)</button>
+          <button type="button" id="btn-ble-status" class="btn btn-secondary btn-block">Status</button>
+          <button type="button" id="btn-ble-enable-notify" class="btn btn-accent btn-block">Enable notifications</button>
+          <button type="button" id="btn-ble-get-notify" class="btn btn-secondary btn-block">Get notifications</button>
+        </details>
+      </section>
+
+      <section>
+        <h2>Consoles</h2>
+        <div class="console-nav console-nav-sidebar">
+          <button type="button" class="console-nav-btn" data-console="build" id="nav-console-build-side">Build</button>
+          <button type="button" class="console-nav-btn" data-console="serial" id="nav-console-serial-side">Serial</button>
+          <button type="button" class="console-nav-btn" data-console="utf" id="nav-console-utf-side">UTF</button>
+        </div>
+      </section>
+    </aside>
+
+    <div id="workspace-pane" class="workspace-pane">
+    <nav class="console-nav" aria-label="Console views">
+      <button type="button" class="console-nav-btn active" data-console="build" id="nav-console-build">Build Console</button>
+      <button type="button" class="console-nav-btn" data-console="serial" id="nav-console-serial">Serial Console</button>
+      <button type="button" class="console-nav-btn" data-console="utf" id="nav-console-utf">UTF Console</button>
+    </nav>
+
+    <div id="main-view" class="content">
+      <section class="panel artifacts-panel">
+        <h2>Build Artifacts</h2>
+        <div id="artifacts" class="artifacts">
+          <p class="muted">Run a build to see .rps, .hex, .s37 outputs</p>
+        </div>
+      </section>
+      <section class="panel log-panel">
+        <div class="log-header">
+          <h2>Build Console</h2>
+          <span id="build-status" class="badge">Idle</span>
+        </div>
+        <pre id="log-output" class="log-output"></pre>
+      </section>
+    </div>
+
+    <div id="utf-view" class="content utf-view hidden">
+      <section class="panel log-panel">
+        <div class="log-header">
+          <h2>UTF Test Console</h2>
+          <span id="utf-status" class="badge">Idle</span>
+        </div>
+        <pre id="utf-log-output" class="log-output"></pre>
+        <div class="row mt">
+          <button id="btn-utf-back-build" class="btn btn-ghost">← Build Console</button>
+          <button id="btn-utf-stop-console" class="btn btn-secondary">Stop Tests</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="serial-view" class="content serial-view hidden">
+      <section class="panel serial-panel">
+        <div class="log-header">
+          <h2>Serial Console</h2>
+          <span id="serial-status" class="badge badge-ok">Idle</span>
+        </div>
+        <div class="serial-controls row">
+          <div class="col">
+            <label>COM port</label>
+            <select id="serial-port-view" class="select"></select>
+          </div>
+          <div class="col narrow">
+            <label>Baud</label>
+            <input id="serial-baud" type="number" value="115200" min="300" max="3000000">
+          </div>
+          <div class="col narrow">
+            <label>&nbsp;</label>
+            <button id="btn-serial-connect" class="btn btn-secondary btn-block">Reconnect</button>
+          </div>
+          <div class="col narrow">
+            <label>&nbsp;</label>
+            <button id="btn-back-build" class="btn btn-ghost btn-block">← Build Console</button>
+          </div>
+        </div>
+        <pre id="serial-output" class="log-output serial-output"></pre>
+      </section>
+    </div>
+    </div>
+  </main>
+
+  <dialog id="error-dialog" class="error-dialog">
+    <form method="dialog">
+      <h3 id="error-dialog-title">Operation Failed</h3>
+      <pre id="error-dialog-body" class="error-dialog-body"></pre>
+      <div class="dialog-actions">
+        <button value="close" class="btn btn-primary">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js?v=28"></script>
+</body>
+</html>

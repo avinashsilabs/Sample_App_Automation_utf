@@ -1,0 +1,48 @@
+{
+  "studio": {
+    "url": "http://127.0.0.1:5050",
+    "sdk_root": "C:/path/to/simplicity_sdk",
+    "examples_root": "C:/path/to/wiseconnect/examples/snippets/wlan_ble",
+    "board": "brd4338a",
+    "toolchain": "gcc",
+    "adapter_serial": ""
+  },
+  "wifi": {
+    "ssid": "YOUR_SSID",
+    "password": "YOUR_WIFI_PASSWORD",
+    "security": 2
+  },
+  "pi": {
+    "host": "10.207.18.79",
+    "port": 22,
+    "username": "pi",
+    "password": "raspberry",
+    "remote_workdir": "/var/tmp/wcbs_power_save"
+  },
+  "ssl": {
+    "server_ip": "",
+    "port": 5001
+  },
+  "ble": {
+    "backend": "pi",
+    "device_name": "WLAN_BLE_SIMPLE_CHAT",
+    "service_uuid": "0000aabb-0000-1000-8000-00805f9b34fb",
+    "write_uuid": "00001aa1-0000-1000-8000-00805f9b34fb",
+    "notify_uuid": "00001bb1-0000-1000-8000-00805f9b34fb",
+    "scan_timeout_s": 45,
+    "connect_timeout_s": 75,
+    "post_flash_settle_s": 12,
+    "hold_s": 600
+  },
+  "timeouts": {
+    "wifi_init_s": 60,
+    "ssl_ca_s": 60,
+    "wlan_s": 90,
+    "ip_s": 60,
+    "power_save_s": 60,
+    "socket_s": 90,
+    "ble_s": 90,
+    "wifi_to_ble_s": 20,
+    "ble_to_wifi_s": 20
+  }
+}

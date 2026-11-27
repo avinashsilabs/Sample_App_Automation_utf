@@ -1,0 +1,4 @@
+config.local.json
+last_result.json
+.certs/
+__pycache__/

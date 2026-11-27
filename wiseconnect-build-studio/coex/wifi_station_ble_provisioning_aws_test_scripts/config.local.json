@@ -1,0 +1,72 @@
+{
+  "studio": {
+    "url": "http://127.0.0.1:5050",
+    "sdk_root": "C:/Avinash/gecko-sdk_809",
+    "examples_root": "C:/Avinash/wiseconnect_809/examples/snippets/wlan_ble",
+    "board": "brd4338a",
+    "toolchain": "gcc",
+    "adapter_serial": "440359452"
+  },
+  "wifi": {
+    "ssid": "avinash_n",
+    "password": "12345678",
+    "security": 2
+  },
+  "pi": {
+    "host": "192.168.50.6",
+    "port": 22,
+    "username": "pi",
+    "password": "raspberry",
+    "remote_workdir": "/var/tmp/wcbs_coex_ble"
+  },
+  "ble": {
+    "backend": "pi",
+    "device_name": "BLE_CONFIGURATOR",
+    "address": "D4:48:67:DD:CF:8B",
+    "write_uuid": "00001aa1-0000-1000-8000-00805f9b34fb",
+    "read_uuid": "00001bb1-0000-1000-8000-00805f9b34fb",
+    "notify_uuid": "00001cc1-0000-1000-8000-00805f9b34fb",
+    "scan_timeout_s": 30,
+    "connect_timeout_s": 75,
+    "post_flash_settle_s": 20,
+    "ssid_scan_retries": 5
+  },
+  "aws": {
+    "endpoint": "a2m21kovu9tcsh-ats.iot.us-east-2.amazonaws.com",
+    "dut_port": 443,
+    "host_port": 8883,
+    "dut_subscribe_topic": "aws_status",
+    "dut_publish_topic": "si91x_status",
+    "host_to_dut_payload": "wcbs_host_to_dut",
+    "dut_publish_payload": "Hi from SiWx917",
+    "certificates_dir": "C:/Avinash/wiseconnect_809/resources/certificates",
+    "client_certificate": "aws_client_certificate.pem.crt.h",
+    "client_private_key": "aws_client_private_key.pem.key.h",
+    "rounds": 5,
+    "round_gap_s": 3,
+    "verify_dut_publish": true
+  },
+  "button": {
+    "host": "192.168.50.8",
+    "port": 4902,
+    "index": 0,
+    "hold_s": 1.5,
+    "mode": "auto",
+    "press_each_round": true
+  },
+  "timeouts": {
+    "wlan_s": 60,
+    "ip_s": 60,
+    "certs_s": 90,
+    "aws_s": 180,
+    "publish_s": 120,
+    "sleep_s": 90,
+    "dut_publish_s": 120,
+    "host_publish_s": 60
+  },
+  "router": {
+    "host": "192.168.50.1",
+    "username": "admin",
+    "password": "admin@12345"
+  }
+}

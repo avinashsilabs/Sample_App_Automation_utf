@@ -1,0 +1,27 @@
+{
+  "studio": {
+    "url": "http://127.0.0.1:5050",
+    "sdk_root": "C:/Avinash/gecko-sdk_809",
+    "examples_root": "C:/Avinash/wiseconnect_809/examples/snippets/wlan_ble",
+    "board": "brd4338a",
+    "toolchain": "gcc",
+    "adapter_serial": ""
+  },
+  "wifi": { "ssid": "avinash_n", "password": "12345678", "security": 2 },
+  "pi": { "host": "192.168.50.2", "port": 22, "username": "pi", "password": "raspberry", "remote_workdir": "/var/tmp/wcbs_throughput" },
+  "udp": {
+    "server_ip": "",
+    "server_port": 5001,
+    "average_time_ms": 60000,
+    "iperf_command": "iperf -s -u -p {port} -i 1",
+    "install_iperf_if_missing": true
+  },
+  "ble": {
+    "device_name": "SI_COEX_MAX_DEMO",
+    "address": "",
+    "notify_uuid": "00001aa1-0000-1000-8000-00805f9b34fb",
+    "connect_timeout_s": 30,
+    "notification_window_s": 8
+  },
+  "timeouts": { "wlan_s": 90, "udp_s": 90 }
+}

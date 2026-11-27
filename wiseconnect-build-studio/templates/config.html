@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Config — WiseConnect Build Studio</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/config.css">
+</head>
+<body class="config-body">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">WC</span>
+      <div>
+        <h1>Application Config</h1>
+        <p id="config-subtitle" class="subtitle">Header editor</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button id="btn-save" class="btn btn-secondary">Save</button>
+      <button id="btn-save-continue" class="btn btn-primary">Save &amp; Continue → Build &amp; Flash</button>
+    </div>
+  </header>
+
+  <main class="config-layout">
+    <aside class="config-sidebar panel">
+      <h2>Header files</h2>
+      <p class="muted small">Sample application headers only (excludes generated output)</p>
+      <ul id="header-list" class="header-list"></ul>
+    </aside>
+    <section class="config-editor panel">
+      <div class="editor-toolbar">
+        <span id="current-file" class="muted">Select a header file</span>
+        <span id="dirty-badge" class="badge badge-warn hidden">Unsaved</span>
+      </div>
+      <textarea id="editor" class="code-editor" spellcheck="false" disabled placeholder="Select a header from the list…"></textarea>
+    </section>
+  </main>
+
+  <script src="/static/config.js?v=2"></script>
+</body>
+</html>

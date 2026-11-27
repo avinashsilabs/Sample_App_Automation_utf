@@ -1,0 +1,64 @@
+{
+  "studio": {
+    "url": "http://127.0.0.1:5050",
+    "sdk_root": "C:/path/to/simplicity_sdk",
+    "examples_root": "C:/path/to/wiseconnect/examples/snippets/wlan_ble",
+    "board": "brd4338a",
+    "toolchain": "gcc",
+    "adapter_serial": ""
+  },
+  "wifi": {
+    "ssid": "avinash_n",
+    "password": "12345678",
+    "security": 2
+  },
+  "pi": {
+    "host": "192.168.50.2",
+    "port": 22,
+    "username": "pi",
+    "password": "raspberry",
+    "remote_workdir": "/var/tmp/wcbs_coex_ble"
+  },
+  "ble": {
+    "backend": "pi",
+    "device_name": "BLE_CONFIGURATOR",
+    "write_uuid": "00001aa1-0000-1000-8000-00805f9b34fb",
+    "read_uuid": "00001bb1-0000-1000-8000-00805f9b34fb",
+    "notify_uuid": "00001cc1-0000-1000-8000-00805f9b34fb",
+    "scan_timeout_s": 30,
+    "connect_timeout_s": 75,
+    "post_flash_settle_s": 20,
+    "ssid_scan_retries": 3,
+    "address": ""
+  },
+  "mqtt": {
+    "broker_host": "test.mosquitto.org",
+    "broker_port": 1883,
+    "dut_subscribe_topic": "Si917_MQTT_RECEIVE",
+    "dut_publish_topic": "Si917_APP_STATUS",
+    "host_to_dut_payload": "message_host_to_dut",
+    "dut_publish_payload": "Button is pressed",
+    "verify_dut_publish": true,
+    "relay": "auto",
+    "rounds": 5,
+    "round_gap_s": 3
+  },
+  "min_ping_responses": 1,
+  "timeouts": {
+    "wlan_s": 60,
+    "ip_s": 60,
+    "ping_s": 90,
+    "mqtt_s": 150,
+    "sleep_s": 60,
+    "mqtt_transfer_s": 60,
+    "button_s": 180,
+    "ble_self_s": 45
+  },
+  "button": {
+    "host": "",
+    "port": 4902,
+    "index": 0,
+    "hold_s": 1.5,
+    "mode": "auto"
+  }
+}
